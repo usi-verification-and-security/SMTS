@@ -6,7 +6,7 @@ if (NOT GMP_PATH)
 endif ()
 
 include(ExternalProject)
-ExternalProject_Add(OPENSMT2
+ExternalProject_Add(OpenSMT2
         GIT_REPOSITORY https://scm.ti-edu.ch/repogit/opensmt2.git
         UPDATE_COMMAND git pull
         PATCH_COMMAND autoreconf --force --install
@@ -16,8 +16,8 @@ ExternalProject_Add(OPENSMT2
         INSTALL_COMMAND ""
         )
 
-add_dependencies(solver_opensmt OPENSMT2)
-ExternalProject_Get_Property(OPENSMT2 SOURCE_DIR)
+add_dependencies(solver_opensmt OpenSMT2)
+ExternalProject_Get_Property(OpenSMT2 SOURCE_DIR)
 
 include_directories(
         "${GMP_INCLUDE_DIR}"

@@ -1,1 +1,1 @@
-find(SQLITE3 ../lib/sqlite3.h sqlite3)
+find(SQLITE3 sqlite3.h sqlite3)
