@@ -1,4 +1,4 @@
-add_executable(solver_opensmt ../main.cpp SolverProcess.cpp OpenSMTSolver.cpp)
+add_executable(solver_opensmt ../main.cpp SolverProcess.cpp OpenSMTSolver.cpp SplitProcess.cpp)
 
 find_package(GMP REQUIRED)
 if (NOT GMP_PATH)

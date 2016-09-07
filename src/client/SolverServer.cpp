@@ -68,7 +68,7 @@ void SolverServer::handle_exception(Socket &socket, SocketException &exception) 
 
 void SolverServer::stop_solver() {
     if (this->solver != nullptr) {
-        this->del_socket(this->solver->reader());
+        //this->del_socket(this->solver->reader());
         this->solver->stop();
         this->solver->join();
         delete this->solver;
@@ -104,6 +104,10 @@ void SolverServer::handle_message(Socket &socket, std::map<std::string, std::str
             this->solver = new SolverProcess(this->lemmas, header, payload);
             this->add_socket(this->solver->reader());
             this->log(Log::INFO, "start");
+            sleep(3);
+            header["command"] = "partitions";
+            header["partitions"] = "2";
+            this->solver->writer()->write(header, "");
         }
         else if (header["command"] == "stop" && this->check_header(header)) {
             this->log(Log::INFO, "stop");

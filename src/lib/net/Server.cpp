@@ -52,9 +52,10 @@ void Server::run_forever() {
 
         auto pair = this->sockets.begin();
         while (pair != this->sockets.end()) {
-            if (FD_ISSET(pair->first->get_fd(), &readset)) {
-                FD_CLR(pair->first->get_fd(), &readset);
-                if (this->socket && pair->first->get_fd() == this->socket->get_fd()) {
+            Socket *socket = pair->first;
+            if (FD_ISSET(socket->get_fd(), &readset)) {
+                FD_CLR(socket->get_fd(), &readset);
+                if (this->socket && socket->get_fd() == this->socket->get_fd()) {
                     try {
                         client = this->socket->accept();
                     }
@@ -67,17 +68,18 @@ void Server::run_forever() {
                 }
                 else {
                     try {
-                        pair->first->read(header, payload);
-                        this->handle_message(*pair->first, header, payload);
+                        socket->read(header, payload);
+                        this->handle_message(*socket, header, payload);
                     }
                     catch (SocketClosedException ex) {
-                        this->handle_close(*pair->first);
-                        pair->first->close();
-                        this->del_socket(pair++->first);
+                        this->handle_close(*socket);
+                        socket->close();
+                        this->del_socket(socket);
+                        pair = this->sockets.begin();
                         continue;
                     }
                     catch (SocketException ex) {
-                        this->handle_exception(*pair->first, ex);
+                        this->handle_exception(*socket, ex);
                     }
                 }
             }

@@ -88,6 +88,12 @@ private:
                     .smtlib=payload
             };
         }
+        if (header["command"] == "partitions" && header.count("partitions") == 1) {
+            return Task{
+                    .command=Task::partition,
+                    .partitions=(uint8_t) atoi(header["partitions"].c_str())
+            };
+        }
         return Task{
                 .command=Task::resume
         };
