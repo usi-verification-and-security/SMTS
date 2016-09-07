@@ -1,0 +1,1 @@
+find(SQLITE3 ../lib/sqlite3.h sqlite3)
