@@ -33,7 +33,7 @@ private:
         this->init();
         this->report();
         // the cast below is just for the ide to suppress visual error
-        std::thread t((std::thread) [&] {
+        std::thread t([&] {
             std::map<std::string, std::string> header;
             std::string payload;
             while (true) {

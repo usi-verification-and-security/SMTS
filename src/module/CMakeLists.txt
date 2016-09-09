@@ -22,11 +22,17 @@ function(find NAME INCLUDE_NAMES LIBRARY_NAMES)
 
     if (${NAME}_FOUND)
         message(STATUS "Using ${NAME}_INCLUDE_DIR: ${${NAME}_INCLUDE_DIR}")
-        message(STATUS "Using ${NAME}_LIBRARY: ${${NAME}_LIBRARY}")
+        message(STATUS "Using ${NAME}_LIBRARY_DIR: ${${NAME}_LIBRARY_DIR}")
+        set(${NAME}_LIBRARY_DIR ${${NAME}_LIBRARY_DIR} PARENT_SCOPE)
         set(${NAME}_FOUND TRUE PARENT_SCOPE)
-    elseif (${NAME}_FIND_REQUIRED)
-        message(FATAL_ERROR "\nCould not find ${NAME}:\n"
-                "Hint path using -D${NAME}_PATH=\n"
+    else ()
+        if (${NAME}_FIND_REQUIRED)
+            set(TYPE FATAL_ERROR)
+        else ()
+            set(TYPE STATUS)
+        endif ()
+        message(${TYPE} "\nCould not find ${NAME}:\n"
+                "Hint ABSOLUTE path using -D${NAME}_PATH=\n"
                 "Or -D${NAME}_INCLUDE_DIR= and -D${NAME}_LIBRARY=\n")
     endif ()
 endfunction()
