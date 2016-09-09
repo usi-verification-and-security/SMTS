@@ -3,6 +3,8 @@
 //
 
 #include <unistd.h>
+#include <thread>
+#include <chrono>
 #include "lib/Log.h"
 #include "SolverServer.h"
 
@@ -68,9 +70,7 @@ void SolverServer::handle_exception(Socket &socket, SocketException &exception) 
 
 void SolverServer::stop_solver() {
     if (this->solver != nullptr) {
-        //this->del_socket(this->solver->reader());
-        this->solver->stop();
-        this->solver->join();
+        this->del_socket(this->solver->reader());
         delete this->solver;
         this->solver = nullptr;
     }
@@ -98,27 +98,30 @@ void SolverServer::handle_message(Socket &socket, std::map<std::string, std::str
             }
         }
         else if (header["command"] == "solve") {
-            if (this->check_header(header))
+            if (this->check_header(header)) {
                 return;
+            }
             this->stop_solver();
+            header.erase("command");
             this->solver = new SolverProcess(this->lemmas, header, payload);
             this->add_socket(this->solver->reader());
             this->log(Log::INFO, "start");
-            sleep(3);
-            header["command"] = "partitions";
-            header["partitions"] = "2";
-            this->solver->writer()->write(header, "");
         }
-        else if (header["command"] == "stop" && this->check_header(header)) {
+        else if (header["command"] == "stop") {
+            if (!this->check_header(header)) {
+                return;
+            }
             this->log(Log::INFO, "stop");
             this->stop_solver();
         }
+        else if (this->check_header(header))
+            this->solver->writer()->write(header, payload);
     }
-    else if (this->solver && socket.get_fd() == this->solver->reader()->get_fd()) {
-        this->server.write(header, payload);
-        this->solver->header = header;
+    else if (this->solver && &socket == this->solver->reader()) {
         if (header.count("status") == 1) {
             this->log(Log::INFO, header["status"]);
         }
+        this->server.write(header, payload);
+        this->solver->header = header;
     }
 }

@@ -6,6 +6,7 @@
 #define CLAUSE_SHARING_PROCESSSOLVER_H
 
 #include <thread>
+#include "lib/lib.h"
 #include "lib/Process.h"
 #include "lib/net/Pipe.h"
 
@@ -16,7 +17,7 @@ enum Status {
 
 typedef struct {
     const enum {
-        incremental, partition, resume
+        incremental, resume
     } command;
     std::string smtlib;
     uint8_t partitions;
@@ -60,6 +61,9 @@ private:
     // class field are read only
     void solve();
 
+
+    void partition(uint8_t);
+
     // async interrupt the solver
     void interrupt();
 
@@ -78,6 +82,16 @@ private:
 
     }
 
+    void report(const std::vector<std::string> &partitions, const char *error = nullptr) {
+        auto header = this->header;
+        std::string payload;
+        if (error != nullptr)
+            header["error"] = error;
+        ::join(payload, "\n", partitions);
+        header["partitions"] = std::to_string(partitions.size());
+        this->writer()->write(header, payload);
+    }
+
     Task wait() {
         std::map<std::string, std::string> header;
         std::string payload;
@@ -88,11 +102,8 @@ private:
                     .smtlib=payload
             };
         }
-        if (header["command"] == "partitions" && header.count("partitions") == 1) {
-            return Task{
-                    .command=Task::partition,
-                    .partitions=(uint8_t) atoi(header["partitions"].c_str())
-            };
+        if (header["command"] == "partition" && header.count("partitions") == 1) {
+            this->partition((uint8_t) atoi(header["partitions"].c_str()));
         }
         return Task{
                 .command=Task::resume

@@ -59,11 +59,9 @@ Socket::Socket(uint16_t port) {
 
 Socket::Socket(int fd) :
         fd(fd) {
-    //std::cout << "open : " << fd << "\n";
 };
 
 Socket::~Socket() {
-    //std::cout << "close: " << this->fd << "\n";
     this->close();
 }
 
@@ -137,6 +135,7 @@ uint32_t Socket::write(const std::map<std::string, std::string> &header, const s
     if (header.count(""))
         throw SocketException("empty key is not allowed");
     std::string message;
+    message += "\xFF\xFF\xFF\xFF";
     for (auto &pair : header) {
         std::string keyval[2] = {pair.first, pair.second};
         for (uint8_t i = 0; i < 2; i++) {
@@ -152,15 +151,12 @@ uint32_t Socket::write(const std::map<std::string, std::string> &header, const s
 
     if (message.length() > (uint32_t) -1)
         throw SocketException("resulting message is too big");
-    uint32_t length = (uint32_t) message.length();
-    char buffer[4];
-    buffer[3] = (char) length;
-    buffer[2] = (char) (length >> 8);
-    buffer[1] = (char) (length >> 16);
-    buffer[0] = (char) (length >> 24);
-    if (::write(this->fd, buffer, 4) != 4)
-        throw SocketException("write error");
-    if (::write(this->fd, message.c_str(), length) != length)
+    uint32_t length = (uint32_t) message.length() - 4;
+    message[3] = (char) length;
+    message[2] = (char) (length >> 8);
+    message[1] = (char) (length >> 16);
+    message[0] = (char) (length >> 24);
+    if (::write(this->fd, message.c_str(), message.size()) != message.size())
         throw SocketException("write error");
 
     return length;

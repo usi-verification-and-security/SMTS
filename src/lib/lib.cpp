@@ -27,13 +27,10 @@ void split(const std::string &string, const std::string &delimiter, std::functio
 }
 
 
-void join(std::string &string,
-          const std::string &delimiter,
-          std::vector<std::string>::iterator first,
-          std::vector<std::string>::iterator last) {
-    for (; first != last; ++first) {
-        string.append(*first);
-        if (first + 1 != last)
+void join(std::string &string, const std::string &delimiter, const std::vector<std::string> &vector) {
+    for (auto it = vector.begin(); it != vector.end(); ++it) {
+        string.append(*it);
+        if (it + 1 != vector.end())
             string.append(delimiter);
     }
 }

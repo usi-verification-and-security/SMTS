@@ -14,7 +14,7 @@ void split(const std::string &, const std::string &, std::vector<std::string> &)
 
 void split(const std::string &, const std::string &, std::function<void(std::string &)>);
 
-void join(std::string &, const std::string &, std::vector<std::string>::iterator, std::vector<std::string>::iterator);
+void join(std::string &, const std::string &, const std::vector<std::string> &);
 
 void replace(std::string &, const std::string &, const std::string &);
 

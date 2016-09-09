@@ -53,7 +53,10 @@ void Server::run_forever() {
         auto pair = this->sockets.begin();
         while (pair != this->sockets.end()) {
             Socket *socket = pair->first;
-            if (FD_ISSET(socket->get_fd(), &readset)) {
+            if (socket->get_fd() < 0) {
+                this->del_socket(socket);
+            }
+            else if (FD_ISSET(socket->get_fd(), &readset)) {
                 FD_CLR(socket->get_fd(), &readset);
                 if (this->socket && socket->get_fd() == this->socket->get_fd()) {
                     try {
@@ -75,15 +78,17 @@ void Server::run_forever() {
                         this->handle_close(*socket);
                         socket->close();
                         this->del_socket(socket);
-                        pair = this->sockets.begin();
-                        continue;
                     }
                     catch (SocketException ex) {
                         this->handle_exception(*socket, ex);
                     }
                 }
             }
-            ++pair;
+            else {
+                ++pair;
+                continue;
+            }
+            pair = this->sockets.begin();
         }
 //        if (result < 0) {
 //        }

@@ -62,6 +62,7 @@ void FileThread::main() {
 //                std::cout << p.first << " " << p.second << "\n";
 //            }
 //            std::cout << "\n";
+//            std::cout << payload << "\n";
         } while (header.count("status") == 0 && header.count("error") == 0);
         if (lemmas != nullptr)
             try {
@@ -72,6 +73,8 @@ void FileThread::main() {
                 lemmas = nullptr;
             }
         header["command"] = "stop";
+        header["name"] = filename;
+        header["node"] = "[]";
         client.write(header, "");
     }
     delete lemmas;
