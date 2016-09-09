@@ -156,7 +156,7 @@ uint32_t Socket::write(const std::map<std::string, std::string> &header, const s
     message[2] = (char) (length >> 8);
     message[1] = (char) (length >> 16);
     message[0] = (char) (length >> 24);
-    if (::write(this->fd, message.c_str(), message.size()) != message.size())
+    if (::write(this->fd, message.c_str(), message.size()) != (ssize_t) message.size())
         throw SocketException("write error");
 
     return length;
