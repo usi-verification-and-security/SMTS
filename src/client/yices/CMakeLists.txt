@@ -1,13 +1,8 @@
-add_executable(solver_yices ../main.cpp SolverProcess.cpp)
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
-find_package(YICES)
-if (NOT YICES_FOUND)
-    contrib(YICES solver_yices)
-    if (NOT (YICES_INCLUDE_DIR AND YICES_LIBRARY))
-        find_package(YICES REQUIRED)
-    endif ()
-endif ()
+find_package(YICES REQUIRED)
 
 include_directories(${YICES_INCLUDE_DIR})
-target_link_libraries(solver_yices client ${YICES_LIBRARY})
+link_directories(${YICES_LIBRARY_DIR})
+
+add_executable(solver_yices ../main.cpp SolverProcess.cpp)
+
+target_link_libraries(solver_yices client yices)
