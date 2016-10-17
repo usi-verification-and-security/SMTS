@@ -1,12 +1,19 @@
 import net
 import sys
 import pathlib
+import zipfile
 
 s = net.Socket()
 s.listen(("127.0.0.1", 5000))
 c = s.accept()
 c.read()
 for path in sys.argv[1:]:
+    remove = False
+    if path.endswith(".zip"):
+        z = zipfile.ZipFile(path)
+        path = z.namelist()[0]
+        z.extract(path)
+        remove = True
     with open(path, 'r') as file:
         print(path)
         content = file.read()
@@ -33,3 +40,6 @@ for path in sys.argv[1:]:
                 break
             elif "status" in header:
                 break
+
+    if remove:
+        pathlib.Path(path).unlink()
