@@ -16,6 +16,7 @@ private:
 
 public:
     static void log(uint8_t level, std::string message) {
+        int r;
         static std::mutex mtx;
         std::string record;
         record += std::to_string(std::time(nullptr));
@@ -26,15 +27,15 @@ public:
                 break;
             case WARNING:
                 if (getenv("TERM")) {
-                    system("tput setaf 3");
-                    system("tput bold");
+                    r = system("tput setaf 3");
+                    r = system("tput bold");
                 }
                 record += "WARNING\t";
                 break;
             case ERROR:
                 if (getenv("TERM")) {
-                    system("tput setaf 9");
-                    system("tput bold");
+                    r = system("tput setaf 9");
+                    r = system("tput bold");
                 }
                 record += "ERROR\t";
                 break;
@@ -44,8 +45,9 @@ public:
         record += message;
         mtx.lock();
         std::cout << record << "\n";
-        if (getenv("TERM"))
-            system("tput sgr0");
+        if (getenv("TERM")) {
+            r = system("tput sgr0");
+        }
         mtx.unlock();
     }
 

@@ -225,7 +225,7 @@ class Solver(net.Socket):
             'command': 'solve',
             'name': name,
             'node': node.path()
-        }, node.smtlib_complete() + "\n(check-sat)\n")
+        }, node.smtlib_complete() + "\n(check-sat)")
         self.name = name
         self.node = node
         self.db_log('+')
@@ -294,7 +294,7 @@ class Solver(net.Socket):
             try:
                 for partition in payload.decode().split('\n'):
                     node.add_child('(assert {})'.format(partition))
-                    self.db_log('AND', node.children[-1].path())
+                    self.db_log('AND', {"node": node.children[-1].path(), "smtlib": partition})
             except BaseException as ex:
                 header['error'] = 'error reading partitions: {}'.format(ex)
                 node.children.clear()
@@ -307,11 +307,11 @@ class Solver(net.Socket):
         if not self.conn:
             return
         self.conn.cursor().execute("INSERT INTO {}SolvingHistory (name, node, event, solver, data) "
-                                   "VALUES (?,?,?,?,?)".format(self._table_prefix), (
+                                   "VALUES (?,?,?,?,?)".format(self.table_prefix), (
                                        self.name,
                                        str(self.node.path()) if self.node else None,
                                        event,
-                                       self.remote_address,
+                                       str(self.remote_address),
                                        json.dumps(data) if data else None
                                    ))
         self.conn.commit()
@@ -334,7 +334,7 @@ class ParallelizationServer(net.Server):
                            "level TEXT NOT NULL,"
                            "message TEXT NOT NULL,"
                            "data TEXT"
-                           ");".format(self._table_prefix))
+                           ");".format(self.table_prefix))
             cursor.execute("DROP TABLE IF EXISTS {}SolvingHistory;".format(table_prefix))
             cursor.execute("VACUUM;")
             self.conn.commit()
@@ -344,7 +344,7 @@ class ParallelizationServer(net.Server):
     # TODO aggiungi che quando solvo qualcosa elimino le clausole.
 
     def handle_accept(self, sock):
-        self.log(logging.INFO, 'new connection from {}'.format(sock.remote_address))
+        self.log(logging.DEBUG, 'new connection from {}'.format(sock.remote_address))
 
     def handle_message(self, sock, header, payload):
         if isinstance(sock, Solver):
@@ -376,7 +376,7 @@ class ParallelizationServer(net.Server):
                 }
                 self.entrust()
         elif 'solver' in header:
-            solver = Solver(sock, header['solver'])
+            solver = Solver(sock, header['solver'], conn=self.conn, table_prefix=self.table_prefix)
             self.log(logging.INFO, 'new solver "{}" at {}'.format(
                 solver.solver,
                 solver.remote_address
@@ -419,8 +419,8 @@ class ParallelizationServer(net.Server):
     def entrust(self):
         # if the current tree is already solved or timed out: stop it
         if self.current and self.trees[self.current]['started'] and (
-                        self.current.status != framework.SolveStatus.unknown
-                or self.trees[self.current]['started'] + self.trees[self.current]['timeout'] < time.time()
+                        self.current.status != framework.SolveStatus.unknown or
+                            self.trees[self.current]['started'] + self.trees[self.current]['timeout'] < time.time()
         ):
             for solver in {solver for solver in self._rlist
                            if isinstance(solver, Solver) and solver.name == self.trees[self.current]['name']}:
@@ -435,7 +435,6 @@ class ParallelizationServer(net.Server):
             if schedulables:
                 self.current = schedulables[0]
         if not self.current:
-            self.log(logging.INFO, 'all done!')
             return
 
         solvers = {solver for solver in self._rlist if isinstance(solver, Solver) and not solver.name}
@@ -466,6 +465,8 @@ class ParallelizationServer(net.Server):
             for solver in self.solvers(node):
                 if leaf_slots == 0:
                     break
+                if self.config.portfolio_min > 0 and len(self.solvers(node)) <= self.config.portfolio_min:
+                    break
                 leaf_slots -= 1
                 solver.stop()
                 solvers.add(solver)
@@ -477,10 +478,16 @@ class ParallelizationServer(net.Server):
             while solvers:
                 available = len(solvers)
                 for node in selection:
-                    if node.status != framework.SolveStatus.unknown:
-                        continue
                     if not solvers:
                         break
+                    try:
+                        _node = node
+                        while _node:
+                            if _node.status != framework.SolveStatus.unknown:
+                                raise ValueError
+                            _node = _node.parent
+                    except ValueError:
+                        continue
                     if self.config.portfolio_max <= 0 or len(self.solvers(node)) < self.config.portfolio_max:
                         solvers.pop().solve(self.trees[self.current]['name'], node)
                         if not self.trees[self.current]['started']:
@@ -498,6 +505,7 @@ class ParallelizationServer(net.Server):
 
         # if there are still available solvers or need partition timeout: ask partitions
         if solvers or need_partition:
+            self.trees[self.current]['last_partition'] = time.time()
             available = len(solvers)
             # for all the leafs with at least one solver
             for leaf in (leaf for leaf in leaves() if self.solvers(leaf)):
@@ -511,14 +519,7 @@ class ParallelizationServer(net.Server):
                     solver.ask_partitions(self._level_children(leaf.level() + 1))
 
     def _level_children(self, level):
-        if level < len(self.config.partition_policy):
-            return self.config.partition_policy[level]
-        elif len(self.config.partition_policy) > 1:
-            return self.config.partition_policy[-2]
-        elif len(self.config.partition_policy) > 0:
-            return self.config.partition_policy[-1]
-        else:
-            raise ValueError('invalid partition policy')
+        return self.config.partition_policy[level % len(self.config.partition_policy)]
 
     def solvers(self, node):
         return [solver for solver in self._rlist if isinstance(solver, Solver) and solver.node == node]
@@ -540,6 +541,7 @@ if __name__ == '__main__':
     class Config:
         port = 3000
         portfolio_max = 0
+        portfolio_min = 0
         partition_timeout = None
         partition_policy = [2, 2]
         solving_timeout = None

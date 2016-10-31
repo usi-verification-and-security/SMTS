@@ -1,1 +1,1 @@
-find(SPACER "z3.h;z3++.h" "z3")
+find(Z3 "z3.h;z3++.h" "z3")

@@ -2,14 +2,17 @@ import pathlib
 
 port = 3000
 portfolio_max = 0
+portfolio_min = 0
 partition_timeout = 1
-partition_policy = [2, 2]
+partition_policy = [1, 2]
 solving_timeout = 1000
 
 # _benchmarks_path = pathlib.Path(__file__).parent / '../../opensmt2/test/std_benchmarks'
 # files = [str(i.resolve()) for i in _benchmarks_path.glob('*.smt2')]
 
-files=[str(pathlib.Path('../../opensmt2/test/std_benchmarks/NEQ_NEQ015_size6.smt2').resolve())]
+files=[str(pathlib.Path('../../opensmt2/test/std_benchmarks/NEQ_NEQ015_size6.smt2').resolve())]+\
+      [str(pathlib.Path('../../opensmt2/test/std_benchmarks/PEQ_PEQ013_size8.smt2').resolve())]
+#files = ['prova']
 #files=[str(pathlib.Path('../../opensmt2/test/std_benchmarks/PEQ_PEQ013_size8.smt2').resolve())]
 
 # files = """../../test/std_benchmarks/NEQ_NEQ015_size6.smt2

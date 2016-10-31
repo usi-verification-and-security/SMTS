@@ -110,6 +110,44 @@ private:
         };
     }
 
+    void lemma_push(std::vector<std::string> &lemmas) {
+        auto header = this->header;
+        std::string payload;
+        ::join(payload, "\n", lemmas);
+        header["separator"] = "\n";
+        header["lemmas"] = std::to_string(lemmas.size());
+
+        try {
+            this->lemmas->write(header, payload);
+        } catch (SocketException) {
+            header["warning"] = "lemma push failed";
+            this->writer()->write(header, "");
+        }
+    }
+
+    void lemma_pull(std::vector<std::string> &lemmas) {
+        auto header = this->header;
+        std::string payload;
+        header["exclude"] = this->lemmas->get_local().toString();
+
+        try {
+            Socket lemma_pull(this->lemmas->get_remote().toString());
+            lemma_pull.write(header, "");
+            lemma_pull.read(header, payload);
+        } catch (SocketException) {
+            header["warning"] = "lemma pull failed";
+            this->writer()->write(header, "");
+            return;
+        }
+
+        if (header["name"] != this->header["name"]
+            || header["node"] != this->header["node"]
+            || header.count("separator") == 0)
+            return;
+
+        ::split(payload, header["separator"], lemmas);
+    }
+
 public:
     SolverProcess(Socket *lemmas,
                   std::map<std::string, std::string> header,

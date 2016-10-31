@@ -1,13 +1,23 @@
-add_executable(solver_z3 ../main.cpp SolverProcess.cpp)
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 find_package(Z3)
 if (NOT Z3_FOUND)
-    contrib(Z3 solver_z3)
-    if (NOT (Z3_INCLUDE_DIR AND Z3_LIBRARY))
-        find_package(Z3 REQUIRED)
-    endif ()
+    include(ExternalProject)
+    ExternalProject_Add(Z3
+            GIT_REPOSITORY https://github.com/Z3Prover/z3
+            UPDATE_COMMAND git pull
+            PATCH_COMMAND python contrib/cmake/bootstrap.py create
+            CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/install
+            )
+    set(Z3_INCLUDE_DIR ${CMAKE_BINARY_DIR}/install/include)
+    set(Z3_LIBRARY_DIR ${CMAKE_BINARY_DIR}/install/lib)
 endif ()
 
-include_directories(${Z3_INCLUDE_DIR})
-target_link_libraries(solver_z3 client ${Z3_LIBRARY})
+include_directories("${Z3_INCLUDE_DIR}")
+link_directories("${Z3_LIBRARY_DIR}")
+
+add_executable(solver_z3 ../main.cpp SolverProcess.cpp)
+
+if (NOT Z3_FOUND)
+    add_dependencies(solver_z3 Z3)
+endif ()
+
+target_link_libraries(solver_z3 client z3)

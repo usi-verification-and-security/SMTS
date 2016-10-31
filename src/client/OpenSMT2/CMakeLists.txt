@@ -34,4 +34,4 @@ set_target_properties(solver_opensmt PROPERTIES
         COMPILE_FLAGS ${solver_opensmt_flags}
         )
 
-target_link_libraries(solver_opensmt client opensmt2)
+target_link_libraries(solver_opensmt client opensmt2 gmp gmpxx)

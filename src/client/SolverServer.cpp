@@ -47,16 +47,14 @@ void SolverServer::handle_close(Socket &socket) {
         this->stop_solver();
         if (this->lemmas != nullptr)
             delete this->lemmas;
-    }
-    else if (&socket == this->lemmas) {
+    } else if (&socket == this->lemmas) {
         if (this->solver)
             this->log(Log::WARNING, "lemma server closed the connection during solving");
         else
             this->log(Log::INFO, "lemma server closed the connection");
         delete this->lemmas;
         this->lemmas = nullptr;
-    }
-    else if (this->solver && &socket == this->solver->reader()) {
+    } else if (this->solver && &socket == this->solver->reader()) {
         this->log(Log::ERROR, "solver quit unexpectedly");
         this->solver->header["error"] = "unexpected quit";
         this->server.write(this->solver->header, "");
@@ -96,8 +94,7 @@ void SolverServer::handle_message(Socket &socket, std::map<std::string, std::str
             catch (SocketException ex) {
                 this->log(Log::ERROR, "connection error to lemma server " + header["lemmas"]);
             }
-        }
-        else if (header["command"] == "solve") {
+        } else if (header["command"] == "solve") {
             if (this->check_header(header)) {
                 return;
             }
@@ -106,20 +103,23 @@ void SolverServer::handle_message(Socket &socket, std::map<std::string, std::str
             this->solver = new SolverProcess(this->lemmas, header, payload);
             this->add_socket(this->solver->reader());
             this->log(Log::INFO, "start");
-        }
-        else if (header["command"] == "stop") {
+        } else if (header["command"] == "stop") {
             if (!this->check_header(header)) {
                 return;
             }
             this->log(Log::INFO, "stop");
             this->stop_solver();
-        }
-        else if (this->check_header(header))
+        } else if (this->check_header(header)) {
+            this->log(Log::INFO, header["command"]);
             this->solver->writer()->write(header, payload);
-    }
-    else if (this->solver && &socket == this->solver->reader()) {
+        }
+    } else if (this->solver && &socket == this->solver->reader()) {
         if (header.count("status") == 1) {
             this->log(Log::INFO, header["status"]);
+        }
+        if (header.count("warning") == 1) {
+            this->log(Log::WARNING, header["warning"]);
+            header.erase("warning");
         }
         this->server.write(header, payload);
         this->solver->header = header;
