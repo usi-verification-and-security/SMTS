@@ -5,10 +5,13 @@
 #ifndef CLAUSE_SERVER_OPENSMTSOLVER_H
 #define CLAUSE_SERVER_OPENSMTSOLVER_H
 
+#include <vector>
+#include <functional>
 #include "SimpSMTSolver.h"
 #include "Interpret.h"
 #include "client/SolverProcess.h"
 #include "client/Settings.h"
+#include "lib/net/NetLemma.h"
 
 
 namespace opensmt {
@@ -18,19 +21,27 @@ namespace opensmt {
 
 class OpenSMTInterpret : public Interpret {
     friend class OpenSMTSolver;
+
     friend class SolverProcess;
 
 private:
     std::map<std::string, std::string> &header;
-    Socket *clause_socket;
+
+    std::function<void(const std::vector<NetLemma> &)> lemma_push;
+    std::function<void(std::vector<NetLemma> &)> lemma_pull;
+
 protected:
     void new_solver();
 
 public:
-    OpenSMTInterpret(std::map<std::string, std::string> &header, Socket *clause_socket, SMTConfig &c) :
+    OpenSMTInterpret(std::map<std::string, std::string> &header,
+                     std::function<void(const std::vector<NetLemma> &)> lemma_push,
+                     std::function<void(std::vector<NetLemma> &)> lemma_pull,
+                     SMTConfig &c) :
             Interpret(c),
             header(header),
-            clause_socket(clause_socket) { }
+            lemma_push(lemma_push),
+            lemma_pull(lemma_pull) {}
 
 };
 

@@ -5,7 +5,7 @@
 #ifndef CLAUSE_SHARING_SOLVERSERVER_H
 #define CLAUSE_SHARING_SOLVERSERVER_H
 
-#include <ctime>
+//#include <ctime>
 #include "lib/net.h"
 #include "SolverProcess.h"
 

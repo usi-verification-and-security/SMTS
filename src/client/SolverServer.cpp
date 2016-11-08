@@ -48,10 +48,14 @@ void SolverServer::handle_close(Socket &socket) {
         if (this->lemmas != nullptr)
             delete this->lemmas;
     } else if (&socket == this->lemmas) {
-        if (this->solver)
-            this->log(Log::WARNING, "lemma server closed the connection during solving");
-        else
-            this->log(Log::INFO, "lemma server closed the connection");
+        if (this->solver) {
+            this->log(Log::ERROR, "lemma server closed the connection during solving");
+            auto header = this->solver->header;
+            header["command"] = "local";
+            header["local"] = "disable-lemmas";
+            this->solver->writer()->write(header, "");
+        } else
+            this->log(Log::WARNING, "lemma server closed the connection");
         delete this->lemmas;
         this->lemmas = nullptr;
     } else if (this->solver && &socket == this->solver->reader()) {

@@ -28,7 +28,7 @@ void SolverProcess::solve() {
     Z3_params_set_symbol(*context, p, Z3_mk_string_symbol(*context, "engine"), Z3_mk_string_symbol(*context, "spacer"));
     Z3_fixedpoint_set_params(*context, d, p);
     std::cout << "M\n";
-    Z3_fixedpoint_set_push_callback(*context, d, nullptr);
+    //Z3_fixedpoint_set_push_callback(*context, d, nullptr);
     sleep(1);
     exit(0);
 

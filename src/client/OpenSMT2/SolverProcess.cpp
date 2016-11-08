@@ -35,7 +35,16 @@ void SolverProcess::init() {
 void SolverProcess::solve() {
     SMTConfig config;
     config.setRandomSeed(atoi(this->header["seed"].c_str()));
-    interpret = new OpenSMTInterpret(this->header, this->lemmas, config);
+    if (this->is_sharing()) {
+        auto lemma_push = [&](const std::vector<NetLemma> &lemmas) {
+            this->lemma_push(lemmas);
+        };
+        auto lemma_pull = [&](std::vector<NetLemma> &lemmas) {
+            this->lemma_pull(lemmas);
+        };
+        interpret = new OpenSMTInterpret(this->header, lemma_push, lemma_pull, config);
+    } else
+        interpret = new OpenSMTInterpret(this->header, nullptr, nullptr, config);
     char *smtlib = (char *) this->instance.c_str();
 
     while (true) {
@@ -83,8 +92,7 @@ void SolverProcess::partition(uint8_t n) {
             interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_midtune, SMTOption(double(2)), msg) &&
             interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_asap, SMTOption(1), msg))) {
         this->report(partitions, msg);
-    }
-    else {
+    } else {
         sstat status = interpret->main_solver->solve();
         if (status == s_Undef) {
             vec<SplitData> &splits = interpret->main_solver->getSMTSolver().splits;
@@ -109,8 +117,7 @@ void SolverProcess::partition(uint8_t n) {
                 free(str);
             }
             this->report(partitions);
-        }
-        else if (status == s_True)
+        } else if (status == s_True)
             this->report(Status::sat);
         else if (status == s_False)
             this->report(Status::unsat);

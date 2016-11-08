@@ -5,36 +5,30 @@
 #include "lib.h"
 
 
-void split(const std::string &string, const std::string &delimiter, std::vector<std::string> &vector) {
-    return split(string, delimiter, [&vector](std::string &sub) {
+void split(const std::string &string, const std::string &delimiter, std::vector<std::string> &vector, uint32_t limit) {
+    return split(string, delimiter, [&vector](const std::string &sub) {
         vector.push_back(sub);
-    });
+    }, limit);
 }
 
-
-void split(const std::string &string, const std::string &delimiter, std::function<void(std::string &)> callback) {
+void split(const std::string &string,
+           const std::string &delimiter,
+           std::function<void(const std::string &)> callback,
+           uint32_t limit) {
     size_t b = 0;
     size_t e;
     std::string sub;
     while (true) {
-        e = string.find(delimiter, b);
-        sub = string.substr(b, e - b);
-        callback(sub);
+        if (limit != 0 && --limit == 0)
+            e = std::string::npos;
+        else
+            e = string.find(delimiter, b);
+        callback(string.substr(b, e - b));
         if (e == std::string::npos)
             return;
         b = e + delimiter.size();
     }
 }
-
-
-void join(std::string &string, const std::string &delimiter, const std::vector<std::string> &vector) {
-    for (auto it = vector.begin(); it != vector.end(); ++it) {
-        string.append(*it);
-        if (it + 1 != vector.end())
-            string.append(delimiter);
-    }
-}
-
 
 void replace(std::string &string, const std::string &from, const std::string &to) {
     if (from.empty())

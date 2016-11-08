@@ -29,19 +29,19 @@ void Settings::load_header(std::map<std::string, std::string> &header, char *str
 
 void Settings::load(int argc, char **argv) {
     int opt;
-    while ((opt = getopt(argc, argv, "hs:c:r:")) != -1)
+    while ((opt = getopt(argc, argv, "hs:l:r:")) != -1)
         switch (opt) {
             case 'h':
                 std::cout << "Usage: " << argv[0] <<
                 " [-s server-host:port]"
-                        "[-c clause_server-host:port]"
+                        "[-l lemma_server-host:port]"
                         "[-r run-header-key=value [...]]"
                         "\n";
                 exit(0);
             case 's':
                 this->server = new Address(std::string(optarg));
                 break;
-            case 'c':
+            case 'l':
                 this->lemmas = new Address(std::string(optarg));
                 break;
             case 'r':

@@ -5,34 +5,32 @@
 #ifndef CLAUSE_SHARING_PROCESSSOLVER_H
 #define CLAUSE_SHARING_PROCESSSOLVER_H
 
-#include <thread>
+#include <atomic>
 #include "lib/lib.h"
-#include "lib/Process.h"
-#include "lib/net/Pipe.h"
 
 
 enum Status {
     unknown, sat, unsat
 };
 
-typedef struct {
+struct Task {
     const enum {
         incremental, resume
     } command;
     std::string smtlib;
     uint8_t partitions;
-} Task;
+};
+
 
 class SolverProcess : public Process {
 private:
-    Socket *lemmas;
+    std::atomic<Socket *> lemmas;
     Pipe pipe;
     std::string instance;
 
     void main() {
         this->init();
         this->report();
-        // the cast below is just for the ide to suppress visual error
         std::thread t([&] {
             std::map<std::string, std::string> header;
             std::string payload;
@@ -46,6 +44,8 @@ private:
                 if (header["command"] == "local" && header.count("local") == 1) {
                     if (header["local"] == "report")
                         this->report();
+                    else if (header["local"] == "disable-lemmas")
+                        this->lemmas.store(nullptr);
                     continue;
                 }
                 this->interrupt();
@@ -84,12 +84,12 @@ private:
 
     void report(const std::vector<std::string> &partitions, const char *error = nullptr) {
         auto header = this->header;
-        std::string payload;
+        std::stringstream payload;
         if (error != nullptr)
             header["error"] = error;
         ::join(payload, "\n", partitions);
         header["partitions"] = std::to_string(partitions.size());
-        this->writer()->write(header, payload);
+        this->writer()->write(header, payload.str());
     }
 
     Task wait() {
@@ -110,31 +110,39 @@ private:
         };
     }
 
-    void lemma_push(std::vector<std::string> &lemmas) {
+    void lemma_push(const std::vector<NetLemma> &lemmas) {
+        if (!is_sharing() || lemmas.size() == 0)
+            return;
+
         auto header = this->header;
-        std::string payload;
+        std::stringstream payload;
+
         ::join(payload, "\n", lemmas);
+
         header["separator"] = "\n";
         header["lemmas"] = std::to_string(lemmas.size());
 
         try {
-            this->lemmas->write(header, payload);
+            this->lemmas.load()->write(header, payload.str());
         } catch (SocketException) {
             header["warning"] = "lemma push failed";
             this->writer()->write(header, "");
         }
     }
 
-    void lemma_pull(std::vector<std::string> &lemmas) {
+    void lemma_pull(std::vector<NetLemma> &lemmas) {
+        if (!is_sharing())
+            return;
+
         auto header = this->header;
         std::string payload;
-        header["exclude"] = this->lemmas->get_local().toString();
+        header["exclude"] = this->lemmas.load()->get_local().toString();
 
         try {
-            Socket lemma_pull(this->lemmas->get_remote().toString());
+            Socket lemma_pull(this->lemmas.load()->get_remote().toString());
             lemma_pull.write(header, "");
             lemma_pull.read(header, payload);
-        } catch (SocketException) {
+        } catch (SocketException &) {
             header["warning"] = "lemma pull failed";
             this->writer()->write(header, "");
             return;
@@ -145,7 +153,16 @@ private:
             || header.count("separator") == 0)
             return;
 
-        ::split(payload, header["separator"], lemmas);
+        ::split(payload, header["separator"], [&](const std::string &sub) {
+            if (sub.size() == 0)
+                return;
+            try {
+                lemmas.push_back(NetLemma(sub));
+            } catch (Exception &) {
+                header["warning"] = "lemma load failed";
+                this->writer()->write(header, "");
+            }
+        });
     }
 
 public:
@@ -160,6 +177,10 @@ public:
     }
 
     std::map<std::string, std::string> header;
+
+    bool is_sharing() {
+        return this->lemmas != nullptr;
+    }
 
     static const char *solver;
 };

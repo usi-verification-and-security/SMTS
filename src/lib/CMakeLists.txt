@@ -11,6 +11,7 @@ add_library(Lib
         Process.cpp
         Log.h
         net/Address.cpp
+        net/NetLemma.cpp
         net/Pipe.cpp
         net/Server.cpp
         net/Socket.cpp
