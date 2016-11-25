@@ -10,7 +10,7 @@
 
 
 Process::Process() :
-        process(-1), piper(Pipe()), pipew(Pipe()) { }
+        process(-1), piper(net::Pipe()), pipew(net::Pipe()) {}
 
 Process::~Process() {
     this->stop();
@@ -26,8 +26,7 @@ void Process::start() {
         this->pipew.reader()->close();
         this->main();
         exit(0);
-    }
-    else {
+    } else {
         this->piper.reader()->close();
         this->pipew.writer()->close();
     }
@@ -51,10 +50,10 @@ bool Process::joinable() {
     return this->process > 0;
 }
 
-Socket *Process::reader() {
+net::Socket *Process::reader() {
     return (this->process == 0) ? this->piper.reader() : this->pipew.reader();
 }
 
-Socket *Process::writer() {
+net::Socket *Process::writer() {
     return (this->process == 0) ? this->pipew.writer() : this->piper.writer();
 }

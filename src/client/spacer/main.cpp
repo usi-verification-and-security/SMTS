@@ -4,8 +4,11 @@
 
 #include <iostream>
 #include <fstream>
+#include <unistd.h>
 #include <vector>
+#include <lib/net.h>
 #include "fixedpoint.h"
+#include "lib/lib.h"
 
 
 z3::context context;
@@ -14,29 +17,58 @@ void push(Z3_fixedpoint_lemma_set s) {
     std::vector<std::string> lemmas;
     char *l;
     while ((l = (char *)Z3_fixedpoint_lemma_pop(context, s)) != nullptr) {
-        lemmas.push_back(l);
+        //lemmas.push_back(l);
+        std::cout << l << "\n";
         free(l);
     }
-    std::cout << "SERVER client pushed "<< lemmas.size() << "\n";
     //send them to server
 }
 
 void pull(Z3_fixedpoint_lemma_set s) {
     // ask for them to the server
     std::vector<std::string> lemmas;
-    lemmas.push_back("lemma1");
-    lemmas.push_back("lemma2");
-    lemmas.push_back("lemma3");
-
-    std::cout << "SERVER client pulled with "<< lemmas.size() << "\n";
-
     for (auto l:lemmas) {
         Z3_fixedpoint_lemma_push(context, s, l.c_str());
     }
 }
 
 int main(int argc, char **argv) {
-    int i;
+
+    std::vector<net::Lemma> ll;
+    ll.push_back(net::Lemma("asd",0));
+    ll.push_back(net::Lemma("dsa",1));
+
+    std::thread t([&]{
+        net::Socket s((uint16_t) 4000);
+        std::shared_ptr<net::Socket> c=s.accept();
+        std::map<std::string,std::string> header;
+        std::string payload;
+        while(1){
+            c->read(header, payload);
+            std::istringstream is(payload);
+            std::vector<net::Lemma> rl;
+            is >> rl;
+            std::cout << rl.size() << "\n";
+        }
+    });
+    usleep(10000);
+
+    std::stringstream s;
+    s << ll;
+    std::map<std::string,std::string> header;
+    std::string payload;
+    net::Socket c(net::Address("127.0.0.1",4000));
+    c.write(header,s.str());
+    //std::cout << ll;
+//    std::vector<net::Lemma> cc;
+//    std::istringstream is(s.str());
+//    is >> cc;
+//    for(auto i:cc){
+//        std::cout << i.level << ":"<<i.smtlib<<"\n";
+//    }
+
+
+    exit(0);
     z3::fixedpoint f(context);
     z3::params p(context);
     p.set(":engine", context.str_symbol("spacer"));

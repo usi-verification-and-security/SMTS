@@ -68,8 +68,8 @@ class Thread {
 private:
     std::thread *thread;
     pthread_barrier_t barrier;
-    Pipe piper;
-    Pipe pipew;
+    net::Pipe piper;
+    net::Pipe pipew;
     std::mutex mtx;
     std::atomic<bool> stop_requested;
 
@@ -91,9 +91,9 @@ public:
 
     inline bool joinable();
 
-    Socket *reader();
+    net::Socket *reader();
 
-    Socket *writer();
+    net::Socket *writer();
 
 };
 

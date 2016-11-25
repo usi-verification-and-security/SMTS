@@ -11,17 +11,17 @@
 
 class ProcessException : public Exception {
 public:
-    explicit ProcessException(const char *message) : ProcessException(std::string(message)) { }
+    explicit ProcessException(const char *message) : ProcessException(std::string(message)) {}
 
-    explicit ProcessException(const std::string &message) : Exception("ProcessException: " + message) { }
+    explicit ProcessException(const std::string &message) : Exception("ProcessException: " + message) {}
 };
 
 
 class Process {
 private:
     pid_t process;
-    Pipe piper;
-    Pipe pipew;
+    net::Pipe piper;
+    net::Pipe pipew;
 
 protected:
     virtual void main() = 0;
@@ -39,9 +39,9 @@ public:
 
     inline bool joinable();
 
-    Socket *reader();
+    net::Socket *reader();
 
-    Socket *writer();
+    net::Socket *writer();
 
 };
 

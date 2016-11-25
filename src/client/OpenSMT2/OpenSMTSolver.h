@@ -11,7 +11,7 @@
 #include "Interpret.h"
 #include "client/SolverProcess.h"
 #include "client/Settings.h"
-#include "lib/net/NetLemma.h"
+#include "lib/net/Lemma.h"
 
 
 namespace opensmt {
@@ -27,16 +27,16 @@ class OpenSMTInterpret : public Interpret {
 private:
     std::map<std::string, std::string> &header;
 
-    std::function<void(const std::vector<NetLemma> &)> lemma_push;
-    std::function<void(std::vector<NetLemma> &)> lemma_pull;
+    std::function<void(const std::vector<net::Lemma> &)> lemma_push;
+    std::function<void(std::vector<net::Lemma> &)> lemma_pull;
 
 protected:
     void new_solver();
 
 public:
     OpenSMTInterpret(std::map<std::string, std::string> &header,
-                     std::function<void(const std::vector<NetLemma> &)> lemma_push,
-                     std::function<void(std::vector<NetLemma> &)> lemma_pull,
+                     std::function<void(const std::vector<net::Lemma> &)> lemma_push,
+                     std::function<void(std::vector<net::Lemma> &)> lemma_pull,
                      SMTConfig &c) :
             Interpret(c),
             header(header),

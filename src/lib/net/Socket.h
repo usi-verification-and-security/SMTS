@@ -10,50 +10,61 @@
 #include "Address.h"
 
 
-class SocketException : public Exception {
-public:
-    explicit SocketException(const char *message) : SocketException(std::string(message)) { }
+namespace net {
+    class SocketException : public Exception {
+    public:
+        explicit SocketException(const char *message) : SocketException(std::string(message)) {}
 
-    explicit SocketException(const std::string &message) : Exception("SocketException: " + message) { }
-};
-
-
-class SocketClosedException : public SocketException {
-public:
-    explicit SocketClosedException() : SocketException("file descriptor closed") { }
-};
+        explicit SocketException(const std::string &message) : Exception("SocketException: " + message) {}
+    };
 
 
-class Socket {
-private:
-    int fd;
+    class SocketClosedException : public SocketException {
+    public:
+        explicit SocketClosedException() : SocketException("file descriptor closed") {}
+    };
 
-    inline uint32_t readn(char *, uint32_t);
 
-public:
-    Socket(int);
+    class SocketTimeout : public Exception {
+    public:
+        explicit SocketTimeout() : Exception("socket timeout") {}
+    };
 
-    Socket(Address);
 
-    Socket(uint16_t);
+    class Socket {
+    private:
+        int fd;
+        std::mutex read_mtx, write_mtx;
 
-    ~Socket();
+        inline uint32_t readn(char *, uint32_t, uint32_t);
 
-    Socket *accept();
+    public:
+        Socket(int);
 
-    uint32_t read(std::map<std::string, std::string> &, std::string &);
+        Socket(const Address);
 
-    uint32_t write(const std::map<std::string, std::string> &, const std::string &);
+        Socket(const std::string &);
 
-    void close();
+        Socket(uint16_t);
 
-    int get_fd();
+        ~Socket();
 
-    Address get_local();
+        std::shared_ptr<Socket> accept();
 
-    Address get_remote();
+        uint32_t read(std::map<std::string, std::string> &, std::string &, uint32_t timeout_ms = 0);
 
-};
+        uint32_t write(const std::map<std::string, std::string> &, const std::string &);
+
+        void close();
+
+        int get_fd();
+
+        Address get_local();
+
+        Address get_remote();
+
+    };
+}
 
 
 #endif //CLAUSE_SERVER_SOCKET_H

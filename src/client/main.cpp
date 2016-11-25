@@ -3,7 +3,7 @@
 //
 
 #include <iostream>
-#include "lib/Log.h"
+#include "lib/Logger.h"
 #include "Settings.h"
 #include "SolverServer.h"
 #include "FileThread.h"
@@ -20,18 +20,18 @@ int main(int argc, char **argv) {
     }
 
     FileThread *ft = nullptr;
-    if (settings.server == nullptr && settings.files.size() > 0) {
+    if (!settings.server.size() && settings.files.size()) {
         ft = new FileThread(settings);
     }
 
-    if (settings.server != nullptr) {
+    if (settings.server.size()) {
         try {
-            SolverServer ss(*settings.server);
+            SolverServer ss(net::Address(settings.server));
             ss.run_forever();
-        } catch (SocketException &ex) {
-            Log::log(Log::ERROR, ex.what());
+        } catch (net::SocketException &ex) {
+            Logger::log(Logger::ERROR, ex.what());
         }
     }
     delete ft;
-    Log::log(Log::INFO, "all done. bye!");
+    Logger::log(Logger::INFO, "all done. bye!");
 }

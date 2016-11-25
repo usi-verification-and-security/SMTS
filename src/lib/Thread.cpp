@@ -96,7 +96,7 @@ pthread_barrier_wait(pthread_barrier_t *barrier) {
 #endif /* __APPLE__ */
 
 Thread::Thread() :
-        thread(nullptr), piper(Pipe()), pipew(Pipe()), stop_requested(false) { }
+        thread(nullptr), piper(net::Pipe()), pipew(net::Pipe()), stop_requested(false) {}
 
 Thread::~Thread() {
     this->stop();
@@ -128,14 +128,11 @@ void Thread::start() {
 }
 
 void Thread::stop() {
-    this->mtx.lock();
-    if (!this->joinable() || this->stop_requested) {
-        this->mtx.unlock();
+    std::lock_guard<std::mutex> lock(this->mtx);
+    if (!this->joinable() || this->stop_requested)
         return;
-    }
     this->stop_requested = true;
     pthread_cancel(this->thread->native_handle());
-    this->mtx.unlock();
 }
 
 void Thread::join() {
@@ -149,10 +146,10 @@ bool Thread::joinable() {
     return this->thread != nullptr && this->thread->joinable();
 }
 
-Socket *Thread::reader() {
+net::Socket *Thread::reader() {
     return (pthread_self() == this->thread->native_handle()) ? this->piper.reader() : this->pipew.reader();
 }
 
-Socket *Thread::writer() {
+net::Socket *Thread::writer() {
     return (pthread_self() == this->thread->native_handle()) ? this->pipew.writer() : this->piper.writer();
 }

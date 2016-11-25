@@ -22,7 +22,7 @@ void inline OpenSMTSolver::clausesPublish() {
     if (this->interpret.lemma_push == nullptr)
         return;
 
-    std::vector<NetLemma> lemmas;
+    std::vector<net::Lemma> lemmas;
 
     int trail_max = this->trail_lim.size() == 0 ? this->trail.size() : this->trail_lim[0];
     for (int i = this->trail_sent; i < trail_max; i++) {
@@ -30,7 +30,7 @@ void inline OpenSMTSolver::clausesPublish() {
         PTRef pt = this->interpret.thandler->varToTerm(var(this->trail[i]));
         pt = sign(this->trail[i]) ? this->interpret.logic->mkNot(pt) : pt;
         char *s = this->interpret.thandler->getLogic().printTerm(pt, false, true);
-        lemmas.push_back(NetLemma(s, 0));
+        lemmas.push_back(net::Lemma(s, 0));
         free(s);
     }
 
@@ -62,7 +62,7 @@ void inline OpenSMTSolver::clausesPublish() {
                 }
                 PTRef pt = this->interpret.logic->mkOr(clause);
                 char *s = this->interpret.thandler->getLogic().printTerm(pt, false, true);
-                lemmas.push_back(NetLemma(s, (uint8_t) (k + 1)));
+                lemmas.push_back(net::Lemma(s, (uint8_t) (k + 1)));
                 free(s);
                 goto next;
             }
@@ -78,7 +78,7 @@ void inline OpenSMTSolver::clausesUpdate() {
     if (this->interpret.lemma_pull == nullptr)
         return;
 
-    std::vector<NetLemma> lemmas;
+    std::vector<net::Lemma> lemmas;
 
     this->interpret.lemma_pull(lemmas);
 

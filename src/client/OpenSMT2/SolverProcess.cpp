@@ -18,7 +18,7 @@ const char *SolverProcess::solver = "OpenSMT2";
 
 void SolverProcess::init() {
     FILE *file = fopen("/dev/null", "w");
-    dup2(fileno(file), fileno(stdout));
+    //dup2(fileno(file), fileno(stdout));
     dup2(fileno(file), fileno(stderr));
     fclose(file);
 
@@ -36,10 +36,10 @@ void SolverProcess::solve() {
     SMTConfig config;
     config.setRandomSeed(atoi(this->header["seed"].c_str()));
     if (this->is_sharing()) {
-        auto lemma_push = [&](const std::vector<NetLemma> &lemmas) {
+        auto lemma_push = [&](const std::vector<net::Lemma> &lemmas) {
             this->lemma_push(lemmas);
         };
-        auto lemma_pull = [&](std::vector<NetLemma> &lemmas) {
+        auto lemma_pull = [&](std::vector<net::Lemma> &lemmas) {
             this->lemma_pull(lemmas);
         };
         interpret = new OpenSMTInterpret(this->header, lemma_push, lemma_pull, config);

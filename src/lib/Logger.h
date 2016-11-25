@@ -10,9 +10,9 @@
 #include <mutex>
 
 
-class Log {
+class Logger {
 private:
-    Log() { }
+    Logger() { }
 
 public:
     static void log(uint8_t level, std::string message) {

@@ -15,10 +15,10 @@ private:
 
 public:
     explicit Exception(const char *message) :
-            msg(message) { }
+            msg(message) {}
 
     explicit Exception(const std::string &message) :
-            msg(message) { }
+            msg(message) {}
 
     char const *what() const throw() { return this->msg.c_str(); }
 };

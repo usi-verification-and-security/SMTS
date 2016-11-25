@@ -6,7 +6,7 @@
 #define CLAUSE_SHARING_SETTINGS_H
 
 #include <list>
-#include "lib/net.h"
+#include <map>
 
 
 class Settings {
@@ -16,13 +16,12 @@ private:
 public:
     Settings();
 
-    ~Settings();
-
     void load(int, char **);
 
-    Address *server;
-    Address *lemmas;
+    std::string server;
+    std::string lemmas;
     std::list<std::string> files;
+    bool clear_lemmas;
     std::map<std::string, std::string> header_solve;
 };
 

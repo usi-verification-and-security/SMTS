@@ -14,26 +14,23 @@
 #include "Node.h"
 
 
-class LemmaServer : public Server {
+class LemmaServer : public net::Server {
 private:
-    Settings &settings;
-    Socket *server;
-    SQLite3 *db;
-    std::map<std::string, Node *> lemmas;                            // name -> lemmas
+    std::shared_ptr<net::Socket> server;
+    std::shared_ptr<SQLite3::Connection> db;
+    std::map<std::string, Node> lemmas;                            // name -> lemmas
     std::map<std::string, std::map<std::string, std::list<Lemma *>>> solvers;  // name -> solver -> lemmas
 protected:
-    void handle_accept(Socket &);
+    void handle_accept(net::Socket &);
 
-    void handle_close(Socket &);
+    void handle_close(net::Socket &);
 
-    void handle_message(Socket &, std::map<std::string, std::string> &, std::string &);
+    void handle_message(net::Socket &, std::map<std::string, std::string> &, std::string &);
 
-    void handle_exception(Socket &, SocketException &);
+    void handle_exception(net::Socket &, net::SocketException &);
 
 public:
-    LemmaServer(Settings &);
-
-    ~LemmaServer();
+    LemmaServer(uint16_t, const std::string &, const std::string &);
 };
 
 #endif //CLAUSE_SHARING_CLAUSESERVER_H

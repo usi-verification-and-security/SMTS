@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include <random>
 #include <iostream>
-#include "lib/Log.h"
+#include "lib/Logger.h"
 #include "client/SolverProcess.h"
 #include "z3++.h"
 

@@ -6,7 +6,6 @@
 #define CLAUSE_SHARING_SETTINGS_H
 
 #include <string>
-#include "lib/net.h"
 
 
 class Settings {
@@ -16,9 +15,8 @@ public:
     void load(int, char **);
 
     uint16_t port;
-    Address server;
+    std::string server;
     std::string db_filename;
-    bool clear_lemmas;
 };
 
 #endif //CLAUSE_SHARING_SETTINGS_H

@@ -12,52 +12,54 @@
 #include "Exception.h"
 
 
-class SQLiteException : public Exception {
-public:
-    explicit SQLiteException(const char *message) : SQLiteException(std::string(message)) { }
+namespace SQLite3 {
+    class Exception : public ::Exception {
+    public:
+        explicit Exception(const char *message) : Exception(std::string(message)) {}
 
-    explicit SQLiteException(const std::string &message) : Exception("SQLiteException: " + message) { }
-};
-
-
-class SQLite3Stmt {
-private:
-    void *stmt;
-public:
-    SQLite3Stmt(void *);
-
-    ~SQLite3Stmt();
-
-    void bind(int);
-
-    void bind(int, int);
-
-    void bind(int, const char *, int);
-
-    void bind(int, char *, int, void(*)(void *));
-
-    void reset();
-
-    void clear();
-
-    void exec();
-
-};
+        explicit Exception(const std::string &message) : ::Exception("SQLiteException: " + message) {}
+    };
 
 
-class SQLite3 {
-private:
-    void *db;
-public:
-    SQLite3(std::string &db_filename);
+    class Statement {
+    private:
+        void *stmt;
+    public:
+        Statement(void *);
 
-    ~SQLite3();
+        ~Statement();
 
-    SQLite3Stmt *prepare(const std::string &, int _ = -1);
+        void bind(int);
 
-    void exec(const std::string &, std::function<int(int, char **, char **)>);
+        void bind(int, int);
 
-    void exec(const std::string &);
-};
+        void bind(int, const char *, int);
+
+        void bind(int, char *, int, void(*)(void *));
+
+        void reset();
+
+        void clear();
+
+        void exec();
+
+    };
+
+
+    class Connection {
+    private:
+        void *db;
+    public:
+        Connection(const std::string &db_filename);
+
+        ~Connection();
+
+        Statement *prepare(const std::string &, int _ = -1);
+
+        void exec(const std::string &, std::function<int(int, char **, char **)>);
+
+        void exec(const std::string &);
+    };
+}
 
 #endif //CLAUSE_SERVER_SQLITE3_H

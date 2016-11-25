@@ -8,21 +8,23 @@
 #include <string>
 
 
-class Address {
-public:
-    Address(std::string);
+namespace net {
+    class Address {
+    public:
+        Address(std::string);
 
-    Address(std::string, uint16_t);
+        Address(std::string, uint16_t);
 
-    Address(struct sockaddr_storage *);
+        Address(struct sockaddr_storage *);
 
-    std::string toString() {
-        return this->hostname + ":" + std::to_string(this->port);
-    }
+        const std::string toString() {
+            return this->hostname + ":" + std::to_string(this->port);
+        }
 
-    std::string hostname;
-    uint16_t port;
-};
+        std::string hostname;
+        uint16_t port;
+    };
+}
 
 
 #endif //CLAUSE_SERVER_ADDRESS_H

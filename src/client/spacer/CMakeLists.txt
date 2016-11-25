@@ -24,4 +24,4 @@ endif ()
 target_link_libraries(solver_spacer client z3)
 
 add_executable(test_spacer ./main.cpp)
-target_link_libraries(test_spacer z3)
+target_link_libraries(test_spacer Lib z3)

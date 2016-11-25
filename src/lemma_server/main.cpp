@@ -1,5 +1,5 @@
 #include <iostream>
-#include "lib/Log.h"
+#include "lib/Logger.h"
 #include "Settings.h"
 #include "LemmaServer.h"
 
@@ -10,17 +10,13 @@ int main(int argc, char **argv) {
         settings.load(argc, argv);
     }
     catch (Exception &ex) {
-        Log::log(Log::ERROR, ex.what());
+        Logger::log(Logger::ERROR, ex.what());
     }
 
     try {
-        LemmaServer server(settings);
+        LemmaServer server(settings.port, settings.server, settings.db_filename);
         server.run_forever();
-    } catch (SQLiteException &ex) {
-        Log::log(Log::ERROR, ex.what());
-    } catch (SocketException &ex) {
-        Log::log(Log::ERROR, ex.what());
     } catch (Exception &ex) {
-        Log::log(Log::INFO, ex.what());
+        Logger::log(Logger::ERROR, ex.what());
     }
 }

@@ -6,43 +6,48 @@
 #define CLAUSE_SERVER_SERVER_H
 
 #include <list>
-#include <map>
+#include <set>
 #include "Socket.h"
 
 
-class Server {
-private:
-    Socket *socket;
-    std::map<Socket *, bool> sockets;
+namespace net {
+    class Server {
+    private:
+        std::shared_ptr<Socket> socket;
+        std::set<std::shared_ptr<Socket>> sockets;
 
+    protected:
+        virtual void handle_accept(Socket &) {}
 
-    Server(Socket *, bool);
+        virtual void handle_close(Socket &) {}
 
-protected:
-    virtual void handle_accept(Socket &) { }
+        virtual void handle_message(Socket &, std::map<std::string, std::string> &, std::string &) {}
 
-    virtual void handle_close(Socket &) { }
+        virtual void handle_exception(Socket &, SocketException &) {}
 
-    virtual void handle_message(Socket &, std::map<std::string, std::string> &, std::string &) { }
+    public:
+        Server();
 
-    virtual void handle_exception(Socket &, SocketException &) { }
+        Server(std::shared_ptr<Socket>);
 
-public:
-    Server();
+        Server(uint16_t);
 
-    Server(Socket &);
+        virtual ~Server() {}
 
-    Server(uint16_t);
+        void run_forever();
 
-    virtual ~Server();
+        void stop();
 
-    void run_forever();
+        void add_socket(std::shared_ptr<Socket>);
 
-    void add_socket(Socket *);
+        void del_socket(std::shared_ptr<Socket>);
 
-    void del_socket(Socket *);
+        void add_socket(Socket *);
 
-};
+        void del_socket(Socket *);
+
+    };
+}
 
 
 #endif //CLAUSE_SERVER_SERVER_H

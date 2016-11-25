@@ -9,9 +9,9 @@ add_library(Lib
         sqlite3.cpp
         Thread.cpp
         Process.cpp
-        Log.h
+        Logger.h
         net/Address.cpp
-        net/NetLemma.cpp
+        net/Lemma.cpp
         net/Pipe.cpp
         net/Server.cpp
         net/Socket.cpp

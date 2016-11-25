@@ -4,41 +4,39 @@
 
 #include <iostream>
 #include <fstream>
-#include "lib/Log.h"
+#include "lib/Logger.h"
 #include "FileThread.h"
 
 
-FileThread::FileThread(Settings &settings) : settings(settings), server(nullptr) {
-    if (settings.server != nullptr)
+FileThread::FileThread(Settings &settings) :
+        settings(settings),
+        server((uint16_t) 0) {
+    if (settings.server.size())
         throw Exception("server must be null");
-    this->server = new Socket((uint16_t) 0);
-    settings.server = new Address(this->server->get_local());
+    settings.server = this->server.get_local().toString();
     this->start();
-}
-
-FileThread::~FileThread() {
-    delete this->server;
 }
 
 void FileThread::main() {
     std::map<std::string, std::string> header;
 
-    Socket client = *this->server->accept();
-    Socket *lemmas = nullptr;
+    std::shared_ptr<net::Socket> client(this->server.accept());
+    std::shared_ptr<net::Socket> lemmas;
 
-    if (this->settings.lemmas != nullptr) {
+    if (this->settings.lemmas.size()) {
         try {
-            lemmas = new Socket(*this->settings.lemmas);
-        } catch (SocketException) { }
+            lemmas.reset(new net::Socket(this->settings.lemmas));
+        } catch (net::SocketException) {
+        }
         header["command"] = "lemmas";
-        header["lemmas"] = this->settings.lemmas->toString();
-        client.write(header, "");
+        header["lemmas"] = this->settings.lemmas;
+        client->write(header, "");
     }
 
     for (auto &filename : this->settings.files) {
         std::ifstream file(filename);
         if (!file.is_open()) {
-            Log::log(Log::WARNING, "unable to open: " + filename);
+            Logger::log(Logger::WARNING, "unable to open: " + filename);
             continue;
         }
 
@@ -55,27 +53,20 @@ void FileThread::main() {
         header["command"] = "solve";
         header["name"] = filename;
         header["node"] = "[]";
-        client.write(header, payload);
+        client->write(header, payload);
         do {
-            client.read(header, payload);
-//            for (auto p:header) {
-//                std::cout << p.first << " " << p.second << "\n";
-//            }
-//            std::cout << "\n";
-//            std::cout << payload << "\n";
+            client->read(header, payload);
         } while (header.count("status") == 0 && header.count("error") == 0);
-        if (lemmas != nullptr)
+        if (lemmas)
             try {
                 header["lemmas"] = std::string("0");
                 lemmas->write(header, "");
-            } catch (SocketException) {
-                delete lemmas;
-                lemmas = nullptr;
+            } catch (net::SocketException) {
+                lemmas.reset();
             }
         header["command"] = "stop";
         header["name"] = filename;
         header["node"] = "[]";
-        client.write(header, "");
+        client->write(header, "");
     }
-    delete lemmas;
 }

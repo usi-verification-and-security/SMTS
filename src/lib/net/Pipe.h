@@ -8,23 +8,25 @@
 #include "Socket.h"
 
 
-class Pipe {
-private:
-    Socket *r;
-    Socket *w;
+namespace net {
+    class Pipe {
+    private:
+        Socket *r;
+        Socket *w;
 
-    Pipe(int, int);
+        Pipe(int, int);
 
-public:
-    Pipe();
+    public:
+        Pipe();
 
-    ~Pipe();
+        ~Pipe();
 
-    Socket *reader();
+        Socket *reader();
 
-    Socket *writer();
+        Socket *writer();
 
-};
+    };
+}
 
 
 #endif //CLAUSE_SERVER_PIPE_H

@@ -12,7 +12,7 @@ __author__ = 'Matteo Marescotti'
 
 
 class Socket(object):
-    def __init__(self, sock=None):
+    def __init__(self, sock: socket.socket = None):
         if sock is None:
             self._sock = socket.socket()
             self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -112,7 +112,7 @@ class Socket(object):
 
 
 class Server(object):
-    def __init__(self, port=None, timeout=None, logger=None):
+    def __init__(self, port: int = None, timeout: int = None, logger: logging.Logger = None):
         self._rlist = set()
         if port:
             self._sock = Socket()

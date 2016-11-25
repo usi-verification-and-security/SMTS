@@ -5,69 +5,62 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <list>
 #include <string>
 #include <algorithm>
 #include "lib/lib.h"
-#include "lib/Log.h"
+#include "lib/Logger.h"
 #include "lib/Exception.h"
 #include "LemmaServer.h"
 
 
-LemmaServer::LemmaServer(Settings &settings) :
-        Server(settings.port),
-        settings(settings),
-        server(nullptr),
-        db(nullptr) {
-    if (this->settings.server.port > 0) {
-        this->server = new Socket(this->settings.server);
+LemmaServer::LemmaServer(uint16_t port, const std::string &server, const std::string &db_filename) :
+        Server(port) {
+    if (server.size()) {
+        this->server.reset(new net::Socket(server));
         std::map<std::string, std::string> header;
-        header["lemmas"] = ":" + std::to_string(this->settings.port);
+        header["lemmas"] = ":" + std::to_string(port);
         this->server->write(header, "");
         this->add_socket(this->server);
     }
-    if (this->settings.db_filename.size() > 0) {
-        this->db = new SQLite3(this->settings.db_filename);
+    if (db_filename.size()) {
+        this->db.reset(new SQLite3::Connection(db_filename));
         this->db->exec("CREATE TABLE IF NOT EXISTS Lemma"
                                "(id INTEGER PRIMARY KEY, name TEXT, node TEXT, score INTEGER, smtlib TEXT);");
     }
 };
 
-LemmaServer::~LemmaServer() {
-    if (this->db)
-        delete this->db;
+void LemmaServer::handle_accept(net::Socket &client) {
+    Logger::log(Logger::INFO, "+ " + client.get_remote().toString());
 }
 
-
-void LemmaServer::handle_accept(Socket &client) {
-    Log::log(Log::INFO, "+ " + client.get_remote().toString());
-}
-
-
-void LemmaServer::handle_close(Socket &client) {
-    if (&client == this->server)
-        throw Exception("server connection closed.");
+void LemmaServer::handle_close(net::Socket &client) {
+    Logger::log(Logger::INFO, "- " + client.get_remote().toString());
+    if (&client == this->server.get()) {
+        Logger::log(Logger::INFO, "server connection closed. ");
+        this->stop();
+        return;
+    }
     for (auto &pair:this->solvers) {
         if (this->solvers[pair.first].count(client.get_remote().toString())) {
             this->solvers[pair.first].erase(client.get_remote().toString());
         }
     }
-    Log::log(Log::INFO, "- " + client.get_remote().toString());
 }
 
-
-void LemmaServer::handle_exception(Socket &client, SocketException &ex) {
-    Log::log(Log::ERROR, "Exception from: " + client.get_remote().toString() + ": " + ex.what());
+void LemmaServer::handle_exception(net::Socket &client, net::SocketException &ex) {
+    Logger::log(Logger::ERROR, "Exception from: " + client.get_remote().toString() + ": " + ex.what());
 }
 
-
-void LemmaServer::handle_message(Socket &client,
+void LemmaServer::handle_message(net::Socket &client,
                                  std::map<std::string, std::string> &header,
                                  std::string &payload) {
+    //pprint(header);
     if (header.count("name") == 0 || header.count("node") == 0 || header.count("lemmas") == 0)
         return;
 
     if (this->lemmas.count(header["name"]) != 1) {
-        this->lemmas[header["name"]] = new Node;
+        this->lemmas[header["name"]];
     }
 
     if (header["node"].size() < 2)
@@ -81,11 +74,12 @@ void LemmaServer::handle_message(Socket &client,
     }
 
     std::vector<Node *> node_path;
-    node_path.push_back(this->lemmas[header["name"]]);
+    node_path.push_back(&this->lemmas[header["name"]]);
     try {
         ::split(header["node"].substr(1, header["node"].size() - 2), ",", [&node_path](const std::string &node_index) {
-            int index;
-            index = stoi(node_index);
+            if (node_index.size() == 0)
+                return;
+            int index = stoi(node_index);
             if (index < 0)
                 throw std::invalid_argument("negative index");
             while ((unsigned) index >= node_path.back()->children.size()) {
@@ -98,11 +92,9 @@ void LemmaServer::handle_message(Socket &client,
     }
 
     if (clauses_request == 0) {
-        if (!this->settings.clear_lemmas)
-            return;
-        Log::log(Log::INFO,
-                 header["name"] + header["node"] + " " + client.get_remote().toString() +
-                 " clear");
+        Logger::log(Logger::INFO,
+                    header["name"] + header["node"] + " " + client.get_remote().toString() +
+                    " clear");
         Node *node_remove = node_path.back();
         node_path.pop_back();
         if (node_path.size() > 0) {
@@ -110,10 +102,10 @@ void LemmaServer::handle_message(Socket &client,
                          node_path.back()->children.end(),
                          node_remove,
                          new Node);
+            delete node_remove;
         } else {
             this->lemmas.erase(header["name"]);
         }
-        delete node_remove;
         return;
     }
 
@@ -124,15 +116,15 @@ void LemmaServer::handle_message(Socket &client,
 
         uint32_t pushed = 0;
         uint32_t n = 0;
-        split(payload, header["separator"], [&](const std::string &lemma_dump) {
-            if (lemma_dump.size() == 0)
-                return;
-            NetLemma netlemma(lemma_dump);
+        std::vector<net::Lemma> lemmas;
+        std::istringstream is(payload);
+        is >> lemmas;
+        for (net::Lemma &netlemma:lemmas) {
             if (netlemma.smtlib.size() == 0)
-                return;
+                continue;
             // level is too deep, some more push involved somehow
-            if (netlemma.level >= node_path.size())
-                return;
+            if ((uint32_t) netlemma.level >= node_path.size())
+                continue;
             std::list<Lemma *> &node_lemmas = node_path[netlemma.level]->lemmas;
             auto it = std::find_if(node_lemmas.begin(), node_lemmas.end(), [&netlemma](const Lemma *other) {
                 return other->smtlib == netlemma.smtlib;
@@ -141,7 +133,7 @@ void LemmaServer::handle_message(Socket &client,
                 (*it)->increase();
                 lemmas_solver->push_back(*it);
                 if (this->db) {
-                    SQLite3Stmt stmt = *this->db->prepare(
+                    SQLite3::Statement stmt = *this->db->prepare(
                             "UPDATE Lemma SET score=? WHERE name=? AND node=? AND smtlib=?;");
                     stmt.bind(1, (*it)->get_score());
                     stmt.bind(2, header["name"].c_str(), -1);
@@ -155,7 +147,7 @@ void LemmaServer::handle_message(Socket &client,
                 node_lemmas.push_back(lemma);
                 lemmas_solver->push_back(node_lemmas.back());
                 if (this->db) {
-                    SQLite3Stmt stmt = *this->db->prepare(
+                    SQLite3::Statement stmt = *this->db->prepare(
                             "INSERT INTO Lemma (name,node,score,smtlib) VALUES(?,?,?,?);");
                     stmt.bind(1, header["name"].c_str(), -1);
                     stmt.bind(2, header["node"].c_str(), -1);
@@ -165,32 +157,32 @@ void LemmaServer::handle_message(Socket &client,
                 }
             }
             n++;
-        });
+        }
 
-        Log::log(Log::INFO,
-                 header["name"] + header["node"] + " " + client.get_remote().toString() +
-                 " push [" + std::to_string(clauses_request) + "]\t" +
-                 std::to_string(n) +
-                 "\t(" + std::to_string(pushed) + "\tfresh, " + std::to_string(n - pushed) + "\tpresent)");
+        Logger::log(Logger::INFO,
+                    header["name"] + header["node"] + " " + client.get_remote().toString() +
+                    " push [" + std::to_string(clauses_request) + "]\t" +
+                    std::to_string(n) +
+                    "\t(" + std::to_string(pushed) + "\tfresh, " + std::to_string(n - pushed) + "\tpresent)");
 
-    } else {
-        std::list<Lemma *> *lemmas = new std::list<Lemma *>();
+    } else { // pull
+        std::list<Lemma *> lemmas;
         std::list<Lemma *> *lemmas_solver = nullptr;
 
-        if (header.count("exclude") && this->solvers[header["name"]].count(header["exclude"])) {
-            lemmas_solver = &this->solvers[header["name"]][header["exclude"]];
+        if (this->solvers[header["name"]].count(client.get_remote().toString())) {
+            lemmas_solver = &this->solvers[header["name"]][client.get_remote().toString()];
         }
 
         for (auto node:node_path) {
-            lemmas->merge(std::list<Lemma *>(node->lemmas));
+            lemmas.merge(std::list<Lemma *>(node->lemmas));
         }
-        lemmas->sort(Lemma::compare);
+        lemmas.sort(Lemma::compare);
 
-        header["separator"] = "\n";
+        header["separator"] = "\0";
 
-        std::stringstream lemmas_dump;
+        std::vector<net::Lemma> lemmas_send;
         uint32_t n = 0;
-        for (auto lemma = lemmas->rbegin(); lemma != lemmas->rend(); ++lemma) {
+        for (auto lemma = lemmas.rbegin(); lemma != lemmas.rend(); ++lemma) {
             if (n >= clauses_request)
                 break;
             if (lemmas_solver != nullptr) {
@@ -201,19 +193,25 @@ void LemmaServer::handle_message(Socket &client,
                     continue;
                 lemmas_solver->push_back(*lemma);
             }
-            lemmas_dump << NetLemma((*lemma)->smtlib, 0) << header["separator"];
+
+            lemmas_send.push_back(net::Lemma((*lemma)->smtlib, 0));
             n++;
         }
+
+        std::stringstream lemmas_dump;
+        lemmas_dump << lemmas_send;
 
         header["lemmas"] = std::to_string(n);
         try {
             client.write(header, lemmas_dump.str());
         }
-        catch (SocketException ex) { return; }
-        Log::log(Log::INFO,
-                 header["name"] + header["node"] + " " + client.get_remote().toString() +
-                 " pull [" + std::to_string(clauses_request) + "]\t" +
-                 std::to_string(n));
+        catch (net::SocketException ex) {
+            return;
+        }
+        Logger::log(Logger::INFO,
+                    header["name"] + header["node"] + " " + client.get_remote().toString() +
+                    " pull [" + std::to_string(clauses_request) + "]\t" +
+                    std::to_string(n));
     }
 }
 

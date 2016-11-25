@@ -12,15 +12,13 @@
 class FileThread : public Thread {
 private:
     Settings &settings;
-    Socket *server;
+    net::Socket server;
 
 protected:
     void main();
 
 public:
     FileThread(Settings &);
-
-    ~FileThread();
 
 };
 

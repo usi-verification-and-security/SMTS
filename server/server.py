@@ -18,188 +18,23 @@ import sqlite3
 __author__ = 'Matteo Marescotti'
 
 
-# class SocketParallelizationTree(framework.ParallelizationTree):
-#     def __init__(self, name, smtlib, config, conn=None, table_prefix=''):
-#         self.name = name
-#         self.root = framework.AndNode(smtlib.split('(check-sat)')[0])
-#         self.config = config
-#
-#         if self._conn:
-#             self._conn.cursor().execute("CREATE TABLE IF NOT EXISTS {}SolvingHistory ("
-#                                         "id INTEGER NOT NULL PRIMARY KEY, "
-#                                         "ts INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),"
-#                                         "name TEXT NOT NULL, "
-#                                         "event TEXT NOT NULL, "
-#                                         "solver TEXT, "
-#                                         "node TEXT, "
-#                                         "data TEXT"
-#                                         ");".format(self._table_prefix))
-#             self._conn.commit()
-#             self.db_log('CREATE')
-#
-#         self.solvers = set()
-#         self.timeout = False
-#
-#     def solver_node(self, solver):
-#         if solver not in self.solvers:
-#             return
-#         for path in self.reverse[sock]:
-#             if len(path) > 1 and isinstance(path[-2], framework.AndNode) and sock in path[-2]['solvers']:
-#                 return path[-2]
-#
-#     # if socket is new then it is added
-#     # if node is none then auto assign
-#     # if node is False remove solver
-#     def assign_solvers(self, solvers=None, node=None):
-#         if self.timeout:
-#             return self.assign_solvers(self._solvers, False)
-#         if solvers is None:
-#             solvers = {solver for solver in self._solvers}
-#         else:
-#             if not isinstance(solvers, (list, set, tuple)):
-#                 solvers = {solvers}
-#             solvers = set(solvers)
-#             self._solvers.update(solvers)
-#         for solver in solvers:
-#             current_node = self.solver_node(solver)
-#             if current_node and node and node is not current_node:
-#                 try:
-#                     solver.stop()
-#                 except BaseException as ex:
-#                     self.db_log('ERROR',
-#                                 solver,
-#                                 current_node,
-#                                 'exception during solver stop request: {}'.format(ex))
-#                 current_node['solvers'].remove(solver)
-#         if node is False:
-#             # !!! check if the solver was asked to create partitions
-#             self._solvers.difference_update(solvers)
-#             return
-#         if self.root['status'] != framework.SolveState.unknown:
-#             return
-#         if isinstance(node, framework.AndNode):
-#             if node.observer is not self:
-#                 raise ValueError
-#             if 'started' not in node:
-#                 node['started'] = time.time()
-#             for solver in solvers:
-#                 try:
-#                     solver.solve(self, node)
-#                 except BaseException as ex:
-#                     self.db_log('ERROR',
-#                                 solver,
-#                                 node,
-#                                 'exception during solver solve request:{}'.format(ex))
-#                 else:
-#                     node['solvers'].update(solvers)
-#         elif node is None:
-#             l = -1
-#             while solvers:
-#                 l += 1
-#                 if l % 2:
-#                     continue
-#                 level = self.level(l)
-#                 children = self._level_children(l)
-#                 if not level:
-#                     break
-#                 for node in level:
-#                     if node['active'] and 'started' in node:
-#                         if time.time() - node['started'] > self._config.partition_timeout:
-#                             node['active'] = False
-#                     if not node['active'] and node['status'] == framework.SolveState.unknown and \
-#                                     len(node['children']) < children and (
-#                                     'partitions_asked' not in node or node['partitions_asked'] < children):
-#                         if 'partitions_asked' not in node:
-#                             node['partitions_asked'] = 0
-#                         for i in range(children - node['partitions_asked']):
-#                             if not node['solvers']:
-#                                 if solvers:
-#                                     self.assign_solvers(solvers.pop(), node)
-#                                 break
-#                             partition_solver = random.sample(node['solvers'], 1)[0]
-#                             try:
-#                                 partition_solver.ask_partitions(self._level_children(l + 1))
-#                             except BaseException as ex:
-#                                 self.db_log('ERROR',
-#                                             partition_solver,
-#                                             node,
-#                                             'exception during solver ask for partitions: {}'.format(ex))
-#                             else:
-#                                 node['partitions_asked'] += 1
-#                         for solver in node['solvers']:
-#                             if not solver.or_nodes:
-#                                 self.assign_solvers(solver)
-#                     if not node['active'] and len(node['children']) == children and node['solvers']:
-#                         _solvers = node['solvers']
-#                         node['solvers'].clear()
-#                         self.assign_solvers(_solvers)
-#                     if node['active']:
-#                         while solvers and \
-#                                 (self._config.portfolio_max <= 0 or len(node['solvers']) < self._config.portfolio_max):
-#                             self.assign_solvers(solvers.pop(), node)
-#
-#                             # if solvers:
-#                             #     l = -1
-#                             #     reserved = len(solvers)
-#                             #     while True:
-#                             #         l += 1
-#                             #         if l % 2:
-#                             #             continue
-#                             #         level = self.level(l)
-#                             #         if not level:
-#                             #             break
-#                             #         children = self._level_children(l)
-#                             #
-#                             #         for node in level:
-#                             #             if reserved <= 0:
-#                             #                 break
-#                             #             if len(node['children']) < children:
-#                             #                 for i in range(min(len(node['solvers']), children - len(node['children']))):
-#                             #                     partition_solver = random.sample(node['solvers'], 1)[0]
-#                             #                     try:
-#                             #                         partition_solver.ask_partitions(self._level_children(l + 1))
-#                             #                     except BaseException as ex:
-#                             #                         self.db_log('ERROR',
-#                             #                                     partition_solver,
-#                             #                                     node,
-#                             #                                     'exception during solver ask for partitions: {}'.format(ex))
-#                             #                     else:
-#                             #                         reserved -= 1
-#                             #                     finally:
-#                             #                         for solver in node['solvers'].difference(set(partition_solver)):
-#                             #                             solver.stop()
-#                             #                         node['solvers'].clear()
-#                             #         if reserved <= 0:
-#                             #             break
-#         else:
-#             raise ValueError
-#
-#     def db_log(self, event, solver=None, node=None, data=None):
-#         if not self._conn:
-#             return
-#         self._conn.cursor().execute("INSERT INTO {}SolvingHistory (name, event, solver, node, data) "
-#                                     "VALUES (?,?,?,?,?)".format(self._table_prefix), (
-#                                         self.name,
-#                                         event,
-#                                         str(solver.remote_address) if solver else None,
-#                                         str(self.node_path(node, keys=True)) if node else None,
-#                                         json.dumps(data) if data else None
-#                                     ))
-#         self._conn.commit()
-#
-#     def _level_children(self, level):
-#         if level < len(self._config.partition_policy):
-#             return self._config.partition_policy[level]
-#         elif len(self._config.partition_policy) > 1:
-#             return self._config.partition_policy[-2]
-#         elif len(self._config.partition_policy) > 0:
-#             return self._config.partition_policy[-1]
-#         else:
-#             raise ValueError('invalid partition policy')
+class Config:
+    port = 3000
+    portfolio_max = 0
+    portfolio_min = 0
+    partition_timeout = None
+    partition_policy = [2, 2]
+    solving_timeout = None
+    log_level = logging.INFO
 
 
 class Solver(net.Socket):
-    def __init__(self, sock, solver, *, conn=None, table_prefix=''):
+    def __init__(self,
+                 sock: net.Socket,
+                 solver: str,
+                 *,
+                 conn: sqlite3.Connection = None,
+                 table_prefix: str = ''):
         super().__init__(sock._sock)
         self.solver = solver
         self.conn = conn
@@ -318,7 +153,12 @@ class Solver(net.Socket):
 
 
 class ParallelizationServer(net.Server):
-    def __init__(self, config, *, conn=None, table_prefix='', logger=None):
+    def __init__(self,
+                 config: Config,
+                 *,
+                 conn: sqlite3.Connection = None,
+                 table_prefix: str = '',
+                 logger: logging.Logger = None):
         super().__init__(port=config.port, timeout=1, logger=logger)
         self.config = config
         self.conn = conn
@@ -348,23 +188,30 @@ class ParallelizationServer(net.Server):
 
     def handle_message(self, sock, header, payload):
         if isinstance(sock, Solver):
-            if 'error' in header:
-                self.log(logging.ERROR, 'error message from solver {}. {}'.format(
-                    sock.remote_address,
-                    header['error']
-                ), {'header': header, 'payload': payload.decode()})
+            for level in ('info', 'warning', 'error'):
+                if level in header:
+                    self.log(getattr(logging, level.swapcase()), '{} from solver "{}" at {}. {}'.format(
+                        level,
+                        sock.name,
+                        sock.remote_address,
+                        header['info']
+                    ), {'header': header, 'payload': payload.decode()})
+
             else:
                 self.log(logging.INFO, 'message from solver {}'.format(
                     sock.remote_address
                 ), {'header': header, 'payload': payload.decode()})
             self.entrust()
             return
-        self.log(logging.INFO, 'message from {}'.format(sock.remote_address))
+        self.log(logging.DEBUG, 'message from {}'.format(sock.remote_address))
         if 'command' in header:
             if header['command'] == 'solve':
                 if 'name' not in header:
                     return
-                self.log(logging.INFO, 'new instance "{}"'.format(
+                self.log(logging.INFO, 'received instance "{}"'.format(
+                    header['name']
+                ), {'header': header})
+                self.log(logging.DEBUG, 'instance "{}"'.format(
                     header['name']
                 ), {'header': header, 'payload': payload.decode()})
                 smtlib = payload.decode().split('(check-sat)')[0]
@@ -526,7 +373,7 @@ class ParallelizationServer(net.Server):
 
     def log(self, level, message, data=None):
         super().log(level, message)
-        if not self.conn:
+        if not self.conn or level < self.config.log_level:
             return
         self.conn.cursor().execute("INSERT INTO {}ServerLog (level, message, data) "
                                    "VALUES (?,?,?)".format(self.table_prefix), (
@@ -538,23 +385,23 @@ class ParallelizationServer(net.Server):
 
 
 if __name__ == '__main__':
-    class Config:
-        port = 3000
-        portfolio_max = 0
-        portfolio_min = 0
-        partition_timeout = None
-        partition_policy = [2, 2]
-        solving_timeout = None
-
-
     def config_config(option, opt_str, value, parser):
         path = pathlib.Path(value)
         sys.path.insert(0, str(path.parent.absolute()))
+
         try:
-            setattr(parser.values, option.dest, __import__(path.stem))
+            module = __import__(path.stem)
         except ImportError as ex:
             logging.log(logging.ERROR, str(ex))
             sys.exit(1)
+
+        config = getattr(parser.values, option.dest)
+
+        for i in dir(config):
+            if i[:1] == "_":
+                continue
+            if hasattr(module, i):
+                setattr(config, i, getattr(module, i))
 
 
     def config_database(option, opt_str, value, parser):
@@ -566,7 +413,6 @@ if __name__ == '__main__':
         setattr(parser.values, option.dest, conn)
 
 
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     parser = optparse.OptionParser()
     parser.add_option('-c', '--config', dest='config', type='str',
                       action="callback", callback=config_config,
@@ -576,6 +422,8 @@ if __name__ == '__main__':
                       default=None, help='sqlite3 database file path')
 
     options, args = parser.parse_args()
+
+    logging.basicConfig(level=options.config.log_level, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     server = ParallelizationServer(config=options.config, conn=options.db, logger=logging.getLogger('server'))
     if hasattr(options.config, 'files'):
