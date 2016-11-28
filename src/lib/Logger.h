@@ -5,6 +5,7 @@
 #ifndef CLAUSE_SHARING_LOG_H
 #define CLAUSE_SHARING_LOG_H
 
+#include <assert.h>
 #include <ctime>
 #include <iostream>
 #include <mutex>
@@ -12,11 +13,11 @@
 
 class Logger {
 private:
-    Logger() { }
+    Logger() {}
 
 public:
     static void log(uint8_t level, std::string message) {
-        int r;
+        int r = 0;
         static std::mutex mtx;
         std::string record;
         record += std::to_string(std::time(nullptr));

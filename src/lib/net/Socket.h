@@ -6,6 +6,8 @@
 #define CLAUSE_SERVER_SOCKET_H
 
 #include <map>
+#include <memory>
+#include <mutex>
 #include "lib/Exception.h"
 #include "Address.h"
 

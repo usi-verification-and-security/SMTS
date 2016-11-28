@@ -2,6 +2,7 @@
 // Created by Matteo on 12/08/16.
 //
 
+#include <signal.h>
 #include <unistd.h>
 #include "Pipe.h"
 
