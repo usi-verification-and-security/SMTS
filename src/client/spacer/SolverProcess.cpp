@@ -12,7 +12,10 @@
 #include "fixedpoint.h"
 
 
+const char *SolverProcess::solver = "Spacer";
+
 z3::context context;
+z3::fixedpoint fixedpoint(context);
 std::function<void(const std::vector<net::Lemma> &)> this_push;
 std::function<void(std::vector<net::Lemma> &)> this_pull;
 
@@ -35,8 +38,6 @@ void pull(Z3_fixedpoint_lemma_set s) {
     }
 }
 
-const char *SolverProcess::solver = "Spacer";
-
 void SolverProcess::init() {
     FILE *file = fopen("/dev/null", "w");
     dup2(fileno(file), fileno(stdout));
@@ -48,45 +49,57 @@ void SolverProcess::init() {
     this_pull = [&](std::vector<net::Lemma> &l) {
         this->lemma_pull(l);
     };
-    if (this->header.count("lemmas") == 0) {
-        this->header["lemmas"] = std::to_string(1000);
+    z3::params p(context);
+    p.set(":engine", context.str_symbol("spacer"));
+    try {
+        for (auto &pair:this->header) {
+            if (pair.first.substr(0, 10) == "parameter.") {
+
+                if (pair.second == "true")
+                    p.set(pair.first.substr(10).c_str(), true);
+                else if (pair.second == "false")
+                    p.set(pair.first.substr(10).c_str(), false);
+                else
+                    p.set(pair.first.substr(10).c_str(), context.str_symbol(pair.second.c_str()));
+
+            }
+        }
+        fixedpoint.set(p);
+    }
+    catch (z3::exception &) { // i'm not sending the msg because it's too long
+        this->error("cannot set parameters");
     }
 }
 
 void SolverProcess::solve() {
-    z3::fixedpoint f(context);
-    z3::params p(context);
-    p.set(":engine", context.str_symbol("spacer"));
-    p.set(":xform.slice", false);
-    p.set(":xform.inline_eager", false);
-    p.set(":xform.inline_linear", false);
-    f.set(p);
 
-    Z3_fixedpoint_set_lemma_pull_callback(context, f, pull);
-    Z3_fixedpoint_set_lemma_push_callback(context, f, push);
+    Z3_fixedpoint_set_lemma_pull_callback(context, fixedpoint, pull);
+    Z3_fixedpoint_set_lemma_push_callback(context, fixedpoint, push);
 
     z3::solver solver(context);
     char *smtlib = (char *) this->instance.c_str();
 
     while (true) {
-        Z3_ast_vector v = Z3_fixedpoint_from_string(context, f, smtlib);
+        Z3_ast_vector v = Z3_fixedpoint_from_string(context, fixedpoint, smtlib);
         Z3_ast a = Z3_ast_vector_get(context, v, 0);
 
-        Z3_lbool res = Z3_fixedpoint_query(context, f, a);
-        z3::stats statistics(context, Z3_fixedpoint_get_statistics(context, f));
+        Z3_lbool res = Z3_fixedpoint_query(context, fixedpoint, a);
+
+        std::map<std::string, std::string> header;
+        z3::stats statistics(context, Z3_fixedpoint_get_statistics(context, fixedpoint));
         for (uint32_t i = 0; i < statistics.size(); i++) {
-            this->header["statistics." + statistics.key(i)] =
+            header["statistics." + statistics.key(i)] =
                     statistics.is_uint(i) ?
                     std::to_string(statistics.uint_value(i)) :
                     std::to_string(statistics.double_value(i));
         }
 
         if (res == Z3_L_TRUE)
-            this->report(Status::sat);
+            this->report(Status::sat, header);
         else if (res == Z3_L_FALSE)
-            this->report(Status::unsat);
+            this->report(Status::unsat, header);
         else
-            this->report(Status::unknown);
+            this->report(Status::unknown, header);
         Task t = this->wait();
         switch (t.command) {
             case Task::incremental:

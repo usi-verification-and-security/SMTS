@@ -18,23 +18,20 @@ const char *SolverProcess::solver = "OpenSMT2";
 
 void SolverProcess::init() {
     FILE *file = fopen("/dev/null", "w");
-    //dup2(fileno(file), fileno(stdout));
+    dup2(fileno(file), fileno(stdout));
     dup2(fileno(file), fileno(stderr));
     fclose(file);
 
-    if (this->header.count("seed") == 0) {
+    if (this->header.count("config.seed") == 0) {
         std::uniform_int_distribution<uint32_t> randuint(0, 0xFFFFFF);
         std::random_device rd;
-        this->header["seed"] = std::to_string(randuint(rd));
-    }
-    if (this->header.count("lemmas") == 0) {
-        this->header["lemmas"] = std::to_string(1000);
+        this->header["config.seed"] = std::to_string(randuint(rd));
     }
 }
 
 void SolverProcess::solve() {
     SMTConfig config;
-    config.setRandomSeed(atoi(this->header["seed"].c_str()));
+    config.setRandomSeed(atoi(this->header["config.seed"].c_str()));
     if (this->is_sharing()) {
         auto lemma_push = [&](const std::vector<net::Lemma> &lemmas) {
             this->lemma_push(lemmas);
@@ -57,7 +54,8 @@ void SolverProcess::solve() {
             this->report(Status::sat);
         else if (status == s_False)
             this->report(Status::unsat);
-        else this->report(Status::unknown);
+        else
+            this->report(Status::unknown);
 
         Task task = this->wait();
         switch (task.command) {

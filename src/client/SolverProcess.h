@@ -34,8 +34,13 @@ private:
     std::string instance;
 
     void main() {
+        if (!this->header.count("lemmas")) {
+            this->header["lemmas"] = std::to_string(1000);
+        }
         this->init();
-        this->report();
+        auto header = this->header;
+        header["info"] = "start solving";
+        this->report(header);
         std::thread t([&] {
             std::map<std::string, std::string> header;
             std::string payload;
@@ -57,9 +62,7 @@ private:
                             try {
                                 this->lemmas.reset(new net::Socket(header["lemma_server"]));
                             } catch (net::SocketException &ex) {
-                                header = this->header;
-                                header["error"] = std::string("lemma server connection failed: ") + ex.what();
-                                this->report(header, "");
+                                this->error(std::string("lemma server connection failed: ") + ex.what());
                             }
                     }
                     continue;
@@ -83,34 +86,57 @@ private:
     // async interrupt the solver
     void interrupt();
 
-    void report(const std::map<std::string, std::string> header, const std::string payload) {
+    void report(std::map<std::string, std::string> &header, const std::string &payload = "") {
+        if (!header.count("name"))
+            header["name"] = this->header["name"];
+        if (!header.count("node"))
+            header["node"] = this->header["node"];
         this->writer()->write(header, payload);
     }
 
     void report() {
-        this->report(this->header, "");
+        this->writer()->write(this->header, "");
     }
 
-    void report(Status status) {
-        auto header = this->header;
+    void
+    report(Status status, const std::map<std::string, std::string> &h = std::map<std::string, std::string>()) {
+        auto header = h;
         if (status == Status::sat)
             header["status"] = "sat";
         else if (status == Status::unsat)
             header["status"] = "unsat";
         else
             header["status"] = "unknown";
-        this->report(header, "");
+        this->report(header);
 
     }
 
     void report(const std::vector<std::string> &partitions, const char *error = nullptr) {
-        auto header = this->header;
+        std::map<std::string, std::string> header;
         std::stringstream payload;
         if (error != nullptr)
             header["error"] = error;
         ::join(payload, "\n", partitions);
         header["partitions"] = std::to_string(partitions.size());
         this->report(header, payload.str());
+    }
+
+    void info(const std::string &info) {
+        std::map<std::string, std::string> header;
+        header["info"] = info;
+        this->report(header);
+    }
+
+    void warning(const std::string &warning) {
+        std::map<std::string, std::string> header;
+        header["warning"] = warning;
+        this->report(header);
+    }
+
+    void error(const std::string &error) {
+        std::map<std::string, std::string> header;
+        header["error"] = error;
+        this->report(header);
     }
 
     Task wait() {
@@ -137,7 +163,9 @@ private:
 
         std::lock_guard<std::mutex> _l(this->lemmas_mtx);
 
-        auto header = this->header;
+        std::map<std::string, std::string> header;
+        header["name"] = this->header["name"];
+        header["node"] = this->header["node"];
         std::stringstream payload;
 
         payload << lemmas;
@@ -149,8 +177,7 @@ private:
             this->lemmas->write(header, payload.str());
         } catch (net::SocketException &ex) {
             this->lemmas_errors++;
-            header["error"] = std::string("lemma push failed: ") + ex.what();
-            this->report(header, "");
+            this->error(std::string("lemma push failed: ") + ex.what());
         }
     }
 
@@ -160,7 +187,10 @@ private:
 
         std::lock_guard<std::mutex> _l(this->lemmas_mtx);
 
-        auto header = this->header;
+        std::map<std::string, std::string> header;
+        header["name"] = this->header["name"];
+        header["node"] = this->header["node"];
+        header["lemmas"] = this->header["lemmas"];
         std::string payload;
 
         try {
@@ -168,13 +198,11 @@ private:
             this->lemmas->read(header, payload, 2000);
         } catch (net::SocketException &ex) {
             this->lemmas_errors++;
-            header["error"] = std::string("lemma pull failed: ") + ex.what();
-            this->report(header, "");
+            this->error(std::string("lemma pull failed: ") + ex.what());
             return;
         } catch (net::SocketTimeout &) {
             this->lemmas_errors++;
-            header["warning"] = "lemma pull failed: timeout";
-            this->report(header, "");
+            this->error("lemma pull failed: timeout");
             return;
         }
 

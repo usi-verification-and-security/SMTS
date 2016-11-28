@@ -97,11 +97,11 @@ class Node:
         if type(conn) is sqlite3.Connection:
             conn.commit()
 
-    def path(self):
+    def path(self, nodes=False):
         node = self
         path = []
         while node.parent:
-            path.append(node.parent.children.index(node))
+            path.append(node.parent if nodes else node.parent.children.index(node))
             node = node.parent
         path.reverse()
         return path
@@ -113,6 +113,10 @@ class Node:
         for i in path:
             node = node.children[int(i)]
         return node
+
+    @property
+    def root(self):
+        return self.child([])
 
     def level(self):
         return len(self.path())

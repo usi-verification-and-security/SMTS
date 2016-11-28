@@ -61,7 +61,7 @@ void SolverServer::handle_close(net::Socket &socket) {
 }
 
 void SolverServer::handle_exception(net::Socket &socket, net::SocketException &exception) {
-    this->log(Logger::WARNING, exception.what());
+    this->log(Logger::ERROR, exception.what());
 }
 
 void SolverServer::stop_solver() {
@@ -103,7 +103,6 @@ SolverServer::handle_message(net::Socket &socket, std::map<std::string, std::str
             this->solver = new SolverProcess(header, payload);
             this->update_lemmas();
             this->add_socket(this->solver->reader());
-            this->log(Logger::INFO, "start");
         } else if (header["command"] == "stop") {
             if (!this->check_header(header)) {
                 return;
@@ -115,6 +114,8 @@ SolverServer::handle_message(net::Socket &socket, std::map<std::string, std::str
             this->solver->writer()->write(header, payload);
         }
     } else if (this->solver && &socket == this->solver->reader()) {
+        this->server.write(header, payload);
+        //pprint(header);
         if (header.count("status")) {
             this->log(Logger::INFO, std::string("status: ") + header["status"]);
         }
@@ -130,8 +131,6 @@ SolverServer::handle_message(net::Socket &socket, std::map<std::string, std::str
             this->log(Logger::ERROR, header["error"]);
             header.erase("error");
         }
-        //pprint(header);
-        this->server.write(header, payload);
         this->solver->header = header;
     }
 }
