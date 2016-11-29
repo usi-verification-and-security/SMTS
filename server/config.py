@@ -31,8 +31,8 @@ def entrust(header: dict, solver: server.Solver, solvers: set):
             pass
 
 
-_benchmarks_path = pathlib.Path('/Users/matteo/dev/spacer/regressions/')
-files = [str(i.resolve()) for i in _benchmarks_path.glob('*.smt2')]
+#_benchmarks_path = pathlib.Path('/Users/matteo/dev/spacer/regressions/')
+#files = [str(i.resolve()) for i in _benchmarks_path.glob('*.smt2')]
 
 # files=[str(pathlib.Path('../../opensmt2/test/std_benchmarks/NEQ_NEQ015_size6.smt2').resolve())]+\
 #       [str(pathlib.Path('../../opensmt2/test/std_benchmarks/PEQ_PEQ013_size8.smt2').resolve())]

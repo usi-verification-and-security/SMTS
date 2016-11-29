@@ -8,11 +8,17 @@ import subprocess
 import signal
 import pathlib
 import time
+import socket
 import sys
 
 if __name__ == '__main__':
 
     path = str(pathlib.Path(__file__).parent.resolve()) + '/'
+    ip = '127.0.0.1'
+    try:
+        ip = socket.gethostbyname(socket.gethostname())
+    except:
+        pass
 
     parser = optparse.OptionParser()
     parser.add_option('-s', dest='server', type='str', default=path + 'server.py',
@@ -32,6 +38,7 @@ if __name__ == '__main__':
     if options.database:
         args += ['-d', options.database + '.db']
 
+    print(args)
     try:
         server = subprocess.Popen(args)
     except BaseException as ex:
@@ -65,9 +72,10 @@ if __name__ == '__main__':
         except:
             print('cannot run lemma server')
         else:
-            args = [options.lemma_server, '-s', '127.0.0.1:' + str(config.port)]
+            args = [options.lemma_server, '-s', ip + ':' + str(config.port)]
             if options.lemma_database and options.database:
                 args += ['-d', options.database + '.lemma.db']
+            print(args)
             try:
                 lemma_server = subprocess.Popen(args)
             except BaseException as ex:
