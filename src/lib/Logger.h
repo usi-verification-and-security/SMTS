@@ -28,15 +28,15 @@ public:
                 break;
             case WARNING:
                 if (getenv("TERM")) {
-                    r = system("tput setaf 3");
-                    r = system("tput bold");
+                    r += system("tput setaf 3");
+                    r += system("tput bold");
                 }
                 record += "WARNING\t";
                 break;
             case ERROR:
                 if (getenv("TERM")) {
-                    r = system("tput setaf 9");
-                    r = system("tput bold");
+                    r += system("tput setaf 9");
+                    r += system("tput bold");
                 }
                 record += "ERROR\t";
                 break;

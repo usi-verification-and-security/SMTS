@@ -257,7 +257,7 @@ class ParallelizationServer(net.Server):
             self._rlist.add(solver)
             lemma_server = self.lemma_server
             if lemma_server:
-                lemma_server.instruct(solver)
+                solver.set_lemma_server(lemma_server)
             self.entrust()
         elif 'lemmas' in header:
             if header['lemmas'][0] == ':':
