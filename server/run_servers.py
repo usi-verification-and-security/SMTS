@@ -6,13 +6,18 @@ import atexit
 import importlib.util
 import subprocess
 import signal
+import pathlib
 import time
+import sys
 
 if __name__ == '__main__':
+
+    path = str(pathlib.Path(__file__).parent.resolve()) + '/'
+
     parser = optparse.OptionParser()
-    parser.add_option('-s', dest='server', type='str', default=None,
+    parser.add_option('-s', dest='server', type='str', default=path + 'server.py',
                       help='server executable path')
-    parser.add_option('-c', dest='server_config', type='str', default=None,
+    parser.add_option('-c', dest='server_config', type='str', default=path + 'config.py',
                       help='server config path')
     parser.add_option('-l', dest='lemma_server', type='str', default=None,
                       help='lemma server executable path')
@@ -23,17 +28,15 @@ if __name__ == '__main__':
 
     options, args = parser.parse_args()
 
-    if not options.server:
-        parser.error("-s server_path required")
-
-    if not options.server_config:
-        parser.error("-c server_config required")
-
     args = ['/usr/bin/env', 'python3', options.server, '-c', options.server_config]
     if options.database:
         args += ['-d', options.database + '.db']
 
-    server = subprocess.Popen(args)
+    try:
+        server = subprocess.Popen(args)
+    except BaseException as ex:
+        print(ex)
+        sys.exit(-1)
 
 
     def kill_server(force=False):
@@ -65,7 +68,10 @@ if __name__ == '__main__':
             args = [options.lemma_server, '-s', '127.0.0.1:' + str(config.port)]
             if options.lemma_database and options.database:
                 args += ['-d', options.database + '.lemma.db']
-            lemma_server = subprocess.Popen(args)
+            try:
+                lemma_server = subprocess.Popen(args)
+            except BaseException as ex:
+                print(ex)
 
     try:
         server.wait()
