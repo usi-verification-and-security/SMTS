@@ -25,7 +25,7 @@ protected:
 
     void handle_close(net::Socket &);
 
-    void handle_message(net::Socket &, std::map<std::string, std::string> &, std::string &);
+    void handle_message(net::Socket &, net::Header &, std::string &);
 
     void handle_exception(net::Socket &, net::SocketException &);
 

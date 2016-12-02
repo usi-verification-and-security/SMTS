@@ -18,7 +18,7 @@ LemmaServer::LemmaServer(uint16_t port, const std::string &server, const std::st
         Server(port) {
     if (server.size()) {
         this->server.reset(new net::Socket(server));
-        std::map<std::string, std::string> header;
+        net::Header header;
         header["lemmas"] = ":" + std::to_string(port);
         this->server->write(header, "");
         this->add_socket(this->server);
@@ -53,7 +53,7 @@ void LemmaServer::handle_exception(net::Socket &client, net::SocketException &ex
 }
 
 void LemmaServer::handle_message(net::Socket &client,
-                                 std::map<std::string, std::string> &header,
+                                 net::Header &header,
                                  std::string &payload) {
     //pprint(header);
     if (header.count("name") == 0 || header.count("node") == 0 || header.count("lemmas") == 0)

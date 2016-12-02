@@ -25,7 +25,7 @@ class OpenSMTInterpret : public Interpret {
     friend class SolverProcess;
 
 private:
-    std::map<std::string, std::string> &header;
+    net::Header &header;
 
     std::function<void(const std::vector<net::Lemma> &)> lemma_push;
     std::function<void(std::vector<net::Lemma> &)> lemma_pull;
@@ -34,7 +34,7 @@ protected:
     void new_solver();
 
 public:
-    OpenSMTInterpret(std::map<std::string, std::string> &header,
+    OpenSMTInterpret(net::Header &header,
                      std::function<void(const std::vector<net::Lemma> &)> lemma_push,
                      std::function<void(std::vector<net::Lemma> &)> lemma_pull,
                      SMTConfig &c) :

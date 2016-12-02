@@ -6,7 +6,8 @@ link_directories(${SQLITE3_LIBRARY_DIR})
 
 add_library(Lib
         lib.cpp
-        sqlite3.cpp
+        sqlite3/Connection.cpp
+        sqlite3/Statement.cpp
         Thread.cpp
         Process.cpp
         Logger.h

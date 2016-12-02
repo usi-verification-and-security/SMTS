@@ -16,9 +16,9 @@ private:
 
     void update_lemmas();
 
-    void log(uint8_t, std::string, std::map<std::string, std::string> *_ = nullptr);
+    void log(uint8_t, std::string, net::Header *_ = nullptr);
 
-    bool check_header(std::map<std::string, std::string> &);
+    bool check_header(net::Header &);
 
     net::Socket server;
     std::string lemmas_address;
@@ -28,7 +28,7 @@ protected:
 
     void handle_exception(net::Socket &, net::SocketException &);
 
-    void handle_message(net::Socket &, std::map<std::string, std::string> &, std::string &);
+    void handle_message(net::Socket &, net::Header &, std::string &);
 
 public:
     SolverServer(const net::Address &);

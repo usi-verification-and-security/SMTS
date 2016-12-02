@@ -42,7 +42,7 @@ private:
         header["info"] = "start solving";
         this->report(header);
         std::thread t([&] {
-            std::map<std::string, std::string> header;
+            net::Header header;
             std::string payload;
             while (true) {
                 // receives both commands from the server(forwarded by SolverServer) and from SolverServer.
@@ -86,7 +86,7 @@ private:
     // async interrupt the solver
     void interrupt();
 
-    void report(std::map<std::string, std::string> &header, const std::string &payload = "") {
+    void report(net::Header &header, const std::string &payload = "") {
         if (!header.count("name"))
             header["name"] = this->header["name"];
         if (!header.count("node"))
@@ -99,7 +99,7 @@ private:
     }
 
     void
-    report(Status status, const std::map<std::string, std::string> &h = std::map<std::string, std::string>()) {
+    report(Status status, const net::Header &h = net::Header()) {
         auto header = h;
         if (status == Status::sat)
             header["status"] = "sat";
@@ -112,7 +112,7 @@ private:
     }
 
     void report(const std::vector<std::string> &partitions, const char *error = nullptr) {
-        std::map<std::string, std::string> header;
+        net::Header header;
         std::stringstream payload;
         if (error != nullptr)
             header["error"] = error;
@@ -122,25 +122,25 @@ private:
     }
 
     void info(const std::string &info) {
-        std::map<std::string, std::string> header;
+        net::Header header;
         header["info"] = info;
         this->report(header);
     }
 
     void warning(const std::string &warning) {
-        std::map<std::string, std::string> header;
+        net::Header header;
         header["warning"] = warning;
         this->report(header);
     }
 
     void error(const std::string &error) {
-        std::map<std::string, std::string> header;
+        net::Header header;
         header["error"] = error;
         this->report(header);
     }
 
     Task wait() {
-        std::map<std::string, std::string> header;
+        net::Header header;
         std::string payload;
         this->pipe.reader()->read(header, payload);
         if (header["command"] == "incremental") {
@@ -163,7 +163,7 @@ private:
 
         std::lock_guard<std::mutex> _l(this->lemmas_mtx);
 
-        std::map<std::string, std::string> header;
+        net::Header header;
         header["name"] = this->header["name"];
         header["node"] = this->header["node"];
         std::stringstream payload;
@@ -187,7 +187,7 @@ private:
 
         std::lock_guard<std::mutex> _l(this->lemmas_mtx);
 
-        std::map<std::string, std::string> header;
+        net::Header header;
         header["name"] = this->header["name"];
         header["node"] = this->header["node"];
         header["lemmas"] = this->header["lemmas"];
@@ -216,7 +216,7 @@ private:
     }
 
 public:
-    SolverProcess(std::map<std::string, std::string> header,
+    SolverProcess(net::Header header,
                   std::string instance) :
             lemmas_errors(0),
             instance(instance),
@@ -224,7 +224,7 @@ public:
         this->start();
     }
 
-    std::map<std::string, std::string> header;
+    net::Header header;
 
     bool is_sharing() {
         return this->lemmas != nullptr;

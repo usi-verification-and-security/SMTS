@@ -110,7 +110,7 @@ namespace net {
         return r;
     }
 
-    uint32_t Socket::read(std::map<std::string, std::string> &header, std::string &payload, uint32_t timeout) {
+    uint32_t Socket::read(net::Header &header, std::string &payload, uint32_t timeout) {
         std::lock_guard<std::mutex> _l(this->read_mtx);
 
         uint32_t length = 0;
@@ -154,7 +154,7 @@ namespace net {
         return length;
     }
 
-    uint32_t Socket::write(const std::map<std::string, std::string> &header, const std::string &payload) {
+    uint32_t Socket::write(const net::Header &header, const std::string &payload) {
         std::lock_guard<std::mutex> _l(this->write_mtx);
 
         if (header.count(""))

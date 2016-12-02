@@ -7,11 +7,12 @@
 
 #include <list>
 #include <map>
+#include "lib/net/Header.h"
 
 
 class Settings {
 private:
-    void load_header(std::map<std::string, std::string> &header, char *string);
+    void load_header(net::Header &header, char *string);
 
 public:
     Settings();
@@ -22,7 +23,7 @@ public:
     std::string lemmas;
     std::list<std::string> files;
     bool clear_lemmas;
-    std::map<std::string, std::string> header_solve;
+    net::Header header_solve;
 };
 
 #endif //CLAUSE_SHARING_SETTINGS_H

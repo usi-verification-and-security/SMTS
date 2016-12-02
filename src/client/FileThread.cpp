@@ -18,7 +18,7 @@ FileThread::FileThread(Settings &settings) :
 }
 
 void FileThread::main() {
-    std::map<std::string, std::string> header;
+    net::Header header;
 
     std::shared_ptr<net::Socket> client(this->server.accept());
     std::shared_ptr<net::Socket> lemmas;

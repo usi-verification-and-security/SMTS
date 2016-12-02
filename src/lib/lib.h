@@ -35,8 +35,6 @@ void join(std::ostream &stream, const std::string &delimiter, const std::vector<
 
 void replace(std::string &, const std::string &, const std::string &);
 
-void pprint(const std::map<std::string, std::string> &);
-
 #include "Exception.h"
 #include "Logger.h"
 #include "Process.h"

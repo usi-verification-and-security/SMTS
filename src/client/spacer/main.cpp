@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
     std::thread t([&]{
         net::Socket s((uint16_t) 4000);
         std::shared_ptr<net::Socket> c=s.accept();
-        std::map<std::string,std::string> header;
+        net::Header header;
         std::string payload;
         while(1){
             c->read(header, payload);
@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
 
     std::stringstream s;
     s << ll;
-    std::map<std::string,std::string> header;
+    net::Header header;
     std::string payload;
     net::Socket c(net::Address("127.0.0.1",4000));
     c.write(header,s.str());

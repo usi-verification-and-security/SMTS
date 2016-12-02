@@ -85,7 +85,7 @@ void SolverProcess::solve() {
 
         Z3_lbool res = Z3_fixedpoint_query(context, fixedpoint, a);
 
-        std::map<std::string, std::string> header;
+        net::Header header;
         z3::stats statistics(context, Z3_fixedpoint_get_statistics(context, fixedpoint));
         for (uint32_t i = 0; i < statistics.size(); i++) {
             header["statistics." + statistics.key(i)] =

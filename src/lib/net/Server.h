@@ -21,7 +21,7 @@ namespace net {
 
         virtual void handle_close(Socket &) {}
 
-        virtual void handle_message(Socket &, std::map<std::string, std::string> &, std::string &) {}
+        virtual void handle_message(Socket &, net::Header &, std::string &) {}
 
         virtual void handle_exception(Socket &, SocketException &) {}
 

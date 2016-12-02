@@ -10,6 +10,7 @@
 #include <mutex>
 #include "lib/Exception.h"
 #include "Address.h"
+#include "Header.h"
 
 
 namespace net {
@@ -53,9 +54,9 @@ namespace net {
 
         std::shared_ptr<Socket> accept();
 
-        uint32_t read(std::map<std::string, std::string> &, std::string &, uint32_t timeout_ms = 0);
+        uint32_t read(net::Header &, std::string &, uint32_t timeout_ms = 0);
 
-        uint32_t write(const std::map<std::string, std::string> &, const std::string &);
+        uint32_t write(const net::Header &, const std::string &);
 
         void close();
 

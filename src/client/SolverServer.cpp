@@ -13,7 +13,7 @@ SolverServer::SolverServer(const net::Address &server) :
         net::Server(),
         server(server),
         solver(nullptr) {
-    std::map<std::string, std::string> header;
+    net::Header header;
     header["solver"] = SolverProcess::solver;
     this->server.write(header, "");
     this->add_socket(&this->server);
@@ -22,8 +22,8 @@ SolverServer::SolverServer(const net::Address &server) :
 SolverServer::~SolverServer() {
 }
 
-void SolverServer::log(uint8_t level, std::string message, std::map<std::string, std::string> *header_solver) {
-    //    std::map<std::string, std::string> header;
+void SolverServer::log(uint8_t level, std::string message, net::Header *header_solver) {
+    //    net::Header header;
     //    if (header_solver != nullptr) {
     //        for(auto &pair:header_solver)
     //        header["command"] = "log";
@@ -41,7 +41,7 @@ void SolverServer::log(uint8_t level, std::string message, std::map<std::string,
 }
 
 
-bool SolverServer::check_header(std::map<std::string, std::string> &header) {
+bool SolverServer::check_header(net::Header &header) {
     if (this->solver == nullptr)
         return false;
     return header["name"] == this->solver->header["name"] && header["node"] == this->solver->header["node"];
@@ -84,7 +84,7 @@ void SolverServer::update_lemmas() {
 
 
 void
-SolverServer::handle_message(net::Socket &socket, std::map<std::string, std::string> &header, std::string &payload) {
+SolverServer::handle_message(net::Socket &socket, net::Header &header, std::string &payload) {
     if (socket.get_fd() == this->server.get_fd()) {
         if (header.count("command") != 1) {
             this->log(Logger::WARNING, "unexpected message from server without command");

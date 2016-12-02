@@ -11,7 +11,7 @@
 Settings::Settings() :
         clear_lemmas(false) {}
 
-void Settings::load_header(std::map<std::string, std::string> &header, char *string) {
+void Settings::load_header(net::Header &header, char *string) {
     int i;
     for (i = 0; optarg[i] != '=' && optarg[i] != '\0' && i < (uint8_t) -1; i++) {
     }

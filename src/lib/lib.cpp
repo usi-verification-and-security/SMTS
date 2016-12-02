@@ -57,11 +57,3 @@ void replace(std::string &string, const std::string &from, const std::string &to
         start_pos += to.length();
     }
 }
-
-void pprint(const std::map<std::string, std::string> &map) {
-    std::cout << "{\n";
-    for (auto &pair:map) {
-        std::cout << "  " << pair.first << ": " << pair.second << "\n";
-    }
-    std::cout << "}\n";
-}

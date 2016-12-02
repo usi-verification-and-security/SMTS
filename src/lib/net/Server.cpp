@@ -22,7 +22,7 @@ namespace net {
     void Server::run_forever() {
         fd_set readset;
         int result;
-        std::map<std::string, std::string> header;
+        net::Header header;
         std::string payload;
 
         while (true) {
