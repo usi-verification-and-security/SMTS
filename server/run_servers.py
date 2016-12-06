@@ -14,11 +14,6 @@ import sys
 if __name__ == '__main__':
 
     path = str(pathlib.Path(__file__).parent.resolve()) + '/'
-    ip = '127.0.0.1'
-    try:
-        ip = socket.gethostbyname(socket.gethostname())
-    except:
-        pass
 
     parser = optparse.OptionParser()
     parser.add_option('-s', dest='server', type='str', default=path + 'server.py',
@@ -30,9 +25,15 @@ if __name__ == '__main__':
     parser.add_option('-d', dest='database', type='str', default=None,
                       help='name of server database without extension')
     parser.add_option('-D', dest='lemma_database', default=False, action="store_true",
-                      help='ask lemma_server to dump lemmas into <server_database>.lemma.db')
+                      help='ask lemma_server to dump lemmas')
 
     options, args = parser.parse_args()
+
+    ip = '127.0.0.1'
+    try:
+        ip = socket.gethostbyname(socket.gethostname())
+    except:
+        pass
 
     args = ['/usr/bin/env', 'python3', options.server, '-c', options.server_config]
     if options.database:
@@ -60,7 +61,7 @@ if __name__ == '__main__':
     atexit.register(kill_server)
 
     try:
-        time.sleep(5)
+        time.sleep(2)
     except KeyboardInterrupt:
         pass
 

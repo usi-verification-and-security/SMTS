@@ -51,6 +51,9 @@ class LemmaServer(net.Socket):
         super().__init__(sock._sock)
         self.listening = listening
 
+    def __repr__(self):
+        return '<LemmaServer listening:{}>'.format(self.listening)
+
 
 class Solver(net.Socket):
     def __init__(self,
@@ -76,6 +79,9 @@ class Solver(net.Socket):
             self.conn.commit()
         self.node = None
         self.or_waiting = []
+
+    def __repr__(self):
+        return '<Solver "{}" at:{}>'.format(self.name, self.remote_address)
 
     def solve(self, node: framework.AndNode, header: dict):
         root = node.root
@@ -148,7 +154,7 @@ class Solver(net.Socket):
 
         if 'status' in header:
             status = framework.SolveStatus.__members__[header['status']]
-            self.db_log('STATUS', {'status': status.name})
+            self.db_log('STATUS', header)
             self.node.status = status
             if root.status != framework.SolveStatus.unknown:
                 self.db_log('SOLVED', {'status': root.status.name})
@@ -156,6 +162,8 @@ class Solver(net.Socket):
             node = self.or_waiting.pop()
             try:
                 for partition in payload.decode().split('\n'):
+                    if len(partition) == 0:
+                        continue
                     node.add_child('(assert {})'.format(partition))
                     self.db_log('AND', {"node": node.children[-1].path(), "smtlib": partition})
             except BaseException as ex:
@@ -222,15 +230,15 @@ class ParallelizationServer(net.Server):
             for report in levels + ('status',):
                 if report in header:
                     level = report if report in levels else 'info'
-                    self.log(getattr(logging, level.swapcase()), 'from solver "{}" at {}: {}'.format(
-                        sock.name,
-                        sock.remote_address,
+                    self.log(getattr(logging, level.swapcase()), 'from {}: {}'.format(
+                        sock,
                         header[report]
                     ), {'header': header, 'payload': payload.decode()})
                     reported = True
             if not reported:
-                self.log(logging.INFO, 'message from solver {}'.format(
-                    sock.remote_address
+                self.log(logging.INFO, 'message from {}: {}'.format(
+                    sock,
+                    header
                 ), {'header': header, 'payload': payload.decode()})
             self.entrust()
             return
@@ -249,9 +257,8 @@ class ParallelizationServer(net.Server):
                 self.entrust()
         elif 'solver' in header:
             solver = Solver(sock, header['solver'], conn=self.conn, table_prefix=self.table_prefix)
-            self.log(logging.INFO, 'new solver "{}" at {}'.format(
-                solver.name,
-                solver.remote_address
+            self.log(logging.INFO, 'new {}'.format(
+                solver,
             ), {'header': header, 'payload': payload.decode()})
             self._rlist.remove(sock)
             self._rlist.add(solver)
@@ -262,14 +269,14 @@ class ParallelizationServer(net.Server):
         elif 'lemmas' in header:
             if header['lemmas'][0] == ':':
                 header['lemmas'] = sock.remote_address[0] + header['lemmas']
-            self.log(logging.INFO, 'new lemma server listening at {}'.format(
-                header['lemmas']
-            ), {'header': header, 'payload': payload.decode()})
             lemma_server = self.lemma_server
             if lemma_server:
                 lemma_server.close()
             self._rlist.remove(sock)
             lemma_server = LemmaServer(sock, header["lemmas"])
+            self.log(logging.INFO, 'new {}'.format(
+                lemma_server
+            ), {'header': header, 'payload': payload.decode()})
             self._rlist.add(lemma_server)
             for solver in (solver for solver in self._rlist if isinstance(solver, Solver)):
                 solver.set_lemma_server(lemma_server)
@@ -283,34 +290,37 @@ class ParallelizationServer(net.Server):
                 sock.write({}, response_payload)
 
     def handle_close(self, sock):
+        self.log(logging.INFO, 'connection closed from {}'.format(
+            sock
+        ))
         if isinstance(sock, Solver):
-            self.log(logging.INFO, 'connection closed from solver "{}" at {}'.format(
-                sock.name,
-                sock.remote_address
-            ))
-        elif isinstance(sock, LemmaServer):
-            self.log(logging.INFO, 'connection closed from lemma server listening at {}'.format(
-                sock.listening
-            ))
+            for node in sock.or_waiting:
+                try:
+                    node.parent.children.remove(node)
+                except ValueError:
+                    self.log(logging.ERROR, '{} had bad pending or node {}'.format(
+                        sock,
+                        node.path()
+                    ))
 
     def handle_timeout(self):
         self.entrust()
 
     def entrust(self):
-        solving = self.current is not None
+        solving = self.current
         # if the current tree is already solved or timed out: stop it
         if self.current and self.current.started and (
                         self.current.status != framework.SolveStatus.unknown or self.current.is_timeout
         ):
             self.log(
                 logging.INFO,
-                '{} instance "{}"'.format(
+                '{} instance "{}" after {:.2f} seconds'.format(
                     'solved' if self.current.status != framework.SolveStatus.unknown else 'timeout',
-                    self.current.name
+                    self.current.name,
+                    time.time() - self.current.started
                 )
             )
-            for solver in {solver for solver in self._rlist
-                           if isinstance(solver, Solver) and solver.node and solver.node.root == self.current}:
+            for solver in {solver for solver in self.solvers(True) if solver.node.root == self.current}:
                 solver.stop()
             self.current = None
         if not self.current:
@@ -319,14 +329,16 @@ class ParallelizationServer(net.Server):
             if schedulables:
                 self.current = schedulables[0]
                 self.log(logging.INFO, 'solving instance "{}"'.format(self.current.name))
+        if solving != self.current and self.lemma_server:
+            self.lemma_server.write({'name': solving.name, 'node': '[]', 'lemmas': '0'}, '')
         if not self.current:
-            if solving:
+            if solving is not None:
                 self.log(logging.INFO, 'all done.')
             return
 
         assert isinstance(self.current, Tree)
 
-        solvers = {solver for solver in self._rlist if isinstance(solver, Solver) and not solver.node}
+        idle_solvers = self.solvers(None)
         nodes = self.current.all()
         nodes.sort()
 
@@ -344,37 +356,50 @@ class ParallelizationServer(net.Server):
             if node.status != framework.SolveStatus.unknown:
                 for solver in self.solvers(node):
                     solver.stop()
-                    solvers.add(solver)
+                    idle_solvers.add(solver)
 
-        # count the solvers required to fill all the leafs
-        leaf_slots = 0
-        for leaf in leaves():
-            if self.config.portfolio_max <= 0:
-                leaf_slots += 1
-            else:
-                leaf_slots += self.config.portfolio_max - len(self.solvers(leaf))
+        # count the max number of solvers required to fill all the leafs
+        if self.config.portfolio_max <= 0:
+            # infinite
+            leaf_slots = None
+        else:
+            # for each leaf I count how many solver at most I can employ there
+            leaf_slots = 0
+            for leaf in leaves():
+                leaf_slots += max(0, self.config.portfolio_max - len(self.solvers(leaf)))
 
-        # now stop leaf_slots solvers working on a non-leaf node, so it will be moved on a leaf afterwards
+        # now stop leaf_slots solvers working on a already fully partitioned internal node,
+        # so it will be moved on a leaf afterwards.
         # least depth nodes stopped first
-        # if leaf_slots=-1 then all the solvers working on a internal node will be stopped
+        # if leaf_slots=None then all the solvers working on a internal node will be stopped
         for node in (node for node in internals() if len(node.children) == level_children(len(node.path()))):
+            # here I check that every or node child has all the partitions
+            # that is every child is completed. if not then I'll not kill any solver working on that node.
+            try:
+                for child in node.children:
+                    if len(child.children) < level_children(len(child.path())):
+                        raise ValueError
+            except ValueError:
+                continue
+            if leaf_slots == 0:
+                break
             for solver in self.solvers(node):
                 if leaf_slots == 0:
                     break
-                if self.config.portfolio_min > 0 and len(self.solvers(node)) <= self.config.portfolio_min:
-                    break
-                leaf_slots -= 1
+                if leaf_slots is not None:
+                    leaf_slots -= 1
                 solver.stop()
-                solvers.add(solver)
+                idle_solvers.add(solver)
 
         # spread the solvers among the unsolved nodes taking care of portfolio_max
         # first the leafs will be filled. inner nodes after and only if available solvers are left idle
-        nodes.reverse()
-        for selection in [leaves(), internals()]:
-            while solvers:
-                available = len(solvers)
-                for node in selection:
-                    if not solvers:
+        # nodes.reverse()
+        for selection in [leaves, internals]:
+            available = 0
+            while available != len(idle_solvers):
+                available = len(idle_solvers)
+                for node in selection():
+                    if not idle_solvers:
                         break
                     try:
                         # here i check that every node in the path to the root is already solved
@@ -385,18 +410,15 @@ class ParallelizationServer(net.Server):
                     except ValueError:
                         continue
                     if self.config.portfolio_max <= 0 or len(self.solvers(node)) < self.config.portfolio_max:
-                        solver = solvers.pop()
+                        solver = idle_solvers.pop()
                         header = {"lemmas": self.config.lemma_amount}
+                        header = {}
                         self.config.entrust(
                             header,
                             solver,
-                            {solver for solver in self._rlist
-                             if isinstance(solver, Solver) and solver.node and solver.node.root == node.root}
+                            {solver for solver in self.solvers(True) if solver.node.root == self.current}
                         )
                         solver.solve(node, header)
-                # break if no solver was assigned
-                if len(solvers) == available:
-                    break
 
         need_partition = (self.config.partition_timeout and self.current.started
                           and (
@@ -406,9 +428,9 @@ class ParallelizationServer(net.Server):
                           ) + self.config.partition_timeout < time.time())
 
         # if there are still available solvers or need partition timeout: ask partitions
-        if solvers or need_partition:
+        if idle_solvers or need_partition:
             self.current.last_partition = time.time()
-            available = len(solvers)
+            available = len(idle_solvers)
             # for all the leafs with at least one solver
             for leaf in (leaf for leaf in leaves() if self.solvers(leaf)):
                 children = level_children(leaf.level())
@@ -416,15 +438,23 @@ class ParallelizationServer(net.Server):
                     if available <= 0:
                         break
                     available -= children
-                for i in range(children):
+                for i in range(children - len(leaf.children)):
                     solver = random.sample(self.solvers(leaf), 1)[0]
                     solver.ask_partitions(level_children(leaf.level() + 1))
 
+    # node = False : return all solvers
+    # node = True  : return all non idle solvers
+    # node = None  : return all idle solvers
     def solvers(self, node):
-        return [solver for solver in self._rlist if isinstance(solver, Solver) and solver.node == node]
+        return {solver for solver in self._rlist
+                if isinstance(solver, Solver) and (
+                    node is False or
+                    (node is True and solver.node is not None) or
+                    solver.node == node
+                )}
 
     @property
-    def lemma_server(self):
+    def lemma_server(self) -> LemmaServer:
         lemmas = [sock for sock in self._rlist if isinstance(sock, LemmaServer)]
         if lemmas:
             return lemmas[0]
@@ -480,7 +510,7 @@ if __name__ == '__main__':
 
     options, args = parser.parse_args()
 
-    logging.basicConfig(level=options.config.log_level, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=options.config.log_level, format='%(asctime)s\t%(levelname)s\t%(message)s')
 
     server = ParallelizationServer(config=options.config, conn=options.db, logger=logging.getLogger('server'))
     if hasattr(options.config, 'files'):

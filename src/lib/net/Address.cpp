@@ -10,7 +10,8 @@
 namespace net {
     Address::Address(std::string address) {
         uint8_t i;
-        for (i = 0; address[i] != ':' && i < address.size() && i < (uint8_t) -1; i++) {}
+        for (i = 0; address[i] != ':' && i < address.size() && i < (uint8_t) -1; i++) {
+        }
         if (address[i] != ':')
             throw Exception("invalid host:port");
         new(this) Address(address.substr(0, i), (uint16_t) ::atoi(address.substr(i + 1).c_str()));
@@ -34,6 +35,6 @@ namespace net {
             ::inet_ntop(AF_INET6, &s->sin6_addr, ipstr, sizeof ipstr);
         }
 
-        new(this) Address(std::string(ipstr), port);
+        new(this) Address(ipstr, port);
     }
 }

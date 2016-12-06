@@ -8,7 +8,9 @@
 #include <assert.h>
 #include <ctime>
 #include <iostream>
+#include <sstream>
 #include <mutex>
+#include <iomanip>
 
 
 class Logger {
@@ -19,33 +21,34 @@ public:
     static void log(uint8_t level, std::string message) {
         int r = 0;
         static std::mutex mtx;
-        std::string record;
-        record += std::to_string(std::time(nullptr));
-        record += "\t";
+        std::stringstream stream;
+        std::time_t time = std::time(nullptr);
+        struct tm tm = *std::localtime(&time);
+        stream << std::put_time(&tm, "%Y-%m-%d %H:%M:%S") << "\t";
         switch (level) {
             case INFO:
-                record += "INFO\t";
+                stream << "INFO\t";
                 break;
             case WARNING:
                 if (getenv("TERM")) {
                     r += system("tput setaf 3");
                     r += system("tput bold");
                 }
-                record += "WARNING\t";
+                stream << "WARNING\t";
                 break;
             case ERROR:
                 if (getenv("TERM")) {
                     r += system("tput setaf 9");
                     r += system("tput bold");
                 }
-                record += "ERROR\t";
+                stream << "ERROR\t";
                 break;
             default:
-                record += "UNKNOWN\t";
+                stream << "UNKNOWN\t";
         }
-        record += message;
+        stream << message;
         mtx.lock();
-        std::cout << record << "\n";
+        std::cout << stream.str() << "\n";
         if (getenv("TERM")) {
             r = system("tput sgr0");
         }

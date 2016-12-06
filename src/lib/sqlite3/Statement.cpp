@@ -19,18 +19,19 @@ namespace SQLite3 {
             throw Exception("bind null failed");
     }
 
-    void Statement::bind(int pos, int value) {
-        if (sqlite3_bind_int((sqlite3_stmt *) this->stmt, pos, value) != SQLITE_OK)
+    void Statement::bind(int pos, int64_t value) {
+        if (sqlite3_bind_int64((sqlite3_stmt *) this->stmt, pos, value) != SQLITE_OK)
             throw Exception("bind int failed");
     }
 
-    void Statement::bind(int pos, const char *value, int len) {
-        if (sqlite3_bind_text((sqlite3_stmt *) this->stmt, pos, value, len, SQLITE_STATIC) != SQLITE_OK)
-            throw Exception("bind const text failed");
+    void Statement::bind(int pos, const std::string &value) {
+        this->bind(pos, value.c_str(), (int) value.size());
     }
 
-    void Statement::bind(int pos, char *value, int len, void(*destructor)(void *)) {
-        if (sqlite3_bind_text((sqlite3_stmt *) this->stmt, pos, value, len, destructor) != SQLITE_OK)
+    void Statement::bind(int pos, const char *value, int len) {
+        if (len < 0)
+            len = (int) strlen(value);
+        if (sqlite3_bind_text((sqlite3_stmt *) this->stmt, pos, strndup(value, (size_t) len), len, free) != SQLITE_OK)
             throw Exception("bind const text failed");
     }
 
@@ -50,5 +51,6 @@ namespace SQLite3 {
         if (sqlite3_step((sqlite3_stmt *) this->stmt) != SQLITE_DONE) {
             throw Exception("could not execute the statement.");
         }
+        this->reset();
     }
 }

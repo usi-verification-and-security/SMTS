@@ -152,10 +152,13 @@ class AndNode(Node):
 
     def smtlib_complete(self):
         node = self
+        root = node.root
         smtlibs = []
         while node:
             if isinstance(node, AndNode):
                 smtlibs.append(node.smtlib)
+                if node is not root:
+                    smtlibs.append('(push 1)')
             node = node.parent
         smtlibs.reverse()
         return '\n'.join(smtlibs)

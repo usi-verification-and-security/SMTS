@@ -34,7 +34,7 @@ void SolverServer::log(uint8_t level, std::string message, net::Header *header_s
     //    }
     if (message.find("\n") != std::string::npos) {
         ::replace(message, "\n", "\n  ");
-        message = std::string("\n") + message;
+        message = "\n" + message;
     }
     Logger::log(level, (this->solver ? this->solver->header["name"] + this->solver->header["node"] + ": " : "") +
                        message);
@@ -117,7 +117,7 @@ SolverServer::handle_message(net::Socket &socket, net::Header &header, std::stri
         this->server.write(header, payload);
         //pprint(header);
         if (header.count("status")) {
-            this->log(Logger::INFO, std::string("status: ") + header["status"]);
+            this->log(Logger::INFO, "status: " + header["status"]);
         }
         if (header.count("info")) {
             this->log(Logger::INFO, header["info"]);

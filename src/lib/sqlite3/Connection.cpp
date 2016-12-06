@@ -9,9 +9,10 @@
 
 namespace SQLite3 {
     Connection::Connection(const std::string &db_filename) {
-        int rc = sqlite3_open(db_filename.c_str(), (sqlite3 **) &this->db);
+        const char *filename = db_filename.size() ? db_filename.c_str() : ":memory:";
+        int rc = sqlite3_open(filename, (sqlite3 **) &this->db);
         if (rc)
-            throw Exception(std::string("can't open: ") + db_filename);
+            throw Exception(std::string("can't open: ") + filename);
     }
 
     Connection::~Connection() {
@@ -61,5 +62,9 @@ namespace SQLite3 {
             sqlite3_free(errc);
             throw Exception(err);
         }
+    }
+
+    int64_t Connection::last_rowid() {
+        return sqlite3_last_insert_rowid((sqlite3 *) this->db);
     }
 }

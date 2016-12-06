@@ -17,11 +17,11 @@ namespace SQLite3 {
 
         void bind(int);
 
-        void bind(int, int);
+        void bind(int, int64_t);
 
-        void bind(int, const char *, int);
+        void bind(int, const std::string &);
 
-        void bind(int, char *, int, void(*)(void *));
+        void bind(int, const char *, int len = -1);
 
         void reset();
 

@@ -201,7 +201,7 @@ namespace net {
         socklen_t addr_len = sizeof(addr);
 
         if (::getsockname(this->fd, (struct sockaddr *) &addr, &addr_len) < 0)
-            return Address(std::string(), 0);
+            return Address("", 0);
 
         return Address(&addr);
     }
@@ -211,7 +211,7 @@ namespace net {
         socklen_t addr_len = sizeof(addr);
 
         if (::getpeername(this->fd, (struct sockaddr *) &addr, &addr_len) < 0)
-            return Address(std::string(), 0);
+            return Address("", 0);
 
         return Address(&addr);
     }

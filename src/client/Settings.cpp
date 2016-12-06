@@ -19,7 +19,7 @@ void Settings::load_header(net::Header &header, char *string) {
         Logger::log(Logger::ERROR, std::string("bad pair: ") + string);
     }
     optarg[i] = '\0';
-    header[std::string(optarg)] = std::string(&optarg[i + 1]);
+    header[optarg] = &optarg[i + 1];
 }
 
 
@@ -52,6 +52,6 @@ void Settings::load(int argc, char **argv) {
                 exit(-1);
         }
     for (int i = optind; i < argc; i++) {
-        this->files.push_back(std::string(argv[i]));
+        this->files.push_back(argv[i]);
     }
 }

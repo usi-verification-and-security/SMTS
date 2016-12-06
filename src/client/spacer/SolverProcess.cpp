@@ -51,6 +51,9 @@ void SolverProcess::init() {
     };
     z3::params p(context);
     p.set(":engine", context.str_symbol("spacer"));
+    Z3_global_param_set("verbose", "1");
+    //Z3_update_param_value(context, ":verbose", "1");
+
     try {
         for (auto &pair:this->header) {
             if (pair.first.substr(0, 10) == "parameter.") {
@@ -66,7 +69,8 @@ void SolverProcess::init() {
         }
         fixedpoint.set(p);
     }
-    catch (z3::exception &) { // i'm not sending the msg because it's too long
+    catch (z3::exception &ex) { // i'm not sending the msg because it's too long
+        std::cout << ex << "\n";
         this->error("cannot set parameters");
     }
 }
@@ -85,7 +89,7 @@ void SolverProcess::solve() {
 
         Z3_lbool res = Z3_fixedpoint_query(context, fixedpoint, a);
 
-        net::Header header;
+        net::Header header(this->header);
         z3::stats statistics(context, Z3_fixedpoint_get_statistics(context, fixedpoint));
         for (uint32_t i = 0; i < statistics.size(); i++) {
             header["statistics." + statistics.key(i)] =

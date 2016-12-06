@@ -62,7 +62,7 @@ void inline OpenSMTSolver::clausesPublish() {
                 }
                 PTRef pt = this->interpret.logic->mkOr(clause);
                 char *s = this->interpret.thandler->getLogic().printTerm(pt, false, true);
-                lemmas.push_back(net::Lemma(s, (uint8_t) (k + 1)));
+                lemmas.push_back(net::Lemma(s, (uint16_t) (k + 1)));
                 free(s);
                 goto next;
             }
@@ -89,5 +89,5 @@ void inline OpenSMTSolver::clausesUpdate() {
         if (lemma.smtlib.size() > 0)
             this->interpret.interpFile((char *) ("(assert " + lemma.smtlib + ")").c_str());
     }
-    this->interpret.main_solver->simplifyFormulas();
+    //this->interpret.main_solver->simplifyFormulas();
 }

@@ -6,6 +6,7 @@
 #define CLAUSE_SERVER_ADDRESS_H
 
 #include <string>
+#include <sstream>
 
 
 namespace net {
@@ -17,8 +18,8 @@ namespace net {
 
         Address(struct sockaddr_storage *);
 
-        const std::string toString() {
-            return this->hostname + ":" + std::to_string(this->port);
+        friend std::ostream &operator<<(std::ostream &stream, const Address &address) {
+            return stream << address.hostname << ":" << std::to_string(address.port);
         }
 
         std::string hostname;

@@ -8,8 +8,7 @@
 
 
 Settings::Settings() :
-        port(5000),
-        server(std::string(), 0) {}
+        port(5000) {}
 
 void Settings::load(int argc, char **argv) {
     int opt;
@@ -25,7 +24,7 @@ void Settings::load(int argc, char **argv) {
                 this->server = optarg;
                 break;
             case 'd':
-                this->db_filename = std::string(optarg);
+                this->db_filename = optarg;
                 break;
             default:
                 std::cout << "unknown option '" << opt << "'" << "\n";

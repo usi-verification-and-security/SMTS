@@ -13,7 +13,9 @@ namespace SQLite3 {
     private:
         void *db;
     public:
-        Connection(const std::string &db_filename);
+        Connection() : Connection("") {}
+
+        Connection(const std::string &);
 
         ~Connection();
 
@@ -22,6 +24,8 @@ namespace SQLite3 {
         void exec(const std::string &, std::function<int(int, char **, char **)>);
 
         void exec(const std::string &);
+
+        int64_t last_rowid();
     };
 }
 

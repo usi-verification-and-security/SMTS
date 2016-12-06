@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <fstream>
-#include "lib/Logger.h"
+#include "lib/lib.h"
 #include "FileThread.h"
 
 
@@ -13,7 +13,7 @@ FileThread::FileThread(Settings &settings) :
         server((uint16_t) 0) {
     if (settings.server.size())
         throw Exception("server must be null");
-    settings.server = this->server.get_local().toString();
+    settings.server = to_string(this->server.get_local());
     this->start();
 }
 
@@ -57,9 +57,9 @@ void FileThread::main() {
         do {
             client->read(header, payload);
         } while (header.count("status") == 0 && header.count("error") == 0);
-        if (lemmas)
+        if (lemmas and this->settings.clear_lemmas)
             try {
-                header["lemmas"] = std::string("0");
+                header["lemmas"] = "0";
                 lemmas->write(header, "");
             } catch (net::SocketException) {
                 lemmas.reset();

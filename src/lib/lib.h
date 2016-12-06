@@ -35,6 +35,13 @@ void join(std::ostream &stream, const std::string &delimiter, const std::vector<
 
 void replace(std::string &, const std::string &, const std::string &);
 
+template<typename T>
+const std::string to_string(const T &obj) {
+    std::stringstream ss;
+    ss << obj;
+    return ss.str();
+}
+
 #include "Exception.h"
 #include "Logger.h"
 #include "Process.h"

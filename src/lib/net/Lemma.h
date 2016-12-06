@@ -22,11 +22,7 @@ namespace net {
             return stream;
         }
 
-        friend std::ostream &operator<<(std::ostream &stream, const std::vector<Lemma> &lemmas);
-
-        friend std::istream &operator>>(std::istream &stream, std::vector<Lemma> &lemmas);
-
-        Lemma(const std::string &smtlib, const uint8_t level) : smtlib(smtlib), level(level) {}
+        Lemma(const std::string &smtlib, const uint16_t level) : smtlib(smtlib), level(level) {}
 
         Lemma(const std::string &dump) {
             std::istringstream is(dump);
@@ -36,6 +32,10 @@ namespace net {
         std::string smtlib;
         uint16_t level;
     };
+
+    std::ostream &operator<<(std::ostream &stream, const std::vector<Lemma> &lemmas);
+
+    std::istream &operator>>(std::istream &stream, std::vector<Lemma> &lemmas);
 }
 
 #endif //CLAUSE_SERVER_LEMMA_H

@@ -20,7 +20,7 @@ public:
     explicit Exception(const std::string &message) :
             msg(message) {}
 
-    char const *what() const throw() { return this->msg.c_str(); }
+    const char *what() const throw() { return this->msg.c_str(); }
 };
 
 #endif //CLAUSE_SHARING_EXCEPTION_H
