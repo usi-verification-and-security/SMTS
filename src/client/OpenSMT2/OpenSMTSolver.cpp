@@ -14,7 +14,8 @@ void OpenSMTInterpret::new_solver() {
 OpenSMTSolver::OpenSMTSolver(OpenSMTInterpret &interpret) :
         SimpSMTSolver(interpret.config, *interpret.thandler),
         interpret(interpret),
-        trail_sent(0) {}
+        trail_sent(0),
+        learned_push(false) {}
 
 OpenSMTSolver::~OpenSMTSolver() {}
 
@@ -85,9 +86,14 @@ void inline OpenSMTSolver::clausesUpdate() {
     if (lemmas.size() == 0)
         return;
 
+    if (this->learned_push)
+        this->interpret.main_solver->pop();
+
+    this->interpret.main_solver->push();
+    this->learned_push = true;
+
     for (auto &lemma:lemmas) {
         if (lemma.smtlib.size() > 0)
             this->interpret.interpFile((char *) ("(assert " + lemma.smtlib + ")").c_str());
     }
-    //this->interpret.main_solver->simplifyFormulas();
 }

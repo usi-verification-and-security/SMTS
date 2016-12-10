@@ -55,6 +55,7 @@ void SolverServer::handle_close(net::Socket &socket) {
     } else if (this->solver && &socket == this->solver->reader()) {
         this->log(Logger::ERROR, "solver quit unexpectedly");
         this->solver->header["error"] = "unexpected quit";
+        this->solver->header["status"] = "unknown";
         this->server.write(this->solver->header, "");
         this->stop_solver();
     }

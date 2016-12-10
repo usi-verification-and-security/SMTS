@@ -78,12 +78,20 @@ void LemmaServer::handle_message(net::Socket &client,
     if (header["node"].size() < 2)
         return;
 
+
     uint32_t clauses_request = 0;
     try {
-        clauses_request = (uint32_t) stoi(header["lemmas"]);
+        clauses_request = (uint32_t) stoi(header["lemmas"].substr(1));
     } catch (std::invalid_argument &ex) {
         return;
     }
+    bool push;
+    if (header["lemmas"][0] == '+')
+        push = true;
+    else if (header["lemmas"][0] == '-')
+        push = false;
+    else
+        return;
 
     std::vector<Node *> node_path;
     node_path.push_back(&this->lemmas[header["name"]]);
@@ -122,7 +130,7 @@ void LemmaServer::handle_message(net::Socket &client,
     }
 
     // push
-    if (header.count("separator") == 1) {
+    if (push) {
         //std::list<Lemma *> *lemmas = &node_path.back()->lemmas;
         std::list<Lemma *> *lemmas_solver = &this->solvers[header["name"]][&client];
 
@@ -194,8 +202,6 @@ void LemmaServer::handle_message(net::Socket &client,
             lemmas.merge(std::list<Lemma *>(node->lemmas));
         }
         lemmas.sort(Lemma::compare);
-
-        header["separator"] = "\0";
 
         std::vector<net::Lemma> lemmas_send;
         uint32_t n = 0;

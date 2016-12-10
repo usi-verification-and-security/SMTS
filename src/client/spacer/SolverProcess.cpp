@@ -51,8 +51,6 @@ void SolverProcess::init() {
     };
     z3::params p(context);
     p.set(":engine", context.str_symbol("spacer"));
-    Z3_global_param_set("verbose", "1");
-    //Z3_update_param_value(context, ":verbose", "1");
 
     try {
         for (auto &pair:this->header) {
@@ -65,6 +63,10 @@ void SolverProcess::init() {
                 else
                     p.set(pair.first.substr(10).c_str(), context.str_symbol(pair.second.c_str()));
 
+            } else if (pair.first.substr(0, 6) == "trace.") {
+                Z3_enable_trace(pair.first.substr(6).c_str());
+            } else if (pair.first == "verbose") {
+                Z3_global_param_set("verbose", pair.second.c_str());
             }
         }
         fixedpoint.set(p);

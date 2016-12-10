@@ -82,9 +82,10 @@ namespace net {
     uint32_t Socket::readn(char *buffer, uint32_t length, uint32_t timeout) {
         struct timeval tv;
         if (timeout > 0) {
-            if (timeout > 1000) {
+            if (timeout > 1000)
                 tv.tv_sec = timeout / 1000;
-            }
+            else
+                tv.tv_sec = 0;
             tv.tv_usec = (uint32_t) ((timeout - (tv.tv_sec * 1000)) * 1000);
         }
 

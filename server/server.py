@@ -29,7 +29,7 @@ class Config:
     log_level = logging.INFO
 
     @staticmethod
-    def entrust(header, solver, solvers):
+    def entrust(node, header, solver, solvers):
         pass
 
 
@@ -78,6 +78,7 @@ class Solver(net.Socket):
                                        ");".format(self.table_prefix))
             self.conn.commit()
         self.node = None
+        self.started = None
         self.or_waiting = []
 
     def __repr__(self):
@@ -93,8 +94,9 @@ class Solver(net.Socket):
         header['name'] = root.name
         header['node'] = node.path()
         self.write(header, node.smtlib_complete() + "\n(check-sat)")
+        self.started = time.time()
         if not root.started:
-            root.started = time.time()
+            root.started = self.started
         self.node = node
         self.db_log('+')
 
@@ -401,6 +403,8 @@ class ParallelizationServer(net.Server):
                 for node in selection():
                     if not idle_solvers:
                         break
+                    if node.status != framework.SolveStatus.unknown:
+                        continue
                     try:
                         # here i check that every node in the path to the root is already solved
                         # could happen that an upper level node is solved while one on its subtree is still unsolved
@@ -414,6 +418,7 @@ class ParallelizationServer(net.Server):
                         header = {"lemmas": self.config.lemma_amount}
                         header = {}
                         self.config.entrust(
+                            node,
                             header,
                             solver,
                             {solver for solver in self.solvers(True) if solver.node.root == self.current}
@@ -427,18 +432,13 @@ class ParallelizationServer(net.Server):
                               self.current.started
                           ) + self.config.partition_timeout < time.time())
 
-        # if there are still available solvers or need partition timeout: ask partitions
-        if idle_solvers or need_partition:
+        # if need partition timeout: ask partitions
+        if need_partition:
             self.current.last_partition = time.time()
-            available = len(idle_solvers)
             # for all the leafs with at least one solver
             for leaf in (leaf for leaf in leaves() if self.solvers(leaf)):
-                children = level_children(leaf.level())
-                if not need_partition:
-                    if available <= 0:
-                        break
-                    available -= children
-                for i in range(children - len(leaf.children)):
+                max_children = level_children(leaf.level())
+                for i in range(max_children - len(leaf.children)):
                     solver = random.sample(self.solvers(leaf), 1)[0]
                     solver.ask_partitions(level_children(leaf.level() + 1))
 

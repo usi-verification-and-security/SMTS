@@ -7,6 +7,7 @@
 
 #include <atomic>
 #include <mutex>
+#include <ctime>
 #include "lib/lib.h"
 
 
@@ -25,11 +26,16 @@ struct Task {
 
 class SolverProcess : public Process {
 private:
-    std::vector<net::Lemma> lemma_to_push;
-    std::shared_ptr<net::Socket> lemmas;
-    std::mutex lemmas_mtx;
-    static const uint8_t lemmas_errors_max = 3;
-    uint8_t lemmas_errors;
+    struct {
+        const uint8_t errors_max = 3;
+        std::mutex mtx;
+        std::shared_ptr<net::Socket> server;
+        std::vector<net::Lemma> to_push;
+        uint8_t errors = 0;
+        uint8_t interval = 1;
+        std::time_t last_push = 0;
+        std::time_t last_pull = 0;
+    } lemma;
 
     net::Pipe pipe;
     std::string instance;
@@ -57,13 +63,13 @@ private:
                         this->report();
                     else if (header["local"] == "lemma_server" && header.count("lemma_server")) {
                         if (!header["lemma_server"].size()) {
-                            std::lock_guard<std::mutex> lock(this->lemmas_mtx);
-                            this->lemmas.reset();
+                            std::lock_guard<std::mutex> lock(this->lemma.mtx);
+                            this->lemma.server.reset();
                         } else {
                             try {
-                                std::lock_guard<std::mutex> lock(this->lemmas_mtx);
-                                this->lemmas.reset(new net::Socket(header["lemma_server"]));
-                                this->lemmas_errors = 0;
+                                std::lock_guard<std::mutex> lock(this->lemma.mtx);
+                                this->lemma.server.reset(new net::Socket(header["lemma_server"]));
+                                this->lemma.errors = 0;
                             } catch (net::SocketException &ex) {
                                 this->error(std::string("lemma server connection failed: ") + ex.what());
                                 continue;
@@ -104,8 +110,7 @@ private:
         this->writer()->write(this->header, "");
     }
 
-    void
-    report(Status status, const net::Header &h = net::Header()) {
+    void report(Status status, const net::Header &h = net::Header()) {
         auto header = h;
         if (status == Status::sat)
             header["status"] = "sat";
@@ -164,14 +169,18 @@ private:
     }
 
     void lemma_push(const std::vector<net::Lemma> &lemmas) {
-        if (lemmas.size() == 0 && this->lemma_to_push.size() == 0)
+        if (lemmas.size() == 0 && this->lemma.to_push.size() == 0)
             return;
 
-        std::lock_guard<std::mutex> _l(this->lemmas_mtx);
+        std::lock_guard<std::mutex> _l(this->lemma.mtx);
 
-        this->lemma_to_push.insert(this->lemma_to_push.end(), lemmas.begin(), lemmas.end());
+        this->lemma.to_push.insert(this->lemma.to_push.end(), lemmas.begin(), lemmas.end());
 
-        if (!is_sharing() || this->lemmas_errors >= SolverProcess::lemmas_errors_max)
+        if (
+                !is_sharing() ||
+                std::time(nullptr) < this->lemma.last_push + this->lemma.interval ||
+                this->lemma.errors >= this->lemma.errors_max
+                )
             return;
 
         net::Header header = this->header;
@@ -179,49 +188,64 @@ private:
         header["node"] = this->header["node"];
         std::stringstream payload;
 
-        payload << this->lemma_to_push;
+        payload << this->lemma.to_push;
 
-        header["separator"] = "a";
-        header["lemmas"] = std::to_string(this->lemma_to_push.size());
+        header["lemmas"] = "+" + std::to_string(this->lemma.to_push.size());
 
         try {
-            this->lemmas->write(header, payload.str());
+            this->lemma.server->write(header, payload.str());
         } catch (net::SocketException &ex) {
-            this->lemmas_errors++;
+            this->lemma.errors++;
             this->error(std::string("lemma push failed: ") + ex.what());
             return;
         }
-        this->lemma_to_push.clear();
+
+        this->lemma.errors = 0;
+        this->lemma.last_push = std::time(nullptr);
+        if (this->lemma.interval > 1)
+            this->lemma.interval--;
+
+        this->lemma.to_push.clear();
     }
 
     void lemma_pull(std::vector<net::Lemma> &lemmas) {
-        if (!is_sharing() || this->lemmas_errors >= SolverProcess::lemmas_errors_max)
+        if (
+                !is_sharing() ||
+                std::time(nullptr) < this->lemma.last_pull + this->lemma.interval ||
+                this->lemma.errors >= this->lemma.errors_max
+                )
             return;
 
-        std::lock_guard<std::mutex> _l(this->lemmas_mtx);
+        std::lock_guard<std::mutex> _l(this->lemma.mtx);
 
         net::Header header;
         header["name"] = this->header["name"];
         header["node"] = this->header["node"];
-        header["lemmas"] = this->header["lemmas"];
+        header["lemmas"] = "-" + this->header["lemmas"];
         std::string payload;
 
         try {
-            this->lemmas->write(header, "");
-            this->lemmas->read(header, payload, 2000);
+            this->lemma.server->write(header, "");
+            this->lemma.server->read(header, payload, 500);
         } catch (net::SocketException &ex) {
-            this->lemmas_errors++;
+            this->lemma.errors++;
             this->error(std::string("lemma pull failed: ") + ex.what());
             return;
         } catch (net::SocketTimeout &) {
-            this->lemmas_errors++;
-            this->error("lemma pull failed: timeout");
+            this->lemma.errors++;
+            this->warning("lemma pull failed: timeout");
+            if (this->lemma.interval < 0x7F)
+                this->lemma.interval *= 2;
             return;
         }
 
+        this->lemma.errors = 0;
+        this->lemma.last_pull = std::time(nullptr);
+        if (this->lemma.interval > 1)
+            this->lemma.interval--;
+
         if (header["name"] != this->header["name"]
-            || header["node"] != this->header["node"]
-            || header.count("separator") == 0)
+            || header["node"] != this->header["node"])
             return;
 
         std::istringstream is(payload);
@@ -231,7 +255,6 @@ private:
 public:
     SolverProcess(net::Header header,
                   std::string instance) :
-            lemmas_errors(0),
             instance(instance),
             header(header) {
         this->start();
@@ -240,7 +263,7 @@ public:
     net::Header header;
 
     bool is_sharing() {
-        return this->lemmas != nullptr;
+        return this->lemma.server != nullptr;
     }
 
     static const char *solver;

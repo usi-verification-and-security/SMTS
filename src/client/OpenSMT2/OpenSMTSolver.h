@@ -49,6 +49,7 @@ class OpenSMTSolver : public SimpSMTSolver {
 private:
     OpenSMTInterpret &interpret;
     uint32_t trail_sent;
+    bool learned_push;
 
     void inline clausesPublish();
 
