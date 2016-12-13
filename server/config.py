@@ -31,6 +31,8 @@ def entrust(node, header: dict, solver: server.Solver, solvers: set):
         if len(solvers) % 3 == 2:
             # -p gpdr
             header["-p"] = "gpdr"
+    if solver.name == "OpenSMT2":
+        header["config.seed"] = random.randint(0, 0xFFFFFF)
 
 
 _benchmarks_path = pathlib.Path('/Users/matteo/dev/spacer/regressions/')
@@ -39,8 +41,8 @@ files.remove('/Users/matteo/dev/spacer/regressions/false.smt2')
 
 # files = ["/Users/matteo/dev/spacer/regressions/ex01-dmpl-inline-unsat.smt2"]
 
-files = ["/Users/matteo/dev/opensmt2/test/std_benchmarks/NEQ_NEQ046_size6.smt2"]
-files = ["/Users/matteo/dev/opensmt2/test/std_benchmarks/PEQ_PEQ004_size8.smt2"]
+files = ["/Users/matteo/dev/opensmt2/test/std_benchmarks/NEQ_NEQ046_size6.smt2",
+         "/Users/matteo/dev/opensmt2/test/std_benchmarks/PEQ_PEQ004_size8.smt2"]
 
 # files=[str(pathlib.Path('../../opensmt2/test/std_benchmarks/NEQ_NEQ015_size6.smt2').resolve())]+\
 #       [str(pathlib.Path('../../opensmt2/test/std_benchmarks/PEQ_PEQ013_size8.smt2').resolve())]

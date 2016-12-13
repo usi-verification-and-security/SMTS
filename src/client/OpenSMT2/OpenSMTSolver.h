@@ -46,6 +46,8 @@ public:
 };
 
 class OpenSMTSolver : public SimpSMTSolver {
+    friend class SolverProcess;
+
 private:
     OpenSMTInterpret &interpret;
     uint32_t trail_sent;

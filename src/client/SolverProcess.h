@@ -32,7 +32,7 @@ private:
         std::shared_ptr<net::Socket> server;
         std::vector<net::Lemma> to_push;
         uint8_t errors = 0;
-        uint8_t interval = 1;
+        uint8_t interval = 2;
         std::time_t last_push = 0;
         std::time_t last_pull = 0;
     } lemma;
@@ -46,7 +46,7 @@ private:
         }
         this->init();
         auto header = this->header;
-        header["info"] = "start solving";
+        header["info"] = "solver start";
         this->report(header);
         std::thread t([&] {
             net::Header header;
@@ -155,10 +155,16 @@ private:
         std::string payload;
         this->pipe.reader()->read(header, payload);
         if (header["command"] == "incremental") {
-            return Task{
-                    .command=Task::incremental,
-                    .smtlib=payload
-            };
+            if (header.count("node_") && header.count("query")) {
+                this->instance += payload;
+                this->header["node"] = header["node_"];
+                this->header["query"] = header["query"];
+                this->info("incremental solving step from " + header["node"]);
+                return Task{
+                        .command=Task::incremental,
+                        .smtlib=payload
+                };
+            }
         }
         if (header["command"] == "partition" && header.count("partitions") == 1) {
             this->partition((uint8_t) atoi(header["partitions"].c_str()));
@@ -232,10 +238,10 @@ private:
             this->error(std::string("lemma pull failed: ") + ex.what());
             return;
         } catch (net::SocketTimeout &) {
-            this->lemma.errors++;
-            this->warning("lemma pull failed: timeout");
             if (this->lemma.interval < 0x7F)
                 this->lemma.interval *= 2;
+            else
+                this->warning("lemma pull failed: timeout");
             return;
         }
 
@@ -257,6 +263,8 @@ public:
                   std::string instance) :
             instance(instance),
             header(header) {
+        if (!header.count("name") || !header.count("node"))
+            throw Exception("missing mandatory key in header");
         this->start();
     }
 

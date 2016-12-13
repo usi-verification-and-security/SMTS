@@ -53,7 +53,7 @@ void SolverServer::handle_close(net::Socket &socket) {
         this->log(Logger::INFO, "server closed the connection");
         this->stop_solver();
     } else if (this->solver && &socket == this->solver->reader()) {
-        this->log(Logger::ERROR, "solver quit unexpectedly");
+        this->log(Logger::ERROR, "solver quit unexpected");
         this->solver->header["error"] = "unexpected quit";
         this->solver->header["status"] = "unknown";
         this->server.write(this->solver->header, "");
@@ -68,6 +68,7 @@ void SolverServer::handle_exception(net::Socket &socket, net::SocketException &e
 void SolverServer::stop_solver() {
     if (!this->solver)
         return;
+    this->log(Logger::INFO, "solver stop");
     this->del_socket(this->solver->reader());
     delete this->solver;
     this->solver = nullptr;
@@ -108,30 +109,32 @@ SolverServer::handle_message(net::Socket &socket, net::Header &header, std::stri
             if (!this->check_header(header)) {
                 return;
             }
-            this->log(Logger::INFO, "stop");
             this->stop_solver();
         } else if (this->check_header(header)) {
-            this->log(Logger::INFO, header["command"]);
             this->solver->writer()->write(header, payload);
         }
     } else if (this->solver && &socket == this->solver->reader()) {
         this->server.write(header, payload);
         //pprint(header);
+        this->solver->header = header;
         if (header.count("status")) {
             this->log(Logger::INFO, "status: " + header["status"]);
         }
         if (header.count("info")) {
             this->log(Logger::INFO, header["info"]);
-            header.erase("info");
+            this->solver->header.erase("info");
         }
         if (header.count("warning")) {
             this->log(Logger::WARNING, header["warning"]);
-            header.erase("warning");
+            this->solver->header.erase("warning");
         }
         if (header.count("error")) {
             this->log(Logger::ERROR, header["error"]);
-            header.erase("error");
+            this->solver->header.erase("error");
         }
-        this->solver->header = header;
+        if (header.count("partitions")) {
+            this->log(Logger::INFO, "produced " + header["partitions"] + " partitions");
+            this->solver->header.erase("partitions");
+        }
     }
 }

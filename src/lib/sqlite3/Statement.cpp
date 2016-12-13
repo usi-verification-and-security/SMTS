@@ -2,6 +2,7 @@
 // Created by Matteo on 02/12/2016.
 //
 
+#include <string.h>
 #include <sqlite3.h>
 #include "Exception.h"
 #include "Statement.h"

@@ -18,14 +18,12 @@ const char *SolverProcess::solver = "OpenSMT2";
 
 void SolverProcess::init() {
     FILE *file = fopen("/dev/null", "w");
-    //dup2(fileno(file), fileno(stdout));
+    dup2(fileno(file), fileno(stdout));
     dup2(fileno(file), fileno(stderr));
     fclose(file);
 
     if (this->header.count("config.seed") == 0) {
-        std::uniform_int_distribution<uint32_t> randuint(0, 0xFFFFFF);
-        std::random_device rd;
-        this->header["config.seed"] = std::to_string(randuint(rd));
+        this->header["config.seed"] = "0";
     }
 }
 
@@ -43,6 +41,7 @@ void SolverProcess::solve() {
 
     while (true) {
         interpret->interpFile(smtlib);
+        interpret->interpFile((char *) this->header["query"].c_str());
         interpret->f_exit = false;
         opensmt::stop = false;
         sstat status = interpret->main_solver->getStatus();
@@ -51,16 +50,18 @@ void SolverProcess::solve() {
             this->report(Status::sat);
         else if (status == s_False)
             this->report(Status::unsat);
-        else
-            this->report(Status::unknown);
 
         Task task = this->wait();
         switch (task.command) {
             case Task::incremental:
                 smtlib = (char *) task.smtlib.c_str();
+                if (((OpenSMTSolver *) interpret->solver)->learned_push) {
+                    ((OpenSMTSolver *) interpret->solver)->learned_push = false;
+                    interpret->main_solver->pop();
+                }
                 break;
             case Task::resume:
-                smtlib = (char *) "(check-sat)";
+                smtlib = (char *) "";
                 break;
         }
     }

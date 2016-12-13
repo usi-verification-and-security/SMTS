@@ -5,6 +5,7 @@
 #ifndef CLAUSE_SERVER_CONNECTION_H
 #define CLAUSE_SERVER_CONNECTION_H
 
+#include <functional>
 #include "Statement.h"
 
 

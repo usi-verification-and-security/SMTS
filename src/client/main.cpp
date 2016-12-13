@@ -19,19 +19,18 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    FileThread *ft = nullptr;
+    std::unique_ptr<FileThread> ft;
     if (!settings.server.size() && settings.files.size()) {
-        ft = new FileThread(settings);
+        ft.reset(new FileThread(settings));
     }
 
     if (settings.server.size()) {
         try {
-            SolverServer ss(net::Address(settings.server));
-            ss.run_forever();
+            SolverServer(net::Address(settings.server)).run_forever();
         } catch (net::SocketException &ex) {
             Logger::log(Logger::ERROR, ex.what());
+            return -1;
         }
+        Logger::log(Logger::INFO, "all done. bye!");
     }
-    delete ft;
-    Logger::log(Logger::INFO, "all done. bye!");
 }
