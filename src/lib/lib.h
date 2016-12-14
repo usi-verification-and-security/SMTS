@@ -42,6 +42,27 @@ const std::string to_string(const T &obj) {
     return ss.str();
 }
 
+template<typename T>
+std::ostream &operator<<(std::ostream &stream, const std::vector<T> &v) {
+    for (auto &i:v) {
+        stream << i << '\0';
+    }
+    return stream;
+}
+
+template<typename T>
+std::istream &operator>>(std::istream &stream, std::vector<T> &v) {
+    ::split(stream, '\0', [&](const std::string &sub) {
+        if (sub.size() == 0)
+            return;
+        std::istringstream is(sub);
+        T t;
+        is >> t;
+        v.push_back(t);
+    });
+    return stream;
+}
+
 #include "Exception.h"
 #include "Logger.h"
 #include "Process.h"

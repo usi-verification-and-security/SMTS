@@ -6,6 +6,7 @@
 #define CLAUSE_SHARING_PROCESSSOLVER_H
 
 #include <atomic>
+#include <random>
 #include <mutex>
 #include <ctime>
 #include "lib/lib.h"
@@ -127,7 +128,7 @@ private:
         std::stringstream payload;
         if (error != nullptr)
             header["error"] = error;
-        ::join(payload, "\n", partitions);
+        payload << partitions;
         header["partitions"] = std::to_string(partitions.size());
         this->report(header, payload.str());
     }
@@ -238,9 +239,10 @@ private:
             this->error(std::string("lemma pull failed: ") + ex.what());
             return;
         } catch (net::SocketTimeout &) {
-            if (this->lemma.interval < 0x7F)
-                this->lemma.interval *= 2;
-            else
+            if (this->lemma.interval < 0x7F) {
+                std::random_device rd;
+                this->lemma.interval += std::uniform_int_distribution<uint8_t>(1, this->lemma.interval)(rd);
+            } else
                 this->warning("lemma pull failed: timeout");
             return;
         }

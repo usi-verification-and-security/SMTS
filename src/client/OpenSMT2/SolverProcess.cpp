@@ -37,14 +37,14 @@ void SolverProcess::solve() {
         this->lemma_pull(lemmas);
     };
     interpret = new OpenSMTInterpret(this->header, lemma_push, lemma_pull, config);
-    char *smtlib = (char *) this->instance.c_str();
+    std::string smtlib = this->instance;
 
     while (true) {
-        interpret->interpFile(smtlib);
-        interpret->interpFile((char *) this->header["query"].c_str());
+        opensmt::stop = false;
+        interpret->interpFile((char *) (smtlib + this->header["query"]).c_str());
+        sstat status = interpret->main_solver->getStatus();
         interpret->f_exit = false;
         opensmt::stop = false;
-        sstat status = interpret->main_solver->getStatus();
 
         if (status == s_True)
             this->report(Status::sat);
@@ -54,14 +54,14 @@ void SolverProcess::solve() {
         Task task = this->wait();
         switch (task.command) {
             case Task::incremental:
-                smtlib = (char *) task.smtlib.c_str();
+                smtlib = task.smtlib;
                 if (((OpenSMTSolver *) interpret->solver)->learned_push) {
                     ((OpenSMTSolver *) interpret->solver)->learned_push = false;
                     interpret->main_solver->pop();
                 }
                 break;
             case Task::resume:
-                smtlib = (char *) "";
+                smtlib = "";
                 break;
         }
     }

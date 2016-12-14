@@ -5,8 +5,8 @@ import server
 port = 3000
 portfolio_max = 0
 portfolio_min = 0
-partition_timeout = 30
-partition_policy = [1, 4]
+partition_timeout = 60
+partition_policy = [1, 8]
 solving_timeout = 1000
 
 

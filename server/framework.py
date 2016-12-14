@@ -160,23 +160,30 @@ class Node:
 
 
 class AndNode(Node):
-    def __init__(self, smtlib: str, query: str, parent=None):
+    def __init__(self, smtlib: str, query: str, push: bool, parent=None):
         if not isinstance(parent, (OrNode, type(None))):
             raise TypeError
         super().__init__(parent)
         self._smtlib = smtlib
         self.query = query
+        self.push = push
 
-    def smtlib(self, threshold=None):
+    def smtlib(self, start=None):
+        npop = 0
+        if start:
+            while not start.is_ancestor(self):
+                if isinstance(start, AndNode) and start.push:
+                    npop += 1
+                start = start.parent
         node = self
-        root = node.root
         smtlibs = []
-        while node is not threshold:
+        while node is not start:
             if isinstance(node, AndNode):
                 smtlibs.append(node._smtlib)
-                if node is not root:
+                if node.push and node is not self.root:
                     smtlibs.append('(push 1)')
             node = node.parent
+        smtlibs += ['(pop 1)' for _ in range(npop)]
         smtlibs.reverse()
         return '\n'.join(smtlibs)
 
@@ -186,11 +193,11 @@ class AndNode(Node):
             if status == SolveStatus.sat or all([node.status == status for node in self.parent.children]):
                 self.parent.status = status
 
-    # def db_data(self, data=None):
-    #     if data:
-    #         self.smtlib = data
-    #     else:
-    #         return self.smtlib
+                # def db_data(self, data=None):
+                #     if data:
+                #         self.smtlib = data
+                #     else:
+                #         return self.smtlib
 
 
 class OrNode(Node):
@@ -203,5 +210,13 @@ class OrNode(Node):
         self._status = status
         self.parent.status = status
 
-    # def db_data(self, data=None):
-    #     return
+        # def db_data(self, data=None):
+        #     return
+
+
+root = AndNode('(input-smt)', '(check-sat)', True)
+c = OrNode(root)
+c = AndNode('(p1)', c.parent.query, True, c)
+c = OrNode(c)
+c = AndNode('(p2)', c.parent.query, True, c)
+c = AndNode('(d1)', root.query, True, root.child([0]))

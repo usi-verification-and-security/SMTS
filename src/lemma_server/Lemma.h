@@ -7,15 +7,17 @@
 
 #include <string>
 #include <list>
+#include "lib/net/Lemma.h"
 
 
-class Lemma {
+class Lemma : public net::Lemma {
 private:
     int score;
 public:
-    Lemma(std::string smtlib) :
+    Lemma(net::Lemma &lemma) :
+            net::Lemma(lemma),
             score(0),
-            smtlib(smtlib) { }
+            id(0) {}
 
     static bool compare(const Lemma *const &a, Lemma *const &b) {
         return a->score < b->score;
@@ -41,7 +43,7 @@ public:
 
     bool operator>=(Lemma const &b) const { return this->score >= b.score; }
 
-    std::string smtlib;
+    uint32_t id;
 };
 
 

@@ -13,7 +13,6 @@ add_library(Lib
         Logger.h
         net/Address.cpp
         net/Header.cpp
-        net/Lemma.cpp
         net/Pipe.cpp
         net/Server.cpp
         net/Socket.cpp

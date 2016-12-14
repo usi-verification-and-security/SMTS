@@ -93,7 +93,6 @@ SolverServer::handle_message(net::Socket &socket, net::Header &header, std::stri
             return;
         }
         if (header["command"] == "lemmas" && header.count("lemmas") == 1) {
-            this->log(Logger::INFO, "new lemma server address: " + header["lemmas"]);
             this->lemmas_address = header["lemmas"];
             this->update_lemmas();
         } else if (header["command"] == "solve") {

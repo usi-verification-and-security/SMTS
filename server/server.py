@@ -27,8 +27,7 @@ class Config:
     solving_timeout = None  # None no timeout
     lemma_amount = None  # None for auto
     log_level = logging.INFO  #
-    incremental_pop = True
-    incremental_push = True
+    incremental = 2  # 0: always restart. 1: only push. 2: always incremental
 
     @staticmethod
     def entrust(node, header, solver, solvers):
@@ -127,14 +126,12 @@ class Solver(net.Socket):
         self.node.root.db_log(self, '+')
 
     def incremental(self, node: framework.AndNode):
-        if not self.node.is_ancestor(node):
-            raise ValueError('current node is required to be an ancestor of the new node')
-        header = {}
-        header['command'] = 'incremental'
-        header['name'] = self.node.root.name
-        header['node'] = self.node.path()
-        header['node_'] = node.path()
-        header['query'] = node.query
+        header = {'command': 'incremental',
+                  'name': self.node.root.name,
+                  'node': self.node.path(),
+                  'node_': node.path(),
+                  'query': node.query
+                  }
         self.write(header, node.smtlib(self.node))
         self.started = time.time()
         self.node = node
@@ -151,10 +148,10 @@ class Solver(net.Socket):
         self.node = None
         self.or_waiting = []
 
-    def set_lemma_server(self, lemma_server: LemmaServer):
+    def set_lemma_server(self, lemma_server: LemmaServer = None):
         self.write({
             'command': 'lemmas',
-            'lemmas': lemma_server.listening
+            'lemmas': lemma_server.listening if lemma_server else ''
         }, '')
 
     def ask_partitions(self, n, node=None):
@@ -199,10 +196,10 @@ class Solver(net.Socket):
         if 'partitions' in header and self.or_waiting:
             node = self.or_waiting.pop()
             try:
-                for partition in payload.decode().split('\n'):
+                for partition in payload.decode().split('\0'):
                     if len(partition) == 0:
                         continue
-                    child = framework.AndNode('(assert {})'.format(partition), self.node.query, node)
+                    child = framework.AndNode('(assert {})'.format(partition), self.node.query, True, node)
                     self.node.root.db_log(self, 'AND', {"node": child.path(), "smtlib": partition})
                 # if there is only one partition then it is discarded
                 # I leave the or node without children
@@ -244,8 +241,6 @@ class ParallelizationServer(net.Server):
             cursor.execute("VACUUM;")
             self.conn.commit()
         self.log(logging.INFO, 'server start')
-
-    # TODO aggiungi che quando solvo qualcosa elimino le clausole.
 
     def handle_accept(self, sock):
         self.log(logging.DEBUG, 'new connection from {}'.format(sock.remote_address))
@@ -336,6 +331,9 @@ class ParallelizationServer(net.Server):
                         sock,
                         node.path()
                     ))
+        if isinstance(sock, LemmaServer):
+            for solver in self.solvers(False):
+                solver.set_lemma_server()
 
     def handle_timeout(self):
         self.entrust()
@@ -428,7 +426,7 @@ class ParallelizationServer(net.Server):
 
         # spread the solvers among the unsolved nodes taking care of portfolio_max
         # first the leafs will be filled. inner nodes after and only if available solvers are left idle
-        nodes.reverse()
+        # nodes.reverse()
         for selection in [leaves, internals]:
             available = 0
             while available != len(idle_solvers):
@@ -439,7 +437,7 @@ class ParallelizationServer(net.Server):
                     if node.status != framework.SolveStatus.unknown:
                         continue
                     try:
-                        # here i check that every node in the path to the root is already solved
+                        # here i check whether some node in the path to the root is already solved
                         # could happen that an upper level node is solved while one on its subtree is still unsolved
                         for _node in node.path(True):
                             if _node.status != framework.SolveStatus.unknown:
@@ -447,13 +445,23 @@ class ParallelizationServer(net.Server):
                     except StopIteration:
                         continue
                     if self.config.portfolio_max <= 0 or len(self.solvers(node)) < self.config.portfolio_max:
-                        if self.config.incremental_push:
+                        if self.config.incremental > 0:
                             try:
-                                # I prefer incremental solving on another solver
+                                # I first search for a solver which is solving an ancestor of node
+                                # so that incremental solving would work better
                                 for solver in idle_solvers:
                                     if not solver.node:
                                         continue
                                     if solver.node.is_ancestor(node):
+                                        idle_solvers.remove(solver)
+                                        solver.incremental(node)
+                                        raise StopIteration
+                            except StopIteration:
+                                continue
+                        if self.config.incremental > 1:
+                            try:
+                                for solver in idle_solvers:
+                                    if solver.node:
                                         idle_solvers.remove(solver)
                                         solver.incremental(node)
                                         raise StopIteration
