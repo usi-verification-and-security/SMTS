@@ -26,6 +26,8 @@ if __name__ == '__main__':
                       help='name of server database without extension')
     parser.add_option('-D', dest='lemma_database', default=False, action="store_true",
                       help='ask lemma_server to dump lemmas')
+    parser.add_option('-a', dest='lemma_send_again', default=False, action="store_true",
+                      help='lemma_server -a option')
 
     options, args = parser.parse_args()
 
@@ -74,6 +76,8 @@ if __name__ == '__main__':
             print('cannot run lemma server')
         else:
             args = [options.lemma_server, '-s', ip + ':' + str(config.port)]
+            if options.lemma_send_again:
+                args += ['-a']
             if options.lemma_database and options.database:
                 args += ['-d', options.database + '.lemma.db']
             print(args)
