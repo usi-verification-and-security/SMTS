@@ -60,7 +60,7 @@ void LemmaServer::handle_close(net::Socket &client) {
     }
 }
 
-void LemmaServer::handle_exception(net::Socket &client, net::SocketException &ex) {
+void LemmaServer::handle_exception(net::Socket &client, const net::SocketException &ex) {
     Logger::log(Logger::WARNING, "Exception from: " + to_string(client.get_remote()) + ": " + ex.what());
 }
 
@@ -126,7 +126,7 @@ void LemmaServer::handle_message(net::Socket &client,
     // push
     if (push) {
         //std::list<Lemma *> *lemmas = &node_path.back()->lemmas;
-        std::list<Lemma *> *lemmas_solver = &this->solvers[header["name"]][&client];
+        std::map<Lemma *, bool> &lemmas_solver = this->solvers[header["name"]][&client];
 
         uint32_t pushed = 0;
         uint32_t n = 0;
@@ -141,25 +141,24 @@ void LemmaServer::handle_message(net::Socket &client,
             if ((uint32_t) lemma.level >= node_path.size())
                 continue;
             for (int level = 0; level <= lemma.level; level++) {
-                std::list<Lemma *> &node_lemmas = node_path[level]->lemmas;
-                auto it = std::find_if(node_lemmas.begin(), node_lemmas.end(), [&lemma](const Lemma *other) {
-                    return other->smtlib == lemma.smtlib;
-                });
-                if (it != node_lemmas.end()) {
-                    (*it)->increase();
-                    lemmas_solver->push_back(*it);
-                    if (this->db) {
-                        SQLite3::Statement stmt = *this->db->prepare(
-                                "UPDATE Lemma SET score=? WHERE smtlib=?;");
-                        stmt.bind(1, (*it)->get_score());
-                        stmt.bind(2, (*it)->smtlib);
-                        stmt.exec();
+                Lemma *l = node_path[level]->get(lemma);
+                if (l) {
+                    l->increase();
+                    if (!lemmas_solver[l]) {
+                        lemmas_solver[l] = true;
+                        if (this->db) {
+                            SQLite3::Statement stmt = *this->db->prepare(
+                                    "UPDATE Lemma SET score=? WHERE smtlib=?;");
+                            stmt.bind(1, l->get_score());
+                            stmt.bind(2, l->smtlib);
+                            stmt.exec();
+                        }
                     }
                     break;
                 } else if (level == lemma.level) {
                     pushed++;
-                    node_lemmas.push_back(new Lemma(lemma));
-                    lemmas_solver->push_back(node_lemmas.back());
+                    l = node_path[level]->add_lemma(lemma);
+                    lemmas_solver[l] = true;
                     if (this->db) {
                         if (push_rowid < 0) {
                             SQLite3::Statement stmt = *this->db->prepare(
@@ -175,10 +174,10 @@ void LemmaServer::handle_message(net::Socket &client,
                                 "INSERT INTO Lemma (pid,level,score,smtlib) VALUES(?,?,?,?);");
                         stmt.bind(1, push_rowid);
                         stmt.bind(2, lemma.level);
-                        stmt.bind(3, node_lemmas.back()->get_score());
-                        stmt.bind(4, node_lemmas.back()->smtlib);
+                        stmt.bind(3, l->get_score());
+                        stmt.bind(4, l->smtlib);
                         stmt.exec();
-                        node_lemmas.back()->id = (uint32_t) this->db->last_rowid();
+                        l->id = (uint32_t) this->db->last_rowid();
                     }
                 }
             }
@@ -193,10 +192,10 @@ void LemmaServer::handle_message(net::Socket &client,
 
     } else { // pull
         std::list<Lemma *> lemmas;
-        std::list<Lemma *> *lemmas_solver = &this->solvers[header["name"]][&client];
+        std::map<Lemma *, bool> &lemmas_solver = this->solvers[header["name"]][&client];
 
         for (auto node:node_path) {
-            lemmas.merge(std::list<Lemma *>(node->lemmas));
+            node->fill(lemmas);
         }
         lemmas.sort(Lemma::compare);
 
@@ -206,13 +205,10 @@ void LemmaServer::handle_message(net::Socket &client,
             if (n >= clauses_request)
                 break;
 
-            auto it = std::find_if(lemmas_solver->begin(), lemmas_solver->end(), [&lemma](const Lemma *other) {
-                return other->smtlib == (*lemma)->smtlib;
-            });
-            if (it != lemmas_solver->end())
+            if (lemmas_solver[*lemma])
                 continue;
 
-            lemmas_solver->push_back(*lemma);
+            lemmas_solver[*lemma] = true;
             lemmas_send.push_back(net::Lemma((*lemma)->smtlib, 0));
             n++;
         }

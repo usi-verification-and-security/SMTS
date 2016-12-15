@@ -7,7 +7,6 @@ import importlib.util
 import subprocess
 import signal
 import pathlib
-import threading
 import time
 import socket
 import sys
@@ -61,35 +60,27 @@ if __name__ == '__main__':
 
     atexit.register(kill_server)
 
-
-    def lemma_thread():
-        try:
-            time.sleep(2)
-        except KeyboardInterrupt:
-            pass
-        while (True):
-            try:
-                spec = importlib.util.spec_from_file_location("config", options.server_config)
-                config = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(config)
-            except:
-                print('cannot run lemma server')
-            else:
-                args = [options.lemma_server, '-s', ip + ':' + str(config.port)]
-                if options.lemma_database and options.database:
-                    args += ['-d', options.database + '.lemma.db']
-                print(args)
-                try:
-                    lemma_server = subprocess.Popen(args)
-                    lemma_server.wait()
-                except BaseException as ex:
-                    print(ex)
-
+    try:
+        time.sleep(3)
+    except KeyboardInterrupt:
+        pass
 
     if options.lemma_server:
-        t = threading.Thread(target=lemma_thread)
-        t.daemon = True
-        t.start()
+        try:
+            spec = importlib.util.spec_from_file_location("config", options.server_config)
+            config = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(config)
+        except:
+            print('cannot run lemma server')
+        else:
+            args = [options.lemma_server, '-s', ip + ':' + str(config.port)]
+            if options.lemma_database and options.database:
+                args += ['-d', options.database + '.lemma.db']
+            print(args)
+            try:
+                lemma_server = subprocess.Popen(args)
+            except BaseException as ex:
+                print(ex)
 
     try:
         server.wait()

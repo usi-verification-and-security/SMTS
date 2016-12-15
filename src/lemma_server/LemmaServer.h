@@ -19,7 +19,7 @@ private:
     std::shared_ptr<net::Socket> server;
     std::shared_ptr<SQLite3::Connection> db;
     std::map<std::string, Node> lemmas;                            // name -> lemmas
-    std::map<std::string, std::map<net::Socket *, std::list<Lemma *>>> solvers;  // name -> solver -> lemmas
+    std::map<std::string, std::map<net::Socket *, std::map<Lemma *, bool>>> solvers;  // name -> solver -> lemma -> t/f
 protected:
     void handle_accept(net::Socket &);
 
@@ -27,7 +27,7 @@ protected:
 
     void handle_message(net::Socket &, net::Header &, std::string &);
 
-    void handle_exception(net::Socket &, net::SocketException &);
+    void handle_exception(net::Socket &, const net::SocketException &);
 
 public:
     LemmaServer(uint16_t, const std::string &, const std::string &);

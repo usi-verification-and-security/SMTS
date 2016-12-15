@@ -122,26 +122,21 @@ namespace net {
                  (uint32_t) ((uint8_t) buffer[1]) << 16 |
                  (uint32_t) ((uint8_t) buffer[2]) << 8 |
                  (uint32_t) ((uint8_t) buffer[3]);
-        char *message = (char *) malloc(length);
+        std::unique_ptr<char> message((char *) malloc(length));
         if (message == nullptr)
             throw SocketException("can't malloc");
-        try {
-            length = this->readn(message, length, timeout);
-        }
-        catch (SocketException ex) {
-            free(message);
-            throw ex;
-        }
+
+        length = this->readn(message.get(), length, timeout);
 
         uint32_t i = 0;
         header.clear();
-        while (message[i] != '\x00') {
+        while (message.get()[i] != '\x00') {
             std::string keyval[2] = {"", ""};
             for (uint8_t j = 0; j < 2; j++) {
-                uint8_t l = (uint8_t) message[i++];
+                uint8_t l = (uint8_t) message.get()[i++];
                 if (i + l >= length)
                     throw SocketException("error during header parsing");
-                keyval[j] += std::string(&message[i], l);
+                keyval[j] += std::string(&message.get()[i], l);
                 i += l;
             }
             header[keyval[0]] = keyval[1];
@@ -150,7 +145,7 @@ namespace net {
 
         payload.clear();
         if (length > i)
-            payload.append(std::string(&message[i], length - i));
+            payload.append(std::string(&message.get()[i], length - i));
 
         return length;
     }

@@ -51,7 +51,7 @@ namespace net {
                         try {
                             client = this->socket->accept();
                         }
-                        catch (SocketException ex) {
+                        catch (SocketException &ex) {
                             socket++;
                             continue;
                         }
@@ -62,13 +62,16 @@ namespace net {
                             (*socket)->read(header, payload);
                             this->handle_message(**socket, header, payload);
                         }
-                        catch (SocketClosedException ex) {
+                        catch (SocketClosedException &ex) {
                             std::shared_ptr<net::Socket> s = *socket;
                             this->sockets.erase(socket);
                             this->handle_close(*s);
                         }
-                        catch (SocketException ex) {
+                        catch (SocketException &ex) {
                             this->handle_exception(**socket, ex);
+                        }
+                        catch (std::exception &ex) {
+                            this->handle_exception(**socket, SocketException(ex.what()));
                         }
                     }
                 } else {
