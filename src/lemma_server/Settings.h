@@ -14,6 +14,7 @@ public:
 
     void load(int, char **);
 
+    bool send_again;
     uint16_t port;
     std::string server;
     std::string db_filename;

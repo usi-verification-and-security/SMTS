@@ -308,7 +308,8 @@ class ParallelizationServer(net.Server):
         elif 'eval' in header:
             response_payload = ''
             try:
-                response_payload = str(eval(header['eval']))
+                if header['eval']:
+                    response_payload = str(eval(header['eval']))
             except:
                 response_payload = str(traceback.format_exc())
             finally:

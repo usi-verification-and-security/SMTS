@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
     }
 
     try {
-        LemmaServer server(settings.port, settings.server, settings.db_filename);
+        LemmaServer server(settings.port, settings.server, settings.db_filename, settings.send_again);
         server.run_forever();
     } catch (Exception &ex) {
         Logger::log(Logger::ERROR, ex.what());

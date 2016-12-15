@@ -16,6 +16,7 @@
 
 class LemmaServer : public net::Server {
 private:
+    bool send_again;
     std::shared_ptr<net::Socket> server;
     std::shared_ptr<SQLite3::Connection> db;
     std::map<std::string, Node> lemmas;                            // name -> lemmas
@@ -30,7 +31,7 @@ protected:
     void handle_exception(net::Socket &, const net::SocketException &);
 
 public:
-    LemmaServer(uint16_t, const std::string &, const std::string &);
+    LemmaServer(uint16_t, const std::string &, const std::string &, bool send_again);
 };
 
 #endif //CLAUSE_SHARING_CLAUSESERVER_H

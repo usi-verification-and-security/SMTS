@@ -8,15 +8,19 @@
 
 
 Settings::Settings() :
+        send_again(false),
         port(5000) {}
 
 void Settings::load(int argc, char **argv) {
     int opt;
-    while ((opt = getopt(argc, argv, "hp:s:d:")) != -1)
+    while ((opt = getopt(argc, argv, "hap:s:d:")) != -1)
         switch (opt) {
             case 'h':
                 std::cout << "Usage: " << argv[0] << "\n";
                 exit(0);
+            case 'a':
+                this->send_again = true;
+                break;
             case 'p':
                 this->port = (uint16_t) atoi(optarg);
                 break;

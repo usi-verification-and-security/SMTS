@@ -14,8 +14,9 @@
 #include "LemmaServer.h"
 
 
-LemmaServer::LemmaServer(uint16_t port, const std::string &server, const std::string &db_filename) :
-        Server(port) {
+LemmaServer::LemmaServer(uint16_t port, const std::string &server, const std::string &db_filename, bool send_again) :
+        Server(port),
+        send_again(send_again) {
     if (server.size()) {
         this->server.reset(new net::Socket(server));
         net::Header header;
@@ -205,7 +206,7 @@ void LemmaServer::handle_message(net::Socket &client,
             if (n >= clauses_request)
                 break;
 
-            if (lemmas_solver[*lemma])
+            if (!this->send_again && lemmas_solver[*lemma])
                 continue;
 
             lemmas_solver[*lemma] = true;
