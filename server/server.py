@@ -170,19 +170,33 @@ class Solver(net.Socket):
 
     def read(self):
         header, payload = super().read()
+        if 'partitions' in header and self.or_waiting:
+            for node in self.or_waiting:
+                if self.node.child(json.loads(header['node'])) is node.parent:
+                    self.or_waiting.remove(node)
+                    try:
+                        for partition in payload.decode().split('\0'):
+                            if len(partition) == 0:
+                                continue
+                            child = framework.AndNode('(assert {})'.format(partition), self.node.query, True, node)
+                            self.node.root.db_log(self, 'AND', {"node": child.path(), "smtlib": partition})
+                        # if there is only one partition then it is discarded
+                        # I leave the or node without children
+                        if len(node.children) == 1:
+                            node.children.clear()
+                    except BaseException as ex:
+                        header['error'] = 'error reading partitions: {}'.format(ex)
+                        node.children.clear()
+                        self.ask_partitions(header['partitions'], node)
+                    return header, payload
+            print(self.or_waiting)
+            print(self.node.child(json.loads(header['node'])))
+
         if self.node is None:
             return header, payload
-        if self.node.root.name != header['name']:
-            header['error'] = 'wrong name "{}"'.format(
-                header['name'],
-            )
-            return header, payload
-        if str(self.node.path()) != header['node']:
-            header['error'] = 'wrong node "{}", expected "{}"'.format(
-                header['node'],
-                str(self.node.path())
-            )
-            return header, payload
+
+        if self.node.root.name != header['name'] or str(self.node.path()) != header['node']:
+            return {}, b""
 
         if 'status' in header:
             status = framework.SolveStatus.__members__[header['status']]
@@ -192,24 +206,6 @@ class Solver(net.Socket):
                 self.node.root.db_log(self, 'SOLVED', {'status': self.node.root.status.name})
             if status == framework.SolveStatus.unknown:
                 self.stop()
-
-        if 'partitions' in header and self.or_waiting:
-            node = self.or_waiting.pop()
-            try:
-                for partition in payload.decode().split('\0'):
-                    if len(partition) == 0:
-                        continue
-                    child = framework.AndNode('(assert {})'.format(partition), self.node.query, True, node)
-                    self.node.root.db_log(self, 'AND', {"node": child.path(), "smtlib": partition})
-                # if there is only one partition then it is discarded
-                # I leave the or node without children
-                if len(node.children) == 1:
-                    node.children.clear()
-            except BaseException as ex:
-                header['error'] = 'error reading partitions: {}'.format(ex)
-                node.children.clear()
-                self.ask_partitions(header['partitions'], node)
-                return header, payload
 
         return header, payload
 
@@ -249,6 +245,8 @@ class ParallelizationServer(net.Server):
         self.log(logging.DEBUG, 'message from {}'.format(sock.remote_address),
                  {'header': header, 'payload': payload.decode()})
         if isinstance(sock, Solver):
+            if not header:
+                return
             reported = False
             levels = ('info', 'warning', 'error')
             for report in levels + ('status', 'partitions'):
@@ -387,53 +385,16 @@ class ParallelizationServer(net.Server):
         for node in nodes:
             if node.status != framework.SolveStatus.unknown:
                 for solver in self.solvers(node):
-                    # solver.stop()
                     idle_solvers.add(solver)
-
-        # count the max number of solvers required to fill all the leafs
-        if self.config.portfolio_max <= 0:
-            # infinite
-            leaf_slots = None
-        else:
-            # for each leaf I count how many solver at most I can employ there
-            leaf_slots = 0
-            for leaf in leaves():
-                if leaf.status == framework.SolveStatus.unknown:
-                    leaf_slots += max(0, self.config.portfolio_max - len(self.solvers(leaf)))
-
-        # now stop leaf_slots solvers working on a already fully partitioned internal node,
-        # so it will be moved on a leaf afterwards.
-        # least depth nodes stopped first
-        # if leaf_slots=None then all the solvers working on a internal node will be stopped
-        for node in (node for node in internals() if len(node.children) == level_children(len(node.path()))):
-            # here I check that every or node child has some partitions
-            # that is every child is completed. if not then I'll not kill any solver working on that node.
-            try:
-                for child in node.children:
-                    if len(child.children) == 0:
-                        raise StopIteration
-            except StopIteration:
-                continue
-            if leaf_slots == 0:
-                break
-            for solver in self.solvers(node):
-                if leaf_slots == 0:
-                    break
-                if leaf_slots is not None:
-                    leaf_slots -= 1
-                # solver.stop()
-                idle_solvers.add(solver)
 
         # spread the solvers among the unsolved nodes taking care of portfolio_max
         # first the leafs will be filled. inner nodes after and only if available solvers are left idle
         # nodes.reverse()
         for selection in [leaves, internals]:
-            available = 0
+            available = -1
             while available != len(idle_solvers):
                 available = len(idle_solvers)
                 for node in selection():
-                    if not idle_solvers:
-                        break
                     if node.status != framework.SolveStatus.unknown:
                         continue
                     try:
@@ -444,40 +405,74 @@ class ParallelizationServer(net.Server):
                                 raise StopIteration
                     except StopIteration:
                         continue
-                    if self.config.portfolio_max <= 0 or len(self.solvers(node)) < self.config.portfolio_max:
-                        if self.config.incremental > 0:
+                    if 0 < self.config.portfolio_max <= len(self.solvers(node)):
+                        continue
+                    # now node needs to be solved.
+                    # try to search for a solver...
+                    if not idle_solvers:
+                        for _node in (node for node in internals() if
+                                      len(node.children) == level_children(len(node.path()))):
+                            # here I check that every or-node child has some partitions, that is
+                            # every child is completed. if not then I'll not use any solver working on that node.
                             try:
-                                # I first search for a solver which is solving an ancestor of node
-                                # so that incremental solving would work better
-                                for solver in idle_solvers:
-                                    if not solver.node:
-                                        continue
-                                    if solver.node.is_ancestor(node):
-                                        idle_solvers.remove(solver)
-                                        solver.incremental(node)
+                                for child in _node.children:
+                                    if len(child.children) == 0:
                                         raise StopIteration
                             except StopIteration:
                                 continue
-                        if self.config.incremental > 1:
-                            try:
-                                for solver in idle_solvers:
-                                    if solver.node:
-                                        idle_solvers.remove(solver)
-                                        solver.incremental(node)
+                            solvers = self.solvers(_node)
+                            if 0 <= self.config.portfolio_min < len(solvers):
+                                try:
+                                    # I can choose only one solver if it's solving for more than partition_timeout
+                                    for solver in self.solvers(_node):
+                                        if self.config.partition_timeout and solver.started + self.config.partition_timeout > time.time():
+                                            continue
+                                        idle_solvers.add(solver)
                                         raise StopIteration
-                            except StopIteration:
-                                continue
-                        solver = idle_solvers.pop()
-                        header = {}
-                        if self.config.lemma_amount:
-                            header["lemmas"] = self.config.lemma_amount
-                        self.config.entrust(
-                            node,
-                            header,
-                            solver,
-                            {solver for solver in self.solvers(True) if solver.node.root == self.current}
-                        )
-                        solver.solve(node, header)
+                                except StopIteration:
+                                    break
+
+                    # if there are still no solvers available
+                    if not idle_solvers:
+                        continue
+
+                    if self.config.incremental > 0:
+                        try:
+                            # I first search for a solver which is solving an ancestor of node
+                            # so that incremental solving would work better
+                            for solver in idle_solvers:
+                                if not solver.node or solver.node is node:
+                                    continue
+                                if solver.node.is_ancestor(node):
+                                    idle_solvers.remove(solver)
+                                    solver.incremental(node)
+                                    raise StopIteration
+                        except StopIteration:
+                            continue
+                    if self.config.incremental > 1:
+                        try:
+                            # try to use incremental on another already solving solver
+                            for solver in idle_solvers:
+                                if solver.node and solver.node is not node:
+                                    idle_solvers.remove(solver)
+                                    solver.incremental(node)
+                                    raise StopIteration
+                        except StopIteration:
+                            continue
+
+                    solver = idle_solvers.pop()
+                    if solver.node is node:
+                        continue
+                    header = {}
+                    if self.config.lemma_amount:
+                        header["lemmas"] = self.config.lemma_amount
+                    self.config.entrust(
+                        node,
+                        header,
+                        solver,
+                        {solver for solver in self.solvers(True) if solver.node.root == self.current}
+                    )
+                    solver.solve(node, header)
 
         # if need partition: ask partitions
         if self.config.partition_timeout or idle_solvers:
