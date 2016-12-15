@@ -206,10 +206,11 @@ void LemmaServer::handle_message(net::Socket &client,
             if (n >= clauses_request)
                 break;
 
-            if (!this->send_again && lemmas_solver[*lemma])
+            if (lemmas_solver[*lemma])
                 continue;
 
-            lemmas_solver[*lemma] = true;
+            if (!this->send_again)
+                lemmas_solver[*lemma] = true;
             lemmas_send.push_back(net::Lemma((*lemma)->smtlib, 0));
             n++;
         }
