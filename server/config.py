@@ -5,13 +5,15 @@ import server
 port = 3000
 portfolio_max = 0
 portfolio_min = 0
-partition_timeout = 60
-partition_policy = [1, 8]
+partition_timeout = 10
+partition_policy = [1, 4]
 solving_timeout = 1000
 
 
 def entrust(node, header: dict, solver: server.Solver, solvers: set):
     if solver.name == "Spacer":
+        header["parameter.fixedpoint.spacer.restarts"] = "true"
+        header["parameter.fixedpoint.spacer.random_seed"] = random.randint(0, 0xFFFFFF)
         header["parameter.fixedpoint.xform.slice"] = "false"
         header["parameter.fixedpoint.xform.inline_linear"] = "false"
         header["parameter.fixedpoint.xform.inline_eager"] = "false"
@@ -40,12 +42,14 @@ files = [str(i.resolve()) for i in _benchmarks_path.glob('*.smt2')]
 files.remove('/Users/matteo/dev/spacer/regressions/false.smt2')
 
 # files = ["/Users/matteo/dev/spacer/regressions/ex01-dmpl-inline-unsat.smt2"]
+# _benchmarks_path = pathlib.Path('/Users/matteo/dev/opensmt2/test/std_benchmarks/')
+# files = [str(i.resolve()) for i in _benchmarks_path.glob('*.smt2')]
 
-files = ["/Users/matteo/dev/opensmt2/test/std_benchmarks/NEQ_NEQ046_size6.smt2",
-         "/Users/matteo/dev/opensmt2/test/std_benchmarks/PEQ_PEQ004_size8.smt2"]
+# files = ["/Users/matteo/dev/opensmt2/test/std_benchmarks/NEQ_NEQ046_size6.smt2",
+#          "/Users/matteo/dev/opensmt2/test/std_benchmarks/PEQ_PEQ004_size8.smt2"]
 
-# files=[str(pathlib.Path('../../opensmt2/test/std_benchmarks/NEQ_NEQ015_size6.smt2').resolve())]+\
-#       [str(pathlib.Path('../../opensmt2/test/std_benchmarks/PEQ_PEQ013_size8.smt2').resolve())]
+files=[str(pathlib.Path('../../opensmt2/test/std_benchmarks/NEQ_NEQ015_size6.smt2').resolve())]+\
+       [str(pathlib.Path('../../opensmt2/test/std_benchmarks/PEQ_PEQ013_size8.smt2').resolve())]
 
 
 # files = ['prova']

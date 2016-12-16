@@ -25,14 +25,20 @@ for arg in sys.argv[1:]:
             if (ts_start is None):
                 print('Not even started: {}'.format(name))
                 continue
-            row_end = c.execute('select ts, data FROM SolvingHistory where id = (select min(id) '
+            possible_timeout = False
+            row_solved = c.execute('select ts, data FROM SolvingHistory where id = (select min(id) '
                                 'from SolvingHistory '
                                 'where name = ? and event = "SOLVED");', (name,)).fetchone()
-            if not row_end:
-                print('Only started: {}'.format(name))
-                continue
-            ts_end, data = row_end
-            data = json.loads(data)
-            file_times.write('{} {} {}\n'.format(name, data['status'], ts_end - ts_start))
+            if not row_solved:
+                row_solved = c.execute('select ts, data FROM SolvingHistory where id = (select min(id) '
+                                'from SolvingHistory '
+                                'where name != ? and ts > ? and event = "+");', (name,ts_start)).fetchone()
+                if not row_solved:
+                    print('Only started: {}'.format(name))
+                    continue
+                possible_timeout = True
+            ts_end, data = row_solved
+            data = json.loads(data) if data else None
+            file_times.write('{} {} {} # {}\n'.format(name, data['status'] if data else 'unknown', ts_end - ts_start,'timeout?' if possible_timeout else ''))
             total_time += ts_end - ts_start
-    print('TOTAL: {} seconds'.format(total_time))
+    print('TOTAL: {}'.format(total_time))

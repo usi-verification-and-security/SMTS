@@ -46,8 +46,9 @@ class Tree(framework.AndNode):
             i = smtlib.index('(check-sat)')
         except:
             raise
+            # i = smtlib.index('(query ')
         else:
-            super().__init__(smtlib[:i], '(check-sat)', None)
+            super().__init__(smtlib[:i], '(check-sat)', True, None)
         self.name = name
         self.timeout = timeout
         self.conn = conn
@@ -189,8 +190,6 @@ class Solver(net.Socket):
                         node.children.clear()
                         self.ask_partitions(header['partitions'], node)
                     return header, payload
-            print(self.or_waiting)
-            print(self.node.child(json.loads(header['node'])))
 
         if self.node is None:
             return header, payload
