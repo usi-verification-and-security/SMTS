@@ -9,10 +9,12 @@ import net
 import sys
 import client
 import logging
+import enum
 import traceback
 import random
 import pathlib
 import time
+import re
 import sqlite3
 
 __author__ = 'Matteo Marescotti'
@@ -35,6 +37,10 @@ class Config:
 
 
 class Tree(framework.AndNode):
+    class Type(enum.Enum):
+        standard = 0
+        horn = 1
+
     def __init__(self,
                  smtlib: str,
                  name: str,
@@ -43,12 +49,22 @@ class Tree(framework.AndNode):
                  conn: sqlite3.Connection = None,
                  table_prefix: str = ''):
         try:
-            i = smtlib.index('(check-sat)')
-        except:
-            raise
-            # i = smtlib.index('(query ')
-        else:
-            super().__init__(smtlib[:i], '(check-sat)', True, None)
+            query = re.search(r"\(check-sat\)", smtlib)
+            if query:
+                super().__init__(smtlib[:query.span()[0]], query.group(), True, None)
+                self.type = self.Type.standard
+                raise StopIteration
+
+            # cannot have brackets inside (query ...) !
+            query = re.search(r"\(query [^\)]*\)", smtlib)
+            if query:
+                super().__init__(smtlib[:query.span()[0]], query.group(), False, None)
+                self.type = self.Type.horn
+                raise StopIteration
+            raise ValueError('query not found')
+        except StopIteration:
+            pass
+
         self.name = name
         self.timeout = timeout
         self.conn = conn
@@ -271,13 +287,16 @@ class ParallelizationServer(net.Server):
                 self.log(logging.INFO, 'new instance "{}"'.format(
                     header['name']
                 ), {'header': header})
-                self.trees.add(
-                    Tree(payload.decode(),
-                         header['name'],
-                         self.config.solving_timeout,
-                         conn=self.conn,
-                         table_prefix=self.table_prefix)
-                )
+                try:
+                    self.trees.add(
+                        Tree(payload.decode(),
+                             header['name'],
+                             self.config.solving_timeout,
+                             conn=self.conn,
+                             table_prefix=self.table_prefix)
+                    )
+                except BaseException as ex:
+                    self.log(logging.ERROR, 'cannot add instance: ' + str(ex))
                 self.entrust()
         elif 'solver' in header:
             solver = Solver(sock, header['solver'])
@@ -474,8 +493,12 @@ class ParallelizationServer(net.Server):
                     )
                     solver.solve(node, header)
 
+        # only standard instances can partition
+        if not self.current.type is Tree.Type.standard:
+            return
+
         # if need partition: ask partitions
-        if self.config.partition_timeout or idle_solvers:
+        if (self.config.partition_timeout or idle_solvers):
             # for all the leafs with at least one solver
             for leaf in (leaf for leaf in leaves() if self.solvers(leaf)):
                 max_children = level_children(leaf.level())

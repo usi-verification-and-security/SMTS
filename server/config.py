@@ -2,10 +2,10 @@ import pathlib
 import random
 import server
 
-port = 3000
+port = 3001
 portfolio_max = 0
 portfolio_min = 0
-partition_timeout = 10
+partition_timeout = None
 partition_policy = [1, 4]
 solving_timeout = 1000
 
@@ -40,16 +40,18 @@ def entrust(node, header: dict, solver: server.Solver, solvers: set):
 _benchmarks_path = pathlib.Path('/Users/matteo/dev/spacer/regressions/')
 files = [str(i.resolve()) for i in _benchmarks_path.glob('*.smt2')]
 files.remove('/Users/matteo/dev/spacer/regressions/false.smt2')
+files = ["/Users/matteo/dev/spacer/regressions/ldv_sat01.smt2"]
 
-# files = ["/Users/matteo/dev/spacer/regressions/ex01-dmpl-inline-unsat.smt2"]
-# _benchmarks_path = pathlib.Path('/Users/matteo/dev/opensmt2/test/std_benchmarks/')
+# _benchmarks_path = pathlib.Path('/Users/matteo/dev/benchmark_lra/lra_sat/')
 # files = [str(i.resolve()) for i in _benchmarks_path.glob('*.smt2')]
+# _benchmarks_path = pathlib.Path('/Users/matteo/dev/benchmark_lra/lra_unsat/')
+# files += [str(i.resolve()) for i in _benchmarks_path.glob('*.smt2')]
 
 # files = ["/Users/matteo/dev/opensmt2/test/std_benchmarks/NEQ_NEQ046_size6.smt2",
 #          "/Users/matteo/dev/opensmt2/test/std_benchmarks/PEQ_PEQ004_size8.smt2"]
 
-files=[str(pathlib.Path('../../opensmt2/test/std_benchmarks/NEQ_NEQ015_size6.smt2').resolve())]+\
-       [str(pathlib.Path('../../opensmt2/test/std_benchmarks/PEQ_PEQ013_size8.smt2').resolve())]
+# files=[str(pathlib.Path('../../opensmt2/test/std_benchmarks/NEQ_NEQ015_size6.smt2').resolve())]+\
+#        [str(pathlib.Path('../../opensmt2/test/std_benchmarks/PEQ_PEQ013_size8.smt2').resolve())]
 
 
 # files = ['prova']

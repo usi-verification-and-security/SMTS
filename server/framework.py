@@ -212,11 +212,3 @@ class OrNode(Node):
 
         # def db_data(self, data=None):
         #     return
-
-
-root = AndNode('(input-smt)', '(check-sat)', True)
-c = OrNode(root)
-c = AndNode('(p1)', c.parent.query, True, c)
-c = OrNode(c)
-c = AndNode('(p2)', c.parent.query, True, c)
-c = AndNode('(d1)', root.query, True, root.child([0]))

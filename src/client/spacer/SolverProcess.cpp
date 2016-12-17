@@ -24,7 +24,6 @@ void push(Z3_fixedpoint_lemma_set s) {
     char *l;
     while ((l = (char *) Z3_fixedpoint_lemma_pop(context, s))) {
         lemmas.push_back(net::Lemma(l, 0));
-        //std::cout << l << "\n";
         free(l);
     }
     this_push(lemmas);
@@ -60,8 +59,14 @@ void SolverProcess::init() {
                     p.set(pair.first.substr(10).c_str(), true);
                 else if (pair.second == "false")
                     p.set(pair.first.substr(10).c_str(), false);
-                else
-                    p.set(pair.first.substr(10).c_str(), context.str_symbol(pair.second.c_str()));
+                else {
+                    try {
+                        p.set(pair.first.substr(10).c_str(), (unsigned) stoi(pair.second));
+                    }
+                    catch (std::exception) {
+                        p.set(pair.first.substr(10).c_str(), context.str_symbol(pair.second.c_str()));
+                    }
+                }
 
             } else if (pair.first.substr(0, 6) == "trace.") {
                 Z3_enable_trace(pair.first.substr(6).c_str());
@@ -72,7 +77,6 @@ void SolverProcess::init() {
         fixedpoint.set(p);
     }
     catch (z3::exception &ex) { // i'm not sending the msg because it's too long
-        std::cout << ex << "\n";
         this->error("cannot set parameters");
     }
 }
@@ -83,10 +87,10 @@ void SolverProcess::solve() {
     Z3_fixedpoint_set_lemma_push_callback(context, fixedpoint, push);
 
     z3::solver solver(context);
-    char *smtlib = (char *) this->instance.c_str();
+    std::string smtlib = this->instance;
 
     while (true) {
-        Z3_ast_vector v = Z3_fixedpoint_from_string(context, fixedpoint, smtlib);
+        Z3_ast_vector v = Z3_fixedpoint_from_string(context, fixedpoint, (smtlib + this->header["query"]).c_str());
         Z3_ast a = Z3_ast_vector_get(context, v, 0);
 
         Z3_lbool res = Z3_fixedpoint_query(context, fixedpoint, a);
@@ -99,7 +103,7 @@ void SolverProcess::solve() {
                     std::to_string(statistics.uint_value(i)) :
                     std::to_string(statistics.double_value(i));
         }
-
+        //std::cout << header << "\n";
         if (res == Z3_L_TRUE)
             this->report(Status::sat, header);
         else if (res == Z3_L_FALSE)
@@ -107,14 +111,15 @@ void SolverProcess::solve() {
         else
             this->report(Status::unknown, header);
         Task t = this->wait();
-        switch (t.command) {
-            case Task::incremental:
-                smtlib = (char *) t.smtlib.c_str();
-                break;
-            case Task::resume:
-                smtlib = (char *) "(check-sat)";
-                break;
-        }
+        exit(0);
+//        switch (t.command) {
+//            case Task::incremental:
+//                smtlib = (char *) t.smtlib.c_str();
+//                break;
+//            case Task::resume:
+//                smtlib = (char *) "(check-sat)";
+//                break;
+//        }
     }
 }
 
