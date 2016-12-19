@@ -108,11 +108,12 @@ private:
     }
 
     void report() {
-        this->writer()->write(this->header, "");
+        this->report(this->header);
     }
 
     void report(Status status, const net::Header &h = net::Header()) {
         auto header = h;
+        header.insert(this->header.begin(), this->header.end());
         if (status == Status::sat)
             header["status"] = "sat";
         else if (status == Status::unsat)

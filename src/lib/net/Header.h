@@ -14,11 +14,10 @@ namespace net {
     class Header : public std::map<std::string, std::string> {
         friend std::ostream &operator<<(std::ostream &stream, const Header &header);
 
-        //friend std::istream &operator>>(std::istream &, Header &);
+        friend std::istream &operator>>(std::istream &, Header &);
 
     };
 
-    std::ostream &pprint(std::ostream &, const Header &, bool json = false);
 }
 
 #endif //CLAUSE_SERVER_HEADER_H
