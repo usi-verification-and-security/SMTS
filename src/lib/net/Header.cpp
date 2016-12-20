@@ -30,7 +30,7 @@ namespace net {
                     if (!stream.get(c))
                         throw Exception("unexpected end");
                 } else
-                    throw Exception("invalid char");
+                    throw Exception("double quotes expected");
             }
             if (!escape) {
                 switch (c) {
@@ -57,6 +57,8 @@ namespace net {
                         }
                         break;
                     default:
+                        if ('\x00' <= c && c <= '\x1f')
+                            throw Exception("control char not allowed");
                         *s += c;
                 }
             } else {
@@ -97,7 +99,6 @@ namespace net {
     }
 
     std::ostream &operator<<(std::ostream &stream, const Header &header) {
-        stream << "{";
         std::vector<std::string> pairs;
         for (auto &pair:header) {
             std::ostringstream ss;
@@ -141,8 +142,6 @@ namespace net {
             }
             pairs.push_back(ss.str());
         }
-        ::join(stream, ",", pairs);
-        stream << "}";
-        return stream;
+        return ::join(stream << "{", ",", pairs) << "}";
     }
 }

@@ -2,18 +2,18 @@ import pathlib
 import random
 import server
 
-port = 3001
+port = 3000
 portfolio_max = 0
 portfolio_min = 0
 partition_timeout = None
-partition_policy = [1, 4]
+partition_policy = [1, 8]
 solving_timeout = 1000
 
 
 def entrust(node, header: dict, solver: server.Solver, solvers: set):
     if solver.name == "Spacer":
         header["parameter.fixedpoint.spacer.restarts"] = "true"
-        header["parameter.fixedpoint.spacer.random_seed"] = random.randint(0, 0xFFFFFF)
+        # header["parameter.fixedpoint.spacer.random_seed"] = random.randint(0, 0xFFFFFF)
         header["parameter.fixedpoint.xform.slice"] = "false"
         header["parameter.fixedpoint.xform.inline_linear"] = "false"
         header["parameter.fixedpoint.xform.inline_eager"] = "false"
@@ -35,17 +35,14 @@ def entrust(node, header: dict, solver: server.Solver, solvers: set):
             header["-p"] = "gpdr"
     if solver.name == "OpenSMT2":
         header["config.seed"] = random.randint(0, 0xFFFFFF)
+        header["config.split"] = "lookahead" # scattering
 
 
-_benchmarks_path = pathlib.Path('/Users/matteo/dev/spacer/regressions/')
+_benchmarks_path = pathlib.Path('/Users/matteo/dev/benchmark_spacer/selected')
 files = [str(i.resolve()) for i in _benchmarks_path.glob('*.smt2')]
-files.remove('/Users/matteo/dev/spacer/regressions/false.smt2')
-files = ["/Users/matteo/dev/spacer/regressions/ldv_sat01.smt2"]
 
-# _benchmarks_path = pathlib.Path('/Users/matteo/dev/benchmark_lra/lra_sat/')
-# files = [str(i.resolve()) for i in _benchmarks_path.glob('*.smt2')]
-# _benchmarks_path = pathlib.Path('/Users/matteo/dev/benchmark_lra/lra_unsat/')
-# files += [str(i.resolve()) for i in _benchmarks_path.glob('*.smt2')]
+# _benchmarks_path = pathlib.Path('/Users/matteo/dev/benchmark_lra/')
+# files = [str(i.resolve()) for i in _benchmarks_path.glob('simple_startup_8nodes.abstract.induct.smt2')]
 
 # files = ["/Users/matteo/dev/opensmt2/test/std_benchmarks/NEQ_NEQ046_size6.smt2",
 #          "/Users/matteo/dev/opensmt2/test/std_benchmarks/PEQ_PEQ004_size8.smt2"]

@@ -12,25 +12,26 @@
 #include <functional>
 
 
-void split(std::istream &stream,
-           const char delimiter,
-           std::function<void(const std::string &)> callback);
+std::istream &split(std::istream &stream,
+                    const char delimiter,
+                    std::function<void(const std::string &)> callback);
 
-void split(std::istream &stream,
-           const char delimiter,
-           std::vector<std::string> &vector);
+std::istream &split(std::istream &stream,
+                    const char delimiter,
+                    std::vector<std::string> &vector);
 
 void split(const std::string &, const std::string &, std::vector<std::string> &, uint32_t limit = 0);
 
 void split(const std::string &, const std::string &, std::function<void(const std::string &)>, uint32_t limit = 0);
 
 template<typename T>
-void join(std::ostream &stream, const std::string &delimiter, const std::vector<T> &vector) {
+std::ostream &join(std::ostream &stream, const std::string &delimiter, const std::vector<T> &vector) {
     for (auto it = vector.begin(); it != vector.end(); ++it) {
         stream << *it;
         if (it + 1 != vector.end())
             stream << delimiter;
     }
+    return stream;
 }
 
 void replace(std::string &, const std::string &, const std::string &);
@@ -52,7 +53,7 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T> &v) {
 
 template<typename T>
 std::istream &operator>>(std::istream &stream, std::vector<T> &v) {
-    ::split(stream, '\0', [&](const std::string &sub) {
+    return ::split(stream, '\0', [&](const std::string &sub) {
         if (sub.size() == 0)
             return;
         std::istringstream is(sub);
@@ -60,7 +61,6 @@ std::istream &operator>>(std::istream &stream, std::vector<T> &v) {
         is >> t;
         v.push_back(t);
     });
-    return stream;
 }
 
 #include "Exception.h"

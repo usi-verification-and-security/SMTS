@@ -5,20 +5,21 @@
 #include "lib.h"
 
 
-void split(std::istream &stream,
-           const char delimiter,
-           std::function<void(const std::string &)> callback) {
+std::istream &split(std::istream &stream,
+                    const char delimiter,
+                    std::function<void(const std::string &)> callback) {
     std::string sub;
     while (std::getline(stream, sub, delimiter)) {
         callback(sub);
     }
+    return stream;
 }
 
 
-void split(std::istream &stream,
-           const char delimiter,
-           std::vector<std::string> &vector) {
-    split(stream, delimiter, [&vector](const std::string &sub) {
+std::istream &split(std::istream &stream,
+                    const char delimiter,
+                    std::vector<std::string> &vector) {
+    return split(stream, delimiter, [&vector](const std::string &sub) {
         vector.push_back(sub);
     });
 }

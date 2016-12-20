@@ -25,6 +25,16 @@ void SolverProcess::init() {
     if (this->header.count("config.seed") == 0) {
         this->header["config.seed"] = "0";
     }
+
+    if (!this->header.count("config.split") &&
+        this->header["config.split"] != spts_lookahead &&
+        this->header["config.split"] != spts_scatter) {
+        this->header["warning"] = "bad config.split: " + this->header["config.split"];
+        this->header.erase("config.split");
+    }
+    if (this->header.count("config.split") == 0) {
+        this->header["config.split"] = "lookahead";
+    }
 }
 
 void SolverProcess::solve() {
@@ -81,7 +91,8 @@ void SolverProcess::partition(uint8_t n) {
             interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_num,
                                                           SMTOption(int(n)),
                                                           msg) &&
-            interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_type, SMTOption(spts_lookahead),
+            interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_type,
+                                                          SMTOption(this->header["config.split"].c_str()),
                                                           msg) &&
             interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_units, SMTOption(spts_time), msg) &&
             interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_inittune, SMTOption(double(2)), msg) &&
