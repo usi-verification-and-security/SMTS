@@ -91,7 +91,8 @@ void SolverProcess::solve() {
 
     while (true) {
         Z3_ast_vector v = Z3_fixedpoint_from_string(context, fixedpoint, (smtlib + this->header["query"]).c_str());
-        Z3_ast a = Z3_ast_vector_get(context, v, 0);
+        unsigned size = Z3_ast_vector_size(context, v);
+        Z3_ast a = Z3_ast_vector_get(context, v, size - 1);
 
         Z3_lbool res = Z3_fixedpoint_query(context, fixedpoint, a);
 

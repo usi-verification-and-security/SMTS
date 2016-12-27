@@ -85,8 +85,7 @@ void SolverServer::update_lemmas() {
 }
 
 
-void
-SolverServer::handle_message(net::Socket &socket, net::Header &header, std::string &payload) {
+void SolverServer::handle_message(net::Socket &socket, net::Header &header, std::string &payload) {
     if (socket.get_fd() == this->server.get_fd()) {
         if (header.count("command") != 1) {
             this->log(Logger::WARNING, "unexpected message from server without command");

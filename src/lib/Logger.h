@@ -18,9 +18,11 @@ private:
     Logger() {}
 
 public:
-    static void log(uint8_t level, std::string message) {
-        int r = 0;
+    template<typename T>
+    static void log(uint8_t level, const T &message) {
         static std::mutex mtx;
+        std::lock_guard<std::mutex> _l(mtx);
+        int r = 0;
         std::stringstream stream;
         std::time_t time = std::time(nullptr);
         struct tm tm = *std::localtime(&time);
@@ -47,12 +49,10 @@ public:
                 stream << "UNKNOWN\t";
         }
         stream << message;
-        mtx.lock();
         std::cout << stream.str() << "\n";
         if (getenv("TERM")) {
             r = system("tput sgr0");
         }
-        mtx.unlock();
     }
 
     static const uint8_t INFO = 1;

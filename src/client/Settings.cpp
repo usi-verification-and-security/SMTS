@@ -9,6 +9,7 @@
 
 
 Settings::Settings() :
+        verbose(false),
         clear_lemmas(false) {}
 
 void Settings::load_header(net::Header &header, char *string) {
@@ -26,16 +27,19 @@ void Settings::load_header(net::Header &header, char *string) {
 
 void Settings::load(int argc, char **argv) {
     int opt;
-    while ((opt = getopt(argc, argv, "hs:l:cr:")) != -1)
+    while ((opt = getopt(argc, argv, "hvs:l:cr:")) != -1)
         switch (opt) {
             case 'h':
                 std::cout << "Usage: " << argv[0] <<
                           " [-s server-host:port]"
                                   "[-l lemma_server-host:port]"
-                                  "[-c]"
+                                  "[-hvc]"
                                   "[-r run-header-key=value [...]]"
                                   "\n";
                 exit(0);
+            case 'v':
+                this->verbose = true;
+                break;
             case 's':
                 this->server = optarg;
                 break;

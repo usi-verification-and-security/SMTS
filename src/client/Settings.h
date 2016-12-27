@@ -19,6 +19,7 @@ public:
 
     void load(int, char **);
 
+    bool verbose;
     std::string server;
     std::string lemmas;
     std::list<std::string> files;

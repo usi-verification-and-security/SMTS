@@ -4,41 +4,83 @@
 import sqlite3
 import sys
 import json
+import traceback
 import pathlib
 
-for arg in sys.argv[1:]:
-    try:
-        path_sql = pathlib.Path(arg).resolve()
-    except FileNotFoundError:
-        continue
+
+class Benchmark:
+    def __init__(self, name):
+        self.name = name
+        self.ts_start = None
+        self.ts_end = None
+        self.data = None
+
+
+def get_benchmarks(db_path):
+    path_sql = db_path.resolve()
     if not path_sql.is_file():
-        continue
-    total_time = 0
-    conn = sqlite3.connect(str(path_sql))
+        raise ValueError(str(db_path) + ' is not a file')
+    conn = sqlite3.connect(str(db_path))
     c = conn.cursor()
-    names = [name[0] for name in c.execute('SELECT DISTINCT(name) FROM SolvingHistory;')]
-    with open(str(path_sql.parent / (path_sql.stem + '.times')), 'w') as file_times:
-        for name in names:
-            ts_start = c.execute('select min(ts) '
-                                 'from SolvingHistory '
-                                 'where name = ? and event = "+";', (name,)).fetchone()[0]
-            if (ts_start is None):
-                print('Not even started: {}'.format(name))
-                continue
-            possible_timeout = False
-            row_solved = c.execute('select ts, data FROM SolvingHistory where id = (select min(id) '
-                                'from SolvingHistory '
-                                'where name = ? and event = "SOLVED");', (name,)).fetchone()
-            if not row_solved:
-                row_solved = c.execute('select ts, data FROM SolvingHistory where id = (select min(id) '
-                                'from SolvingHistory '
-                                'where name != ? and ts > ? and event = "+");', (name,ts_start)).fetchone()
-                if not row_solved:
-                    print('Only started: {}'.format(name))
-                    continue
-                possible_timeout = True
-            ts_end, data = row_solved
-            data = json.loads(data) if data else None
-            file_times.write('{} {} {} # {}\n'.format(name, data['status'] if data else 'unknown', ts_end - ts_start,'timeout?' if possible_timeout else ''))
-            total_time += ts_end - ts_start
-    print('TOTAL: {}'.format(total_time))
+    benchmarks = {Benchmark(name[0]) for name in c.execute('SELECT DISTINCT(name) FROM SolvingHistory;')}
+    for benchmark in benchmarks:
+        ts_start = c.execute('SELECT min(ts) '
+                             'FROM SolvingHistory '
+                             'WHERE name = ? AND event = "+";', (benchmark.name,)).fetchone()[0]
+        if (ts_start is None):
+            continue
+        benchmark.ts_start = ts_start
+        row_solved = c.execute('SELECT ts, data FROM SolvingHistory WHERE id = (SELECT min(id) '
+                               'FROM SolvingHistory '
+                               'WHERE name = ? AND event = "SOLVED");', (benchmark.name,)).fetchone()
+        if not row_solved:
+            next_started = c.execute('SELECT ts, data FROM SolvingHistory WHERE id = (SELECT min(id) '
+                                     'FROM SolvingHistory '
+                                     'WHERE name != ? AND ts > ? AND event = "+");',
+                                     (benchmark.name, ts_start)).fetchone()
+
+            if next_started:
+                row_solved = (next_started[0], None)
+            else:
+                row_solved = (c.execute('SELECT max(ts) FROM SolvingHistory;').fetchone()[0], None)
+        else:
+            # if there is STATUS event on root I use that record instead because
+            # it contains more data (statistics of the solver)
+            # otherwise if STATUS comes from SOLVED of deeper node, then I just use data from STATUS
+            # which is just the status itself.
+            row_root_status = c.execute('SELECT ts, data FROM SolvingHistory WHERE id = (SELECT min(id) '
+                                        'FROM SolvingHistory '
+                                        'WHERE name = ? AND event = "STATUS" AND node="[]");',
+                                        (benchmark.name,)).fetchone()
+            if row_root_status:
+                row_solved = row_root_status
+
+        benchmark.ts_end = row_solved[0]
+        benchmark.data = json.loads(row_solved[1]) if row_solved[1] else None
+    return benchmarks
+
+
+def main():
+    for arg in sys.argv[1:]:
+        try:
+            path = pathlib.Path(arg)
+            benchmarks = get_benchmarks(path)
+        except BaseException as ex:
+            print(traceback.format_exc())
+            continue
+        total_time = 0
+        with open(str(path.parent / (path.stem + '.times')), 'w') as file_times:
+            for benchmark in benchmarks:
+                if not benchmark.ts_start:
+                    print('not started: ' + benchmark.name)
+                file_times.write(
+                    '{} {} {}\n'.format(
+                        benchmark.name,
+                        benchmark.data['status'] if benchmark.data and 'status' in benchmark.data else 'unknown',
+                        benchmark.ts_end - benchmark.ts_start))
+                total_time += benchmark.ts_end - benchmark.ts_start
+        print('TOTAL for ' + arg + ': {}'.format(total_time))
+
+
+if __name__ == '__main__':
+    main()

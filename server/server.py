@@ -30,41 +30,39 @@ class Config:
     lemma_amount = None  # None for auto
     log_level = logging.INFO  #
     incremental = 2  # 0: always restart. 1: only push. 2: always incremental
+    z3_path = pathlib.Path()
+    fixedpoint_partition = False
 
     @staticmethod
     def entrust(node, header, solver, solvers):
         pass
 
+    def __init__(self):
+        self._z3 = None
+
+    @property
+    def z3(self):
+        if self._z3:
+            return self._z3
+        sys.path.insert(0, str(self.z3_path.resolve()))
+        self._z3 = __import__('z3')
+        return self.z3
+
 
 class Tree(framework.AndNode):
     class Type(enum.Enum):
         standard = 0
-        horn = 1
+        fixedpoint = 1
 
     def __init__(self,
                  smtlib: str,
                  name: str,
                  timeout: int,
+                 z3,
                  *,
                  conn: sqlite3.Connection = None,
-                 table_prefix: str = ''):
-        try:
-            query = re.search(r"\(check-sat\)", smtlib)
-            if query:
-                super().__init__(smtlib[:query.span()[0]], query.group(), True, None)
-                self.type = self.Type.standard
-                raise StopIteration
-
-            # cannot have brackets inside (query ...) !
-            query = re.search(r"\(query [^\)]*\)", smtlib)
-            if query:
-                super().__init__(smtlib[:query.span()[0]], query.group(), False, None)
-                self.type = self.Type.horn
-                raise StopIteration
-            raise ValueError('query not found')
-        except StopIteration:
-            pass
-
+                 table_prefix: str = '',
+                 fixedpoint_partition=True):
         self.name = name
         self.timeout = timeout
         self.conn = conn
@@ -82,6 +80,57 @@ class Tree(framework.AndNode):
             self.conn.commit()
         self.started = None
 
+        c = z3.Context()
+        f = z3.Fixedpoint(ctx=c)
+        queries = f.parse_string(smtlib)
+        if not queries:
+            super().__init__(smtlib.split('(check-sat)')[0], '(check-sat)', True, None)
+            self.type = self.Type.standard
+        else:
+            self.type = self.Type.fixedpoint
+            query = queries[0]
+            if not fixedpoint_partition:
+                super().__init__(
+                    re.sub(r"\(declare-fun .*", '', f.to_string([])).strip(),
+                    '(query ' + query.sexpr() + ')',
+                    False,
+                    None)
+            else:
+                def register(f, ast):
+                    if z3.is_app(ast) and ast.decl().kind() == z3.Z3_OP_UNINTERPRETED:
+                        f.register_relation(ast.decl())
+                    for c in ast.children():
+                        register(f, c)
+
+                _c = z3.Context()
+                _f = z3.Fixedpoint(ctx=_c)
+                queries = []
+                for rule in f.get_rules():
+                    if z3.is_quantifier(rule):
+                        if rule.children()[0].children()[1].eq(query):
+                            body = rule.children()[0].children()[0].translate(_c)
+                            register(_f, body)
+                            head = z3.Bool(query.sexpr() + '__' + str(len(queries)), _c)
+                            queries.append(head)
+                            _f.register_relation(head.decl())
+                            _f.add_rule(head, body)
+                    else:
+                        head = rule.translate(_c)
+                        register(_f, head)
+                        _f.add_rule(head)
+
+                super().__init__(
+                    re.sub(r"\(declare-fun .*", '', _f.to_string([])).strip(),
+                    '',
+                    False,
+                    None)
+
+                node = framework.OrNode(self)
+                self._db_log(self, 'OR', '', node.path())
+                for query in queries:
+                    child = framework.AndNode('', '(query ' + query.sexpr() + ')', False, node)
+                    self._db_log(node, 'AND', '', {"node": child.path(), "query": child.query})
+
     @property
     def is_timeout(self):
         return (self.started + self.timeout) < time.time() if self.started else False
@@ -91,12 +140,15 @@ class Tree(framework.AndNode):
             return
         if solver.node.root is not self:
             raise ValueError('solver solving a different tree')
+        self._db_log(solver.node, event, str(solver.remote_address), data)
+
+    def _db_log(self, node, event, solver, data):
         self.conn.cursor().execute("INSERT INTO {}SolvingHistory (name, node, event, solver, data) "
                                    "VALUES (?,?,?,?,?)".format(self.table_prefix), (
                                        self.name,
-                                       str(solver.node.path()),
+                                       str(node.path()),
                                        event,
-                                       str(solver.remote_address),
+                                       solver,
                                        json.dumps(data) if data else None
                                    ))
         self.conn.commit()
@@ -292,8 +344,10 @@ class ParallelizationServer(net.Server):
                         Tree(payload.decode(),
                              header['name'],
                              self.config.solving_timeout,
+                             self.config.z3,
                              conn=self.conn,
-                             table_prefix=self.table_prefix)
+                             table_prefix=self.table_prefix,
+                             fixedpoint_partition=self.config.fixedpoint_partition)
                     )
                 except BaseException as ex:
                     self.log(logging.ERROR, 'cannot add instance: ' + str(ex))

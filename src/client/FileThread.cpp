@@ -56,14 +56,18 @@ void FileThread::main() {
         client->write(header, payload);
         do {
             client->read(header, payload);
+            if (this->settings.verbose) {
+                Logger::log(Logger::INFO, header);
+            }
         } while (header.count("status") == 0);
-        if (lemmas and this->settings.clear_lemmas)
+        if (lemmas and this->settings.clear_lemmas) {
             try {
                 header["lemmas"] = "0";
                 lemmas->write(header, "");
             } catch (net::SocketException) {
                 lemmas.reset();
             }
+        }
         header["command"] = "stop";
         header["name"] = filename;
         header["node"] = "[]";

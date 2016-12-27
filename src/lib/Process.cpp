@@ -34,7 +34,7 @@ void Process::start() {
 
 void Process::stop() {
     if (this->joinable()) {
-        kill(this->process, SIGINT);
+        kill(this->process, SIGKILL);
         this->join();
     }
 }
