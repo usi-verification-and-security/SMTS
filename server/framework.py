@@ -44,62 +44,6 @@ class Node:
     def __ne__(self, other):
         return id(self) != id(other)
 
-    # @staticmethod
-    # def db_setup(conn, table_prefix=''):
-    #     cursor = conn.cursor()
-    #     cursor.execute("CREATE TABLE IF NOT EXISTS {}Node ("
-    #                    "nid INTEGER PRIMARY KEY, "
-    #                    "name TEXT NOT NULL, "
-    #                    "path TEXT NOT NULL, "
-    #                    "status TEXT NOT NULL, "
-    #                    "data TEXT "
-    #                    ");".format(table_prefix))
-    #     conn.commit()
-
-    # def db_dump(self, conn, name, table_prefix=''):
-    #     if type(conn) is sqlite3.Connection:  # cursor initiated only once for all recursive calls
-    #         cursor = conn.cursor()
-    #     else:
-    #         cursor = conn
-    #
-    #     cursor.execute("INSERT INTO {}Node VALUES (NULL,?,?,?,?);".format(table_prefix), (
-    #         name,
-    #         str(self.path()),
-    #         self.status.name,
-    #         self.db_data()
-    #     ))
-    #     for child in self.children:
-    #         child.db_dump(cursor, name, table_prefix=table_prefix)
-    #     if type(conn) is sqlite3.Connection:
-    #         conn.commit()
-    #
-    # def db_load(self, conn, name, table_prefix=''):
-    #     if type(conn) is sqlite3.Connection:  # cursor initiated only once for all recursive calls
-    #         cursor = conn.cursor()
-    #     else:
-    #         cursor = conn
-    #
-    #     try:
-    #         row = cursor.execute("SELECT * FROM {}Node WHERE name=? and path=?".format(table_prefix), (
-    #             name,
-    #             str(self.path())
-    #         )).fetchall()[0]
-    #     except:
-    #         raise ValueError('node {}{} not found'.format(name, str(self.path())))
-    #
-    #     self._status = SolveStatus.__members__[row[3]]
-    #     self.db_data(row[4])
-    #
-    #     while True:
-    #         self.add_child()
-    #         try:
-    #             self.children[-1].db_load(cursor, name, table_prefix)
-    #         except ValueError:
-    #             break
-    #
-    #     if type(conn) is sqlite3.Connection:
-    #         conn.commit()
-
     def path(self, nodes=False):
         node = self
         path = []

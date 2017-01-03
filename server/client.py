@@ -4,6 +4,7 @@
 import net
 import sys
 import pathlib
+import readline
 
 __author__ = 'Matteo Marescotti'
 

@@ -3,7 +3,7 @@ import random
 import server
 
 port = 3000
-portfolio_max = 0
+portfolio_max = 1
 portfolio_min = 0
 partition_timeout = 10
 partition_policy = [1, 4]
@@ -43,7 +43,7 @@ def entrust(node, header: dict, solver: server.Solver, solvers: set):
 
 
 _benchmarks_path = pathlib.Path('/Users/matteo/dev/benchmark_spacer/')
-files = [str(i.resolve()) for i in _benchmarks_path.glob('*.smt2')]
+files = [str(i.resolve()) for i in _benchmarks_path.glob('*.smt2')][5:6]
 
 # _benchmarks_path = pathlib.Path('/Users/matteo/dev/benchmark_lra/')
 # files = [str(i.resolve()) for i in _benchmarks_path.glob('simple_startup_8nodes.abstract.induct.smt2')]

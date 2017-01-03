@@ -105,7 +105,7 @@ class Tree(framework.AndNode):
                         if imp.num_args() == 2:  # if is implies
                             head = imp.arg(1)
                             if z3.is_and(body):
-                                for i in range(body.num_args()): # app always before others
+                                for i in range(body.num_args()):  # app always before others
                                     ch = body.arg(i)
                                     if z3.is_app(ch) and ch.decl().kind() == z3.Z3_OP_UNINTERPRETED:
                                         _f.register_relation(ch.decl())
@@ -211,13 +211,15 @@ class Solver(net.Socket):
             raise TypeError('node root of type Tree is expected')
         if self.node is not None:
             self.stop()
+        if not node.query:
+            return
         self.node = node
-        header = {
+        header.update({
             'command': 'solve',
             'name': self.node.root.name,
             'node': self.node.path(),
             'query': self.node.query,
-        }
+        })
         self.write(header, self.node.root.to_string(self.node))
         self.started = time.time()
         if not self.node.root.started:
@@ -578,7 +580,7 @@ class ParallelizationServer(net.Server):
                     solver.solve(node, header)
 
         # only standard instances can partition
-        if not self.current.type is Tree.Type.standard:
+        if self.current.type is not Tree.Type.standard:
             return
 
         # if need partition: ask partitions
