@@ -4,7 +4,6 @@
 import net
 import sys
 import pathlib
-import readline
 
 __author__ = 'Matteo Marescotti'
 
@@ -24,7 +23,10 @@ def terminal(address):
     socket.connect(address)
     while True:
         try:
-            line = input('{}:{}> '.format(*socket.remote_address))
+            if sys.stdin.isatty():
+                line = input('{}:{}> '.format(*socket.remote_address))
+            else:
+                line = input()
         except (KeyboardInterrupt, EOFError):
             print()
             break

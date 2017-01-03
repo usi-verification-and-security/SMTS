@@ -26,10 +26,10 @@ void SolverProcess::init() {
         this->header["config.seed"] = "0";
     }
 
-    if (!this->header.count("config.split") &&
+    if (this->header.count("config.split") &&
         this->header["config.split"] != spts_lookahead &&
         this->header["config.split"] != spts_scatter) {
-        this->header["warning"] = "bad config.split: " + this->header["config.split"];
+        this->warning("bad config.split: '" + this->header["config.split"] + "'. using default");
         this->header.erase("config.split");
     }
     if (this->header.count("config.split") == 0) {
@@ -71,7 +71,7 @@ void SolverProcess::solve() {
                 }
                 break;
             case Task::resume:
-                smtlib = "";
+                smtlib.clear();
                 break;
         }
     }
@@ -129,7 +129,7 @@ void SolverProcess::partition(uint8_t n) {
         else if (status == s_False)
             this->report(Status::unsat);
         else
-            this->report(partitions, "unknown status after partition");
+            this->report(partitions, "error during partitioning");
     }
     exit(0);
 }

@@ -46,9 +46,7 @@ private:
             this->header["lemmas"] = std::to_string(1000);
         }
         this->init();
-        auto header = this->header;
-        header["info"] = "solver start";
-        this->report(header);
+        this->info("solver start");
         std::thread t([&] {
             net::Header header;
             std::string payload;
@@ -99,28 +97,26 @@ private:
     // async interrupt the solver
     void interrupt();
 
-    void report(net::Header &header, const std::string &payload = "") {
-        if (!header.count("name"))
-            header["name"] = this->header["name"];
-        if (!header.count("node"))
-            header["node"] = this->header["node"];
+    void report(net::Header &header, const std::string &report, const std::string &payload) {
+        if (&header != &(this->header)) {
+            if (report.size())
+                header["report"] = report;
+            header.insert(this->header.begin(), this->header.end());
+        }
         this->writer()->write(header, payload);
     }
 
     void report() {
-        this->report(this->header);
+        this->report(this->header, "", "");
     }
 
-    void report(Status status, const net::Header &h = net::Header()) {
-        auto header = h;
-        header.insert(this->header.begin(), this->header.end());
+    void report(Status status, net::Header header = net::Header()) {
         if (status == Status::sat)
-            header["status"] = "sat";
+            this->report(header, "sat", "");
         else if (status == Status::unsat)
-            header["status"] = "unsat";
+            this->report(header, "unsat", "");
         else
-            header["status"] = "unknown";
-        this->report(header);
+            this->report(header, "unknown", "");
 
     }
 
@@ -128,28 +124,21 @@ private:
         net::Header header;
         std::stringstream payload;
         if (error != nullptr)
-            header["error"] = error;
+            return this->error(error);
         payload << partitions;
-        header["partitions"] = std::to_string(partitions.size());
-        this->report(header, payload.str());
+        this->report(header, "partitions", payload.str());
     }
 
-    void info(const std::string &info) {
-        net::Header header;
-        header["info"] = info;
-        this->report(header);
+    void info(const std::string &info, net::Header header = net::Header()) {
+        this->report(header, "info:" + info, "");
     }
 
-    void warning(const std::string &warning) {
-        net::Header header;
-        header["warning"] = warning;
-        this->report(header);
+    void warning(const std::string &warning, net::Header header = net::Header()) {
+        this->report(header, "warning:" + warning, "");
     }
 
-    void error(const std::string &error) {
-        net::Header header;
-        header["error"] = error;
-        this->report(header);
+    void error(const std::string &error, net::Header header = net::Header()) {
+        this->report(header, "error:" + error, "");
     }
 
     Task wait() {

@@ -16,7 +16,7 @@ private:
 
     void update_lemmas();
 
-    void log(uint8_t, std::string, net::Header *_ = nullptr);
+    void log(uint8_t, std::string);
 
     bool check_header(net::Header &);
 

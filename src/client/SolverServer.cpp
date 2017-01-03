@@ -22,18 +22,9 @@ SolverServer::SolverServer(const net::Address &server) :
 SolverServer::~SolverServer() {
 }
 
-void SolverServer::log(uint8_t level, std::string message, net::Header *header_solver) {
-    //    net::Header header;
-    //    if (header_solver != nullptr) {
-    //        for(auto &pair:header_solver)
-    //        header["command"] = "log";
-    //        header["level"] = std::to_string(level);
-    //        try {
-    //            this->server.write(header, message);
-    //        } catch (SocketException) { }
-    //    }
+void SolverServer::log(uint8_t level, std::string message) {
     if (message.find("\n") != std::string::npos) {
-        ::replace(message, "\n", "\n  ");
+        ::replace(message, "\n", "\n    ");
         message = "\n" + message;
     }
     Logger::log(level, (this->solver ? this->solver->header["name"] + this->solver->header["node"] + ": " : "") +
@@ -54,8 +45,7 @@ void SolverServer::handle_close(net::Socket &socket) {
         this->stop_solver();
     } else if (this->solver && &socket == this->solver->reader()) {
         this->log(Logger::ERROR, "solver quit unexpected");
-        this->solver->header["error"] = "unexpected quit";
-        this->solver->header["status"] = "unknown";
+        this->solver->header["report"] = "unknown";
         this->server.write(this->solver->header, "");
         this->stop_solver();
     }
@@ -115,24 +105,18 @@ void SolverServer::handle_message(net::Socket &socket, net::Header &header, std:
         this->server.write(header, payload);
         //pprint(header);
         this->solver->header = header;
-        if (header.count("status")) {
-            this->log(Logger::INFO, "status: " + header["status"]);
-        }
-        if (header.count("info")) {
-            this->log(Logger::INFO, header["info"]);
-            this->solver->header.erase("info");
-        }
-        if (header.count("warning")) {
-            this->log(Logger::WARNING, header["warning"]);
-            this->solver->header.erase("warning");
-        }
-        if (header.count("error")) {
-            this->log(Logger::ERROR, header["error"]);
-            this->solver->header.erase("error");
-        }
-        if (header.count("partitions")) {
-            this->log(Logger::INFO, "produced " + header["partitions"] + " partitions");
-            this->solver->header.erase("partitions");
+        if (header.count("report")) {
+            std::vector<std::string> v;
+            ::split(header["report"], ":", v, 2);
+            uint8_t level = Logger::INFO;
+            if (v.size() == 2) {
+                if (v[0] == "error")
+                    level = Logger::ERROR;
+                else if (v[0] == "warning")
+                    level = Logger::WARNING;
+            }
+            this->log(level, v.back());
+            this->solver->header.erase("report");
         }
     }
 }

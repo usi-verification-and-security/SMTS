@@ -91,8 +91,8 @@ void SolverProcess::solve() {
 
     while (true) {
         Z3_ast_vector v = Z3_fixedpoint_from_string(context, fixedpoint, (smtlib + this->header["query"]).c_str());
-        unsigned size = Z3_ast_vector_size(context, v);
-        Z3_ast a = Z3_ast_vector_get(context, v, size - 1);
+        //unsigned size = Z3_ast_vector_size(context, v);
+        Z3_ast a = Z3_ast_vector_get(context, v, 0);
 
         Z3_lbool res = Z3_fixedpoint_query(context, fixedpoint, a);
 
@@ -104,23 +104,22 @@ void SolverProcess::solve() {
                     std::to_string(statistics.uint_value(i)) :
                     std::to_string(statistics.double_value(i));
         }
-        //std::cout << header << "\n";
         if (res == Z3_L_TRUE)
             this->report(Status::sat, header);
         else if (res == Z3_L_FALSE)
             this->report(Status::unsat, header);
-        else
-            this->report(Status::unknown, header);
+
         Task t = this->wait();
-        exit(0);
-//        switch (t.command) {
-//            case Task::incremental:
-//                smtlib = (char *) t.smtlib.c_str();
-//                break;
-//            case Task::resume:
-//                smtlib = (char *) "(check-sat)";
-//                break;
-//        }
+        switch (t.command) {
+            case Task::incremental:
+                smtlib = t.smtlib;
+                break;
+            case Task::resume:
+                smtlib.clear();
+                break;
+            default:
+                return;
+        }
     }
 }
 

@@ -5,14 +5,17 @@ import server
 port = 3000
 portfolio_max = 0
 portfolio_min = 0
-partition_timeout = None
-partition_policy = [1, 8]
+partition_timeout = 10
+partition_policy = [1, 4]
 solving_timeout = 1000
+z3_path = pathlib.Path('/Users/matteo/dev/spacer/build')
+fixedpoint_partition = True
+incremental = 2
 
 
 def entrust(node, header: dict, solver: server.Solver, solvers: set):
     if solver.name == "Spacer":
-        header["parameter.fixedpoint.spacer.restarts"] = "true"
+        #header["parameter.fixedpoint.spacer.restarts"] = "true"
         # header["parameter.fixedpoint.spacer.random_seed"] = random.randint(0, 0xFFFFFF)
         header["parameter.fixedpoint.xform.slice"] = "false"
         header["parameter.fixedpoint.xform.inline_linear"] = "false"
@@ -32,13 +35,14 @@ def entrust(node, header: dict, solver: server.Solver, solvers: set):
             header["parameter.fixedpoint.pdr.flexible_trace"] = "true"
         if len(solvers) % 3 == 2:
             # -p gpdr
+            header["parameter.fixedpoint.spacer.restarts"] = "false"
             header["-p"] = "gpdr"
     if solver.name == "OpenSMT2":
         header["config.seed"] = random.randint(0, 0xFFFFFF)
-        header["config.split"] = "lookahead" # scattering
+        header["config.split"] = "lookahead"  # scattering
 
 
-_benchmarks_path = pathlib.Path('/Users/matteo/dev/benchmark_spacer/selected')
+_benchmarks_path = pathlib.Path('/Users/matteo/dev/benchmark_spacer/')
 files = [str(i.resolve()) for i in _benchmarks_path.glob('*.smt2')]
 
 # _benchmarks_path = pathlib.Path('/Users/matteo/dev/benchmark_lra/')
@@ -47,12 +51,8 @@ files = [str(i.resolve()) for i in _benchmarks_path.glob('*.smt2')]
 # files = ["/Users/matteo/dev/opensmt2/test/std_benchmarks/NEQ_NEQ046_size6.smt2",
 #          "/Users/matteo/dev/opensmt2/test/std_benchmarks/PEQ_PEQ004_size8.smt2"]
 
-# files=[str(pathlib.Path('../../opensmt2/test/std_benchmarks/NEQ_NEQ015_size6.smt2').resolve())]+\
-#        [str(pathlib.Path('../../opensmt2/test/std_benchmarks/PEQ_PEQ013_size8.smt2').resolve())]
 
-
-# files = ['prova']
-# files=[str(pathlib.Path('../../opensmt2/test/std_benchmarks/PEQ_PEQ013_size8.smt2').resolve())]
+# files = ['/Users/matteo/dev/smts/build/prova.smt2']
 
 # files = """/Users/matteo/dev/opensmt2/test/std_benchmarks/NEQ_NEQ015_size6.smt2
 # /Users/matteo/dev/opensmt2/test/std_benchmarks/NEQ_NEQ032_size3.smt2

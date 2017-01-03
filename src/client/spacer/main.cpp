@@ -12,8 +12,11 @@
 
 
 int main() {
-    net::Header h;
-    std::istringstream is("{\"a\":\"A\" ,\"b\":\"B\"}");
-    is >> h;
-    std::cout << h << "\n";
+    std::vector<std::string> v;
+    ::split("ciao:ciao:ciao", ":", v,2);
+    for (auto i:v) {
+        std::cout << i << "\n";
+    }
+
+
 }

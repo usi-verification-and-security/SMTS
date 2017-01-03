@@ -155,49 +155,20 @@ class Node:
     def _set_status(self, status: SolveStatus):
         raise NotImplementedError
 
-        # def db_data(self, data=None):
-        #     raise NotImplementedError
-
 
 class AndNode(Node):
-    def __init__(self, smtlib: str, query: str, push: bool, parent=None):
+    def __init__(self, smtlib, query, parent=None):
         if not isinstance(parent, (OrNode, type(None))):
             raise TypeError
         super().__init__(parent)
-        self._smtlib = smtlib
+        self.smtlib = smtlib
         self.query = query
-        self.push = push
-
-    def smtlib(self, start=None):
-        npop = 0
-        if start:
-            while not start.is_ancestor(self):
-                if isinstance(start, AndNode) and start.push:
-                    npop += 1
-                start = start.parent
-        node = self
-        smtlibs = []
-        while node is not start:
-            if isinstance(node, AndNode):
-                smtlibs.append(node._smtlib)
-                if node.push and node is not self.root:
-                    smtlibs.append('(push 1)')
-            node = node.parent
-        smtlibs += ['(pop 1)' for _ in range(npop)]
-        smtlibs.reverse()
-        return '\n'.join(smtlibs)
 
     def _set_status(self, status: SolveStatus):
         self._status = status
         if self.parent:
             if status == SolveStatus.sat or all([node.status == status for node in self.parent.children]):
                 self.parent.status = status
-
-                # def db_data(self, data=None):
-                #     if data:
-                #         self.smtlib = data
-                #     else:
-                #         return self.smtlib
 
 
 class OrNode(Node):
@@ -209,6 +180,3 @@ class OrNode(Node):
     def _set_status(self, status: SolveStatus):
         self._status = status
         self.parent.status = status
-
-        # def db_data(self, data=None):
-        #     return
