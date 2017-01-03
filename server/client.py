@@ -20,12 +20,16 @@ def send_file(address, path):
 
 
 def terminal(address):
+    history_file = pathlib.Path('.client_history')
     socket = net.Socket()
     socket.connect(address)
+    if sys.stdin.isatty() and history_file.is_file():
+        readline.read_history_file(str(history_file.resolve()))
     while True:
         try:
             if sys.stdin.isatty():
                 line = input('{}:{}> '.format(*socket.remote_address))
+                readline.write_history_file(str(history_file))
             else:
                 line = input()
         except (KeyboardInterrupt, EOFError):
