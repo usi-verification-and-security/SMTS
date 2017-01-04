@@ -327,7 +327,7 @@ class ParallelizationServer(net.Server):
         self.config = config
         self.conn = conn
         self.table_prefix = table_prefix
-        self.trees = set()
+        self.trees = []
         self.current = None
         if self.conn:
             cursor = self.conn.cursor()
@@ -371,7 +371,7 @@ class ParallelizationServer(net.Server):
                     header['name']
                 ), {'header': header})
                 try:
-                    self.trees.add(
+                    self.trees.append(
                         Tree(payload.decode(),
                              header['name'],
                              self.config.solving_timeout,

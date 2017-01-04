@@ -59,7 +59,9 @@ void FileThread::main() {
             if (this->settings.verbose) {
                 Logger::log(Logger::INFO, header);
             }
-        } while (header.count("status") == 0);
+        } while (header.count("report") == 0 || (
+                header["report"] != "sat" && header["report"] != "unsat" && header["report"] != "unknown"
+        ));
         if (lemmas and this->settings.clear_lemmas) {
             try {
                 header["lemmas"] = "0";

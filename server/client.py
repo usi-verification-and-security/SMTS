@@ -20,7 +20,7 @@ def send_file(address, path):
 
 
 def terminal(address):
-    history_file = pathlib.Path('.client_history')
+    history_file = pathlib.Path.home() / '.smts_client_history'
     socket = net.Socket()
     socket.connect(address)
     if sys.stdin.isatty() and history_file.is_file():

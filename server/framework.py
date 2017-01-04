@@ -124,3 +124,8 @@ class OrNode(Node):
     def _set_status(self, status: SolveStatus):
         self._status = status
         self.parent.status = status
+
+
+class Root(AndNode):
+    def __init__(self, smtlib, query):
+        super().__init__(smtlib, query, None)

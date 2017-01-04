@@ -35,7 +35,6 @@ def entrust(node, header: dict, solver: server.Solver, solvers: set):
             header["parameter.fixedpoint.pdr.flexible_trace"] = "true"
         if len(solvers) % 3 == 2:
             # -p gpdr
-            header["parameter.fixedpoint.spacer.restarts"] = "false"
             header["-p"] = "gpdr"
     if solver.name == "OpenSMT2":
         header["config.seed"] = random.randint(0, 0xFFFFFF)
