@@ -21,10 +21,10 @@ std::function<void(std::vector<net::Lemma> &)> this_pull;
 
 void push(Z3_fixedpoint_lemma_set s) {
     std::vector<net::Lemma> lemmas;
-    char *l;
-    while ((l = (char *) Z3_fixedpoint_lemma_pop(context, s))) {
-        lemmas.push_back(net::Lemma(l, 0));
-        free(l);
+    Z3_fixedpoint_lemma *lemma;
+    while ((lemma = Z3_fixedpoint_lemma_pop(context, s))) {
+        lemmas.push_back(net::Lemma(std::to_string(lemma->level) + " " + lemma->str, 0));
+        free(lemma);
     }
     this_push(lemmas);
 }
@@ -32,8 +32,12 @@ void push(Z3_fixedpoint_lemma_set s) {
 void pull(Z3_fixedpoint_lemma_set s) {
     std::vector<net::Lemma> lemmas;
     this_pull(lemmas);
-    for (net::Lemma &l:lemmas) {
-        Z3_fixedpoint_lemma_push(context, s, l.smtlib.c_str());
+    Z3_fixedpoint_lemma l;
+    for (net::Lemma &lemma:lemmas) {
+        std::istringstream is(lemma.smtlib);
+        is >> l.level;
+        l.str = std::string(std::istreambuf_iterator<char>(is), {}).c_str();
+        Z3_fixedpoint_lemma_push(context, s, &l);
     }
 }
 

@@ -17,6 +17,7 @@ def entrust(node, header: dict, solver: server.Solver, solvers: set):
     if solver.name == "Spacer":
         #header["parameter.fixedpoint.spacer.restarts"] = "true"
         # header["parameter.fixedpoint.spacer.random_seed"] = random.randint(0, 0xFFFFFF)
+        # header["parameter.fixedpoint.spacer.lemma_level"] = 1
         header["parameter.fixedpoint.xform.slice"] = "false"
         header["parameter.fixedpoint.xform.inline_linear"] = "false"
         header["parameter.fixedpoint.xform.inline_eager"] = "false"

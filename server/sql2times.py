@@ -53,7 +53,16 @@ def get_benchmarks(db_path):
                                         'WHERE name = ? AND event = "STATUS" AND node="[]");',
                                         (benchmark.name,)).fetchone()
             if row_root_status:
-                row_solved = row_root_status
+                try:
+                    json_solved = json.loads(row_solved[1])
+                except:
+                    json_solved = {}
+                try:
+                    json_root_status = json.loads(row_root_status[1])
+                except:
+                    json_root_status = {}
+                json_root_status.update(json_solved)
+                row_solved = (row_root_status[0], json.dumps(json_root_status))
 
         benchmark.ts_end = row_solved[0]
         benchmark.data = json.loads(row_solved[1]) if row_solved[1] else None
@@ -73,6 +82,7 @@ def main():
             for benchmark in benchmarks:
                 if not benchmark.ts_start:
                     print('not started: ' + benchmark.name)
+                    continue
                 file_times.write(
                     '{} {} {}\n'.format(
                         benchmark.name,
