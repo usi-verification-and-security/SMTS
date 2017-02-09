@@ -28,18 +28,12 @@ namespace net {
     };
 
 
-    class SocketTimeout : public Exception {
-    public:
-        explicit SocketTimeout() : Exception("socket timeout") {}
-    };
-
-
     class Socket {
     private:
         int fd;
         std::mutex read_mtx, write_mtx;
 
-        inline uint32_t readn(char *, uint32_t, uint32_t);
+        inline uint32_t readn(char *, uint32_t);
 
     public:
         Socket(int);
@@ -54,7 +48,7 @@ namespace net {
 
         std::shared_ptr<Socket> accept();
 
-        uint32_t read(net::Header &, std::string &, uint32_t timeout_ms = 0);
+        uint32_t read(net::Header &, std::string &);
 
         uint32_t write(const net::Header &, const std::string &);
 

@@ -11,9 +11,6 @@
 
 
 class Settings {
-private:
-    void load_header(net::Header &header, char *string);
-
 public:
     Settings();
 
@@ -24,7 +21,7 @@ public:
     std::string lemmas;
     std::list<std::string> files;
     bool clear_lemmas;
-    net::Header header_solve;
+    net::Header parameters;
 };
 
 #endif //CLAUSE_SHARING_SETTINGS_H

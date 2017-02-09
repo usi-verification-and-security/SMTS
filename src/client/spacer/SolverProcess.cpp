@@ -43,8 +43,8 @@ void pull(Z3_fixedpoint_lemma_set s) {
 
 void SolverProcess::init() {
     FILE *file = fopen("/dev/null", "w");
-    dup2(fileno(file), fileno(stdout));
-    dup2(fileno(file), fileno(stderr));
+    //dup2(fileno(file), fileno(stdout));
+    //dup2(fileno(file), fileno(stderr));
     fclose(file);
     this_push = [&](const std::vector<net::Lemma> &l) {
         this->lemma_push(l);

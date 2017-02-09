@@ -79,44 +79,25 @@ namespace net {
         return std::shared_ptr<Socket>(new Socket(clientfd));
     }
 
-    uint32_t Socket::readn(char *buffer, uint32_t length, uint32_t timeout) {
-        struct timeval tv;
-        if (timeout > 0) {
-            if (timeout > 1000)
-                tv.tv_sec = timeout / 1000;
-            else
-                tv.tv_sec = 0;
-            tv.tv_usec = (uint32_t) ((timeout - (tv.tv_sec * 1000)) * 1000);
-        }
-
-        fd_set set;
+    uint32_t Socket::readn(char *buffer, uint32_t length) {
         uint32_t r = 0;
         while (length > r) {
-            FD_ZERO(&set);
-            FD_SET(this->fd, &set);
-            int s = select(this->fd + 1, &set, nullptr, nullptr, timeout > 0 ? &tv : nullptr);
-            if (s == -1)
-                throw SocketException("select error during read");
-            else if (s == 0)
-                throw SocketTimeout();
-            else {
-                ssize_t t = ::read(this->fd, &buffer[r], length - r);
-                if (t == 0)
-                    throw SocketClosedException();
-                if (t < 0)
-                    throw SocketException("file descriptor error during read");
-                r += t;
-            }
+            ssize_t t = ::read(this->fd, &buffer[r], length - r);
+            if (t == 0)
+                throw SocketClosedException();
+            if (t < 0)
+                throw SocketException("file descriptor error");
+            r += t;
         }
         return r;
     }
 
-    uint32_t Socket::read(net::Header &header, std::string &payload, uint32_t timeout) {
+    uint32_t Socket::read(net::Header &header, std::string &payload) {
         std::lock_guard<std::mutex> _l(this->read_mtx);
 
         uint32_t length = 0;
         char buffer[4];
-        if (this->readn(buffer, 4, timeout) != 4)
+        if (this->readn(buffer, 4) != 4)
             return 0;
         length = (uint32_t) ((uint8_t) buffer[0]) << 24 |
                  (uint32_t) ((uint8_t) buffer[1]) << 16 |
@@ -126,7 +107,7 @@ namespace net {
         if (message == nullptr)
             throw SocketException("can't malloc");
 
-        length = this->readn(message.get(), length, timeout);
+        length = this->readn(message.get(), length);
 
         uint32_t i = 0;
         header.clear();

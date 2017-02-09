@@ -223,17 +223,10 @@ private:
 
         try {
             this->lemma.server->write(header, "");
-            this->lemma.server->read(header, payload, 500);
+            this->lemma.server->read(header, payload);
         } catch (net::SocketException &ex) {
             this->lemma.errors++;
             this->error(std::string("lemma pull failed: ") + ex.what());
-            return;
-        } catch (net::SocketTimeout &) {
-            if (this->lemma.interval < 0x7F) {
-                std::random_device rd;
-                this->lemma.interval += std::uniform_int_distribution<uint8_t>(1, this->lemma.interval)(rd);
-            } else
-                this->warning("lemma pull failed: timeout");
             return;
         }
 

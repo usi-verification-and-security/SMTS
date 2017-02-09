@@ -3,7 +3,7 @@
 //
 
 #include <getopt.h>
-#include <iostream>
+#include <sstream>
 #include "lib/Logger.h"
 #include "Settings.h"
 
@@ -12,29 +12,17 @@ Settings::Settings() :
         verbose(false),
         clear_lemmas(false) {}
 
-void Settings::load_header(net::Header &header, char *string) {
-
-    int i;
-    for (i = 0; optarg[i] != '=' && optarg[i] != '\0' && i < (uint8_t) -1; i++) {
-    }
-    if (optarg[i] != '=') {
-        Logger::log(Logger::ERROR, std::string("bad pair: ") + string);
-    }
-    optarg[i] = '\0';
-    header[optarg] = &optarg[i + 1];
-}
-
-
 void Settings::load(int argc, char **argv) {
     int opt;
-    while ((opt = getopt(argc, argv, "hvs:l:cr:")) != -1)
+    while ((opt = getopt(argc, argv, "hvs:l:cp:r:")) != -1)
         switch (opt) {
             case 'h':
                 std::cout << "Usage: " << argv[0] <<
                           " [-s server-host:port]"
                                   "[-l lemma_server-host:port]"
                                   "[-hvc]"
-                                  "[-r run-header-key=value [...]]"
+                                  "[-p parameter-json]"
+                                  "[-r parameter-key=value]"
                                   "\n";
                 exit(0);
             case 'v':
@@ -49,8 +37,18 @@ void Settings::load(int argc, char **argv) {
             case 'c':
                 this->clear_lemmas = true;
                 break;
+            case 'p':
+                std::istringstream(optarg) >> this->parameters;
+                break;
             case 'r':
-                this->load_header(this->header_solve, optarg);
+                int i;
+                for (i = 0; optarg[i] != '=' && optarg[i] != '\0' && i < (uint8_t) -1; i++) {
+                }
+                if (optarg[i] != '=') {
+                    Logger::log(Logger::ERROR, std::string("bad pair: ") + optarg);
+                }
+                optarg[i] = '\0';
+                this->parameters[optarg] = &optarg[i + 1];
                 break;
             default:
                 std::cout << "unknown option '" << opt << "'" << "\n";

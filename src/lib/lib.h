@@ -56,9 +56,8 @@ std::istream &operator>>(std::istream &stream, std::vector<T> &v) {
     return ::split(stream, '\0', [&](const std::string &sub) {
         if (sub.size() == 0)
             return;
-        std::istringstream is(sub);
         T t;
-        is >> t;
+        std::istringstream(sub) >> t;
         v.push_back(t);
     });
 }

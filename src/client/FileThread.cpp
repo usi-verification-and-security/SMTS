@@ -48,7 +48,7 @@ void FileThread::main() {
         file.close();
 
         header.clear();
-        for (auto &it : this->settings.header_solve)
+        for (auto &it : this->settings.parameters)
             header[it.first] = it.second;
         header["command"] = "solve";
         header["name"] = filename;
