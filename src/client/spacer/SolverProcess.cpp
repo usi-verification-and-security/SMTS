@@ -36,7 +36,7 @@ void pull(Z3_fixedpoint_lemma_set s) {
     for (net::Lemma &lemma:lemmas) {
         std::istringstream is(lemma.smtlib);
         is >> l.level;
-        l.str = std::string(std::istreambuf_iterator<char>(is), {}).c_str();
+        l.str = strdup(std::string(std::istreambuf_iterator<char>(is), {}).c_str());
         Z3_fixedpoint_lemma_push(context, s, &l);
     }
 }
