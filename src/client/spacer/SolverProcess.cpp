@@ -2,6 +2,7 @@
 // Created by Matteo on 10/12/15.
 //
 
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <random>
@@ -24,6 +25,7 @@ void push(Z3_fixedpoint_lemma_set s) {
     Z3_fixedpoint_lemma *lemma;
     while ((lemma = Z3_fixedpoint_lemma_pop(context, s))) {
         lemmas.push_back(net::Lemma(std::to_string(lemma->level) + " " + lemma->str, 0));
+        free(lemma->str);
         free(lemma);
     }
     this_push(lemmas);
@@ -38,6 +40,7 @@ void pull(Z3_fixedpoint_lemma_set s) {
         is >> l.level;
         l.str = strdup(std::string(std::istreambuf_iterator<char>(is), {}).c_str());
         Z3_fixedpoint_lemma_push(context, s, &l);
+        free(l.str);
     }
 }
 
