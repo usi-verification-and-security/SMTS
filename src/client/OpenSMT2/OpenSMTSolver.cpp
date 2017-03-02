@@ -46,33 +46,33 @@ void inline OpenSMTSolver::clausesPublish() {
         Clause &c = this->ca[cr];
         if (c.size() > 3 || c.mark() == 3)
             continue;
+        uint16_t level = 0;
+        vec<PTRef> clause;
         for (int j = 0; j < c.size(); j++) {
-            bool keep_it = false;
             Lit &l = c[j];
-            for (uint8_t k = 0; k < enabled_assumptions.size(); k++) {
-                if (var(l) != enabled_assumptions[k])
-                    continue;
-
-                vec<PTRef> clause;
-                for (int m = 0; m < c.size(); m++) {
-                    if (c[m] == l)
-                        continue;
-                    PTRef pt = this->interpret.thandler->varToTerm(var(c[m]));
-                    pt = sign(c[m]) ? this->interpret.logic->mkNot(pt) : pt;
-                    clause.push(pt);
+            uint8_t k;
+            for (k = 0; k < enabled_assumptions.size(); k++) {
+                if (var(l) == enabled_assumptions[k]) {
+                    if (level <= k)
+                        level = (uint16_t) (k + 1);
+                    break;
                 }
-                PTRef pt = this->interpret.logic->mkOr(clause);
-                char *s = this->interpret.thandler->getLogic().printTerm(pt, false, true);
-                lemmas.push_back(net::Lemma(s, (uint16_t) (k + 1)));
-                free(s);
-                goto next;
             }
+            if (k != enabled_assumptions.size())
+                continue;
+            PTRef pt = this->interpret.thandler->varToTerm(var(l));
+            pt = sign(l) ? this->interpret.logic->mkNot(pt) : pt;
+            clause.push(pt);
         }
-        next:;
+        if (clause.size() == 0)
+            continue;
+        PTRef pt = this->interpret.logic->mkOr(clause);
+        char *s = this->interpret.thandler->getLogic().printTerm(pt, false, true);
+        lemmas.push_back(net::Lemma(s, level));
+        free(s);
+        c.mark(3);
     }
-
     this->interpret.lemma_push(lemmas);
-
 }
 
 void inline OpenSMTSolver::clausesUpdate() {

@@ -16,10 +16,10 @@ incremental = 2
 def entrust(node, header: dict, solver: server.Solver, solvers: set):
     if solver.name == "Spacer":
         #header["parameter.fixedpoint.spacer.restarts"] = "true"
-        header["parameter.fixedpoint.spacer.random_seed"] = random.randint(0, 0xFFFFFF)
+        #header["parameter.fixedpoint.spacer.random_seed"] = random.randint(0, 0xFFFFFF)
         header["parameter.fixedpoint.spacer.share_lemmas"] = "true"
         header["parameter.fixedpoint.spacer.share_invariants"] = "true"
-        header["parameter.fixedpoint.spacer.share_lemmas.level"] = 10
+        #header["parameter.fixedpoint.spacer.share_lemmas.level"] = 10
 
         header["parameter.fixedpoint.xform.slice"] = "false"
         header["parameter.fixedpoint.xform.inline_linear"] = "false"
@@ -46,7 +46,9 @@ def entrust(node, header: dict, solver: server.Solver, solvers: set):
 
 
 _benchmarks_path = pathlib.Path('/Users/matteo/dev/hpc/scratch/marescotti/benchmarks/horn/')
-files = [str(i.resolve()) for i in _benchmarks_path.glob('32_7a_cilled_true-unreach-call_linux-3.8-rc1-32_7a-drivers--net--arcnet--com90xx.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.smt2')]
+_benchmarks_path = pathlib.Path('/Users/matteo/dev/smts/build')
+
+files = [str(i.resolve()) for i in _benchmarks_path.glob('32*.smt2')]
 
 
 # _benchmarks_path = pathlib.Path('/Users/matteo/dev/benchmark_lra/')
