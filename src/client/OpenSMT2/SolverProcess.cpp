@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <random>
+#include <mutex>
 #include "client/SolverProcess.h"
 #include "OpenSMTSolver.h"
 
@@ -16,7 +17,10 @@ OpenSMTInterpret *interpret = nullptr;
 
 const char *SolverProcess::solver = "OpenSMT2";
 
+std::mutex mtx_solve;
+
 void SolverProcess::init() {
+    mtx_solve.lock();
     FILE *file = fopen("/dev/null", "w");
     dup2(fileno(file), fileno(stdout));
     dup2(fileno(file), fileno(stderr));
@@ -51,7 +55,9 @@ void SolverProcess::solve() {
 
     while (true) {
         opensmt::stop = false;
+        mtx_solve.unlock();
         interpret->interpFile((char *) (smtlib + this->header["query"]).c_str());
+        mtx_solve.lock();
         sstat status = interpret->main_solver->getStatus();
         interpret->f_exit = false;
         opensmt::stop = false;
@@ -78,6 +84,7 @@ void SolverProcess::solve() {
 }
 
 void SolverProcess::interrupt() {
+    std::lock_guard<std::mutex> _l(mtx_solve);
     opensmt::stop = true;
 }
 
@@ -85,6 +92,10 @@ void SolverProcess::partition(uint8_t n) {
     pid_t pid = fork();
     if (pid != 0)
         return;
+    FILE *file = fopen("/dev/null", "w");
+    dup2(fileno(file), fileno(stdout));
+    dup2(fileno(file), fileno(stderr));
+    fclose(file);
     std::vector<std::string> partitions;
     const char *msg;
     if (!(

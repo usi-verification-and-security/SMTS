@@ -128,7 +128,7 @@ void Thread::start() {
 }
 
 void Thread::stop() {
-    std::lock_guard<std::mutex> lock(this->mtx);
+    std::lock_guard<std::mutex> _l(this->mtx);
     if (!this->joinable() || this->stop_requested)
         return;
     this->stop_requested = true;

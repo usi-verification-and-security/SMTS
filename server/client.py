@@ -3,6 +3,7 @@
 
 import net
 import sys
+import bz2
 import pathlib
 import readline
 
@@ -10,13 +11,19 @@ __author__ = 'Matteo Marescotti'
 
 
 def send_file(address, path):
-    file = open(path, 'r')
+    p = pathlib.Path(path).resolve()
+    if path.endswith('.bz2'):
+        with bz2.open(path) as file:
+            content = file.read().decode()
+    else:
+        with open(path, 'r') as file:
+            content = file.read()
     socket = net.Socket()
     socket.connect(address)
     socket.write({
         'command': 'solve',
-        'name': pathlib.Path(path).name
-    }, file.read())
+        'name': p.name
+    }, content)
 
 
 def terminal(address):

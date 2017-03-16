@@ -62,11 +62,11 @@ private:
                         this->report();
                     else if (header["local"] == "lemma_server" && header.count("lemma_server")) {
                         if (!header["lemma_server"].size()) {
-                            std::lock_guard<std::mutex> lock(this->lemma.mtx);
+                            std::lock_guard<std::mutex> _l(this->lemma.mtx);
                             this->lemma.server.reset();
                         } else {
                             try {
-                                std::lock_guard<std::mutex> lock(this->lemma.mtx);
+                                std::lock_guard<std::mutex> _l(this->lemma.mtx);
                                 this->lemma.server.reset(new net::Socket(header["lemma_server"]));
                                 this->lemma.errors = 0;
                             } catch (net::SocketException &ex) {

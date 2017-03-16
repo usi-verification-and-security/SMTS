@@ -1,0 +1,14 @@
+port = 3000  # listen port
+db_path = None
+table_prefix = ''
+portfolio_max = 0  # 0 if no limit
+portfolio_min = 0  # 0 if no limit
+partition_timeout = None  # None if no partitioning
+partition_policy = [2, 2]  #
+solving_timeout = None  # None no timeout
+lemma_amount = None  # None for auto
+log_level = 0  # logging.INFO  #
+incremental = 2  # 0: always restart. 1: only push. 2: always incremental
+z3_path = None  # if None then z3.py is in python path
+fixedpoint_partition = False  # automatic partition for fixedpoint instances
+files = []  # list of files loaded immediately

@@ -103,7 +103,6 @@ void SolverServer::handle_message(net::Socket &socket, net::Header &header, std:
         }
     } else if (this->solver && &socket == this->solver->reader()) {
         this->server.write(header, payload);
-        //pprint(header);
         this->solver->header = header;
         if (header.count("report")) {
             std::vector<std::string> v;
