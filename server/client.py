@@ -11,18 +11,20 @@ __author__ = 'Matteo Marescotti'
 
 
 def send_file(address, path):
-    p = pathlib.Path(path).resolve()
-    if path.endswith('.bz2'):
-        with bz2.open(path) as file:
+    path = pathlib.Path(path).resolve()
+    if path.suffix == '.bz2':
+        with bz2.open(str(path)) as file:
             content = file.read().decode()
+        name = pathlib.Path(path.stem).stem
     else:
-        with open(path, 'r') as file:
+        with open(str(path), 'r') as file:
             content = file.read()
+        name = path.stem
     socket = net.Socket()
     socket.connect(address)
     socket.write({
         'command': 'solve',
-        'name': p.name
+        'name': name
     }, content)
 
 

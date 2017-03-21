@@ -6,177 +6,14 @@ import threading
 import json
 import framework
 import net
-import sys
 import client
 import logging
-import enum
 import traceback
 import random
-import pathlib
 import time
-import re
-import sqlite3
+import config
 
 __author__ = 'Matteo Marescotti'
-
-
-class Config:
-    port = 3000
-    portfolio_max = 0  # 0 if no limit
-    portfolio_min = 0  # 0 if no limit
-    partition_timeout = None  # None if no partitioning
-    partition_policy = [2, 2]  #
-    solving_timeout = None  # None no timeout
-    lemma_amount = None  # None for auto
-    log_level = logging.INFO  #
-    incremental = 2  # 0: always restart. 1: only push. 2: always incremental
-    z3_path = pathlib.Path()
-    fixedpoint_partition = False
-
-    @staticmethod
-    def entrust(node, header, solver, solvers):
-        pass
-
-    def __init__(self):
-        self._z3 = None
-
-    @property
-    def z3(self):
-        if self._z3:
-            return self._z3
-        try:
-            sys.path.insert(0, str(self.z3_path.resolve()))
-            self._z3 = __import__('z3')
-        except:
-            raise Exception('cannot import z3')
-        return self.z3
-
-
-class Tree(framework.AndNode):
-    class Type(enum.Enum):
-        standard = 0
-        fixedpoint = 1
-
-    def __init__(self,
-                 smtlib: str,
-                 name: str,
-                 timeout: int,
-                 z3,
-                 *,
-                 conn: sqlite3.Connection = None,
-                 table_prefix: str = '',
-                 fixedpoint_partition=True):
-        self.name = name
-        self.timeout = timeout
-        self.conn = conn
-        self.table_prefix = table_prefix
-        if self.conn:
-            self.conn.cursor().execute("CREATE TABLE IF NOT EXISTS {}SolvingHistory ("
-                                       "id INTEGER NOT NULL PRIMARY KEY, "
-                                       "ts INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),"
-                                       "name TEXT NOT NULL, "
-                                       "node TEXT, "
-                                       "event TEXT NOT NULL, "
-                                       "solver TEXT, "
-                                       "data TEXT"
-                                       ");".format(self.table_prefix))
-            self.conn.commit()
-        self.started = None
-
-        c = z3.Context()
-        f = z3.Fixedpoint(ctx=c)
-        queries = f.parse_string(smtlib)
-        if not queries:
-            super().__init__(smtlib.split('(check-sat)')[0], '(check-sat)')
-            self.type = self.Type.standard
-        else:
-            self.type = self.Type.fixedpoint
-            query = queries[0]
-            if not fixedpoint_partition:
-                s = f.to_string([])
-                super().__init__(s[s.index('(declare-rel '):], '(query ' + query.sexpr() + ')')
-            else:
-                _f = z3.Fixedpoint(ctx=c)
-                queries = []
-                for rule in f.get_rules():
-                    if z3.is_quantifier(rule):
-                        imp = rule.body()
-                        body = imp.arg(0)
-                        if imp.num_args() == 2:  # if is implies
-                            head = imp.arg(1)
-                            if z3.is_and(body):
-                                for i in range(body.num_args()):  # app always before others
-                                    ch = body.arg(i)
-                                    if z3.is_app(ch) and ch.decl().kind() == z3.Z3_OP_UNINTERPRETED:
-                                        _f.register_relation(ch.decl())
-                                    else:
-                                        break
-                            else:
-                                _f.register_relation(body.decl())
-                            if head.eq(query):
-                                head = z3.Bool(query.sexpr() + str(len(queries)), c)
-                                queries.append(head)
-                            _f.register_relation(head.decl())
-                            _f.add_rule(head, body)
-                            continue
-                    else:
-                        imp = rule
-                    _f.register_relation(imp.decl())
-                    _f.add_rule(rule)
-
-                s = _f.to_string([])
-
-                super().__init__(s[s.index('(declare-rel '):], '')
-
-                node = framework.OrNode(self)
-                self._db_log(self, 'OR', '', node.path())
-                for query in queries:
-                    child = framework.AndNode('',
-                                              '(query ' + query.sexpr() + ')',
-                                              node)
-                    self._db_log(node, 'AND', '', {"node": child.path(), "query": query.sexpr()})
-
-    @property
-    def is_timeout(self):
-        return (self.started + self.timeout) < time.time() if self.started else False
-
-    def to_string(self, node, start=None):
-        npop = 0
-        if start:
-            while not start.is_ancestor(node):
-                if isinstance(start, framework.AndNode):
-                    npop += 1
-                start = start.parent
-        smtlibs = []
-
-        while node is not start:
-            if isinstance(node, framework.AndNode):
-                smtlibs.append(node.smtlib)
-                if self.type is self.Type.standard and node is not self.root:
-                    smtlibs.append('(push 1)')
-            node = node.parent
-        if self.type is self.Type.standard:
-            smtlibs += ['(pop 1)' for _ in range(npop)]
-        smtlibs.reverse()
-        return '\n'.join(smtlibs)
-
-    def db_log(self, solver, event, data=None):
-        if solver.node.root is not self:
-            raise ValueError('solver solving a different tree')
-        self._db_log(solver.node, event, str(solver.remote_address), data)
-
-    def _db_log(self, node, event, solver, data):
-        if not self.conn:
-            return
-        self.conn.cursor().execute("INSERT INTO {}SolvingHistory (name, node, event, solver, data) "
-                                   "VALUES (?,?,?,?,?)".format(self.table_prefix), (
-                                       self.name,
-                                       str(node.path()),
-                                       event,
-                                       solver,
-                                       json.dumps(data) if data else None
-                                   ))
-        self.conn.commit()
 
 
 class LemmaServer(net.Socket):
@@ -187,7 +24,7 @@ class LemmaServer(net.Socket):
     def __repr__(self):
         return '<LemmaServer listening:{}>'.format(self.listening)
 
-    def clear_lemmas(self, node):
+    def reset(self, node):
         self.write({'name': node.root.name, 'node': node.path(), 'lemmas': '0'}, '')
 
 
@@ -203,37 +40,33 @@ class Solver(net.Socket):
         return '<{} at{} {}>'.format(
             self.name,
             self.remote_address,
-            self.node.root.name + str(self.node.path()) if self.node else 'idle'
+            'idle' if self.node is None else '{}{}'.format(self.node.root, self.node.path())
         )
 
     def solve(self, node: framework.AndNode, header: dict):
-        if not isinstance(node.root, Tree):
-            raise TypeError('node root of type Tree is expected')
         if self.node is not None:
             self.stop()
-        if not node.query:
-            return
         self.node = node
+        smt, query = self.node.root.to_string(self.node)
         header.update({
             'command': 'solve',
             'name': self.node.root.name,
             'node': self.node.path(),
-            'query': self.node.query,
+            'query': query,
         })
-        self.write(header, self.node.root.to_string(self.node))
+        self.write(header, smt)
         self.started = time.time()
-        if not self.node.root.started:
-            self.node.root.started = self.started
-        self.node.root.db_log(self, '+')
+        self._db_log('+')
 
     def incremental(self, node: framework.AndNode):
+        smt, query = self.node.root.to_string(node, self.node)
         header = {'command': 'incremental',
                   'name': self.node.root.name,
                   'node': self.node.path(),
                   'node_': node.path(),
-                  'query': node.query,
+                  'query': query,
                   }
-        self.write(header, node.root.to_string(node, self.node))
+        self.write(header, smt)
         self.started = time.time()
         self.node = node
 
@@ -245,7 +78,7 @@ class Solver(net.Socket):
             'name': self.node.root.name,
             'node': self.node.path()
         }, '')
-        self.node.root.db_log(self, '-')
+        self._db_log('-')
         self.node = None
         self.or_waiting = []
 
@@ -255,7 +88,7 @@ class Solver(net.Socket):
             'lemmas': lemma_server.listening if lemma_server else ''
         }, '')
 
-    def ask_partitions(self, n, node=None):
+    def ask_partitions(self, n, node: framework.AndNode = None):
         if self.node is None:
             raise ValueError('not solving anything')
         self.write({
@@ -267,7 +100,7 @@ class Solver(net.Socket):
         if not node:
             node = framework.OrNode(self.node)
         self.or_waiting.append(node)
-        self.node.root.db_log(self, 'OR', node.path())
+        self._db_log('OR', {'node': node.path()})
 
     def read(self):
         header, payload = super().read()
@@ -275,73 +108,75 @@ class Solver(net.Socket):
             return {}, b''
         if header['report'] == 'partitions' and self.or_waiting:
             for node in self.or_waiting:
-                if self.node.child(json.loads(header['node'])) is node.parent:
+                if self.node.root.child(json.loads(header['node'])) is node.parent:
                     self.or_waiting.remove(node)
                     try:
                         for partition in payload.decode().split('\0'):
                             if len(partition) == 0:
                                 continue
-                            child = framework.AndNode('(assert {})'.format(partition),
-                                                      node.parent.query,
-                                                      node)
-                            self.node.root.db_log(self, 'AND', {"node": child.path(), "smtlib": partition})
-                        # if there is only one partition then it is discarded
-                        # I leave the or node without children
-                        partitions = len(node.children)
-                        if partitions == 1:
-                            node.children.clear()
+                            child = framework.AndNode(node, '(assert {})'.format(partition))
+                            self._db_log('AND', {'node': child.path(), 'smt': child.smt})
                     except BaseException as ex:
-                        header['report'] = 'error:(server) error reading partitions: {}'.format(ex)
-                        node.children.clear()
+                        header['report'] = 'error:(server) error reading partitions: {}'.format(traceback.format_exc())
+                        node.clear()
                         # ask them again?
                     else:
-                        header['report'] = 'received ' + str(partitions) + ' partitions'
+                        header['report'] = 'info:(server) received {} partitions'.format(len(node))
+                        if len(node) == 1:
+                            node.clear()
                     return header, payload
 
         if self.node is None:
             return header, payload
 
         if self.node.root.name != header['name'] or str(self.node.path()) != header['node']:
-            return {}, b""
+            return {}, b''
 
         if header['report'] in framework.SolveStatus.__members__:
             status = framework.SolveStatus.__members__[header['report']]
-            self.node.root.db_log(self, 'STATUS', header)
+            self._db_log('STATUS', header)
             self.node.status = status
             if self.node.root.status != framework.SolveStatus.unknown:
-                self.node.root.db_log(self, 'SOLVED', {'status': self.node.root.status.name})
+                self._db_log('SOLVED', {'status': self.node.root.status.name})
             if status == framework.SolveStatus.unknown:
                 self.stop()
 
         return header, payload
 
+    def _db_log(self, event: str, data: dict = None):
+        if not config.db():
+            return
+        config.db().cursor().execute("INSERT INTO {}SolvingHistory (name, node, event, solver, data) "
+                                     "VALUES (?,?,?,?,?)".format(config.table_prefix), (
+                                         self.node.root.name,
+                                         str(self.node.path()),
+                                         event,
+                                         str(self.remote_address),
+                                         json.dumps(data) if data else None
+                                     ))
+        config.db().commit()
+
+
+class Instance(object):
+    def __init__(self, name: str, smt: str):
+        self.root = framework.parse(name, smt)
+        self.started = None
+        self.timeout = None
+
+    def __repr__(self):
+        return '{}({:.2f})'.format(repr(self.root), self.when_timeout)
+
+    @property
+    def when_timeout(self):
+        return self.started + self.timeout - time.time() if self.started and self.timeout else float('inf')
+
 
 class ParallelizationServer(net.Server):
-    def __init__(self,
-                 config: Config,
-                 *,
-                 conn: sqlite3.Connection = None,
-                 table_prefix: str = '',
-                 logger: logging.Logger = None):
+    def __init__(self, logger: logging.Logger = None):
         super().__init__(port=config.port, timeout=1, logger=logger)
         self.config = config
-        self.conn = conn
-        self.table_prefix = table_prefix
         self.trees = []
         self.current = None
-        if self.conn:
-            cursor = self.conn.cursor()
-            cursor.execute("DROP TABLE IF EXISTS {}ServerLog;".format(table_prefix))
-            cursor.execute("CREATE TABLE IF NOT EXISTS {}ServerLog ("
-                           "id INTEGER NOT NULL PRIMARY KEY, "
-                           "ts INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),"
-                           "level TEXT NOT NULL,"
-                           "message TEXT NOT NULL,"
-                           "data TEXT"
-                           ");".format(self.table_prefix))
-            cursor.execute("DROP TABLE IF EXISTS {}SolvingHistory;".format(table_prefix))
-            cursor.execute("VACUUM;")
-            self.conn.commit()
         self.log(logging.INFO, 'server start')
 
     def handle_accept(self, sock):
@@ -371,17 +206,14 @@ class ParallelizationServer(net.Server):
                     header['name']
                 ), {'header': header})
                 try:
-                    self.trees.append(
-                        Tree(payload.decode(),
-                             header['name'],
-                             self.config.solving_timeout,
-                             self.config.z3,
-                             conn=self.conn,
-                             table_prefix=self.table_prefix,
-                             fixedpoint_partition=self.config.fixedpoint_partition)
-                    )
-                except BaseException as ex:
-                    self.log(logging.ERROR, 'cannot add instance: ' + str(traceback.format_exc()))
+                    instance = Instance(header["name"], payload.decode())
+                    if isinstance(instance.root, framework.Fixedpoint) and config.fixedpoint_partition:
+                        instance.root.partition()
+                except:
+                    self.log(logging.ERROR, 'cannot add instance: {}'.format(traceback.format_exc()))
+                else:
+                    instance.timeout = config.solving_timeout
+                    self.trees.append(instance)
                 self.entrust()
         elif 'solver' in header:
             solver = Solver(sock, header['solver'])
@@ -419,20 +251,16 @@ class ParallelizationServer(net.Server):
                 sock.write({}, response_payload)
 
     def handle_close(self, sock):
-        self.log(logging.INFO, 'connection closed by {}'.format(
+        self.log(logging.DEBUG, 'connection closed by {}'.format(
             sock
         ))
         if isinstance(sock, Solver):
-            for node in sock.or_waiting:
-                if len(node.children) > 0:
-                    continue
-                try:
-                    node.parent.children.remove(node)
-                except ValueError:
-                    self.log(logging.ERROR, '{} had bad pending or-node {}'.format(
-                        sock,
-                        node.path()
-                    ))
+            if sock.or_waiting:
+                self.log(logging.WARNING, '{} had waiting or-nodes {}'.format(
+                    sock,
+                    sock.or_waiting
+                ))
+                # todo: manage what to do now
         if isinstance(sock, LemmaServer):
             for solver in self.solvers(False):
                 solver.set_lemma_server()
@@ -443,47 +271,46 @@ class ParallelizationServer(net.Server):
     def entrust(self):
         solving = self.current
         # if the current tree is already solved or timed out: stop it
-        if self.current and self.current.started and (
-                        self.current.status != framework.SolveStatus.unknown or self.current.is_timeout
-        ):
-            self.log(
-                logging.INFO,
-                '{} instance "{}" after {:.2f} seconds'.format(
-                    'solved' if self.current.status != framework.SolveStatus.unknown else 'timeout',
-                    self.current.name,
-                    time.time() - self.current.started
+        if isinstance(self.current, Instance):
+            if self.current.root.status != framework.SolveStatus.unknown or self.current.when_timeout < 0:
+                self.log(
+                    logging.INFO,
+                    '{} instance "{}" after {:.2f} seconds'.format(
+                        'solved' if self.current.root.status != framework.SolveStatus.unknown else 'timeout',
+                        self.current.root.name,
+                        time.time() - self.current.started
+                    )
                 )
-            )
-            for solver in {solver for solver in self.solvers(True) if solver.node.root == self.current}:
-                solver.stop()
-            self.current = None
-        if not self.current:
-            schedulables = [root for root in self.trees if
-                            root.status == framework.SolveStatus.unknown and not root.is_timeout]
+                for solver in {solver for solver in self.solvers(True) if solver.node.root == self.current}:
+                    solver.stop()
+                self.current = None
+        elif self.current is None:
+            schedulables = [instance for instance in self.trees if
+                            instance.root.status == framework.SolveStatus.unknown and instance.when_timeout > 0]
             if schedulables:
                 self.current = schedulables[0]
-                self.log(logging.INFO, 'solving instance "{}"'.format(self.current.name))
+                self.log(logging.INFO, 'solving instance "{}"'.format(self.current.root.name))
         if solving != self.current and self.lemma_server:
-            self.lemma_server.clear_lemmas(self.current)
+            self.lemma_server.reset(self.current.root)
         if not self.current:
             if solving is not None:
                 self.log(logging.INFO, 'all done.')
             return
 
-        assert isinstance(self.current, Tree)
+        assert isinstance(self.current, Instance)
 
         idle_solvers = self.solvers(None)
-        nodes = self.current.all()
+        nodes = self.current.root.all()
         nodes.sort()
 
         def level_children(level):
             return self.config.partition_policy[level % len(self.config.partition_policy)]
 
         def leaves():
-            return (node for node in nodes if len(node.children) == 0 and isinstance(node, framework.AndNode))
+            return (node for node in nodes if len(node) == 0 and isinstance(node, framework.AndNode))
 
         def internals():
-            return (node for node in nodes if len(node.children) > 0 and isinstance(node, framework.AndNode))
+            return (node for node in nodes if len(node) > 0 and isinstance(node, framework.AndNode))
 
         # stop the solvers working on an already solved node of the whole tree, and add them to the list
         for node in nodes:
@@ -515,12 +342,12 @@ class ParallelizationServer(net.Server):
                     # try to search for a solver...
                     if not idle_solvers:
                         for _node in (node for node in internals() if
-                                      len(node.children) == level_children(len(node.path()))):
+                                      len(node) == level_children(len(node.path()))):
                             # here I check that every or-node child has some partitions, that is
                             # every child is completed. if not then I'll not use any solver working on that node.
                             try:
-                                for child in _node.children:
-                                    if len(child.children) == 0:
+                                for child in _node:
+                                    if len(child) == 0:
                                         raise StopIteration
                             except StopIteration:
                                 continue
@@ -540,7 +367,7 @@ class ParallelizationServer(net.Server):
                     if not idle_solvers:
                         continue
 
-                    if self.current.type is Tree.Type.standard:
+                    if isinstance(self.current.root, framework.SMT):
                         if self.config.incremental > 0:
                             try:
                                 # I first search for a solver which is solving an ancestor of node
@@ -564,37 +391,34 @@ class ParallelizationServer(net.Server):
                                         raise StopIteration
                             except StopIteration:
                                 continue
-
                     solver = idle_solvers.pop()
+                    assert isinstance(solver, Solver)
                     if solver.node is node:
                         continue
                     header = {}
                     if self.config.lemma_amount:
                         header["lemmas"] = self.config.lemma_amount
-                    self.config.entrust(
-                        node,
-                        header,
-                        solver,
-                        {solver for solver in self.solvers(True) if solver.node.root == self.current}
-                    )
+                    self.config.entrust(node, header, solver.name, self.solvers(node))
                     solver.solve(node, header)
+                    if self.current.started is None:
+                        self.current.started = time.time()
 
         # only standard instances can partition
-        if self.current.type is not Tree.Type.standard:
+        if not isinstance(self.current.root, framework.SMT):
             return
 
         # if need partition: ask partitions
-        if (self.config.partition_timeout or idle_solvers):
+        if self.config.partition_timeout or idle_solvers:
             # for all the leafs with at least one solver
             for leaf in (leaf for leaf in leaves() if self.solvers(leaf)):
-                max_children = level_children(leaf.level())
-                for i in range(max_children - len(leaf.children)):
+                max_children = level_children(leaf.level)
+                for i in range(max_children - len(leaf)):
                     solvers = list(self.solvers(leaf))
                     random.shuffle(solvers)
                     for solver in solvers:
                         # ask the solver to partition if timeout or if needed because idle solvers
                         if idle_solvers or solver.started + self.config.partition_timeout <= time.time():
-                            solver.ask_partitions(level_children(leaf.level() + 1))
+                            solver.ask_partitions(level_children(leaf.level + 1))
                             break
 
     # node = False : return all solvers
@@ -616,59 +440,39 @@ class ParallelizationServer(net.Server):
 
     def log(self, level, message, data=None):
         super().log(level, message)
-        if not self.conn or level < self.config.log_level:
+        if not config.db() or level < self.config.log_level:
             return
-        self.conn.cursor().execute("INSERT INTO {}ServerLog (level, message, data) "
-                                   "VALUES (?,?,?)".format(self.table_prefix), (
-                                       logging.getLevelName(level),
-                                       message,
-                                       json.dumps(data) if data else None
-                                   ))
-        self.conn.commit()
+        config.db().cursor().execute("INSERT INTO {}ServerLog (level, message, data) "
+                                     "VALUES (?,?,?)".format(config.table_prefix), (
+                                         logging.getLevelName(level),
+                                         message,
+                                         json.dumps(data) if data else None
+                                     ))
+        config.db().commit()
 
 
 if __name__ == '__main__':
-    def config_config(option, opt_str, value, parser):
-        path = pathlib.Path(value)
-        sys.path.insert(0, str(path.parent.absolute()))
-
-        try:
-            module = __import__(path.stem)
-        except ImportError as ex:
-            logging.log(logging.ERROR, str(ex))
-            sys.exit(1)
-
-        config = getattr(parser.values, option.dest)
-
-        for i in dir(module):
-            if i[:1] == "_":
-                continue
-            setattr(config, i, getattr(module, i))
-
-
-    def config_database(option, opt_str, value, parser):
-        try:
-            conn = sqlite3.connect(value)
-        except BaseException as ex:
-            logging.log(logging.ERROR, str(ex))
-            sys.exit(1)
-        setattr(parser.values, option.dest, conn)
+    def callback_config(option, opt, value, parser):
+        config.extend(value)
 
 
     parser = optparse.OptionParser()
-    parser.add_option('-c', '--config', dest='config', type='str',
-                      action="callback", callback=config_config,
-                      default=Config(), help='config file path')
-    parser.add_option('-d', '--database', dest='db', type='str',
-                      action="callback", callback=config_database,
+    parser.add_option('-c', '--config', dest='config_path', type='str',
+                      action="callback", callback=callback_config,
+                      help='config file path')
+    parser.add_option('-d', '--database', dest='db_path', type='str',
                       default=None, help='sqlite3 database file path')
 
     options, args = parser.parse_args()
 
-    logging.basicConfig(level=options.config.log_level, format='%(asctime)s\t%(levelname)s\t%(message)s')
+    if options.db_path:
+        config.db_path = options.db_path
+    config.db()
 
-    server = ParallelizationServer(config=options.config, conn=options.db, logger=logging.getLogger('server'))
-    if hasattr(options.config, 'files'):
+    logging.basicConfig(level=config.log_level, format='%(asctime)s\t%(levelname)s\t%(message)s')
+
+    server = ParallelizationServer(logging.getLogger('server'))
+    if config.files:
         def send_files(address, files):
             for path in files:
                 try:
@@ -677,7 +481,7 @@ if __name__ == '__main__':
                     pass
 
 
-        thread = threading.Thread(target=send_files, args=(server.address, options.config.files))
+        thread = threading.Thread(target=send_files, args=(server.address, config.files))
         thread.start()
 
     try:

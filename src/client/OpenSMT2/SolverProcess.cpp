@@ -26,24 +26,28 @@ void SolverProcess::init() {
     dup2(fileno(file), fileno(stderr));
     fclose(file);
 
-    if (this->header.count("config.seed") == 0) {
-        this->header["config.seed"] = "0";
+    const char *default_split = "lookahead";
+    const char *default_seed = "0";
+
+    if (this->header.count("parameter.seed") == 0) {
+        this->header["parameter.seed"] = default_seed;
     }
 
-    if (this->header.count("config.split") &&
-        this->header["config.split"] != spts_lookahead &&
-        this->header["config.split"] != spts_scatter) {
-        this->warning("bad config.split: '" + this->header["config.split"] + "'. using default");
-        this->header.erase("config.split");
+    if (this->header.count("parameter.split") &&
+        this->header["parameter.split"] != spts_lookahead &&
+        this->header["parameter.split"] != spts_scatter) {
+        this->warning(
+                "bad parameter.split: '" + this->header["parameter.split"] + "'. using default(" + default_seed + ")");
+        this->header.erase("parameter.split");
     }
-    if (this->header.count("config.split") == 0) {
-        this->header["config.split"] = "lookahead";
+    if (this->header.count("parameter.split") == 0) {
+        this->header["parameter.split"] = default_split;
     }
 }
 
 void SolverProcess::solve() {
     SMTConfig config;
-    config.setRandomSeed(atoi(this->header["config.seed"].c_str()));
+    config.setRandomSeed(atoi(this->header["parameter.seed"].c_str()));
     auto lemma_push = [&](const std::vector<net::Lemma> &lemmas) {
         this->lemma_push(lemmas);
     };
@@ -103,7 +107,7 @@ void SolverProcess::partition(uint8_t n) {
                                                           SMTOption(int(n)),
                                                           msg) &&
             interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_type,
-                                                          SMTOption(this->header["config.split"].c_str()),
+                                                          SMTOption(this->header["parameter.split"].c_str()),
                                                           msg) &&
             interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_units, SMTOption(spts_time), msg) &&
             interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_inittune, SMTOption(double(2)), msg) &&

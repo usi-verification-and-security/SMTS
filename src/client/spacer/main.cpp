@@ -7,16 +7,16 @@
 #include <unistd.h>
 #include <vector>
 #include <lib/net.h>
-// #include "fixedpoint.h"
 #include "lib/lib.h"
 
 
 int main() {
     std::vector<std::string> v;
-    ::split("ciao:ciao:ciao", ":", v,2);
+    ::split("cia\0o:ciao:ciao", ":", v);
     for (auto i:v) {
         std::cout << i << "\n";
     }
 
+    std::cout << v << "\n";
 
 }
