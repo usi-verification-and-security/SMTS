@@ -12,7 +12,7 @@
 namespace SQLite3 {
     class Connection {
     private:
-        void *db;
+        const void *db;
     public:
         Connection() : Connection("") {}
 
@@ -20,13 +20,13 @@ namespace SQLite3 {
 
         ~Connection();
 
-        Statement *prepare(const std::string &, int _ = -1);
+        Statement *prepare(const std::string &, int _ = -1) const;
 
-        void exec(const std::string &, std::function<int(int, char **, char **)>);
+        void exec(const std::string &, std::function<int(int, char **, char **)>) const;
 
-        void exec(const std::string &);
+        void exec(const std::string &) const;
 
-        int64_t last_rowid();
+        int64_t last_rowid() const;
     };
 }
 

@@ -46,14 +46,14 @@ void Process::join() {
     }
 }
 
-bool Process::joinable() {
+bool Process::joinable() const {
     return this->process > 0;
 }
 
-net::Socket *Process::reader() {
+net::Socket *Process::reader() const {
     return (this->process == 0) ? this->piper.reader() : this->pipew.reader();
 }
 
-net::Socket *Process::writer() {
+net::Socket *Process::writer() const {
     return (this->process == 0) ? this->pipew.writer() : this->piper.writer();
 }

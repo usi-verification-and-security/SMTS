@@ -10,6 +10,7 @@ extern "C" {
 
 
 #ifdef __APPLE__
+// from http://codereview.stackexchange.com/questions/88269/implementing-pthread-barrier-for-mac-os-x
 
 #define __unused __attribute__((unused))
 
@@ -142,14 +143,14 @@ void Thread::join() {
     }
 }
 
-bool Thread::joinable() {
+bool Thread::joinable() const {
     return this->thread != nullptr && this->thread->joinable();
 }
 
-net::Socket *Thread::reader() {
+net::Socket *Thread::reader() const {
     return (pthread_self() == this->thread->native_handle()) ? this->piper.reader() : this->pipew.reader();
 }
 
-net::Socket *Thread::writer() {
+net::Socket *Thread::writer() const {
     return (pthread_self() == this->thread->native_handle()) ? this->pipew.writer() : this->piper.writer();
 }

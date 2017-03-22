@@ -31,9 +31,9 @@ namespace net {
     class Socket {
     private:
         int fd;
-        std::mutex read_mtx, write_mtx;
+        mutable std::mutex read_mtx, write_mtx;
 
-        inline uint32_t readn(char *, uint32_t);
+        inline uint32_t readn(char *, uint32_t) const;
 
     public:
         Socket(int);
@@ -46,19 +46,19 @@ namespace net {
 
         ~Socket();
 
-        std::shared_ptr<Socket> accept();
+        std::shared_ptr<Socket> accept() const;
 
-        uint32_t read(net::Header &, std::string &);
+        uint32_t read(net::Header &, std::string &) const;
 
-        uint32_t write(const net::Header &, const std::string &);
+        uint32_t write(const net::Header &, const std::string &) const;
 
         void close();
 
-        int get_fd();
+        int get_fd() const;
 
-        Address get_local();
+        Address get_local() const;
 
-        Address get_remote();
+        Address get_remote() const;
 
     };
 }

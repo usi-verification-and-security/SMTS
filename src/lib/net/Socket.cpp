@@ -68,7 +68,7 @@ namespace net {
         this->close();
     }
 
-    std::shared_ptr<Socket> Socket::accept() {
+    std::shared_ptr<Socket> Socket::accept() const {
         int clientfd;
         struct sockaddr_in client_addr;
         socklen_t addr_len = sizeof(client_addr);
@@ -79,7 +79,7 @@ namespace net {
         return std::shared_ptr<Socket>(new Socket(clientfd));
     }
 
-    uint32_t Socket::readn(char *buffer, uint32_t length) {
+    uint32_t Socket::readn(char *buffer, uint32_t length) const {
         uint32_t r = 0;
         while (length > r) {
             ssize_t t = ::read(this->fd, &buffer[r], length - r);
@@ -92,7 +92,7 @@ namespace net {
         return r;
     }
 
-    uint32_t Socket::read(net::Header &header, std::string &payload) {
+    uint32_t Socket::read(net::Header &header, std::string &payload) const {
         std::lock_guard<std::mutex> _l(this->read_mtx);
 
         uint32_t length = 0;
@@ -131,7 +131,7 @@ namespace net {
         return length;
     }
 
-    uint32_t Socket::write(const net::Header &header, const std::string &payload) {
+    uint32_t Socket::write(const net::Header &header, const std::string &payload) const {
         std::lock_guard<std::mutex> _l(this->write_mtx);
 
         if (header.count(""))
@@ -169,11 +169,11 @@ namespace net {
         this->fd = -1;
     }
 
-    int Socket::get_fd() {
+    int Socket::get_fd() const {
         return this->fd;
     }
 
-    Address Socket::get_local() {
+    Address Socket::get_local() const {
         struct sockaddr_storage addr;
         socklen_t addr_len = sizeof(addr);
 
@@ -183,7 +183,7 @@ namespace net {
         return Address(&addr);
     }
 
-    Address Socket::get_remote() {
+    Address Socket::get_remote() const {
         struct sockaddr_storage addr;
         socklen_t addr_len = sizeof(addr);
 

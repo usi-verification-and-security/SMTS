@@ -10,6 +10,8 @@
 #include "lib/lib.h"
 
 
+
+
 int main() {
     std::vector<std::string> v;
     ::split("cia\0o:ciao:ciao", ":", v);

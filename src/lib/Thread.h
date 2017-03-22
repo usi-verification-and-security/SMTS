@@ -14,6 +14,7 @@
 
 
 #ifdef __APPLE__
+// from http://codereview.stackexchange.com/questions/88269/implementing-pthread-barrier-for-mac-os-x
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,8 +69,8 @@ class Thread {
 private:
     std::thread *thread;
     pthread_barrier_t barrier;
-    net::Pipe piper;
-    net::Pipe pipew;
+    const net::Pipe piper;
+    const net::Pipe pipew;
     std::mutex mtx;
     std::atomic<bool> stop_requested;
 
@@ -89,11 +90,11 @@ public:
 
     void join();
 
-    inline bool joinable();
+    inline bool joinable() const;
 
-    net::Socket *reader();
+    net::Socket *reader() const;
 
-    net::Socket *writer();
+    net::Socket *writer() const;
 
 };
 

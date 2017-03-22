@@ -26,11 +26,11 @@ namespace net {
         delete this->w;
     }
 
-    Socket *Pipe::reader() {
+    Socket *Pipe::reader() const {
         return this->r;
     }
 
-    Socket *Pipe::writer() {
+    Socket *Pipe::writer() const {
         return this->w;
     }
 }

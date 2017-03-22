@@ -21,9 +21,9 @@ namespace net {
 
         ~Pipe();
 
-        Socket *reader();
+        Socket *reader() const;
 
-        Socket *writer();
+        Socket *writer() const;
 
     };
 }

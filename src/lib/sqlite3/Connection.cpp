@@ -19,7 +19,7 @@ namespace SQLite3 {
         sqlite3_close((sqlite3 *) this->db);
     }
 
-    Statement *Connection::prepare(const std::string &sql, int n) {
+    Statement *Connection::prepare(const std::string &sql, int n) const {
         sqlite3_stmt *stmt;
         if (sqlite3_prepare(
                 (sqlite3 *) this->db,
@@ -32,7 +32,7 @@ namespace SQLite3 {
         return new Statement(stmt);
     }
 
-    void Connection::exec(const std::string &sql, std::function<int(int, char **, char **)> callback_row) {
+    void Connection::exec(const std::string &sql, std::function<int(int, char **, char **)> callback_row) const {
         char *errc;
         int rc = sqlite3_exec(
                 (sqlite3 *) this->db,
@@ -49,7 +49,7 @@ namespace SQLite3 {
         }
     }
 
-    void Connection::exec(const std::string &sql) {
+    void Connection::exec(const std::string &sql) const {
         char *errc;
         int rc = sqlite3_exec(
                 (sqlite3 *) this->db,
@@ -64,7 +64,7 @@ namespace SQLite3 {
         }
     }
 
-    int64_t Connection::last_rowid() {
+    int64_t Connection::last_rowid() const {
         return sqlite3_last_insert_rowid((sqlite3 *) this->db);
     }
 }

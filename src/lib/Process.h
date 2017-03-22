@@ -20,8 +20,8 @@ public:
 class Process {
 private:
     pid_t process;
-    net::Pipe piper;
-    net::Pipe pipew;
+    const net::Pipe piper;
+    const net::Pipe pipew;
 
 protected:
     virtual void main() = 0;
@@ -37,11 +37,11 @@ public:
 
     void join();
 
-    inline bool joinable();
+    inline bool joinable() const;
 
-    net::Socket *reader();
+    net::Socket *reader() const;
 
-    net::Socket *writer();
+    net::Socket *writer() const;
 
 };
 

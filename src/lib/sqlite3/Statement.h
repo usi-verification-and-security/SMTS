@@ -9,25 +9,25 @@
 namespace SQLite3 {
     class Statement {
     private:
-        void *stmt;
+        const void *stmt;
     public:
         Statement(void *);
 
         ~Statement();
 
-        void bind(int);
+        void bind(int) const;
 
-        void bind(int, int64_t);
+        void bind(int, int64_t) const;
 
-        void bind(int, const std::string &);
+        void bind(int, const std::string &) const;
 
-        void bind(int, const char *, int len = -1);
+        void bind(int, const char *, int len = -1) const;
 
-        void reset();
+        void reset() const;
 
-        void clear();
+        void clear() const;
 
-        void exec();
+        void exec() const;
 
     };
 }
