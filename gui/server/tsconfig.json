@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "sourceMap":  true,
+        "declaration": true,
+//        "outDir": "out/",
+        "target": "es5"
+    },
+
+    "compileOnSave": true,
+
+    "exclude": [
+        "out",
+        "node_modules"
+    ]
+}

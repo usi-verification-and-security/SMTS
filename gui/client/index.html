@@ -1,0 +1,99 @@
+<html>
+<head>
+	<title>SMT Viewer</title>
+	<link rel="stylesheet" href="main.css">
+	<style type="text/css">
+
+	</style>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+</head>
+<body ng-app="myApp" class="w3-grey">
+<header >
+	<div class="w3-container w3-center ">
+		<h1 ><b>SMT Viewer</b></h1>
+	</div>
+</header>
+
+<div class="w3-cell-row">
+	<div ng-controller="TreeController" id="d1">
+
+	<ul class="menu"> 
+	<button class="w3-button w3-round-large w3-border w3-dark-grey" ng-click="readNextRow()">Next</button> 
+	<button class="w3-button w3-round-large w3-border w3-dark-grey" ng-click="readPreviousRow()">Previous</button> 
+	</ul>
+
+	</div>
+	<div class="w3-container w3-border w3-quarter w3-cell" id="d2" ng-controller="InstancesController" ng-init='load()'>
+		<table>
+			<td> <b>Instances</b></td>
+
+			<tr ng-repeat="x in entries" ng-click="showEvent(x)">
+				<td>{{ x.name }}</td>
+			</tr>
+		</table>
+
+	</div>
+
+	<div class = "tree_container w3-half w3-border w3-cell" id="tree-container">
+
+	</div>
+
+
+	<div class="w3-quarter w3-border w3-container w3-cell" ng-controller="SolverController" id="d4">
+		<table>
+			<td><b>Solver</b></td>
+			<td><b>Node</b></td>
+
+			<tr ng-repeat="x in entries" ng-click="showEvent(x)">
+				<td>{{ x.name}}</td>
+				<td>{{ x.node}}</td>
+			</tr>
+		</table>
+
+	</div>
+</div>
+
+<div class="w3-cell-row">
+	<div class="w3-container w3-border w3-quarter w3-cell">
+	</div>
+	<div class="w3-container w3-border w3-half w3-cell"  style="max-height: 500px; overflow:auto;" ng-controller="EventController" id="d5">
+		<table>
+			<td><b>Id</b></td>
+			<td><b>Ts</b></td>
+			<!--<td><b>Name</b></td>-->
+			<td><b>Node</b></td>
+			<td><b>Event</b></td>
+			<td><b>Solver</b></td>
+			<td><b>Data</b></td>
+
+			<tr ng-repeat="x in entries" ng-click="showEvent(x)">
+				<td>{{ x.id }}</td>
+				<td>{{ x.ts }}</td>
+				<!--<td>{{ x.name }}</td>-->
+				<td>{{ x.node }}</td>
+				<td>{{ x.event }}</td>
+				<td>{{ x.solver }}</td>
+				<td>{{ x.data }}</td>
+			</tr>
+		</table>
+
+	</div>
+
+	<div class="w3-container w3-border w3-quarter w3-cell" id="d6">
+		<p> DATA </p>
+	</div>
+</div>
+
+<!--&lt;!&ndash;<pre id="showEvent"></pre>&ndash;&gt;-->
+
+</body>
+<script type="text/javascript" src="node_modules/angular/angular.min.js"></script>
+<script type="text/javascript" src="main.js"></script>
+<!--Scripts for the tree-->
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="dndTree.js"></script>
+<script type="text/javascript" src="node_modules/ng-file-upload/dist/ng-file-upload.min.js"></script>
+<script type="text/javascript" src="node_modules/ng-file-upload/dist/ng-file-upload-shim.min.js"></script>
+</html>

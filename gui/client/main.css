@@ -1,0 +1,79 @@
+/*html {*/
+    /*height: 100%;*/
+/*}*/
+
+/*body {*/
+    /*height: 100%;*/
+/*}*/
+
+/*button {*/
+    /*background-color: lightgrey;*/
+    /*color: black;*/
+    /*font-size: 16px;*/
+    /*border-radius: 12px;*/
+    /*border: 2px solid gray;*/
+/*}*/
+
+button:hover {
+    color: dodgerblue;
+    border-radius: 12px;
+    box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+}
+
+.node {
+    cursor: pointer;
+}
+
+.overlay{
+    background-color:#EEE;
+}
+
+.node circle {
+    fill: #fff;
+    stroke: steelblue;
+    stroke-width: 1.5px;
+}
+
+.node text {
+    font-size:10px;
+    font-family:sans-serif;
+}
+
+.link {
+    fill: none;
+    stroke: #ccc;
+    stroke-width: 1.5px;
+}
+
+.templink {
+    fill: none;
+    stroke: red;
+    stroke-width: 3px;
+}
+
+.ghostCircle.show{
+    display:block;
+}
+
+.ghostCircle, .activeDrag .ghostCircle{
+    display: none;
+}
+
+/*#tree-container {*/
+    /*width: 600px;*/
+    /*height: 400px;*/
+    /*border: 1px solid lightgray;*/
+/*}*/
+
+
+table, th , td {
+border: 1px solid grey;
+border-collapse: collapse;
+padding: 5px;
+}
+tr {
+    cursor: pointer;
+}
+tr:hover {
+    color: dodgerblue;
+}

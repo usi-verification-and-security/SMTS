@@ -1,0 +1,107 @@
+{
+     "children": [
+          {
+               "children": [
+                    {
+                         "children": [],
+                         "solvers": [],
+                         "name": [
+                              0,
+                              0
+                         ],
+                         "type": "AND",
+                         "status": "unsat"
+                    },
+                    {
+                         "children": [],
+                         "solvers": [],
+                         "name": [
+                              0,
+                              1
+                         ],
+                         "type": "AND",
+                         "status": "unsat"
+                    },
+                    {
+                         "children": [],
+                         "solvers": [],
+                         "name": [
+                              0,
+                              2
+                         ],
+                         "type": "AND",
+                         "status": "unsat"
+                    },
+                    {
+                         "children": [
+                              {
+                                   "children": [
+                                        {
+                                             "children": [],
+                                             "solvers": [],
+                                             "name": [
+                                                  0,
+                                                  3,
+                                                  0,
+                                                  0
+                                             ],
+                                             "type": "AND",
+                                             "status": "unknown"
+                                        },
+                                        {
+                                             "children": [],
+                                             "solvers": [],
+                                             "name": [
+                                                  0,
+                                                  3,
+                                                  0,
+                                                  1
+                                             ],
+                                             "type": "AND",
+                                             "status": "unknown"
+                                        },
+                                        {
+                                             "children": [],
+                                             "solvers": [],
+                                             "name": [
+                                                  0,
+                                                  3,
+                                                  0,
+                                                  2
+                                             ],
+                                             "type": "AND",
+                                             "status": "unknown"
+                                        }
+                                   ],
+                                   "solvers": [],
+                                   "name": [
+                                        0,
+                                        3,
+                                        0
+                                   ],
+                                   "type": "OR",
+                                   "status": "unknown"
+                              }
+                         ],
+                         "solvers": [],
+                         "name": [
+                              0,
+                              3
+                         ],
+                         "type": "AND",
+                         "status": "unsat"
+                    }
+               ],
+               "solvers": [],
+               "name": [
+                    0
+               ],
+               "type": "OR",
+               "status": "unknown"
+          }
+     ],
+     "solvers": [],
+     "name": [],
+     "type": "AND",
+     "status": "unsat"
+}
