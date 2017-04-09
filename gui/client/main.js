@@ -12,6 +12,10 @@ angular.module('myApp', ['ngFileUpload'])
         $rootScope.$broadcast('handleBroadcast');
     };
 
+    sharedService.broadcastItem2 = function() {
+        $rootScope.$broadcast('handleBroadcast2');
+    };
+
     return sharedService;
 })
 
@@ -33,50 +37,44 @@ angular.module('myApp', ['ngFileUpload'])
         //     });
         // };
 
-        $scope.readNextRow = function() {
-            $http({
-                method : 'GET',
-                url : 'http://localhost:3000/getNext'
-            }).then(function successCallback(response) {
-                $window.location.reload();
-
-
-            }, function errorCallback(response) {
-                // called asynchronously if an error occurs
-                // or server returns response with an error status.
-                $window.alert('An error occured!');
-            });
-
-        };
-
-        $scope.readPreviousRow = function() {
-            $http({
-                method : 'GET',
-                url : 'http://localhost:3000/getPrevious'
-            }).then(function successCallback(response) {
-                $window.location.reload();
-
-            }, function errorCallback(response) {
-                // called asynchronously if an error occurs
-                // or server returns response with an error status.
-                $window.alert('An error occured!');
-            });
-        };
+        // $scope.readNextRow = function() {
+        //     $http({
+        //         method : 'GET',
+        //         url : 'http://localhost:3000/getNext'
+        //     }).then(function successCallback(response) {
+        //         $window.location.reload();
+        //
+        //
+        //     }, function errorCallback(response) {
+        //         // called asynchronously if an error occurs
+        //         // or server returns response with an error status.
+        //         $window.alert('An error occured!');
+        //     });
+        // };
+        //
+        // $scope.readPreviousRow = function() {
+        //     $http({
+        //         method : 'GET',
+        //         url : 'http://localhost:3000/getPrevious'
+        //     }).then(function successCallback(response) {
+        //         $window.location.reload();
+        //
+        //     }, function errorCallback(response) {
+        //         // called asynchronously if an error occurs
+        //         // or server returns response with an error status.
+        //         $window.alert('An error occured!');
+        //     });
+        // };
 
     }])
 
     .controller('EventController',['$scope','$rootScope','currentRow', 'rows','$window','$http', 'sharedService',function($scope,$rootScope, currentRow,rows,$window,$http,sharedService){
 
         $scope.$on('handleBroadcast', function() { // This is called when an instance is selected
-            // $scope.message = 'ONE: ' + sharedService.message;
-            // console.log($scope.message);
             $http({
                 method : 'GET',
                 url : 'http://localhost:3000/getEvents'
             }).then(function successCallback(response) {
-                //put each entry of the response array in the table
-                // console.log(response);
-                // $window.location.reload();
                 $scope.entries = response.data;
             }, function errorCallback(response) {
                 // called asynchronously if an error occurs
@@ -85,8 +83,20 @@ angular.module('myApp', ['ngFileUpload'])
             });
         });
 
+        // Show tree up to clicked event
         $scope.showEvent = function(x){
-            console.log(x);
+            $http({
+                method : 'GET',
+                url : 'http://localhost:3000/getNext/' + x.id
+            }).then(function successCallback(response) {
+                // sharedService.broadcastItem2(); // Show tree and solvers
+                getTreeJson(response.data); // Show new tree
+                sharedService.broadcastItem2();
+            }, function errorCallback(response) {
+                // called asynchronously if an error occurs
+                // or server returns response with an error status.
+                $window.alert('An error occured!');
+            });
         }
 
     }])
@@ -96,13 +106,15 @@ angular.module('myApp', ['ngFileUpload'])
         $scope.$on('handleBroadcast', function() { // This is called when an instance is selected
             $scope.showSolver();
         });
+        $scope.$on('handleBroadcast2', function() { // This is called when an instance is selected
+            $scope.showSolver();
+        });
 
         $scope.showSolver = function() {
             $http({
                 method : 'GET',
                 url : 'http://localhost:3000/getSolvers'
             }).then(function successCallback(response) {
-                console.log(response.data)
                 $scope.entries = response.data;
 
 
@@ -146,7 +158,7 @@ angular.module('myApp', ['ngFileUpload'])
                 method : 'GET',
                 url : 'http://localhost:3000/get'
             }).then(function successCallback(response) {
-                sharedService.broadcastItem(); // Show events and tree
+                sharedService.broadcastItem(); // Show events, tree and solvers
 
 
             }, function errorCallback(response) {
@@ -167,6 +179,14 @@ angular.module('myApp', ['ngFileUpload'])
                 getTreeJson(response.data);
             });
         });
+        // $scope.$on('handleBroadcast2', function() { // This is called when an instance is selected
+        //     $http({
+        //         method : 'GET',
+        //         url : 'http://localhost:3000/get'
+        //     }).then(function successCallback(response) {
+        //         getTreeJson(response.data);
+        //     });
+        // });
 
     }]);
 

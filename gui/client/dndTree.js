@@ -180,6 +180,7 @@ function getTreeJson(treeData) {
         // }
 
         // define the baseSvg, attaching a class for styling and the zoomListener
+        d3.select("#tree-container").select("svg").remove(); // Delete previous treeView
         var baseSvg = d3.select("#tree-container").append("svg")
             .attr("width", viewerWidth)
             .attr("height", viewerHeight)

@@ -50,7 +50,34 @@
         db.close();
     });
 
-    app.get('/getNext', function(req, res) { //get the content of the next row in the tree
+    // app.get('/getNext', function(req, res) { //get the content of the next row in the tree
+    //     var db = new sqlite.Database(file2);
+    //     var result = [];
+    //     db.all("SELECT * FROM SolvingHistory", function(err, rows) { //  take everything from table "SolvingHistory"
+    //         if(err){
+    //             res.json({error_code:1,err_desc:err});
+    //             return;
+    //         }
+    //         rows.forEach(function (row) { // save each of the table as an object in array "result"
+    //             result.push({id: row.id, ts: row.ts, name: row.name, node: row.node, event: row.event, solver: row.solver, data: row.data});
+    //         });
+    //         res.json(result); //return result to the browser
+    //
+    //         // Analyze db content
+    //         if(currenRow != result.length){
+    //             currenRow++;
+    //         }
+    //         getDbResult(result);
+    //
+    //
+    //     });
+    //     db.close();
+    // });
+
+    // Get treeView up to selected event
+    app.get('/getNext/:id', function(req, res) {
+        var id = req.params.id;
+
         var db = new sqlite.Database(file2);
         var result = [];
         db.all("SELECT * FROM SolvingHistory", function(err, rows) { //  take everything from table "SolvingHistory"
@@ -61,42 +88,42 @@
             rows.forEach(function (row) { // save each of the table as an object in array "result"
                 result.push({id: row.id, ts: row.ts, name: row.name, node: row.node, event: row.event, solver: row.solver, data: row.data});
             });
-            res.json(result); //return result to the browser
 
             // Analyze db content
-            if(currenRow != result.length){
-                currenRow++;
-            }
-            getDbResult(result);
+            currenRow = id;
+            console.log(currenRow);
+            var tree = getDbResult(result);
+            res.json(tree); //return result to the browser
 
 
         });
         db.close();
+
     });
 
-    app.get('/getPrevious', function(req, res) { //get the content of the next row in the tree
-        var db = new sqlite.Database(file2);
-        var result = [];
-        db.all("SELECT * FROM SolvingHistory", function(err, rows) { //  take everything from table "SolvingHistory"
-            if(err){
-                res.json({error_code:1,err_desc:err});
-                return;
-            }
-            rows.forEach(function (row) { // save each of the table as an object in array "result"
-                result.push({id: row.id, ts: row.ts, name: row.name, node: row.node, event: row.event, solver: row.solver, data: row.data});
-            });
-            res.json(result); //return result to the browser
-
-            // Analyze db content
-            if(currenRow != 0){
-                currenRow--;
-            }
-            getDbResult(result);
-
-
-        });
-        db.close();
-    });
+    // app.get('/getPrevious', function(req, res) { //get the content of the next row in the tree
+    //     var db = new sqlite.Database(file2);
+    //     var result = [];
+    //     db.all("SELECT * FROM SolvingHistory", function(err, rows) { //  take everything from table "SolvingHistory"
+    //         if(err){
+    //             res.json({error_code:1,err_desc:err});
+    //             return;
+    //         }
+    //         rows.forEach(function (row) { // save each of the table as an object in array "result"
+    //             result.push({id: row.id, ts: row.ts, name: row.name, node: row.node, event: row.event, solver: row.solver, data: row.data});
+    //         });
+    //         res.json(result); //return result to the browser
+    //
+    //         // Analyze db content
+    //         if(currenRow != 0){
+    //             currenRow--;
+    //         }
+    //         getDbResult(result);
+    //
+    //
+    //     });
+    //     db.close();
+    // });
 
     app.get('/getEvents', function(req, res) {
         if(dbTree != undefined){
