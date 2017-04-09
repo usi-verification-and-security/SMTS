@@ -39,11 +39,11 @@
             rows.forEach(function (row) { // save each of the table as an object in array "result"
                 result.push({id: row.id, ts: row.ts, name: row.name, node: row.node, event: row.event, solver: row.solver, data: row.data});
             });
-            res.json(result); //return result to the browser
 
-            // Save db content
+            // Analyze db content
             currenRow = result.length;
-            saveDbResult(result);
+            var tree = getDbResult(result);
+            res.json(tree); //return result to the browser
 
 
         });
@@ -63,11 +63,11 @@
             });
             res.json(result); //return result to the browser
 
-            // Save db content
+            // Analyze db content
             if(currenRow != result.length){
                 currenRow++;
             }
-            saveDbResult(result);
+            getDbResult(result);
 
 
         });
@@ -87,11 +87,11 @@
             });
             res.json(result); //return result to the browser
 
-            // Save db content
+            // Analyze db content
             if(currenRow != 0){
                 currenRow--;
             }
-            saveDbResult(result);
+            getDbResult(result);
 
 
         });
@@ -152,46 +152,34 @@
         console.log('Server running on 3000...');
     });
 
-    function saveDbResult(result) {
+    function getDbResult(result) {
         dbTree = new tree.Tree();
         dbTree.createEvents(result);
         dbTree.arrangeTree(currenRow);
 
-        // //////
-        // var db = new sqlite.Database(file2);
-        // var solvers = new Array();
-        // db.all("SELECT DISTINCT solver FROM SolvingHistory", function(err, rows) {
-        //     rows.forEach(function (row) { // save each of the table as an object in array "result"
-        //         solvers.push(new solver.Solver(row.solver));
-        //
-        //     });
-        //
-        //     dbTree.solvers = solvers ;
-        //     dbTree.assignSolvers(1,currenRow);
-        // });
-        // db.close();
-        // //////
-
+        //get the tree
         var treeView = dbTree.getTreeView();
 
         // write to the file to update treeView
-        if(treeView != undefined){
-            fs.writeFile("../client/treeData.json", JSON.stringify(treeView, null, 5), function(err){
-                if (err) {
-                    console.error(err);
-                    return;
-                };
-            });
-        }
+        // if(treeView != undefined){
+        //     fs.writeFile("../client/treeData.json", JSON.stringify(treeView, null, 5), function(err){
+        //         if (err) {
+        //             console.error(err);
+        //             return;
+        //         };
+        //     });
+        // }
+        //
+        // else {
+        //     fs.writeFile("../client/treeData.json", null, function(err){
+        //         if (err) {
+        //             console.error(err);
+        //             return;
+        //         };
+        //     });
+        // }
 
-        else {
-            fs.writeFile("../client/treeData.json", null, function(err){
-                if (err) {
-                    console.error(err);
-                    return;
-                };
-            });
-        }
+        return treeView;
 
 
     }

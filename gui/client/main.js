@@ -139,7 +139,6 @@ angular.module('myApp', ['ngFileUpload'])
         $scope.showEvent = function(x){
             // console.log(x);
             this.showTree(); // show corresponding tree
-            // sharedService.broadcastItem(); // show corresponding events
         };
 
         $scope.showTree = function() {
@@ -147,8 +146,7 @@ angular.module('myApp', ['ngFileUpload'])
                 method : 'GET',
                 url : 'http://localhost:3000/get'
             }).then(function successCallback(response) {
-                // $window.location.reload();
-                sharedService.broadcastItem();
+                sharedService.broadcastItem(); // Show events and tree
 
 
             }, function errorCallback(response) {
@@ -158,4 +156,20 @@ angular.module('myApp', ['ngFileUpload'])
             });
         };
 
+    }])
+
+    .controller('ViewController',['$scope','$rootScope','currentRow', 'rows','$window','$http', 'sharedService',function($scope,$rootScope, currentRow,rows,$window,$http,sharedService){
+        $scope.$on('handleBroadcast', function() { // This is called when an instance is selected
+            $http({
+                method : 'GET',
+                url : 'http://localhost:3000/get'
+            }).then(function successCallback(response) {
+                getTreeJson(response.data);
+            });
+        });
+
     }]);
+
+
+
+

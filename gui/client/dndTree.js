@@ -27,8 +27,9 @@
 
 
 // Get JSON data
-function getTreeJson() {
-    treeJSON = d3.json("treeData.json", function(error, treeData) {
+function getTreeJson(treeData) {
+    // d3.json("treeData.json", function(error, treeData) {
+    var root = treeData;
 
         // Calculate total nodes, max label length
         var totalNodes = 0;
@@ -42,7 +43,7 @@ function getTreeJson() {
         // Misc. variables
         var i = 0;
         var duration = 750;
-        var root;
+        // var root;
 
         // size of the diagram
         // var viewerWidth = $(document).width();
@@ -611,7 +612,7 @@ function getTreeJson() {
             centerNode(root);
         }
 
-    });
+    // });
 }
 
-getTreeJson();
+// getTreeJson();
