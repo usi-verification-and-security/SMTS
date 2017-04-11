@@ -17,23 +17,22 @@ const char *SolverProcess::solver = "Spacer";
 
 z3::context context;
 z3::fixedpoint fixedpoint(context);
-std::function<void(const std::vector<net::Lemma> &)> this_push;
-std::function<void(std::vector<net::Lemma> &)> this_pull;
+SolverProcess *solverProcess;
 
 void push(Z3_fixedpoint_lemma_set s) {
     std::vector<net::Lemma> lemmas;
     Z3_fixedpoint_lemma *lemma;
     while ((lemma = Z3_fixedpoint_lemma_pop(context, s))) {
-        lemmas.push_back(net::Lemma(std::to_string(lemma->level) + " " + lemma->str, 0));
+        lemmas.push_back(net::Lemma(std::to_string(lemma->level) + " " + lemma->str, solverProcess->header.level()));
         free(lemma->str);
         free(lemma);
     }
-    this_push(lemmas);
+    solverProcess->lemma_push(lemmas);
 }
 
 void pull(Z3_fixedpoint_lemma_set s) {
     std::vector<net::Lemma> lemmas;
-    this_pull(lemmas);
+    solverProcess->lemma_pull(lemmas);
     Z3_fixedpoint_lemma l;
     for (net::Lemma &lemma:lemmas) {
         std::istringstream is(lemma.smtlib);
@@ -45,16 +44,11 @@ void pull(Z3_fixedpoint_lemma_set s) {
 }
 
 void SolverProcess::init() {
+    solverProcess = this;
     FILE *file = fopen("/dev/null", "w");
     //dup2(fileno(file), fileno(stdout));
     //dup2(fileno(file), fileno(stderr));
     fclose(file);
-    this_push = [&](const std::vector<net::Lemma> &l) {
-        this->lemma_push(l);
-    };
-    this_pull = [&](std::vector<net::Lemma> &l) {
-        this->lemma_pull(l);
-    };
     z3::params p(context);
 
     try {

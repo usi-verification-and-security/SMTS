@@ -16,8 +16,10 @@ namespace net {
 
         friend std::istream &operator>>(std::istream &, Header &);
 
-    };
+    public:
+        uint8_t level();
 
+    };
 }
 
 #endif //CLAUSE_SERVER_HEADER_H

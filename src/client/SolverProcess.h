@@ -165,6 +165,22 @@ private:
         };
     }
 
+public:
+    SolverProcess(net::Header header,
+                  std::string instance) :
+            instance(instance),
+            header(header) {
+        if (!header.count("name") || !header.count("node"))
+            throw Exception("missing mandatory key in header");
+        this->start();
+    }
+
+    net::Header header;
+
+    bool is_sharing() {
+        return this->lemma.server != nullptr;
+    }
+
     void lemma_push(const std::vector<net::Lemma> &lemmas) {
         if (lemmas.size() == 0 && this->lemma.to_push.size() == 0)
             return;
@@ -241,22 +257,6 @@ private:
 
         std::istringstream is(payload);
         is >> lemmas;
-    }
-
-public:
-    SolverProcess(net::Header header,
-                  std::string instance) :
-            instance(instance),
-            header(header) {
-        if (!header.count("name") || !header.count("node"))
-            throw Exception("missing mandatory key in header");
-        this->start();
-    }
-
-    net::Header header;
-
-    bool is_sharing() {
-        return this->lemma.server != nullptr;
     }
 
     static const char *solver;

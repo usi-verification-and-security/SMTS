@@ -34,7 +34,9 @@ std::ostream &join(std::ostream &stream, const std::string &delimiter, const std
     return stream;
 }
 
-void replace(std::string &, const std::string &, const std::string &);
+std::string &replace(std::string &, const std::string &, const std::string &, size_t n = 0);
+
+std::string &operator%(std::string &, const std::pair<std::string, std::string> &);
 
 template<typename T>
 const std::string to_string(const T &obj) {
