@@ -56,12 +56,10 @@ void SolverProcess::init() {
         this->lemma_pull(l);
     };
     z3::params p(context);
-    p.set(":engine", context.str_symbol("spacer"));
 
     try {
         for (auto &pair:this->header) {
             if (pair.first.substr(0, 10) == "parameter.") {
-
                 if (pair.second == "true")
                     p.set(pair.first.substr(10).c_str(), true);
                 else if (pair.second == "false")
@@ -81,6 +79,7 @@ void SolverProcess::init() {
                 Z3_global_param_set("verbose", pair.second.c_str());
             }
         }
+        p.set(":engine", context.str_symbol("spacer"));
         fixedpoint.set(p);
     }
     catch (z3::exception &ex) { // i'm not sending the msg because it's too long
