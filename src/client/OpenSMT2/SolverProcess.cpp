@@ -37,7 +37,7 @@ void SolverProcess::init() {
         this->header["parameter.split"] != spts_lookahead &&
         this->header["parameter.split"] != spts_scatter) {
         this->warning(
-                "bad parameter.split: '" + this->header["parameter.split"] + "'. using default(" + default_seed + ")");
+                "bad parameter.split: '" + this->header["parameter.split"] + "'. using default (" + default_split + ")");
         this->header.erase("parameter.split");
     }
     if (this->header.count("parameter.split") == 0) {

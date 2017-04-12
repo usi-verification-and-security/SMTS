@@ -20,7 +20,7 @@ std::istream &split(std::istream &stream,
                     const char delimiter,
                     std::vector<std::string> &vector);
 
-void split(const std::string &, const std::string &, std::vector<std::string> &, uint32_t limit = 0);
+std::shared_ptr<std::vector<std::string>> split(const std::string &, const std::string &, uint32_t limit = 0);
 
 void split(const std::string &, const std::string &, std::function<void(const std::string &)>, uint32_t limit = 0);
 

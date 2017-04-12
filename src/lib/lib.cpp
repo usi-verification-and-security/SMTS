@@ -25,16 +25,20 @@ std::istream &split(std::istream &stream,
 }
 
 
-void split(const std::string &string, const std::string &delimiter, std::vector<std::string> &vector, uint32_t limit) {
+std::shared_ptr<std::vector<std::string>>
+split(const std::string &string, const std::string &delimiter, uint32_t limit) {
+    std::shared_ptr<std::vector<std::string>> vector(new std::vector<std::string>());
     split(string, delimiter, [&vector](const std::string &sub) {
-        vector.push_back(sub);
+        vector->push_back(sub);
     }, limit);
+    return vector;
 }
 
-void split(const std::string &string,
-           const std::string &delimiter,
-           std::function<void(const std::string &)> callback,
-           uint32_t limit) {
+void
+split(const std::string &string,
+      const std::string &delimiter,
+      std::function<void(const std::string &)> callback,
+      uint32_t limit) {
     size_t b = 0;
     size_t e;
     while (true) {

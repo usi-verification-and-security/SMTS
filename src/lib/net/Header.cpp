@@ -148,8 +148,7 @@ namespace net {
     uint8_t Header::level() {
         std::string node = (*this)["node"];
         node % std::make_pair("[", "") % std::make_pair("]", "") % std::make_pair(" ", "");
-        std::vector<std::string> v;
-        ::split(node, ",", v);
-        return (uint8_t) (v.size() / 2);
+        auto v = ::split(node, ",");
+        return (uint8_t) (v->size() / 2);
     }
 }

@@ -105,16 +105,15 @@ void SolverServer::handle_message(net::Socket &socket, net::Header &header, std:
         this->server.write(header, payload);
         this->solver->header = header;
         if (header.count("report")) {
-            std::vector<std::string> v;
-            ::split(header["report"], ":", v, 2);
+            auto report = ::split(header["report"], ":", 2);
             uint8_t level = Logger::INFO;
-            if (v.size() == 2) {
-                if (v[0] == "error")
+            if (report->size() == 2) {
+                if (report->at(0) == "error")
                     level = Logger::ERROR;
-                else if (v[0] == "warning")
+                else if (report->at(0) == "warning")
                     level = Logger::WARNING;
             }
-            this->log(level, v.back());
+            this->log(level, report->back());
             this->solver->header.erase("report");
         }
     }
