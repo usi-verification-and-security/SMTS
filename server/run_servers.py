@@ -46,7 +46,7 @@ if __name__ == '__main__':
     except:
         pass
 
-    args = ['/usr/bin/env', 'python3', 'server.py'] + custom_config
+    args = ['/usr/bin/env', 'python3', str(pathlib.Path(__file__).parent / 'server.py')] + custom_config
 
     if options.database:
         args += ['-d', options.database + '.db']
