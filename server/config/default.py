@@ -21,6 +21,8 @@ files = []  # list of files loaded at server startup
 # value is either the parameter value or
 # a callable where value() -> (int, str) is the parameter value
 # the callable is called every time the solver is asked to solve something
+#
+# a single key can be overridden without copying the entire object
 parameters = {
     'OpenSMT2.seed': lambda: random.randint(0, 0xFFFFFF),
     'OpenSMT2.split': 'lookahead',

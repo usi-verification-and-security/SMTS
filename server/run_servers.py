@@ -9,17 +9,26 @@ import signal
 import pathlib
 import time
 import socket
+import config
 import sys
 
 if __name__ == '__main__':
 
     path = str(pathlib.Path(__file__).parent.resolve()) + '/'
 
+    custom_config = []
+
+
+    def callback_config(option, opt, value, parser):
+        global custom_config
+        custom_config += ['-c', value]
+        config.extend(value)
+
+
     parser = optparse.OptionParser()
-    parser.add_option('-s', dest='server', type='str', default=path + 'server.py',
-                      help='server executable path')
-    parser.add_option('-c', dest='server_config', type='str', default=path + 'config.py',
-                      help='server config path')
+    parser.add_option('-c', '--config', dest='config_path', type='str',
+                      action="callback", callback=callback_config,
+                      help='config file path')
     parser.add_option('-l', dest='lemma_server', type='str', default=None,
                       help='lemma server executable path')
     parser.add_option('-d', dest='database', type='str', default=None,
@@ -37,11 +46,12 @@ if __name__ == '__main__':
     except:
         pass
 
-    args = ['/usr/bin/env', 'python3', options.server, '-c', options.server_config]
+    args = ['/usr/bin/env', 'python3', 'server.py'] + custom_config
+
     if options.database:
         args += ['-d', options.database + '.db']
 
-    print(args)
+    print(' '.join(args))
     try:
         server = subprocess.Popen(args)
     except BaseException as ex:
@@ -68,23 +78,16 @@ if __name__ == '__main__':
         pass
 
     if options.lemma_server:
+        args = [options.lemma_server, '-s', ip + ':' + str(config.port)]
+        if options.lemma_send_again:
+            args += ['-a']
+        if options.lemma_database and options.database:
+            args += ['-d', options.database + '.lemma.db']
+        print(' '.join(args))
         try:
-            spec = importlib.util.spec_from_file_location("config", options.server_config)
-            config = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(config)
-        except:
-            print('cannot run lemma server')
-        else:
-            args = [options.lemma_server, '-s', ip + ':' + str(config.port)]
-            if options.lemma_send_again:
-                args += ['-a']
-            if options.lemma_database and options.database:
-                args += ['-d', options.database + '.lemma.db']
-            print(args)
-            try:
-                lemma_server = subprocess.Popen(args)
-            except BaseException as ex:
-                print(ex)
+            lemma_server = subprocess.Popen(args)
+        except BaseException as ex:
+            print(ex)
 
     try:
         server.wait()
