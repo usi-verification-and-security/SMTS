@@ -3,7 +3,6 @@
 
 import net
 import sys
-import bz2
 import pathlib
 import readline
 
@@ -13,6 +12,7 @@ __author__ = 'Matteo Marescotti'
 def send_file(address, path):
     path = pathlib.Path(path).resolve()
     if path.suffix == '.bz2':
+        import bz2
         with bz2.open(str(path)) as file:
             content = file.read().decode()
         name = pathlib.Path(path.stem).stem
