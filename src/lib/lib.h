@@ -7,7 +7,6 @@
 
 #include <string>
 #include <sstream>
-#include <memory>
 #include <map>
 #include <vector>
 #include <functional>
@@ -21,7 +20,7 @@ std::istream &split(std::istream &stream,
                     const char delimiter,
                     std::vector<std::string> &vector);
 
-std::shared_ptr<std::vector<std::string>> split(const std::string &, const std::string &, uint32_t limit = 0);
+std::vector<std::string> split(const std::string &, const std::string &, uint32_t limit = 0);
 
 void split(const std::string &, const std::string &, std::function<void(const std::string &)>, uint32_t limit = 0);
 
@@ -40,13 +39,6 @@ std::string &replace(std::string &, const std::string &, const std::string &, si
 std::string &operator%(std::string &, const std::pair<std::string, std::string> &);
 
 template<typename T>
-const std::string to_string(const T &obj) {
-    std::stringstream ss;
-    ss << obj;
-    return ss.str();
-}
-
-template<typename T>
 std::ostream &operator<<(std::ostream &stream, const std::vector<T> &v) {
     for (auto &i:v) {
         stream << i << '\0';
@@ -63,6 +55,13 @@ std::istream &operator>>(std::istream &stream, std::vector<T> &v) {
         std::istringstream(sub) >> t;
         v.push_back(t);
     });
+}
+
+template<typename T>
+const std::string to_string(const T &obj) {
+    std::ostringstream ss;
+    ss << obj;
+    return ss.str();
 }
 
 #include "Exception.h"

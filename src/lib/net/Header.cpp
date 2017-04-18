@@ -10,6 +10,9 @@
 
 
 namespace net {
+    const header_prefix Header::statistic = "statistic";
+    const header_prefix Header::parameter = "parameter";
+
     std::istream &operator>>(std::istream &stream, Header &header) {
         char c;
         do {
@@ -145,10 +148,60 @@ namespace net {
         return ::join(stream << "{", ",", pairs) << "}";
     }
 
-    uint8_t Header::level() {
-        std::string node = (*this)["node"];
+    uint8_t Header::level() const {
+        std::string node;
+        try {
+            node = this->at("node");
+        } catch (std::out_of_range &) {
+        }
         node % std::make_pair("[", "") % std::make_pair("]", "") % std::make_pair(" ", "");
         auto v = ::split(node, ",");
-        return (uint8_t) (v->size() / 2);
+        return (uint8_t) (v.size() / 2);
+    }
+
+    net::Header Header::copy(const std::vector<const std::string> &keys) const {
+        auto header = Header();
+        for (auto &key:keys) {
+            try {
+                header[key] = this->at(key);
+            } catch (std::out_of_range &) {
+            }
+        }
+        return header;
+    }
+
+    net::Header Header::copy(const header_prefix &prefix, const std::vector<const std::string> &keys) const {
+        auto header = Header();
+        for (auto &key:keys) {
+            header.set(prefix, key, this->get(prefix, key));
+        }
+        return header;
+    }
+
+    const std::vector<const std::string> Header::keys(const header_prefix &prefix) const {
+        std::vector<const std::string> st;
+        for (auto &pair:*this) {
+            if (pair.first.substr(0, prefix.size() + 1) == prefix + ".") {
+                st.push_back(pair.first.substr(prefix.size() + 1));
+            }
+        }
+        return st;
+    }
+
+    const std::string &Header::get(const header_prefix &prefix, const std::string &key) const {
+        static const std::string empty = "";
+        try {
+            return this->at(prefix + "." + key);
+        } catch (std::out_of_range &) {
+            return empty;
+        }
+    }
+
+    void Header::set(const header_prefix &prefix, const std::string &key, const std::string &value) {
+        (*this)[prefix + "." + key] = value;
+    }
+
+    void Header::remove(const header_prefix &prefix, const std::string &key) {
+        this->erase(prefix + "." + key);
     }
 }

@@ -3,6 +3,7 @@
 //
 
 #include <unistd.h>
+#include <stdlib.h>
 #include <string>
 #include <iostream>
 #include <random>
@@ -26,28 +27,30 @@ void SolverProcess::init() {
     dup2(fileno(file), fileno(stderr));
     fclose(file);
 
-    const char *default_split = "lookahead";
-    const char *default_seed = "0";
+    static const char *default_split = "lookahead";
+    static const char *default_seed = "0";
 
-    if (this->header.count("parameter.seed") == 0) {
-        this->header["parameter.seed"] = default_seed;
+    if (this->header.get(net::Header::parameter, "seed").size() == 0) {
+        this->header.set(net::Header::parameter, "seed", default_seed);
     }
 
-    if (this->header.count("parameter.split") &&
-        this->header["parameter.split"] != spts_lookahead &&
-        this->header["parameter.split"] != spts_scatter) {
+    if (this->header.get(net::Header::parameter, "split").size() > 0 &&
+        this->header.get(net::Header::parameter, "split") != spts_lookahead &&
+        this->header.get(net::Header::parameter, "split") != spts_scatter) {
         this->warning(
-                "bad parameter.split: '" + this->header["parameter.split"] + "'. using default (" + default_split + ")");
-        this->header.erase("parameter.split");
+                "bad parameter.split: '" + this->header.get(net::Header::parameter, "seed") + "'. using default (" +
+                default_split +
+                ")");
+        this->header.remove(net::Header::parameter, "split");
     }
-    if (this->header.count("parameter.split") == 0) {
-        this->header["parameter.split"] = default_split;
+    if (this->header.get(net::Header::parameter, "split").size() == 0) {
+        this->header.set(net::Header::parameter, "split", default_split);
     }
 }
 
 void SolverProcess::solve() {
     SMTConfig config;
-    config.setRandomSeed(atoi(this->header["parameter.seed"].c_str()));
+    config.setRandomSeed(atoi(this->header.get(net::Header::parameter, "seed").c_str()));
     auto lemma_push = [&](const std::vector<net::Lemma> &lemmas) {
         this->lemma_push(lemmas);
     };
@@ -93,13 +96,19 @@ void SolverProcess::interrupt() {
 }
 
 void SolverProcess::partition(uint8_t n) {
-    pid_t pid = fork();
-    if (pid != 0)
+    pid_t pid = getpid();
+    if (fork() != 0) {
         return;
-    FILE *file = fopen("/dev/null", "w");
-    dup2(fileno(file), fileno(stdout));
-    dup2(fileno(file), fileno(stderr));
-    fclose(file);
+    }
+    std::thread _t([&] {
+        while (getppid() == pid)
+            sleep(1);
+        exit(0);
+    });
+    //FILE *file = fopen("/dev/null", "w");
+    //dup2(fileno(file), fileno(stdout));
+    //dup2(fileno(file), fileno(stderr));
+    //fclose(file);
     std::vector<std::string> partitions;
     const char *msg;
     if (!(
@@ -107,7 +116,8 @@ void SolverProcess::partition(uint8_t n) {
                                                           SMTOption(int(n)),
                                                           msg) &&
             interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_type,
-                                                          SMTOption(this->header["parameter.split"].c_str()),
+                                                          SMTOption(this->header.get(net::Header::parameter, "split")
+                                                                            .c_str()),
                                                           msg) &&
             interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_units, SMTOption(spts_time), msg) &&
             interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_inittune, SMTOption(double(2)), msg) &&

@@ -13,17 +13,19 @@
 #include <iomanip>
 
 
+typedef uint8_t log_level;
+
 class Logger {
 private:
     Logger() {}
 
 public:
     template<typename T>
-    static void log(uint8_t level, const T &message) {
+    static void log(log_level level, const T &message) {
         static std::mutex mtx;
         std::lock_guard<std::mutex> _l(mtx);
         int r = 0;
-        std::stringstream stream;
+        std::ostringstream stream;
         std::time_t time = std::time(nullptr);
         struct tm tm = *std::localtime(&time);
         stream << std::put_time(&tm, "%Y-%m-%d %H:%M:%S") << "\t";
@@ -55,9 +57,9 @@ public:
         }
     }
 
-    static const uint8_t INFO = 1;
-    static const uint8_t WARNING = 2;
-    static const uint8_t ERROR = 3;
+    static const log_level INFO = 1;
+    static const log_level WARNING = 2;
+    static const log_level ERROR = 3;
 };
 
 
