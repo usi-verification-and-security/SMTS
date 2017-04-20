@@ -223,7 +223,7 @@ class Fixedpoint(Root):
                                              str(self.path()),
                                              'OR',
                                              '',
-                                             {'node': parent.path(), 'smt': parent.smt}
+                                             str({'node': parent.path(), 'smt': parent.smt})
                                          ))
 
         for query in queries:
@@ -235,7 +235,7 @@ class Fixedpoint(Root):
                                                  str(self.path()),
                                                  'AND',
                                                  '',
-                                                 {'node': child.path(), 'smt': child.smt}
+                                                 str({'node': child.path(), 'smt': child.smt})
                                              ))
 
         if config.db():
