@@ -159,7 +159,7 @@ namespace net {
         return (uint8_t) (v.size() / 2);
     }
 
-    net::Header Header::copy(const std::vector<const std::string> &keys) const {
+    net::Header Header::copy(const std::vector<std::string> &keys) const {
         auto header = Header();
         for (auto &key:keys) {
             try {
@@ -170,7 +170,7 @@ namespace net {
         return header;
     }
 
-    net::Header Header::copy(const header_prefix &prefix, const std::vector<const std::string> &keys) const {
+    net::Header Header::copy(const header_prefix &prefix, const std::vector<std::string> &keys) const {
         auto header = Header();
         for (auto &key:keys) {
             header.set(prefix, key, this->get(prefix, key));
@@ -178,8 +178,8 @@ namespace net {
         return header;
     }
 
-    const std::vector<const std::string> Header::keys(const header_prefix &prefix) const {
-        std::vector<const std::string> st;
+    const std::vector<std::string> Header::keys(const header_prefix &prefix) const {
+        std::vector<std::string> st;
         for (auto &pair:*this) {
             if (pair.first.substr(0, prefix.size() + 1) == prefix + ".") {
                 st.push_back(pair.first.substr(prefix.size() + 1));

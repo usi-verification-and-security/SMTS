@@ -23,11 +23,11 @@ namespace net {
     public:
         uint8_t level() const;
 
-        net::Header copy(const std::vector<const std::string> &) const;
+        net::Header copy(const std::vector<std::string> &) const;
 
-        net::Header copy(const header_prefix &, const std::vector<const std::string> &) const;
+        net::Header copy(const header_prefix &, const std::vector<std::string> &) const;
 
-        const std::vector<const std::string> keys(const header_prefix &) const;
+        const std::vector<std::string> keys(const header_prefix &) const;
 
         const std::string &get(const header_prefix &, const std::string &) const;
 
