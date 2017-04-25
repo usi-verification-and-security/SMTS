@@ -12,13 +12,19 @@ function(find NAME INCLUDE_NAMES LIBRARY_NAMES)
     endif ()
 
     if (NOT ${NAME}_INCLUDE_DIR)
+        set(${NAME}_INCLUDE_DIR "${${NAME}_INCLUDE_DIR}-NOTFOUND")
         find_path(${NAME}_INCLUDE_DIR NAMES ${INCLUDE_NAMES}
-                PATHS ${${NAME}_ABS_DIR}/include)
+                PATHS ${${NAME}_ABS_DIR}
+                PATH_SUFFIXES "" "include" NO_DEFAULT_PATH)
+        find_path(${NAME}_INCLUDE_DIR NAMES ${INCLUDE_NAMES})
     endif ()
 
     if (NOT ${NAME}_LIBRARY)
+        set(${NAME}_LIBRARY "${${NAME}_LIBRARY}-NOTFOUND")
         find_library(${NAME}_LIBRARY NAMES ${LIBRARY_NAMES}
-                PATHS ${${NAME}_ABS_DIR}/lib)
+                PATHS ${${NAME}_ABS_DIR}
+                PATH_SUFFIXES "" "lib" "lib64" NO_DEFAULT_PATH)
+        find_library(${NAME}_LIBRARY NAMES ${LIBRARY_NAMES})
     endif ()
 
     if (${NAME}_INCLUDE_DIR AND ${NAME}_LIBRARY)
