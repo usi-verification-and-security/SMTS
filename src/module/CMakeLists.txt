@@ -28,7 +28,6 @@ function(find NAME INCLUDE_NAMES LIBRARY_NAMES)
     endif ()
 
     if (${NAME}_INCLUDE_DIR AND ${NAME}_LIBRARY)
-        get_filename_component(${NAME}_LIBRARY_DIR ${${NAME}_LIBRARY} PATH)
         set(${NAME}_FOUND TRUE)
     endif ()
 
@@ -36,8 +35,7 @@ function(find NAME INCLUDE_NAMES LIBRARY_NAMES)
 
     if (${NAME}_FOUND)
         message(STATUS "Using ${NAME}_INCLUDE_DIR: ${${NAME}_INCLUDE_DIR}")
-        message(STATUS "Using ${NAME}_LIBRARY_DIR: ${${NAME}_LIBRARY_DIR}")
-        set(${NAME}_LIBRARY_DIR ${${NAME}_LIBRARY_DIR} PARENT_SCOPE)
+        message(STATUS "Using ${NAME}_LIBRARY: ${${NAME}_LIBRARY}")
         set(${NAME}_FOUND TRUE PARENT_SCOPE)
     else ()
         if (${NAME}_FIND_REQUIRED)
