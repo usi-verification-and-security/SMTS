@@ -16,9 +16,9 @@ include_directories("${Z3SPACER_INCLUDE_DIR}")
 
 add_executable(solver_z3spacer ../main.cpp SolverProcess.cpp)
 
-if (NOT Z3SPACER_FOUND)
-    add_dependencies(solver_z3spacer Z3Spacer)
-endif ()
+#if (NOT Z3SPACER_FOUND)
+#    add_dependencies(solver_z3spacer Z3Spacer)
+#endif ()
 
 target_link_libraries(solver_z3spacer client ${Z3SPACER_LIBRARY})
 
