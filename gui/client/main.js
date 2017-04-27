@@ -1,128 +1,75 @@
 
 angular.module('myApp', ['ngFileUpload'])
 
+    // Variable used to keep track how many rows of the db needs to be read
     .value('currentRow', { value: 0})
-
-    .value('rows', { value: []})
 
     .factory('sharedService', function($rootScope) {
     var sharedService = {};
 
+    // This is used to show solvers, tree and events when an instance is selected
     sharedService.broadcastItem = function() {
         $rootScope.$broadcast('handleBroadcast');
     };
 
+    // This is used to show in solver view solver's new status when an event is clicked and a new tree is displayed
     sharedService.broadcastItem2 = function() {
         $rootScope.$broadcast('handleBroadcast2');
     };
 
     return sharedService;
-})
+    })
 
-    .controller('TreeController',['$scope','$rootScope','currentRow', 'rows','$window','$http','sharedService',function($scope,$rootScope, currentRow,rows,$window,$http,sharedService){
+    //Tree
+    .factory('sharedTree', function() {
+        var tree = new TreeManager.Tree();
+        return tree;
 
-        // $scope.readAll = function() {
-        //     $http({
-        //         method : 'GET',
-        //         url : 'http://localhost:3000/get'
-        //     }).then(function successCallback(response) {
-        //         // $rootScope.$emit("CallEventMethod", {});
-        //         $window.location.reload();
-        //
-        //
-        //     }, function errorCallback(response) {
-        //         // called asynchronously if an error occurs
-        //         // or server returns response with an error status.
-        //         $window.alert('An error occured!');
-        //     });
-        // };
+    })
 
-        // $scope.readNextRow = function() {
-        //     $http({
-        //         method : 'GET',
-        //         url : 'http://localhost:3000/getNext'
-        //     }).then(function successCallback(response) {
-        //         $window.location.reload();
-        //
-        //
-        //     }, function errorCallback(response) {
-        //         // called asynchronously if an error occurs
-        //         // or server returns response with an error status.
-        //         $window.alert('An error occured!');
-        //     });
-        // };
-        //
-        // $scope.readPreviousRow = function() {
-        //     $http({
-        //         method : 'GET',
-        //         url : 'http://localhost:3000/getPrevious'
-        //     }).then(function successCallback(response) {
-        //         $window.location.reload();
-        //
-        //     }, function errorCallback(response) {
-        //         // called asynchronously if an error occurs
-        //         // or server returns response with an error status.
-        //         $window.alert('An error occured!');
-        //     });
-        // };
+    .controller('TreeController',['$scope','$rootScope','currentRow','$window','$http','sharedService',function($scope,$rootScope, currentRow,$window,$http,sharedService){
 
     }])
 
-    .controller('EventController',['$scope','$rootScope','currentRow', 'rows','$window','$http', 'sharedService',function($scope,$rootScope, currentRow,rows,$window,$http,sharedService){
+    .controller('EventController',['$scope','$rootScope','currentRow','sharedTree','$window','$http', 'sharedService',function($scope,$rootScope, currentRow,sharedTree,$window,$http,sharedService){
 
         $scope.$on('handleBroadcast', function() { // This is called when an instance is selected
-            $http({
-                method : 'GET',
-                url : 'http://localhost:3000/getEvents'
-            }).then(function successCallback(response) {
-                $scope.entries = response.data;
-            }, function errorCallback(response) {
-                // called asynchronously if an error occurs
-                // or server returns response with an error status.
-                $window.alert('An error occured!');
-            });
+            var eventEntries = sharedTree.tree.getEvents(currentRow.value);
+            $scope.entries = eventEntries;
+
         });
 
         // Show tree up to clicked event
         $scope.showEvent = function(x){
-            $http({
-                method : 'GET',
-                url : 'http://localhost:3000/getNext/' + x.id
-            }).then(function successCallback(response) {
-                // sharedService.broadcastItem2(); // Show tree and solvers
-                getTreeJson(response.data); // Show new tree
-                sharedService.broadcastItem2();
-            }, function errorCallback(response) {
-                // called asynchronously if an error occurs
-                // or server returns response with an error status.
-                $window.alert('An error occured!');
-            });
+            currentRow.value = x.id;
+            sharedTree.tree.arrangeTree(currentRow.value);
+            var treeView = sharedTree.tree.getTreeView();
+            getTreeJson(treeView);
+            sharedService.broadcastItem2();
         }
 
     }])
 
-    .controller('SolverController',['$scope','$rootScope','currentRow', 'rows','$window','$http', 'sharedService',function($scope,$rootScope, currentRow,rows,$window,$http,sharedService){
-
+    .controller('SolverController',['$scope','$rootScope','currentRow','sharedTree','$window','$http', 'sharedService',function($scope,$rootScope, currentRow,sharedTree,$window,$http,sharedService){
         $scope.$on('handleBroadcast', function() { // This is called when an instance is selected
             $scope.showSolver();
         });
-        $scope.$on('handleBroadcast2', function() { // This is called when an instance is selected
+        $scope.$on('handleBroadcast2', function() { // This is called when an event is selected and the new tree shows up
             $scope.showSolver();
         });
 
         $scope.showSolver = function() {
-            $http({
-                method : 'GET',
-                url : 'http://localhost:3000/getSolvers'
-            }).then(function successCallback(response) {
-                $scope.entries = response.data;
+            sharedTree.tree.assignSolvers(1,currentRow.value);
+            $scope.entries = sharedTree.tree.solvers;
 
-
-            }, function errorCallback(response) {
-                // called asynchronously if an error occurs
-                // or server returns response with an error status.
-                $window.alert('An error occured!');
-            });
+            // var ppTable = prettyPrint(sharedTree.tree.solvers);
+            // var item = document.getElementById('d4_2');
+            // if(item.childNodes[0]){
+            //     item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table
+            // }
+            // else{
+            //     item.appendChild(ppTable);
+            // }
         };
 
         $scope.showEvent = function(x){
@@ -131,7 +78,7 @@ angular.module('myApp', ['ngFileUpload'])
 
     }])
 
-    .controller('InstancesController',['$scope','$rootScope','currentRow', 'rows','$window','$http','sharedService',function($scope,$rootScope, currentRow,rows,$window,$http,sharedService){
+    .controller('InstancesController',['$scope','$rootScope','currentRow','sharedTree','$window','$http','sharedService',function($scope,$rootScope, currentRow,sharedTree,$window,$http,sharedService){
 
         $scope.load = function() {
             $http({
@@ -148,16 +95,22 @@ angular.module('myApp', ['ngFileUpload'])
             });
         };
 
-        $scope.showEvent = function(x){
-            // console.log(x);
-            this.showTree(); // show corresponding tree
+        $scope.clickEvent = function(){
+            this.getTree(); // show corresponding tree
         };
 
-        $scope.showTree = function() {
+        $scope.getTree = function() {
             $http({
                 method : 'GET',
                 url : 'http://localhost:3000/get'
             }).then(function successCallback(response) {
+                // Initialize tree
+                sharedTree.tree = new TreeManager.Tree();
+                sharedTree.tree.createEvents(response.data);
+                currentRow.value = response.data.length;
+                sharedTree.tree.arrangeTree(currentRow.value);
+                sharedTree.tree.initializeSolvers(response.data);
+
                 sharedService.broadcastItem(); // Show events, tree and solvers
 
 
@@ -170,23 +123,11 @@ angular.module('myApp', ['ngFileUpload'])
 
     }])
 
-    .controller('ViewController',['$scope','$rootScope','currentRow', 'rows','$window','$http', 'sharedService',function($scope,$rootScope, currentRow,rows,$window,$http,sharedService){
+    .controller('ViewController',['$scope','$rootScope','currentRow','sharedTree','$window','$http', 'sharedService',function($scope,$rootScope, currentRow,sharedTree,$window,$http,sharedService){
         $scope.$on('handleBroadcast', function() { // This is called when an instance is selected
-            $http({
-                method : 'GET',
-                url : 'http://localhost:3000/get'
-            }).then(function successCallback(response) {
-                getTreeJson(response.data);
-            });
+            var treeView = sharedTree.tree.getTreeView();
+            getTreeJson(treeView);
         });
-        // $scope.$on('handleBroadcast2', function() { // This is called when an instance is selected
-        //     $http({
-        //         method : 'GET',
-        //         url : 'http://localhost:3000/get'
-        //     }).then(function successCallback(response) {
-        //         getTreeJson(response.data);
-        //     });
-        // });
 
     }]);
 
