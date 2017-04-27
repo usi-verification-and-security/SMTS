@@ -75,5 +75,8 @@ tr {
     cursor: pointer;
 }
 tr:hover {
-    color: dodgerblue;
+    color: #7CFC00;
+}
+th{
+    background-color: #7CFC00;
 }

@@ -366,6 +366,20 @@ function getTreeJson(treeData) {
                 d.x0 = d.x;
                 d.y0 = d.y;
             });
+
+
+            ///
+            var object ={};
+
+            var ppTable = prettyPrint(object);
+            var item = document.getElementById('d6_2');
+
+            if(item.childNodes[0]){
+                item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table
+            }
+            else{
+                item.appendChild(ppTable);
+            }
         }
 
         // Append a group which holds all nodes and which the zoom Listener can act upon.
@@ -385,7 +399,6 @@ function getTreeJson(treeData) {
 
 // Show node's info in data
 function click(d) {
-
     var object ={};
     object.name = d.name.toString(); // transform to string or it will show and array
     object.type = d.type;

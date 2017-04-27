@@ -11,7 +11,7 @@
 <body ng-app="myApp" class="w3-grey">
 <header >
 	<div class="w3-container w3-center ">
-		<h1 ><b>SMT Viewer</b></h1>
+		<h1 style="text-shadow:1px 1px 0 #7CFC00" ><b>SMT Viewer</b></h1>
 		<!--<img src="Logo_Budakovic.png" style="width:100px;height:100px;">-->
 	</div>
 </header>
@@ -21,7 +21,7 @@
 	</div>
 	<div class="w3-container w3-border w3-quarter w3-cell" id="d2" ng-controller="InstancesController" ng-init='load()'>
 		<table>
-			<td> <b>Instances</b></td>
+			<th> <b>Instances</b></th>
 
 			<tr ng-repeat="x in entries" ng-click="clickEvent(x)">
 				<td>{{ x.name }}</td>
@@ -38,8 +38,8 @@
 	<div class="w3-quarter w3-border w3-container w3-cell" ng-controller="SolverController" id="d4">
 		<p > <b> SOLVERS </b></p>
 		<table>
-			<td><b>Solver</b></td>
-			<td><b>Node</b></td>
+			<th ><b>Solver</b></th>
+			<th><b>Node</b></th>
 
 			<tr ng-repeat="x in entries" ng-click="showEvent(x)">
 				<td>{{ x.name}}</td>
@@ -56,13 +56,13 @@
 	</div>
 	<div class="w3-container w3-border w3-half w3-cell"  style="max-height: 500px; overflow:auto;" ng-controller="EventController" id="d5">
 		<table>
-			<td><b>Id</b></td>
-			<td><b>Ts</b></td>
+			<th><b>Id</b></th>
+			<th><b>Ts</b></th>
 			<!--<td><b>Name</b></td>-->
-			<td><b>Node</b></td>
-			<td><b>Event</b></td>
-			<td><b>Solver</b></td>
-			<td><b>Data</b></td>
+			<th><b>Node</b></th>
+			<th><b>Event</b></th>
+			<th><b>Solver</b></th>
+			<th><b>Data</b></th>
 
 			<tr ng-repeat="x in entries" ng-click="showEvent(x)">
 				<td>{{ x.id }}</td>
