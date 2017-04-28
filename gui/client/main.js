@@ -95,31 +95,34 @@ angular.module('myApp', ['ngFileUpload'])
             });
         };
 
-        $scope.clickEvent = function(){
-            this.getTree(); // show corresponding tree
+        $scope.clickEvent = function(x){
+            // this.getTree(); // show corresponding tree
+            this.getTree(x);
         };
+            $scope.getTree = function(x) {
+            // console.log(x.name);
+                $http({
+                    method : 'GET',
+                    url : 'http://localhost:3000/get/' + x.name
+                }).then(function successCallback(response) {
+                    // Initialize tree
+                    sharedTree.tree = new TreeManager.Tree();
+                    sharedTree.tree.createEvents(response.data);
+                    currentRow.value = response.data.length;
+                    sharedTree.tree.arrangeTree(currentRow.value);
+                    sharedTree.tree.initializeSolvers(response.data);
 
-        $scope.getTree = function() {
-            $http({
-                method : 'GET',
-                url : 'http://localhost:3000/get'
-            }).then(function successCallback(response) {
-                // Initialize tree
-                sharedTree.tree = new TreeManager.Tree();
-                sharedTree.tree.createEvents(response.data);
-                currentRow.value = response.data.length;
-                sharedTree.tree.arrangeTree(currentRow.value);
-                sharedTree.tree.initializeSolvers(response.data);
-
-                sharedService.broadcastItem(); // Show events, tree and solvers
+                    sharedService.broadcastItem(); // Show events, tree and solvers
 
 
-            }, function errorCallback(response) {
-                // called asynchronously if an error occurs
-                // or server returns response with an error status.
-                $window.alert('An error occured!');
-            });
-        };
+                }, function errorCallback(response) {
+                    // called asynchronously if an error occurs
+                    // or server returns response with an error status.
+                    $window.alert('An error occured!');
+                });
+
+
+            };
 
     }])
 
