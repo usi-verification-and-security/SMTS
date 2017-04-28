@@ -1,5 +1,8 @@
 import enum
 import config
+import re
+import json
+import sys
 
 __author__ = 'Matteo Marescotti'
 
@@ -223,7 +226,7 @@ class Fixedpoint(Root):
                                              str(self.path()),
                                              'OR',
                                              '',
-                                             str({'node': parent.path(), 'smt': parent.smt})
+                                             '',  # str({'node': parent.path(), 'smt': parent.smt})
                                          ))
 
         for query in queries:
@@ -235,7 +238,7 @@ class Fixedpoint(Root):
                                                  str(self.path()),
                                                  'AND',
                                                  '',
-                                                 str({'node': child.path(), 'smt': child.smt})
+                                                 '',  # str({'node': child.path(), 'smt': child.smt})
                                              ))
 
         if config.db():
@@ -248,6 +251,46 @@ class Fixedpoint(Root):
             return self.smt, '(query ' + self.queries[0].sexpr() + ')'
         elif isinstance(node, AndNode):
             return node.parent.smt, node.smt
+
+
+def smt2json(smt):
+    orc = sys.getrecursionlimit()
+
+    try:
+        sys.setrecursionlimit(100000)
+
+        strings = {}
+
+        def add_string(s):
+            nonlocal strings
+            key = '{{{}}}'.format(len(strings))
+            strings[key] = json.dumps(s)[1:-1]
+            return key
+
+        smt = '({})'.format(smt)
+
+        s = re.sub(r"\"([^\"\\]*(?:\\.[^\"\\]*)*)\"", lambda x: add_string(x.group(1)), smt, 0, re.DOTALL)
+        s = re.sub(r"([^\"\s()]+)", r'"\1", ', s)
+        s = re.sub(r", *\)", ")", s)
+
+        s = re.sub(r"\)\s*[(]", "), (", s)
+        s = re.sub(r"\)(?!\s*,|\s*\))", "), ", s)
+        s = re.sub(r",\s*$", "", s)
+
+        s = re.sub(r"\(", "[", s)
+        s = re.sub(r"\)", "]", s)
+
+        for key in strings:
+            s = s.replace(key, strings[key])
+
+        o = json.loads(s)
+
+    except:
+        raise
+    else:
+        return o
+    finally:
+        sys.setrecursionlimit(orc)
 
 
 def parse(name: str, smt: str):
