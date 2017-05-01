@@ -1,10 +1,10 @@
-    var express = require('express'); 
-    var app = express(); 
+    var express = require('express');
+    const app = express();
+    const fileUpload = require('express-fileupload');
     var bodyParser = require('body-parser');
     var sqlite = require('sqlite3').verbose();
 
-    var file2 = "global.db";
-    // var file2 = "prova.db";
+    var database = process.argv[2]; // use "global.db" for testing
 
     var fs = require('fs');
 
@@ -16,66 +16,109 @@
     });
 
     app.use(express.static( '../client'));
-    app.use(bodyParser.json());  
+    app.use(bodyParser.json());
+    app.use(fileUpload());
 
     app.get('/get', function(req, res) { //get the content of the whole tree
-        var db = new sqlite.Database(file2);
-        var result = [];
-        db.all("SELECT * FROM SolvingHistory", function(err, rows) { //  take everything from table "SolvingHistory"
-            if(err){
-                res.json({error_code:1,err_desc:err});
-                return;
-            }
-            rows.forEach(function (row) { // save each of the table as an object in array "result"
-                result.push({id: row.id, ts: row.ts, name: row.name, node: row.node, event: row.event, solver: row.solver, data: row.data});
+        if(database ==  undefined){
+            console.log("No database was provided.");
+            res.json([]); //return result to the browser
+        }
+        else{
+            var db = new sqlite.Database(database);
+            var result = [];
+            db.all("SELECT * FROM SolvingHistory", function(err, rows) { //  take everything from table "SolvingHistory"
+                if(err){
+                    res.json({error_code:1,err_desc:err});
+                    return;
+                }
+                rows.forEach(function (row) { // save each of the table as an object in array "result"
+                    result.push({id: row.id, ts: row.ts, name: row.name, node: row.node, event: row.event, solver: row.solver, data: row.data});
+                });
+
+                res.json(result); //return result to the browser
+
+
             });
+            db.close();
+        }
 
-            res.json(result); //return result to the browser
-
-
-        });
-        db.close();
     });
 
     app.get('/get/:instance', function(req, res) { // Get content of a specific instance
-        var inst = "'" + req.params.instance + "'";
-        var db = new sqlite.Database(file2);
-        var query = "SELECT * FROM SolvingHistory WHERE name=" + inst;
-        var result = [];
-        db.all(query, function(err, rows) {
-            if(err){
-                res.json({error_code:1,err_desc:err});
-                return;
-            }
-            rows.forEach(function (row) { // save each of the table as an object in array "result"
-                result.push({id: row.id, ts: row.ts, name: row.name, node: row.node, event: row.event, solver: row.solver, data: row.data});
+        if(database ==  undefined){
+            console.log("No database was provided.");
+            res.json([]); //return result to the browser
+        }
+        else{
+            var inst = "'" + req.params.instance + "'";
+            var db = new sqlite.Database(database);
+            var query = "SELECT * FROM SolvingHistory WHERE name=" + inst;
+            var result = [];
+            db.all(query, function(err, rows) {
+                if(err){
+                    res.json({error_code:1,err_desc:err});
+                    return;
+                }
+                rows.forEach(function (row) { // save each of the table as an object in array "result"
+                    result.push({id: row.id, ts: row.ts, name: row.name, node: row.node, event: row.event, solver: row.solver, data: row.data});
+                });
+
+                res.json(result); //return result to the browser
+
+
             });
+            db.close();
+        }
 
-            res.json(result); //return result to the browser
-
-
-        });
-        db.close();
     });
 
 
 
     app.get('/getInstances', function(req, res) {
-        var db = new sqlite.Database(file2);
-        var result = [];
-        db.all("SELECT DISTINCT name FROM SolvingHistory", function(err, rows) {
-            if(err){
-                res.json({error_code:1,err_desc:err});
-                return;
-            }
-            rows.forEach(function (row) { // save each of the table as an object in array "result"
-                result.push(row);
-            });
-            // console.log(result);
-            res.json(result); //return result to the browser
+        if(database ==  undefined){
+            console.log("No database was provided.");
+            res.json([]); //return result to the browser
+        }
+        else{
+            var db = new sqlite.Database(database);
+            var result = [];
+            db.all("SELECT DISTINCT name FROM SolvingHistory", function(err, rows) {
+                if(err){
+                    res.json({error_code:1,err_desc:err});
+                    return;
+                }
+                rows.forEach(function (row) { // save each of the table as an object in array "result"
+                    result.push(row);
+                });
+                // console.log(result);
+                res.json(result); //return result to the browser
 
+            });
+            db.close();
+        }
+
+    });
+
+    app.post('/upload', function(req, res) {
+        console.log('Uploading db file...');
+        if (!req.files)
+            return res.status(400).send('No files were uploaded.');
+
+        // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
+        var sampleFile = req.files.db;
+        var uploadPath = __dirname + '/temp/' + sampleFile.name;
+
+        // Use the mv() method to place the file somewhere on your server
+        sampleFile.mv(uploadPath, function(err) {
+            if (err){
+                return res.status(500).send(err);
+            }
+            // Set database
+            database = './temp/' + sampleFile.name;
+            console.log('File successfully uploaded.');
+            res.redirect('back');
         });
-        db.close();
     });
 
     app.listen('3000', function(){

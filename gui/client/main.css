@@ -2,9 +2,8 @@
     /*height: 100%;*/
 /*}*/
 
-/*body {*/
-    /*height: 100%;*/
-/*}*/
+body {
+}
 
 /*button {*/
     /*background-color: lightgrey;*/
@@ -77,6 +76,7 @@ tr {
 tr:hover {
     color: #7CFC00;
 }
+
 th{
     background-color: #7CFC00;
 }

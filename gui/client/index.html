@@ -3,10 +3,10 @@
 	<title>SMT Viewer</title>
 	<link rel="stylesheet" href="main.css">
 	<style type="text/css">
-
 	</style>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+	<link rel="shortcut icon" type="image/x-icon" href="Logo_Budakovic.png" />
 </head>
 <body ng-app="myApp" class="w3-grey">
 <header >
@@ -18,12 +18,20 @@
 
 <div class="w3-cell-row">
 	<div ng-controller="TreeController" id="d1">
+		<form ref='uploadForm'
+			  id='uploadForm'
+			  action='http://localhost:3000/upload'
+			  method='post'
+			  encType="multipart/form-data">
+			<input type="file" name="db" accept=".db" required>
+			<input type='submit' value='Upload!' />
+		</form>
 	</div>
 	<div class="w3-container w3-border w3-quarter w3-cell" id="d2" ng-controller="InstancesController" ng-init='load()'>
 		<table>
 			<th> <b>Instances</b></th>
 
-			<tr ng-repeat="x in entries" ng-click="clickEvent(x)">
+			<tr ng-repeat="x in entries" ng-click="clickEvent($event,x)">
 				<td>{{ x.name }}</td>
 			</tr>
 		</table>
@@ -41,7 +49,7 @@
 			<th ><b>Solver</b></th>
 			<th><b>Node</b></th>
 
-			<tr ng-repeat="x in entries" ng-click="showEvent(x)">
+			<tr ng-repeat="x in entries">
 				<td>{{ x.name}}</td>
 				<td>{{ x.node}}</td>
 			</tr>
@@ -55,7 +63,7 @@
 	<div class="w3-container w3-border w3-quarter w3-cell">
 	</div>
 	<div class="w3-container w3-border w3-half w3-cell"  style="max-height: 500px; overflow:auto;" ng-controller="EventController" id="d5">
-		<table>
+		<table id="d5_2">
 			<th><b>Id</b></th>
 			<th><b>Ts</b></th>
 			<!--<td><b>Name</b></td>-->
@@ -64,7 +72,7 @@
 			<th><b>Solver</b></th>
 			<th><b>Data</b></th>
 
-			<tr ng-repeat="x in entries" ng-click="showEvent(x)">
+			<tr ng-repeat="x in entries" ng-click="showEvent($event,x)">
 				<td>{{ x.id }}</td>
 				<td>{{ x.ts }}</td>
 				<!--<td>{{ x.name }}</td>-->

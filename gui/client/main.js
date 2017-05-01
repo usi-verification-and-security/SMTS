@@ -40,7 +40,11 @@ angular.module('myApp', ['ngFileUpload'])
         });
 
         // Show tree up to clicked event
-        $scope.showEvent = function(x){
+        $scope.showEvent = function($event,x){
+            // $event.target.parentNode.style.color= "black";
+            console.log($event.target.parentNode);
+            document.getElementById('d5_2').style.color= "black";
+            $event.currentTarget.style.color= "#7CFC00";
             currentRow.value = x.id;
             sharedTree.tree.arrangeTree(currentRow.value);
             var treeView = sharedTree.tree.getTreeView();
@@ -72,10 +76,6 @@ angular.module('myApp', ['ngFileUpload'])
             // }
         };
 
-        $scope.showEvent = function(x){
-            console.log(x.node);
-        }
-
     }])
 
     .controller('InstancesController',['$scope','$rootScope','currentRow','sharedTree','$window','$http','sharedService',function($scope,$rootScope, currentRow,sharedTree,$window,$http,sharedService){
@@ -95,12 +95,11 @@ angular.module('myApp', ['ngFileUpload'])
             });
         };
 
-        $scope.clickEvent = function(x){
-            // this.getTree(); // show corresponding tree
-            this.getTree(x);
+        $scope.clickEvent = function($event,x){
+            $event.currentTarget.style.color= "#7CFC00";
+            this.getTree(x); // show corresponding tree
         };
             $scope.getTree = function(x) {
-            // console.log(x.name);
                 $http({
                     method : 'GET',
                     url : 'http://localhost:3000/get/' + x.name
