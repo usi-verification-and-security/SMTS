@@ -411,13 +411,12 @@ var prettyPrint = (function(){
 	};
 	
 	// Main..
-	var prettyPrintThis = function(obj, options) {
+	var prettyPrintThis = function(obj,options) {
 		
 		 /*
 		 *	  obj :: Object to be printed					
 		 *  options :: Options (merged with config)
 		 */
-		
 		options = options || {};
 		
 		var settings = util.merge( {}, prettyPrintThis.config, options ),
@@ -517,7 +516,7 @@ var prettyPrint = (function(){
 					return util.common.depthReached(obj, settings);
 				}
 				
-				var table = util.table(['Node', null],'object'),
+				var table = util.table(["Data",null],'object'),
 					isEmpty = true;
 				
 				for (var i in obj) {
@@ -665,7 +664,7 @@ var prettyPrint = (function(){
 				return util.txt('prettyPrint: TypeNotFound Error');
 			}
 		};
-		
+
 		container.appendChild( typeDealer[ (settings.forceObject) ? 'object' : util.type(obj) ](obj, currentDepth) );
 		
 		return container;

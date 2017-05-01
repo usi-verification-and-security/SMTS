@@ -42,7 +42,7 @@ angular.module('myApp', ['ngFileUpload'])
         // Show tree up to clicked event
         $scope.showEvent = function($event,x){
             // $event.target.parentNode.style.color= "black";
-            console.log($event.target.parentNode);
+            // console.log($event.target.parentNode);
             document.getElementById('d5_2').style.color= "black";
             $event.currentTarget.style.color= "#7CFC00";
             currentRow.value = x.id;
@@ -66,15 +66,25 @@ angular.module('myApp', ['ngFileUpload'])
             sharedTree.tree.assignSolvers(1,currentRow.value);
             $scope.entries = sharedTree.tree.solvers;
 
-            // var ppTable = prettyPrint(sharedTree.tree.solvers);
-            // var item = document.getElementById('d4_2');
-            // if(item.childNodes[0]){
-            //     item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table
-            // }
-            // else{
-            //     item.appendChild(ppTable);
-            // }
         };
+
+        $scope.clickEvent = function($event,x){
+            // console.log(x);
+            if(x.node){
+                x.node = x.node.toString(); // transform to string or it will show and array
+            }
+            var ppTable = prettyPrint(x);
+            document.getElementById('d6_1').innerHTML = "Solver".bold();
+            var item = document.getElementById('d6_2');
+
+            if(item.childNodes[0]){
+                item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table
+            }
+            else{
+                item.appendChild(ppTable);
+            }
+
+        }
 
     }])
 
@@ -108,8 +118,8 @@ angular.module('myApp', ['ngFileUpload'])
                     sharedTree.tree = new TreeManager.Tree();
                     sharedTree.tree.createEvents(response.data);
                     currentRow.value = response.data.length;
-                    sharedTree.tree.arrangeTree(currentRow.value);
                     sharedTree.tree.initializeSolvers(response.data);
+                    sharedTree.tree.arrangeTree(currentRow.value);
 
                     sharedService.broadcastItem(); // Show events, tree and solvers
 

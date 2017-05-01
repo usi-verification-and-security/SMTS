@@ -372,6 +372,7 @@ function getTreeJson(treeData) {
             var object ={};
 
             var ppTable = prettyPrint(object);
+            document.getElementById('d6_1').innerHTML = "";
             var item = document.getElementById('d6_2');
 
             if(item.childNodes[0]){
@@ -406,6 +407,7 @@ function click(d) {
     object.status = d.status;
 
     var ppTable = prettyPrint(object);
+    document.getElementById('d6_1').innerHTML = "Node".bold();
     var item = document.getElementById('d6_2');
 
     if(item.childNodes[0]){
