@@ -121,6 +121,44 @@
         });
     });
 
+    function deleteFile (file) {
+        fs.unlink(file, function (err) {
+            if (err) {
+                console.error(err.toString());
+            } else {
+                console.warn(file + ' deleted');
+            }
+        });
+    };
+
+    process.stdin.resume();//so the program will not close instantly
+
+    // Delete all files in temp directory before killing the process
+    function exitHandler(options, err) {
+        if (options.cleanup){
+            console.log('Cleaning databases..');
+            fs.readdir('./temp/', function(err, items) {
+                for (var i=0; i<items.length; i++) {
+                    console.log(items[i]);
+                    deleteFile('./temp/' + items[i]);
+                }
+                process.exit(0);
+            });
+
+        }
+        if (err) console.log(err.stack);
+        if (options.exit) process.exit();
+    }
+
+    //do something when app is closing
+    process.on('exit', exitHandler.bind(null,{cleanup:true}));
+
+    //catches ctrl+c event
+    process.on('SIGINT', exitHandler.bind(null, {cleanup:true}));
+
+    //catches uncaught exceptions
+    process.on('uncaughtException', exitHandler.bind(null, {exit:true}));
+
     app.listen('3000', function(){
         console.log('Server running on 3000...');
     });
