@@ -15,6 +15,9 @@ class Benchmark:
         self.ts_end = None
         self.data = None
 
+    def __repr__(self):
+        return '<{},{},{}>'.format(self.name, self.ts_start, self.ts_end)
+
 
 def get_benchmarks(db_path):
     path_sql = db_path.resolve()
