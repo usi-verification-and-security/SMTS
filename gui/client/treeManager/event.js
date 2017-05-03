@@ -11,6 +11,9 @@ var TreeManager;
             this.solver = value.solver;
             this.data = value.data;
         }
+        Event.prototype.setTs = function (value) {
+            this.ts = value;
+        };
         return Event;
     }());
     TreeManager.Event = Event;

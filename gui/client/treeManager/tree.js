@@ -7,9 +7,13 @@ var TreeManager;
             this.solvers = [];
         }
         Tree.prototype.createEvents = function (array) {
+            var time = array[0].ts;
+            var diff;
             for (var _i = 0, array_1 = array; _i < array_1.length; _i++) {
                 var item = array_1[_i];
                 var event = new TreeManager.Event(item);
+                diff = item.ts - time;
+                event.setTs(diff);
                 this.events.push(event);
             }
         };

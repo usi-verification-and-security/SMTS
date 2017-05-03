@@ -10,9 +10,13 @@ module TreeManager{
         constructor() {
         }
 
-        createEvents(array: Array<Object>) {
+        createEvents(array) {
+            var time = array[0].ts;
+            var diff;
             for (var item of array) {
                 var event = new Event(item);
+                diff = item.ts - time;
+                event.setTs(diff);
                 this.events.push(event);
             }
         }
@@ -30,8 +34,8 @@ module TreeManager{
                 var event = this.events[record].event;
 
                 if (event == "OR") {
-                    var node = new Node(depth.node,"OR"); // This is for "db = prova.db"
-                    // var node = new Node(depth, "OR"); // This is for "db = global.db"
+                    // var node = new Node(depth.node,"OR"); // This is for "db = prova.db"
+                    var node = new Node(depth, "OR"); // This is for "db = global.db"
 
                     //Initializing (the first node seen is the root)
                     // if(!treeView){

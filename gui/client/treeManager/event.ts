@@ -21,6 +21,10 @@ module TreeManager {
 
         }
 
+        setTs(value: number){
+            this.ts =value;
+        }
+
     }
     ;
 }
