@@ -4,6 +4,10 @@ angular.module('myApp', ['ngFileUpload'])
     // Variable used to keep track how many rows of the db needs to be read
     .value('currentRow', { value: 0})
 
+    .value('eventRow', { value: undefined})
+
+    .value('instanceRow', { value: undefined})
+
     .factory('sharedService', function($rootScope) {
     var sharedService = {};
 
@@ -31,7 +35,7 @@ angular.module('myApp', ['ngFileUpload'])
 
     }])
 
-    .controller('EventController',['$scope','$rootScope','currentRow','sharedTree','$window','$http', 'sharedService',function($scope,$rootScope, currentRow,sharedTree,$window,$http,sharedService){
+    .controller('EventController',['$scope','$rootScope','currentRow','eventRow','sharedTree','$window','$http', 'sharedService',function($scope,$rootScope, currentRow,eventRow,sharedTree,$window,$http,sharedService){
 
         $scope.$on('handleBroadcast', function() { // This is called when an instance is selected
             var eventEntries = sharedTree.tree.getEvents(currentRow.value);
@@ -41,15 +45,32 @@ angular.module('myApp', ['ngFileUpload'])
 
         // Show tree up to clicked event
         $scope.showEvent = function($event,x){
-            // $event.target.parentNode.style.color= "black";
-            // console.log($event.target.parentNode);
-            document.getElementById('d5_2').style.color= "black";
+            if(eventRow.value != undefined){
+                eventRow.value.style.color= "black";
+            }
+            eventRow.value = $event.currentTarget;
             $event.currentTarget.style.color= "#7CFC00";
             currentRow.value = x.id;
             sharedTree.tree.arrangeTree(currentRow.value);
             var treeView = sharedTree.tree.getTreeView();
             getTreeJson(treeView);
             sharedService.broadcastItem2();
+
+            if(x.event == "STATUS"){
+                // console.log(x.data);
+                // console.log(JSON.parse(x.data));
+                var object = JSON.parse(x.data);
+                var ppTable = prettyPrint(object);
+                document.getElementById('d6_1').innerHTML = "Status".bold();
+                var item = document.getElementById('d6_2');
+
+                if(item.childNodes[0]){
+                    item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table
+                }
+                else{
+                    item.appendChild(ppTable);
+                }
+            }
         }
 
     }])
@@ -88,7 +109,7 @@ angular.module('myApp', ['ngFileUpload'])
 
     }])
 
-    .controller('InstancesController',['$scope','$rootScope','currentRow','sharedTree','$window','$http','sharedService',function($scope,$rootScope, currentRow,sharedTree,$window,$http,sharedService){
+    .controller('InstancesController',['$scope','$rootScope','currentRow','instanceRow','sharedTree','$window','$http','sharedService',function($scope,$rootScope, currentRow,instanceRow,sharedTree,$window,$http,sharedService){
 
         $scope.load = function() {
             $http({
@@ -106,6 +127,10 @@ angular.module('myApp', ['ngFileUpload'])
         };
 
         $scope.clickEvent = function($event,x){
+            if(instanceRow.value != undefined){
+                instanceRow.value.style.color= "black";
+            }
+            instanceRow.value = $event.currentTarget;
             $event.currentTarget.style.color= "#7CFC00";
             this.getTree(x); // show corresponding tree
         };
