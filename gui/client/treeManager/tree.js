@@ -118,6 +118,12 @@ var TreeManager;
         // assignSolvers tells which solver is working on which node
         Tree.prototype.assignSolvers = function (x, y) {
             var i = x - 1;
+            // clear previous assignments of solvers
+            for (var u = 0; u < this.solvers.length; u++) {
+                this.solvers[u].node = null;
+                this.solvers[u].data = null;
+            }
+            // assign
             for (i; i < y; i++) {
                 if (this.events[i].event == "+") {
                     for (var u = 0; u < this.solvers.length; u++) {
