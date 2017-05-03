@@ -27,7 +27,7 @@ void SolverServer::log(uint8_t level, std::string message) {
         ::replace(message, "\n", "\n    ");
         message = "\n" + message;
     }
-    Logger::log(level, (this->solver ? this->solver->header["name"] + this->solver->header["node"] + ": " : "") +
+    Logger::log(level, (this->solver ? this->solver->header["name"] + this->solver->header["node"] + "\t" : "") +
                        message);
 }
 
@@ -58,7 +58,7 @@ void SolverServer::handle_exception(net::Socket &socket, const net::SocketExcept
 void SolverServer::stop_solver() {
     if (!this->solver)
         return;
-    this->log(Logger::INFO, "solver stop");
+    this->log(Logger::INFO, "solver killed");
     this->del_socket(this->solver->reader());
     delete this->solver;
     this->solver = nullptr;
@@ -67,7 +67,7 @@ void SolverServer::stop_solver() {
 void SolverServer::update_lemmas() {
     if (!this->solver)
         return;
-    auto header = this->solver->header;
+    net::Header header;
     header["command"] = "local";
     header["local"] = "lemma_server";
     header["lemma_server"] = this->lemmas_address;
@@ -100,21 +100,22 @@ void SolverServer::handle_message(net::Socket &socket, net::Header &header, std:
             this->stop_solver();
         } else if (this->check_header(header)) {
             this->solver->writer()->write(header, payload);
+        } else {
+            this->log(Logger::WARNING, "incorrect name received in command");
         }
     } else if (this->solver && &socket == this->solver->reader()) {
         this->server.write(header, payload);
         this->solver->header = header;
         if (header.count("report")) {
-            std::vector<std::string> v;
-            ::split(header["report"], ":", v, 2);
+            auto report = ::split(header["report"], ":", 2);
             uint8_t level = Logger::INFO;
-            if (v.size() == 2) {
-                if (v[0] == "error")
+            if (report.size() == 2) {
+                if (report[0] == "error")
                     level = Logger::ERROR;
-                else if (v[0] == "warning")
+                else if (report[0] == "warning")
                     level = Logger::WARNING;
             }
-            this->log(level, v.back());
+            this->log(level, "solver report: " + report.back());
             this->solver->header.erase("report");
         }
     }

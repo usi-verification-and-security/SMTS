@@ -48,8 +48,9 @@ void FileThread::main() {
         file.close();
 
         header.clear();
-        for (auto &it : this->settings.parameters)
-            header[it.first] = it.second;
+        for (auto &it : this->settings.parameters) {
+            header.set(net::Header::parameter, it.first, it.second);
+        }
         header["command"] = "solve";
         header["name"] = filename;
         header["node"] = "[]";

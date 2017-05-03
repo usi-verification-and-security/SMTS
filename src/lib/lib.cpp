@@ -25,10 +25,12 @@ std::istream &split(std::istream &stream,
 }
 
 
-void split(const std::string &string, const std::string &delimiter, std::vector<std::string> &vector, uint32_t limit) {
-    return split(string, delimiter, [&vector](const std::string &sub) {
+std::vector<std::string> split(const std::string &string, const std::string &delimiter, uint32_t limit) {
+    std::vector<std::string> vector;
+    split(string, delimiter, [&vector](const std::string &sub) {
         vector.push_back(sub);
     }, limit);
+    return vector;
 }
 
 void split(const std::string &string,
@@ -49,12 +51,22 @@ void split(const std::string &string,
     }
 }
 
-void replace(std::string &string, const std::string &from, const std::string &to) {
+std::string &replace(std::string &string, const std::string &from, const std::string &to, size_t n) {
     if (from.empty())
-        return;
+        return string;
     size_t start_pos = 0;
     while ((start_pos = string.find(from, start_pos)) != std::string::npos) {
         string.replace(start_pos, from.length(), to);
         start_pos += to.length();
+        if (n > 0) {
+            if (n == 1)
+                break;
+            n--;
+        }
     }
+    return string;
+}
+
+std::string &operator%(std::string &string, const std::pair<std::string, std::string> &pair) {
+    return ::replace(string, pair.first, pair.second);
 }

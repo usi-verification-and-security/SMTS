@@ -281,18 +281,18 @@ class ParallelizationServer(net.Server):
                         time.time() - self.current.started
                     )
                 )
-                for solver in {solver for solver in self.solvers(True) if solver.node.root == self.current}:
+                for solver in {solver for solver in self.solvers(True) if solver.node.root == self.current.root}:
                     solver.stop()
                 self.current = None
-        elif self.current is None:
+        if self.current is None:
             schedulables = [instance for instance in self.trees if
                             instance.root.status == framework.SolveStatus.unknown and instance.when_timeout > 0]
             if schedulables:
                 self.current = schedulables[0]
                 self.log(logging.INFO, 'solving instance "{}"'.format(self.current.root.name))
-        if solving != self.current and self.lemma_server:
-            self.lemma_server.reset(self.current.root)
-        if not self.current:
+        if solving is not None and solving != self.current and self.lemma_server:
+            self.lemma_server.reset(solving.root)
+        if self.current is None:
             if solving is not None:
                 self.log(logging.INFO, 'all done.')
             return

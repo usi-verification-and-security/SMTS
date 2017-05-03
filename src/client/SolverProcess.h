@@ -46,7 +46,7 @@ private:
             this->header["lemmas"] = std::to_string(1000);
         }
         this->init();
-        this->info("solver start");
+        this->info("start");
         std::thread t([&] {
             net::Header header;
             std::string payload;
@@ -111,6 +111,8 @@ private:
     }
 
     void report(Status status, net::Header header = net::Header()) {
+        if (header.size() == 0)
+            header = this->header.copy(this->header.keys(net::Header::statistic));
         if (status == Status::sat)
             this->report(header, "sat", "");
         else if (status == Status::unsat)
@@ -122,11 +124,9 @@ private:
 
     void report(const std::vector<std::string> &partitions, const char *error = nullptr) {
         net::Header header;
-        std::stringstream payload;
         if (error != nullptr)
             return this->error(error);
-        payload << partitions;
-        this->report(header, "partitions", payload.str());
+        this->report(header, "partitions", ::to_string(partitions));
     }
 
     void info(const std::string &info, net::Header header = net::Header()) {
@@ -165,6 +165,22 @@ private:
         };
     }
 
+public:
+    SolverProcess(net::Header header,
+                  std::string instance) :
+            instance(instance),
+            header(header) {
+        if (!header.count("name") || !header.count("node"))
+            throw Exception("missing mandatory key in header");
+        this->start();
+    }
+
+    net::Header header;
+
+    bool is_sharing() {
+        return this->lemma.server != nullptr;
+    }
+
     void lemma_push(const std::vector<net::Lemma> &lemmas) {
         if (lemmas.size() == 0 && this->lemma.to_push.size() == 0)
             return;
@@ -180,17 +196,12 @@ private:
                 )
             return;
 
-        net::Header header = this->header;
-        header["name"] = this->header["name"];
-        header["node"] = this->header["node"];
-        std::stringstream payload;
-
-        payload << this->lemma.to_push;
+        net::Header header = this->header.copy({"name", "node"});
 
         header["lemmas"] = "+" + std::to_string(this->lemma.to_push.size());
 
         try {
-            this->lemma.server->write(header, payload.str());
+            this->lemma.server->write(header, ::to_string(this->lemma.to_push));
         } catch (net::SocketException &ex) {
             this->lemma.errors++;
             this->error(std::string("lemma push failed: ") + ex.what());
@@ -215,9 +226,7 @@ private:
 
         std::lock_guard<std::mutex> _l(this->lemma.mtx);
 
-        net::Header header;
-        header["name"] = this->header["name"];
-        header["node"] = this->header["node"];
+        net::Header header = this->header.copy({"name", "node"});
         header["lemmas"] = "-" + this->header["lemmas"];
         std::string payload;
 
@@ -241,22 +250,6 @@ private:
 
         std::istringstream is(payload);
         is >> lemmas;
-    }
-
-public:
-    SolverProcess(net::Header header,
-                  std::string instance) :
-            instance(instance),
-            header(header) {
-        if (!header.count("name") || !header.count("node"))
-            throw Exception("missing mandatory key in header");
-        this->start();
-    }
-
-    net::Header header;
-
-    bool is_sharing() {
-        return this->lemma.server != nullptr;
     }
 
     static const char *solver;

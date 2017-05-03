@@ -215,12 +215,9 @@ void LemmaServer::handle_message(net::Socket &client,
             n++;
         }
 
-        std::stringstream lemmas_dump;
-        lemmas_dump << lemmas_send;
-
         header["lemmas"] = std::to_string(n);
 
-        client.write(header, lemmas_dump.str());
+        client.write(header, ::to_string(lemmas_send));
 
         if (n > 0)
             Logger::log(Logger::INFO,
