@@ -56,21 +56,20 @@ angular.module('myApp', ['ngFileUpload'])
             getTreeJson(treeView);
             sharedService.broadcastItem2();
 
-            if(x.event == "STATUS"){
-                // console.log(x.data);
-                // console.log(JSON.parse(x.data));
-                var object = JSON.parse(x.data);
-                var ppTable = prettyPrint(object);
-                document.getElementById('d6_1').innerHTML = "Status".bold();
-                var item = document.getElementById('d6_2');
-
-                if(item.childNodes[0]){
-                    item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table
-                }
-                else{
-                    item.appendChild(ppTable);
-                }
+            // Show event's data in dataView
+            var object = JSON.parse(x.data);
+            if(!object) object = {}
+            var ppTable = prettyPrint(object);
+            var tableName = "Event " + x.event;
+            document.getElementById('d6_1').innerHTML = tableName.bold();
+            var item = document.getElementById('d6_2');
+            if(item.childNodes[0]){
+                item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table
             }
+            else{
+                item.appendChild(ppTable);
+            }
+
         }
 
     }])
