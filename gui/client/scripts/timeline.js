@@ -15,6 +15,15 @@ function refactorEvents(allEvents) {
     // console.log(timelineEvents);
 }
 
+// This function returns the element in timelineEvents with the same ts as the selected element
+function findElwithSameTS(time){
+    for (var i = 0; i < timelineEvents.length - 1; i++) {
+        if(timelineEvents[i].ts == time){
+            return timelineEvents[i].id;
+        }
+    }
+}
+
 //Main function. Draw your circles.
 function makeCircles() {
     // If in allEvents the are more events with the sam timeStamp just the first one will be left
@@ -48,7 +57,7 @@ function makeCircles() {
     $(".circle:first").addClass("active");
 }
 
-function selectDate(selector) {
+function selectEvent(selector) {
     $selector = "#" + selector;
     $spanSelector = $selector.replace("circle", "span");
     var current = $selector.replace("circle", "");

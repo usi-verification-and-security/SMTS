@@ -59,7 +59,7 @@ angular.module('myApp', ['ngFileUpload'])
 
             $(".circle").click(function() {
                 var spanNum = $(this).attr("id");
-                selectDate(spanNum)
+                selectEvent(spanNum)
                 //Simulate event click
                 var find = "event" + spanNum;
                 var row = document.getElementById(find);
@@ -89,12 +89,23 @@ angular.module('myApp', ['ngFileUpload'])
             }
 
             eventRow.value = $event.currentTarget;
-            // console.log($event.currentTarget.id)
             $event.currentTarget.style.color= "#7CFC00";
+
             currentRow.value = x.id;
             sharedTree.tree.arrangeTree(currentRow.value);
             var treeView = sharedTree.tree.getTreeView();
             getTreeJson(treeView);
+
+            //Update timeline
+            var circle = document.getElementById(x.id);
+            if(circle != null){
+                selectEvent(x.id);
+            }
+            else if((circle == null) && (timelineEvents.length > 1)){ // if timelineEvents.length < 2 then there isn' the timeline
+                var index = findElwithSameTS(x.ts);
+                selectEvent(index);
+            }
+
             sharedService.broadcastItem2();
         }
 
