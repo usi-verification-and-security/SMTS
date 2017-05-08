@@ -39,22 +39,40 @@ angular.module('myApp', ['ngFileUpload'])
 
         $scope.$on('handleBroadcast', function() { // This is called when an instance is selected
             var eventEntries = sharedTree.tree.getEvents(currentRow.value);
+            // console.log(eventEntries)
             $scope.entries = eventEntries;
+            $scope.initTimeline(eventEntries); // Initialize timeline
 
         });
+
+        $scope.initTimeline = function(events){
+            allEvents = events;
+            makeCircles();
+
+            $(".circle").mouseenter(function() {
+                $(this).addClass("hover");
+            });
+
+            $(".circle").mouseleave(function() {
+                $(this).removeClass("hover");
+            });
+
+            $(".circle").click(function() {
+                var spanNum = $(this).attr("id");
+                selectDate(spanNum)
+                //Simulate event click
+                var find = "event" + spanNum;
+                var row = document.getElementById(find);
+                row.click();
+                // TODO: Scroll table till selected event
+            });
+        };
 
         // Show tree up to clicked event
         $scope.showEvent = function($event,x){
             if(eventRow.value != undefined){
                 eventRow.value.style.color= "black";
             }
-            eventRow.value = $event.currentTarget;
-            $event.currentTarget.style.color= "#7CFC00";
-            currentRow.value = x.id;
-            sharedTree.tree.arrangeTree(currentRow.value);
-            var treeView = sharedTree.tree.getTreeView();
-            getTreeJson(treeView);
-            sharedService.broadcastItem2();
 
             // Show event's data in dataView
             var object = JSON.parse(x.data);
@@ -70,6 +88,14 @@ angular.module('myApp', ['ngFileUpload'])
                 item.appendChild(ppTable);
             }
 
+            eventRow.value = $event.currentTarget;
+            // console.log($event.currentTarget.id)
+            $event.currentTarget.style.color= "#7CFC00";
+            currentRow.value = x.id;
+            sharedTree.tree.arrangeTree(currentRow.value);
+            var treeView = sharedTree.tree.getTreeView();
+            getTreeJson(treeView);
+            sharedService.broadcastItem2();
         }
 
     }])
@@ -133,29 +159,30 @@ angular.module('myApp', ['ngFileUpload'])
             $event.currentTarget.style.color= "#7CFC00";
             this.getTree(x); // show corresponding tree
         };
-            $scope.getTree = function(x) {
-                $http({
-                    method : 'GET',
-                    url : 'http://localhost:3000/get/' + x.name
-                }).then(function successCallback(response) {
-                    // Initialize tree
-                    sharedTree.tree = new TreeManager.Tree();
-                    sharedTree.tree.createEvents(response.data);
-                    currentRow.value = response.data.length;
-                    sharedTree.tree.initializeSolvers(response.data);
-                    sharedTree.tree.arrangeTree(currentRow.value);
 
-                    sharedService.broadcastItem(); // Show events, tree and solvers
+        $scope.getTree = function(x) {
+            $http({
+                method : 'GET',
+                url : 'http://localhost:3000/get/' + x.name
+            }).then(function successCallback(response) {
+                // Initialize tree
+                sharedTree.tree = new TreeManager.Tree();
+                sharedTree.tree.createEvents(response.data);
+                currentRow.value = response.data.length;
+                sharedTree.tree.initializeSolvers(response.data);
+
+                sharedService.broadcastItem(); // Show events, tree and solvers
+
+                sharedTree.tree.arrangeTree(currentRow.value);
+
+            }, function errorCallback(response) {
+                // called asynchronously if an error occurs
+                // or server returns response with an error status.
+                $window.alert('An error occured!');
+            });
 
 
-                }, function errorCallback(response) {
-                    // called asynchronously if an error occurs
-                    // or server returns response with an error status.
-                    $window.alert('An error occured!');
-                });
-
-
-            };
+        };
 
     }])
 

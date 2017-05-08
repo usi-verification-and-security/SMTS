@@ -1,0 +1,95 @@
+#lineCont {
+    width: 100%;
+    height: 20%;
+}
+
+#line {
+    height: 6px;
+    width: 70%;
+    background: white;
+    border-radius: 5px;
+    margin: auto;
+    top: 50%;
+    transform: translateY(-50%);
+    position: relative;
+}
+
+#span {
+    display: none;
+    width: 70%;
+    margin: auto;
+    margin-top: 25%;
+    text-align: center;
+    color: white;
+}
+
+.circle {
+    width: 20px;
+    height: 20px;
+    background: #7CFC00;
+    border-radius: 15px;
+    position: absolute;
+    top: -7px;
+    border: 3px solid white;
+    cursor: pointer;
+}
+.circle:before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: white;
+    position: absolute;
+    border-radius: 100%;
+    top: 2px;
+    left: 2px;
+    display: none;
+}
+.circle .popupSpan {
+    width: auto;
+    height: auto;
+    padding: 10px;
+    white-space: nowrap;
+    display: inline-block;
+    color: white;
+    position: absolute;
+    top: 20px;
+    left: -75px;
+    display: none;
+    transition: all 0.1s ease-out;
+}
+.circle.hover:before, .circle.active:before {
+    display: block;
+}
+.circle.hover .popupSpan, .circle.active .popupSpan {
+    display: block;
+}
+.circle.active .popupSpan {
+    top: -40px;
+}
+
+#mainCont {
+    height: 80%;
+    width: 100%;
+    position: relative;
+    color: white;
+    font-size: 62px;
+    text-align: center;
+    transition: all 0.2s ease-out;
+}
+#mainCont span {
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 30%;
+    transition: all 0.2s ease-out;
+}
+#mainCont span.right {
+    left: 200%;
+}
+#mainCont span.center {
+    left: 0% !important;
+}
+#mainCont span.left {
+    left: -100%;
+}

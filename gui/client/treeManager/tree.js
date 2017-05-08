@@ -22,6 +22,7 @@ var TreeManager;
             var treeView;
             treeView = new TreeManager.Node([], "AND");
             for (var record = 0; record < howMany; record++) {
+                // console.log("record: " + record)
                 var parentNode = [];
                 var depth = JSON.parse(this.events[record].data);
                 var event = this.events[record].event;
@@ -35,6 +36,8 @@ var TreeManager;
                     //insert node in the tree
                     // else {
                     parentNode = JSON.parse(this.events[record].node);
+                    // console.log(parentNode)
+                    // console.log(node)
                     treeView = this.insertNode(treeView, parentNode, node);
                     // }
                 }
@@ -76,6 +79,7 @@ var TreeManager;
             }
         };
         Tree.prototype.updateNode = function (obj, node, event, data) {
+            // console.log(obj)
             if (JSON.stringify(obj.name) == JSON.stringify(JSON.parse(node))) {
                 if (event == "+") {
                     // console.log("Adding solver " + data + "to node " + node);

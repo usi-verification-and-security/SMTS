@@ -1,18 +1,20 @@
 <html>
 <head>
 	<title>SMT Viewer</title>
-	<link rel="stylesheet" href="main.css">
-	<style type="text/css">
-	</style>
+	<link rel="stylesheet" href="css/main.css">
+	<link rel="stylesheet" href="css/timeline.css">
+	<style type="text/css"></style>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-	<link rel="shortcut icon" type="image/x-icon" href="Logo_Budakovic.png" />
+	<link rel="shortcut icon" type="image/x-icon" href="images/Logo_Budakovic.png" />
+	<base href="">
+
 </head>
 <body ng-app="myApp" class="w3-grey">
 <header >
 	<div class="w3-container w3-center ">
 		<h1 style="text-shadow:1px 1px 0 #7CFC00" ><b>SMT Viewer</b></h1>
-		<!--<img src="Logo_Budakovic.png" style="width:100px;height:100px;">-->
+		<!--<img src="images/Logo_Budakovic.png" style="width:100px;height:100px;">-->
 	</div>
 </header>
 
@@ -72,7 +74,7 @@
 			<th><b>Solver</b></th>
 			<th><b>Data</b></th>
 
-			<tr ng-repeat="x in entries" ng-click="showEvent($event,x)">
+			<tr id="event{{x.id}}" ng-repeat="x in entries" ng-click="showEvent($event,x)">
 				<td>{{ x.id }}</td>
 				<td>{{ x.ts }}</td>
 				<!--<td>{{ x.name }}</td>-->
@@ -91,18 +93,25 @@
 	</div>
 
 </div>
+
+<div id="lineCont">
+	<div id="line"></div>
+	<div id="span">Date Placeholder</div>
+</div>
 </body>
 
 <script type="text/javascript" src="scripts/angular.min.js"></script>
+<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
 <script type="text/javascript" src="main.js"></script>
-<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
 <script src="http://d3js.org/d3.v3.min.js"></script>
-<script type="text/javascript" src="dndTree.js"></script>
+<script type="text/javascript" src="scripts/dndTree.js"></script>
 <script type="text/javascript" src="scripts/ng-file-upload.min.js"></script>
 <script type="text/javascript" src="scripts/ng-file-upload-shim.min.js"></script>
-<script src="prettyprint.js"></script>
+<script src="scripts/prettyprint.js"></script>
 <script src="treeManager/event.js"></script>
 <script src="treeManager/node.js"></script>
 <script src="treeManager/solver.js"></script>
 <script src="treeManager/tree.js"></script>
+<script src="scripts/timeline.js"></script>
+
 </html>

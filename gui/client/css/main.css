@@ -1,17 +1,7 @@
-/*html {*/
-    /*height: 100%;*/
-/*}*/
+
 
 body {
 }
-
-/*button {*/
-    /*background-color: lightgrey;*/
-    /*color: black;*/
-    /*font-size: 16px;*/
-    /*border-radius: 12px;*/
-    /*border: 2px solid gray;*/
-/*}*/
 
 button:hover {
     color: dodgerblue;
