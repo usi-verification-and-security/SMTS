@@ -26,7 +26,7 @@
 .circle {
     width: 20px;
     height: 20px;
-    background: #7CFC00;
+    background: white;
     border-radius: 15px;
     position: absolute;
     top: -7px;
@@ -66,30 +66,7 @@
 .circle.active .popupSpan {
     top: -40px;
 }
-
-#mainCont {
-    height: 80%;
-    width: 100%;
-    position: relative;
-    color: white;
-    font-size: 62px;
-    text-align: center;
-    transition: all 0.2s ease-out;
-}
-#mainCont span {
-    display: inline-block;
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    top: 30%;
-    transition: all 0.2s ease-out;
-}
-#mainCont span.right {
-    left: 200%;
-}
-#mainCont span.center {
-    left: 0% !important;
-}
-#mainCont span.left {
-    left: -100%;
+.active {
+    background: #7CFC00;
+    color: #7CFC00;
 }

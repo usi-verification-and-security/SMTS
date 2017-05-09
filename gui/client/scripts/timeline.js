@@ -36,22 +36,20 @@ function makeCircles() {
         //This is what you really want.
     } else if (timelineEvents.length >= 2) {
         var lineLength = 1 / timelineEvents[timelineEvents.length-1].ts;
-        // var relativeInt;
-        // var lineLength = 1/timelineEvents.length;
 
         //Draw first date circle
-        $("#line").append('<div class="circle" id="' + timelineEvents[0].id + '" style="left: ' + 0 + '%;"><div class="popupSpan">' + timelineEvents[0].ts + '</div></div>');
+        $("#line").append('<div class="circle" id="' + timelineEvents[0].id + '" style="left: ' + 0 + '%;"><div class="popupSpan">' + timelineEvents[0].ts + ' s' + '</div></div>');
 
         //Loop through middle dates
         for (i = 1; i < timelineEvents.length - 1; i++) {
             var relativeInt = lineLength * timelineEvents[i].ts;
 
             //Draw the date circle
-           $("#line").append('<div class="circle" id="' + timelineEvents[i].id + '" style="left: ' + relativeInt * 100 + '%;"><div class="popupSpan">' + timelineEvents[i].ts + '</div></div>');
+           $("#line").append('<div class="circle" id="' + timelineEvents[i].id + '" style="left: ' + relativeInt * 100 + '%;"><div class="popupSpan">' + timelineEvents[i].ts + ' s' + '</div></div>');
         }
 
         //Draw the last date circle
-        $("#line").append('<div class="circle" id="' + timelineEvents[timelineEvents.length-1].id + '" style="left: ' + 99 + '%;"><div class="popupSpan">' + timelineEvents[timelineEvents.length-1].ts + '</div></div>');
+        $("#line").append('<div class="circle" id="' + timelineEvents[timelineEvents.length-1].id + '" style="left: ' + 99 + '%;"><div class="popupSpan">' + timelineEvents[timelineEvents.length-1].ts + ' s' + '</div></div>');
     }
 
     $(".circle:first").addClass("active");

@@ -76,7 +76,7 @@ angular.module('myApp', ['ngFileUpload'])
 
             // Show event's data in dataView
             var object = JSON.parse(x.data);
-            if(!object) object = {}
+            if(!object) object = {};
             var ppTable = prettyPrint(object);
             var tableName = "Event " + x.event;
             document.getElementById('d6_1').innerHTML = tableName.bold();
