@@ -158,7 +158,7 @@ module TreeManager{
             }
 
             // assign
-            for (i; i < y; i++) {
+            for (i; i <= y; i++) {
 
                 if (this.events[i].event == "+") {
 

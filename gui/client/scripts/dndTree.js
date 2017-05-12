@@ -52,7 +52,7 @@ function getTreeJson(treeData) {
         // console.log("viewerWidth "+ viewerWidth);
         // console.log(viewerHeight);
         var viewerWidth = 1076;
-        var viewerHeight = 588;
+        var viewerHeight = 488;
 
         var tree = d3.layout.tree()
             .size([viewerHeight, viewerWidth]);

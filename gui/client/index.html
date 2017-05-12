@@ -13,8 +13,8 @@
 <!--class="w3-grey"-->
 <body ng-app="myApp" >
 <header >
-	<div class="w3-container w3-center ">
-		<h1 style="text-shadow:1px 1px 0 #7CFC00" ><b>SMT Viewer</b></h1>
+	<div class="w3-container w3-center " style="top: 40%;transform: translateY(40%);">
+		<h1 style="text-shadow:1px 1px 0 #7CFC00; font-size:300%" ><b>SMT Viewer</b></h1>
 		<!--<img src="images/Logo_Budakovic.png" style="width:100px;height:100px;">-->
 	</div>
 </header>
@@ -31,7 +31,7 @@
 			<input type='submit' value='Upload!' />
 		</form>
 	</div>
-	<div class="w3-container w3-border w3-quarter w3-cell" id="d2" style="max-height: 600px; overflow:auto;" ng-controller="InstancesController" ng-init='load()'>
+	<div class="w3-container w3-border w3-quarter w3-cell" id="d2" style="max-height: 500px; overflow:auto;" ng-controller="InstancesController" ng-init='load()'>
 		<table>
 			<th> <b>Instances</b></th>
 
@@ -47,7 +47,7 @@
 	</div>
 
 
-	<div class="w3-quarter w3-border w3-container w3-cell" style="max-height: 600px; overflow:auto;" ng-controller="SolverController" id="d4">
+	<div class="w3-quarter w3-border w3-container w3-cell" style="max-height: 500px; overflow:auto;" ng-controller="SolverController" id="d4">
 		<p > <b> SOLVERS </b></p>
 		<table>
 			<th ><b>Solver</b></th>
@@ -64,7 +64,8 @@
 </div>
 
 <div class="w3-cell-row">
-	<div class="w3-container w3-border w3-quarter w3-cell">
+	<div class="w3-container w3-border w3-quarter w3-cell" style="height:400px ">
+        <div style="top: 50%;transform: translateY(50%);" >
 		<b> Upload new instance: </b>
 		<form ref='uploadInstanceForm'
 			  id='uploadInstanceForm'
@@ -77,34 +78,34 @@
 		<form action="http://localhost:3000/setTimout">
 			<b>Timeout:</b> <input type="text" style="width: 100px;" name="timeout" value="1000"><br> <input type="submit" name="setTimeout" value="Set"> <input type="submit" name="stopTimeout" value="Stop">
 		</form>
-
+        </div>
 	</div>
-	<div class="w3-container w3-border w3-half w3-cell"  style="max-height: 400px; overflow:auto;" ng-controller="EventController" id="d5">
-		<table id="d5_2">
+	<div class="w3-container w3-border w3-half w3-cell" style="max-height: 400px; overflow:auto;" ng-controller="EventController" id="d5" style="height:400px ">
+		<table id="d5_2" class="etable">
 			<th><b>Nr</b></th>
-			<th><b>Id</b></th>
-			<th><b>Ts</b></th>
+			<!--<th><b>Id</b></th>-->
+			<th><b>Time</b></th>
 			<!--<td><b>Name</b></td>-->
 			<th><b>Node</b></th>
 			<th><b>Event</b></th>
 			<th><b>Solver</b></th>
-			<th><b>Data</b></th>
+			<!--<th><b>Data</b></th>-->
 
 			<tr id="event{{x.id}}" ng-repeat="x in entries" ng-click="showEvent($event,$index,x)">
 				<td>{{$index}}</td>
-				<td>{{ x.id }}</td>
-				<td>{{ x.ts }}</td>
+				<!--<td>{{ x.id }}</td>-->
+				<td style="white-space: nowrap;" >{{ x.ts }} s </td>
 				<!--<td>{{ x.name }}</td>-->
 				<td>{{ x.node }}</td>
 				<td>{{ x.event }}</td>
 				<td>{{ x.solver }}</td>
-				<td>{{ x.data }}</td>
+				<!--<td>{{ x.data }}</td>-->
 			</tr>
 		</table>
 
 	</div>
 
-	<div class="w3-container w3-border w3-quarter w3-cell" id="d6">
+	<div class="w3-container w3-border w3-quarter w3-cell" id="d6" style="height:400px ">
 		<p id="d6_1" > <b> DATA </b></p>
 		<div id="d6_2"> </div>
 	</div>

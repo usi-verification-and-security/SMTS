@@ -46,6 +46,7 @@ angular.module('myApp', ['ngFileUpload'])
         });
 
         $scope.initTimeline = function(events){
+            clearTimeline();
             allEvents = events;
             makeCircles();
 
@@ -60,7 +61,7 @@ angular.module('myApp', ['ngFileUpload'])
             $(".circle").click(function() {
                 var spanNum = $(this).attr("id");
                 selectEvent(spanNum)
-                //Simulate event click
+                //Simulate event click to rebuild the tree
                 var find = "event" + spanNum;
                 var row = document.getElementById(find);
                 row.click();
@@ -76,13 +77,22 @@ angular.module('myApp', ['ngFileUpload'])
 
             // Show event's data in dataView
             var object = JSON.parse(x.data);
-            if(!object) object = {};
+            // console.log(object)
+            if(object == null){
+                object = {};
+            }
             var ppTable = prettyPrint(object);
+            // console.log(ppTable)
             var tableName = "Event " + x.event;
             document.getElementById('d6_1').innerHTML = tableName.bold();
             var item = document.getElementById('d6_2');
             if(item.childNodes[0]){
+                console.log("Inside IF")
+                console.log(ppTable)
+                console.log(item.childNodes[0])
+            //     item.parentNode.replaceChild(ppTable, item);
                 item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table
+                // $(item.childNodes[0] ).replaceWith( ppTable.toString());
             }
             else{
                 item.appendChild(ppTable);

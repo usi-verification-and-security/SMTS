@@ -56,9 +56,10 @@ button:hover {
 
 
 table, th , td {
-border: 1px solid grey;
-border-collapse: collapse;
-padding: 5px;
+    border: 1px solid grey;
+    border-collapse: collapse;
+    padding: 5px;
+    text-align: center;
 }
 tr {
     cursor: pointer;
@@ -69,4 +70,7 @@ tr:hover {
 
 th{
     background-color: #00cc00;
+}
+table.etable {
+    width: 1076px;
 }
