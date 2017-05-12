@@ -63,6 +63,19 @@
 
 <div class="w3-cell-row">
 	<div class="w3-container w3-border w3-quarter w3-cell">
+		<b> Upload instance file: </b>
+		<form ref='uploadInstanceForm'
+			  id='uploadInstanceForm'
+			  action='http://localhost:3000/uploadInstance'
+			  method='post'
+			  encType="multipart/form-data">
+			<input type="file" name="instance" accept="" required>
+			<input type='submit' value='Upload!' />
+		</form>
+		<form action="http://localhost:3000/setTimout">
+			<b>Timeout:</b> <input type="text" style="width: 100px;" name="timeout" value="1000"><br> <input type="submit" name="setTimeout" value="Set"> <input type="submit" name="stopTimeout" value="Stop">
+		</form>
+
 	</div>
 	<div class="w3-container w3-border w3-half w3-cell"  style="max-height: 500px; overflow:auto;" ng-controller="EventController" id="d5">
 		<table id="d5_2">

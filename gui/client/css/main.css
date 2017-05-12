@@ -4,7 +4,7 @@ body {
 }
 
 button:hover {
-    color: dodgerblue;
+    color: #00cc00;
     border-radius: 12px;
     box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
 }
@@ -64,9 +64,9 @@ tr {
     cursor: pointer;
 }
 tr:hover {
-    color: #7CFC00;
+    color: #0073e6;
 }
 
 th{
-    background-color: #7CFC00;
+    background-color: #00cc00;
 }

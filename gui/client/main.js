@@ -89,7 +89,7 @@ angular.module('myApp', ['ngFileUpload'])
             }
 
             eventRow.value = $event.currentTarget;
-            $event.currentTarget.style.color= "#7CFC00";
+            $event.currentTarget.style.color= "#0073e6";
 
             currentRow.value = x.id;
             sharedTree.tree.arrangeTree(currentRow.value);
@@ -167,7 +167,7 @@ angular.module('myApp', ['ngFileUpload'])
                 instanceRow.value.style.color= "black";
             }
             instanceRow.value = $event.currentTarget;
-            $event.currentTarget.style.color= "#7CFC00";
+            $event.currentTarget.style.color= "#0073e6";
             this.getTree(x); // show corresponding tree
         };
 
