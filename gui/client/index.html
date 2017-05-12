@@ -20,6 +20,7 @@
 
 <div class="w3-cell-row">
 	<div ng-controller="TreeController" id="d1">
+		<b> Upload new database file: </b>
 		<form ref='uploadForm'
 			  id='uploadForm'
 			  action='http://localhost:3000/upload'
@@ -63,7 +64,7 @@
 
 <div class="w3-cell-row">
 	<div class="w3-container w3-border w3-quarter w3-cell">
-		<b> Upload instance file: </b>
+		<b> Upload new instance: </b>
 		<form ref='uploadInstanceForm'
 			  id='uploadInstanceForm'
 			  action='http://localhost:3000/uploadInstance'
@@ -79,6 +80,7 @@
 	</div>
 	<div class="w3-container w3-border w3-half w3-cell"  style="max-height: 500px; overflow:auto;" ng-controller="EventController" id="d5">
 		<table id="d5_2">
+			<th><b>Nr</b></th>
 			<th><b>Id</b></th>
 			<th><b>Ts</b></th>
 			<!--<td><b>Name</b></td>-->
@@ -87,7 +89,8 @@
 			<th><b>Solver</b></th>
 			<th><b>Data</b></th>
 
-			<tr id="event{{x.id}}" ng-repeat="x in entries" ng-click="showEvent($event,x)">
+			<tr id="event{{x.id}}" ng-repeat="x in entries" ng-click="showEvent($event,$index,x)">
+				<td>{{$index}}</td>
 				<td>{{ x.id }}</td>
 				<td>{{ x.ts }}</td>
 				<!--<td>{{ x.name }}</td>-->

@@ -21,36 +21,37 @@ var TreeManager;
         Tree.prototype.arrangeTree = function (howMany) {
             var treeView;
             treeView = new TreeManager.Node([], "AND");
+            // console.log(treeView)
             for (var record = 0; record < howMany; record++) {
+                // console.log("Iteration : " + record);
+                // console.log("Event found: "+ this.events[record].event)
                 // console.log("record: " + record)
                 var parentNode = [];
                 var depth = JSON.parse(this.events[record].data);
                 var event = this.events[record].event;
                 if (event == "OR") {
-                    // var node = new Node(depth.node,"OR"); // This is for "db = prova.db"
-                    var node = new TreeManager.Node(depth, "OR"); // This is for "db = global.db"
-                    //Initializing (the first node seen is the root)
-                    // if(!treeView){
-                    //     treeView = node;
-                    // }
-                    //insert node in the tree
-                    // else {
+                    // console.log("Inside OR event")
+                    var node = new TreeManager.Node(JSON.parse(depth.node), "OR"); // This is for "db = prova.db" and the big database
+                    // var node = new Node(depth, "OR"); // This is for "db = global.db"
+                    // console.log()
                     parentNode = JSON.parse(this.events[record].node);
-                    // console.log(parentNode)
-                    // console.log(node)
                     treeView = this.insertNode(treeView, parentNode, node);
-                    // }
                 }
                 if (event == "AND") {
                     var node = new TreeManager.Node(depth.node, "AND");
                     //find parent node (es. for [0,3,0,1] parent is [0,3,0])
-                    for (var i = 0; i < depth.node.length - 1; ++i) {
-                        parentNode.push(depth.node[i]);
+                    for (var i = 0; i < JSON.parse(depth.node).length - 1; ++i) {
+                        //JSON.parse(
+                        // parentNode.push(depth.node[i]);
+                        // console.log(depth.node)
+                        // console.log(JSON.parse(depth.node)[i])
+                        parentNode.push(JSON.parse(depth.node)[i]);
                     }
                     //insert node in the tree
                     treeView = this.insertNode(treeView, parentNode, node);
                 }
                 if (event == "+" || event == "-") {
+                    // console.log(treeView)
                     this.updateNode(treeView, this.events[record].node, event, this.events[record].solver);
                 }
                 var status = JSON.parse(this.events[record].data);
@@ -62,6 +63,7 @@ var TreeManager;
                     this.rootSolved(treeView, status.status);
                     // console.log("SOLVED! Problem "+ this.events[record].name +" is " + status.status);
                 }
+                // console.log(treeView)
             }
             this.treeView = treeView;
         };

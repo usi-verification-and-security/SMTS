@@ -69,7 +69,7 @@ angular.module('myApp', ['ngFileUpload'])
         };
 
         // Show tree up to clicked event
-        $scope.showEvent = function($event,x){
+        $scope.showEvent = function($event,$index,x){
             if(eventRow.value != undefined){
                 eventRow.value.style.color= "black";
             }
@@ -91,7 +91,7 @@ angular.module('myApp', ['ngFileUpload'])
             eventRow.value = $event.currentTarget;
             $event.currentTarget.style.color= "#0073e6";
 
-            currentRow.value = x.id;
+            currentRow.value = $index;
             sharedTree.tree.arrangeTree(currentRow.value);
             var treeView = sharedTree.tree.getTreeView();
             getTreeJson(treeView);
@@ -182,9 +182,10 @@ angular.module('myApp', ['ngFileUpload'])
                 currentRow.value = response.data.length;
                 sharedTree.tree.initializeSolvers(response.data);
 
+                sharedTree.tree.arrangeTree(currentRow.value);
+
                 sharedService.broadcastItem(); // Show events, tree and solvers
 
-                sharedTree.tree.arrangeTree(currentRow.value);
 
             }, function errorCallback(response) {
                 // called asynchronously if an error occurs
