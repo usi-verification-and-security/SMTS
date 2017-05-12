@@ -6,7 +6,8 @@
 #line {
     height: 6px;
     width: 70%;
-    background: white;
+    /*background: white;*/
+    background: gray;
     border-radius: 5px;
     margin: auto;
     top: 50%;
@@ -20,24 +21,28 @@
     margin: auto;
     margin-top: 25%;
     text-align: center;
-    color: white;
+    /*color: white;*/
+    color: gray;
 }
 
 .circle {
     width: 20px;
     height: 20px;
-    background: white;
+    /*background: white;*/
+    background: gray;
     border-radius: 15px;
     position: absolute;
     top: -7px;
-    border: 3px solid white;
+    /*border: 3px solid white;*/
+    border: 3px solid gray;
     cursor: pointer;
 }
 .circle:before {
     content: '';
     width: 10px;
     height: 10px;
-    background: white;
+    /*background: white;*/
+    background: gray;
     position: absolute;
     border-radius: 100%;
     top: 2px;
@@ -50,7 +55,8 @@
     padding: 10px;
     white-space: nowrap;
     display: inline-block;
-    color: white;
+    /*color: white;*/
+    color: gray;
     position: absolute;
     top: 20px;
     left: -75px;

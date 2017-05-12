@@ -48,7 +48,7 @@ module TreeManager{
                 }
 
                 if (event == "AND") {
-                    var node = new Node(depth.node, "AND");
+                    var node = new Node(JSON.parse(depth.node), "AND");
 
 
                     //find parent node (es. for [0,3,0,1] parent is [0,3,0])
@@ -104,7 +104,6 @@ module TreeManager{
         }
 
         updateNode(obj, node, event, data) {
-            // console.log(obj)
             if (JSON.stringify(obj.name) == JSON.stringify(JSON.parse(node))) {
                 if (event == "+") {
                     // console.log("Adding solver " + data + "to node " + node);

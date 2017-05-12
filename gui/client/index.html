@@ -10,7 +10,8 @@
 	<base href="">
 
 </head>
-<body ng-app="myApp" class="w3-grey">
+<!--class="w3-grey"-->
+<body ng-app="myApp" >
 <header >
 	<div class="w3-container w3-center ">
 		<h1 style="text-shadow:1px 1px 0 #7CFC00" ><b>SMT Viewer</b></h1>
@@ -30,7 +31,7 @@
 			<input type='submit' value='Upload!' />
 		</form>
 	</div>
-	<div class="w3-container w3-border w3-quarter w3-cell" id="d2" style="max-height: 500px; overflow:auto;" ng-controller="InstancesController" ng-init='load()'>
+	<div class="w3-container w3-border w3-quarter w3-cell" id="d2" style="max-height: 600px; overflow:auto;" ng-controller="InstancesController" ng-init='load()'>
 		<table>
 			<th> <b>Instances</b></th>
 
@@ -46,7 +47,7 @@
 	</div>
 
 
-	<div class="w3-quarter w3-border w3-container w3-cell" style="max-height: 500px; overflow:auto;" ng-controller="SolverController" id="d4">
+	<div class="w3-quarter w3-border w3-container w3-cell" style="max-height: 600px; overflow:auto;" ng-controller="SolverController" id="d4">
 		<p > <b> SOLVERS </b></p>
 		<table>
 			<th ><b>Solver</b></th>
@@ -78,7 +79,7 @@
 		</form>
 
 	</div>
-	<div class="w3-container w3-border w3-half w3-cell"  style="max-height: 500px; overflow:auto;" ng-controller="EventController" id="d5">
+	<div class="w3-container w3-border w3-half w3-cell"  style="max-height: 400px; overflow:auto;" ng-controller="EventController" id="d5">
 		<table id="d5_2">
 			<th><b>Nr</b></th>
 			<th><b>Id</b></th>

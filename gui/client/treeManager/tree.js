@@ -38,7 +38,7 @@ var TreeManager;
                     treeView = this.insertNode(treeView, parentNode, node);
                 }
                 if (event == "AND") {
-                    var node = new TreeManager.Node(depth.node, "AND");
+                    var node = new TreeManager.Node(JSON.parse(depth.node), "AND");
                     //find parent node (es. for [0,3,0,1] parent is [0,3,0])
                     for (var i = 0; i < JSON.parse(depth.node).length - 1; ++i) {
                         //JSON.parse(
@@ -81,7 +81,6 @@ var TreeManager;
             }
         };
         Tree.prototype.updateNode = function (obj, node, event, data) {
-            // console.log(obj)
             if (JSON.stringify(obj.name) == JSON.stringify(JSON.parse(node))) {
                 if (event == "+") {
                     // console.log("Adding solver " + data + "to node " + node);
