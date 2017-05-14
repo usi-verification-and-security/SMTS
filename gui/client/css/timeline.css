@@ -26,28 +26,28 @@
 }
 
 .circle {
-    width: 20px;
-    height: 20px;
+    width: 1px;
+    height: 30px;
     /*background: white;*/
     background: gray;
-    border-radius: 15px;
+    /*border-radius: 15px;*/
     position: absolute;
-    top: -7px;
+    top: -10px;
     /*border: 3px solid white;*/
-    border: 3px solid gray;
+    border: 2px solid gray;
     cursor: pointer;
 }
 .circle:before {
-    content: '';
-    width: 10px;
-    height: 10px;
-    /*background: white;*/
-    background: gray;
-    position: absolute;
-    border-radius: 100%;
-    top: 2px;
-    left: 2px;
-    display: none;
+    /*content: '';*/
+    /*width: 2px;*/
+    /*height: 20px;*/
+    /*!*background: white;*!*/
+    /*background: gray;*/
+    /*position: absolute;*/
+    /*!*border-radius: 100%;*!*/
+    /*top: 2px;*/
+    /*left: 2px;*/
+    /*display: none;*/
 }
 .circle .popupSpan {
     width: auto;
@@ -73,6 +73,7 @@
     top: -40px;
 }
 .active {
-    background: #00cc00;
-    color: #00cc00;
+    /*background: #00cc00;*/
+    /*color: #00cc00;*/
+    border: 2px solid #00cc00;
 }

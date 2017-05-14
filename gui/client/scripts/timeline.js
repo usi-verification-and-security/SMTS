@@ -29,7 +29,7 @@ function makeCircles() {
     // If in allEvents the are more events with the sam timeStamp just the first one will be left
     refactorEvents(allEvents);
 
-    //Forget the timeline if there's only one date.
+    //Forget the timeline if there's only one event
     if (timelineEvents.length < 2) {
         $("#line").hide();
 
