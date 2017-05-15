@@ -3,6 +3,7 @@
 	<title>SMT Viewer</title>
 	<link rel="stylesheet" href="css/main.css">
 	<link rel="stylesheet" href="css/timeline.css">
+    <link rel="stylesheet" href="css/tree.css">
 	<style type="text/css"></style>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
@@ -13,8 +14,8 @@
 <!--class="w3-grey"-->
 <body ng-app="myApp" >
 <header >
-	<div class="w3-container w3-center " style="top: 40%;transform: translateY(40%);">
-		<h1 style="text-shadow:1px 1px 0 #7CFC00; font-size:300%" ><b>SMT Viewer</b></h1>
+	<div class="w3-container w3-center position">
+		<h1 class="title"><b>SMT Viewer</b></h1>
 		<!--<img src="images/Logo_Budakovic.png" style="width:100px;height:100px;">-->
 	</div>
 </header>
@@ -31,10 +32,9 @@
 			<input type='submit' value='Upload!' />
 		</form>
 	</div>
-	<div class="w3-container w3-border w3-quarter w3-cell" id="d2" style="max-height: 500px; overflow:auto;" ng-controller="InstancesController" ng-init='load()'>
+	<div class="w3-container w3-border w3-quarter w3-cell instance-container" ng-controller="InstancesController" ng-init='load()'>
 		<table>
 			<th> <b>Instances</b></th>
-
 			<tr ng-repeat="x in entries" ng-click="clickEvent($event,x)">
 				<td>{{ x.name }}</td>
 			</tr>
@@ -42,30 +42,27 @@
 
 	</div>
 
-	<div class = "tree_container w3-half w3-border w3-cell" id="tree-container" style="height: 500px;" ng-controller="ViewController">
+	<div class = "w3-half w3-border w3-cell" id="tree-container" ng-controller="ViewController">
 
 	</div>
 
 
-	<div class="w3-quarter w3-border w3-container w3-cell" style="max-height: 500px; overflow:auto;" ng-controller="SolverController" id="d4">
-		<p > <b> SOLVERS </b></p>
+	<div class="w3-quarter w3-border w3-container w3-cell solver-container" ng-controller="SolverController">
+		<p><b> SOLVERS </b></p>
 		<table>
 			<th ><b>Solver</b></th>
 			<th><b>Node</b></th>
-
 			<tr ng-repeat="x in entries" ng-click="clickEvent($event,x)">
 				<td>{{ x.name}}</td>
 				<td>{{ x.node}}</td>
 			</tr>
 		</table>
-		<div id="d4_2"> </div>
-
 	</div>
 </div>
 
 <div class="w3-cell-row">
-	<div class="w3-container w3-border w3-quarter w3-cell" style="height:400px ">
-        <div style="top: 50%;transform: translateY(50%);" >
+	<div class="w3-container w3-border w3-quarter w3-cell task-handler">
+        <div class="position">
 		<b> Upload new instance: </b>
 		<form ref='uploadInstanceForm'
 			  id='uploadInstanceForm'
@@ -80,7 +77,7 @@
 		</form>
         </div>
 	</div>
-	<div class="w3-container w3-border w3-half w3-cell" style="max-height: 400px; overflow:auto;" ng-controller="EventController" id="d5" style="height:400px ">
+	<div class="w3-container w3-border w3-half w3-cell event-container" ng-controller="EventController">
 		<table id="d5_2" class="etable">
 			<th><b>Nr</b></th>
 			<!--<th><b>Id</b></th>-->
@@ -105,16 +102,16 @@
 
 	</div>
 
-	<div class="w3-container w3-border w3-quarter w3-cell" id="d6" style="height:400px;">
-        <div id="d6_1" style="display: inline-block; " > <b> DATA </b> </div>
-		<div style="max-height: 350px; overflow:auto;" id="d6_2"> </div>
+	<div class="w3-container w3-border w3-quarter w3-cell data-container">
+        <div id="d6_1"><b> DATA </b></div>
+		<div id="d6_2"> </div>
 	</div>
 
 </div>
 
 <div id="lineCont">
 	<div id="line"></div>
-	<div id="span">Date Placeholder</div>
+	<div id="span"></div>
 </div>
 </body>
 
