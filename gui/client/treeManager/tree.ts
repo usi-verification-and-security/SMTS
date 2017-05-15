@@ -149,7 +149,7 @@ module TreeManager{
 
         // assignSolvers tells which solver is working on which node
         assignSolvers(x: number, y: number) {
-            var i = x - 1;
+            var i = x;
 
             // clear previous assignments of solvers
             for(var u= 0; u < this.solvers.length; u++){
@@ -158,8 +158,7 @@ module TreeManager{
             }
 
             // assign
-            for (i; i <= y; i++) {
-
+            for (i; i < y; i++) {
                 if (this.events[i].event == "+") {
 
                     for (var u = 0; u < this.solvers.length; u++) {

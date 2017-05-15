@@ -6,9 +6,8 @@ module TreeManager {
         name: string;
         node: string;
         event: string;
-        solver: string; // should become [string, number]
+        solver: string;
         data: any;
-        children: number[] = [];
 
         constructor(value) {
             this.id = value.id;

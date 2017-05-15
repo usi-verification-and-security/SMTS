@@ -8,6 +8,10 @@ angular.module('myApp', ['ngFileUpload'])
 
     .value('instanceRow', { value: undefined})
 
+    .value('realTimeDB', { value: false})
+
+    .value('DBcontent', { value: null})
+
     .factory('sharedService', function($rootScope) {
     var sharedService = {};
 
@@ -74,30 +78,6 @@ angular.module('myApp', ['ngFileUpload'])
             if(eventRow.value != undefined){
                 eventRow.value.style.color= "black";
             }
-
-            // Show event's data in dataView
-            var object = JSON.parse(x.data);
-            // console.log(object)
-            if(object == null){
-                object = {};
-            }
-            var ppTable = prettyPrint(object);
-            // console.log(ppTable)
-            var tableName = "Event " + x.event;
-            document.getElementById('d6_1').innerHTML = tableName.bold();
-            var item = document.getElementById('d6_2');
-            if(item.childNodes[0]){
-                console.log("Inside IF")
-                console.log(ppTable)
-                console.log(item.childNodes[0])
-            //     item.parentNode.replaceChild(ppTable, item);
-                item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table
-                // $(item.childNodes[0] ).replaceWith( ppTable.toString());
-            }
-            else{
-                item.appendChild(ppTable);
-            }
-
             eventRow.value = $event.currentTarget;
             $event.currentTarget.style.color= "#0073e6";
 
@@ -105,6 +85,23 @@ angular.module('myApp', ['ngFileUpload'])
             sharedTree.tree.arrangeTree(currentRow.value);
             var treeView = sharedTree.tree.getTreeView();
             getTreeJson(treeView);
+
+            // Show event's data in dataView
+            var object = JSON.parse(x.data);
+            if(object == null){
+                object = {};
+            }
+            var ppTable = prettyPrint(object);
+            var tableName = "Event " + x.event;
+            document.getElementById('d6_1').innerHTML = tableName.bold();
+            var item = document.getElementById('d6_2');
+
+            if(item.childNodes[0]){
+                item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table
+            }
+            else{
+                item.appendChild(ppTable);
+            }
 
             //Update timeline
             var circle = document.getElementById(x.id);
@@ -130,13 +127,12 @@ angular.module('myApp', ['ngFileUpload'])
         });
 
         $scope.showSolver = function() {
-            sharedTree.tree.assignSolvers(1,currentRow.value);
+            sharedTree.tree.assignSolvers(0,currentRow.value);
             $scope.entries = sharedTree.tree.solvers;
 
         };
 
         $scope.clickEvent = function($event,x){
-            // console.log(x);
             if(x.node){
                 x.node = x.node.toString(); // transform to string or it will show and array
             }
@@ -155,7 +151,7 @@ angular.module('myApp', ['ngFileUpload'])
 
     }])
 
-    .controller('InstancesController',['$scope','$rootScope','currentRow','instanceRow','sharedTree','$window','$http','sharedService',function($scope,$rootScope, currentRow,instanceRow,sharedTree,$window,$http,sharedService){
+    .controller('InstancesController',['$scope','$rootScope','currentRow','instanceRow','sharedTree','realTimeDB','DBcontent','$window','$http','sharedService',function($scope,$rootScope, currentRow,instanceRow,sharedTree,realTimeDB,DBcontent,$window,$http,sharedService){
 
         $scope.load = function() {
             $http({
@@ -178,7 +174,20 @@ angular.module('myApp', ['ngFileUpload'])
             }
             instanceRow.value = $event.currentTarget;
             $event.currentTarget.style.color= "#0073e6";
-            this.getTree(x); // show corresponding tree
+
+            // If real-time analysis ask every 10 seconds for db content otherwise just once
+            if(realTimeDB.value) {
+                this.getTree(x);
+                var interval = setInterval(function () {
+                    console.log("DB content asked.");
+                    this.getTree(x);
+                }, 10000);
+            }
+            else{
+                console.log("DB content asked for passed execution.");
+                this.getTree(x); // show corresponding tree
+            }
+
         };
 
         $scope.getTree = function(x) {
@@ -186,16 +195,20 @@ angular.module('myApp', ['ngFileUpload'])
                 method : 'GET',
                 url : 'http://localhost:3000/get/' + x.name
             }).then(function successCallback(response) {
-                // Initialize tree
-                sharedTree.tree = new TreeManager.Tree();
-                sharedTree.tree.createEvents(response.data);
-                currentRow.value = response.data.length;
-                sharedTree.tree.initializeSolvers(response.data);
+                if(DBcontent.value != response.data){
+                    //TODO: solve bug with DBcontent.value
+                    // console.log("inside if")
+                    // console.log(DBcontent.value) // BUG
+                    DBcontent.value = response.data;
 
-                sharedTree.tree.arrangeTree(currentRow.value);
+                    // Initialize tree
+                    sharedTree.tree = new TreeManager.Tree();
+                    sharedTree.tree.createEvents(response.data);
+                    currentRow.value = response.data.length;
+                    sharedTree.tree.initializeSolvers(response.data);
 
-                sharedService.broadcastItem(); // Show events, tree and solvers
-
+                    sharedService.broadcastItem(); // Show events, tree and solvers
+                }
 
             }, function errorCallback(response) {
                 // called asynchronously if an error occurs
@@ -210,6 +223,7 @@ angular.module('myApp', ['ngFileUpload'])
 
     .controller('ViewController',['$scope','$rootScope','currentRow','sharedTree','$window','$http', 'sharedService',function($scope,$rootScope, currentRow,sharedTree,$window,$http,sharedService){
         $scope.$on('handleBroadcast', function() { // This is called when an instance is selected
+            sharedTree.tree.arrangeTree(currentRow.value);
             var treeView = sharedTree.tree.getTreeView();
             getTreeJson(treeView);
         });
