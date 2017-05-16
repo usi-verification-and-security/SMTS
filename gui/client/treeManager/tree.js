@@ -31,21 +31,25 @@ var TreeManager;
                 var event = this.events[record].event;
                 if (event == "OR") {
                     // console.log("Inside OR event")
-                    var node = new TreeManager.Node(JSON.parse(depth.node), "OR"); // This is for "db = prova.db" and the big database
+                    // var node = new Node(JSON.parse(depth.node),"OR"); // This is for "db = prova.db" and the big database
+                    var node = new TreeManager.Node(depth.node, "OR"); // This is for "db = opensmt.db"
                     // var node = new Node(depth, "OR"); // This is for "db = global.db"
                     // console.log()
                     parentNode = JSON.parse(this.events[record].node);
                     treeView = this.insertNode(treeView, parentNode, node);
                 }
                 if (event == "AND") {
-                    var node = new TreeManager.Node(JSON.parse(depth.node), "AND");
+                    // var node = new Node(JSON.parse(depth.node), "AND");
+                    var node = new TreeManager.Node(depth.node, "AND"); // This is for "db = opensmt.db"
                     //find parent node (es. for [0,3,0,1] parent is [0,3,0])
-                    for (var i = 0; i < JSON.parse(depth.node).length - 1; ++i) {
+                    for (var i = 0; i < depth.node.length - 1; ++i) {
+                        // for (var i = 0; i < JSON.parse(depth.node).length - 1; ++i) {
                         //JSON.parse(
                         // parentNode.push(depth.node[i]);
                         // console.log(depth.node)
                         // console.log(JSON.parse(depth.node)[i])
-                        parentNode.push(JSON.parse(depth.node)[i]);
+                        // parentNode.push(JSON.parse(depth.node)[i]);
+                        parentNode.push(depth.node[i]); // This is for "db = opensmt.db"
                     }
                     //insert node in the tree
                     treeView = this.insertNode(treeView, parentNode, node);
