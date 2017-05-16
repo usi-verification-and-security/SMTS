@@ -77,27 +77,32 @@
 		</form>
         </div>
 	</div>
-	<div class="w3-container w3-border w3-half w3-cell event-container" ng-controller="EventController">
-		<table id="d5_2" class="etable">
-			<th><b>Nr</b></th>
-			<!--<th><b>Id</b></th>-->
-			<th><b>Time</b></th>
-			<!--<td><b>Name</b></td>-->
-			<th><b>Node</b></th>
-			<th><b>Event</b></th>
-			<th><b>Solver</b></th>
-			<!--<th><b>Data</b></th>-->
-
-			<tr id="event{{x.id}}" ng-repeat="x in entries" ng-click="showEvent($event,$index,x)">
-				<td>{{$index}}</td>
-				<!--<td>{{ x.id }}</td>-->
-				<td style="white-space: nowrap;" >{{ x.ts }} s </td>
-				<!--<td>{{ x.name }}</td>-->
-				<td>{{ x.node }}</td>
-				<td>{{ x.event }}</td>
-				<td>{{ x.solver }}</td>
-				<!--<td>{{ x.data }}</td>-->
-			</tr>
+	<div id="d5" class="w3-container w3-border w3-half w3-cell event-container" ng-controller="EventController">
+		<table id="d5_2" class="eventT etable">
+            <thead>
+             <tr>
+                <th><b>Nr</b></th>
+                <!--<th><b>Id</b></th>-->
+                <th><b>Time</b></th>
+                <!--<td><b>Name</b></td>-->
+                <th><b>Node</b></th>
+                <th><b>Event</b></th>
+                <th><b>Solver</b></th>
+                <!--<th><b>Data</b></th>-->
+             </tr>
+            </thead>
+            <tbody>
+                <tr id="event{{x.id}}" ng-repeat="x in entries" ng-click="showEvent($event,$index,x)">
+                    <td>{{$index}}</td>
+                    <!--<td>{{ x.id }}</td>-->
+                    <td style="white-space: nowrap;" >{{ x.ts }} s </td>
+                    <!--<td>{{ x.name }}</td>-->
+                    <td>{{ x.node }}</td>
+                    <td>{{ x.event }}</td>
+                    <td>{{ x.solver }}</td>
+                    <!--<td>{{ x.data }}</td>-->
+                </tr>
+            </tbody>
 		</table>
 
 	</div>
