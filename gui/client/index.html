@@ -1,123 +1,123 @@
 <html>
-<head>
-	<title>SMT Viewer</title>
-	<link rel="stylesheet" href="css/main.css">
-	<link rel="stylesheet" href="css/timeline.css">
-    <link rel="stylesheet" href="css/tree.css">
-	<style type="text/css"></style>
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-	<link rel="shortcut icon" type="image/x-icon" href="images/Logo_Budakovic.png" />
-	<base href="">
+    <head>
+        <title>SMT Viewer</title>
+        <link rel="stylesheet" href="css/main.css">
+        <link rel="stylesheet" href="css/timeline.css">
+        <link rel="stylesheet" href="css/tree.css">
+        <style type="text/css"></style>
+        <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
+        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+        <link rel="shortcut icon" type="image/x-icon" href="images/Logo_Budakovic.png" />
+        <base href="">
 
-</head>
-<!--class="w3-grey"-->
-<body ng-app="myApp" >
-<header >
-	<div class="w3-container w3-center position">
-		<h1 class="title"><b>SMT Viewer</b></h1>
-		<!--<img src="images/Logo_Budakovic.png" style="width:100px;height:100px;">-->
-	</div>
-</header>
-
-<div class="w3-cell-row">
-	<div ng-controller="TreeController" id="d1">
-		<b> Upload new database file: </b>
-		<form ref='uploadForm'
-			  id='uploadForm'
-			  action='http://localhost:3000/upload'
-			  method='post'
-			  encType="multipart/form-data">
-			<input type="file" name="db" accept=".db" required>
-			<input type='submit' value='Upload!' />
-		</form>
-	</div>
-	<div class="w3-container w3-border w3-quarter w3-cell instance-container" ng-controller="InstancesController" ng-init='load()'>
-		<table>
-			<th> <b>Instances</b></th>
-			<tr ng-repeat="x in entries" ng-click="clickEvent($event,x)">
-				<td>{{ x.name }}</td>
-			</tr>
-		</table>
-
-	</div>
-
-	<div class = "w3-half w3-border w3-cell" id="tree-container" ng-controller="ViewController">
-
-	</div>
-
-
-	<div class="w3-quarter w3-border w3-container w3-cell solver-container" ng-controller="SolverController">
-		<p><b> SOLVERS </b></p>
-		<table>
-			<th ><b>Solver</b></th>
-			<th><b>Node</b></th>
-			<tr ng-repeat="x in entries" ng-click="clickEvent($event,x)">
-				<td>{{ x.name}}</td>
-				<td>{{ x.node}}</td>
-			</tr>
-		</table>
-	</div>
-</div>
-
-<div class="w3-cell-row">
-	<div class="w3-container w3-border w3-quarter w3-cell task-handler">
-        <div class="position">
-		<b> Upload new instance: </b>
-		<form ref='uploadInstanceForm'
-			  id='uploadInstanceForm'
-			  action='http://localhost:3000/uploadInstance'
-			  method='post'
-			  encType="multipart/form-data">
-			<input type="file" name="instance" accept="" required>
-			<input type='submit' value='Upload!' />
-		</form>
-		<form action="http://localhost:3000/setTimout">
-			<b>Timeout:</b> <input type="text" style="width: 100px;" name="timeout" value="1000"><br> <input type="submit" name="setTimeout" value="Set"> <input type="submit" name="stopTimeout" value="Stop">
-		</form>
+    </head>
+    <!--class="w3-grey"-->
+    <body ng-app="myApp" >
+    <header >
+        <div class="w3-center position">
+            <h1 class="title"><b>SMT Viewer</b></h1>
+            <!--<img src="images/Logo_Budakovic.png" style="width:100px;height:100px;">-->
         </div>
-	</div>
-	<div id="d5" class="w3-container w3-border w3-half w3-cell event-container" ng-controller="EventController">
-		<table id="d5_2" class="eventT etable">
-            <thead>
-             <tr>
-                <th><b>Nr</b></th>
-                <!--<th><b>Id</b></th>-->
-                <th><b>Time</b></th>
-                <!--<td><b>Name</b></td>-->
-                <th><b>Node</b></th>
-                <th><b>Event</b></th>
-                <th><b>Solver</b></th>
-                <!--<th><b>Data</b></th>-->
-             </tr>
-            </thead>
-            <tbody>
-                <tr id="event{{x.id}}" ng-repeat="x in entries" ng-click="showEvent($event,$index,x)">
-                    <td>{{$index}}</td>
-                    <!--<td>{{ x.id }}</td>-->
-                    <td style="white-space: nowrap;" >{{ x.ts }} s </td>
-                    <!--<td>{{ x.name }}</td>-->
-                    <td>{{ x.node }}</td>
-                    <td>{{ x.event }}</td>
-                    <td>{{ x.solver }}</td>
-                    <!--<td>{{ x.data }}</td>-->
+    </header>
+
+    <div class="w3-cell-row">
+        <div ng-controller="TreeController" id="d1">
+            <b> Upload new database file: </b>
+            <form ref='uploadForm'
+                  id='uploadForm'
+                  action='http://localhost:3000/upload'
+                  method='post'
+                  encType="multipart/form-data">
+                <input type="file" name="db" accept=".db" required>
+                <input type='submit' value='Upload!' />
+            </form>
+        </div>
+        <div class="w3-container w3-border w3-quarter w3-cell instance-container" ng-controller="InstancesController" ng-init='load()'>
+            <table>
+                <th> <b>Instances</b></th>
+                <tr ng-repeat="x in entries" ng-click="clickEvent($event,x)">
+                    <td>{{ x.name }}</td>
                 </tr>
-            </tbody>
-		</table>
+            </table>
 
-	</div>
+        </div>
 
-	<div class="w3-container w3-border w3-quarter w3-cell data-container">
-        <div id="d6_1"><b> DATA </b></div>
-		<div id="d6_2"> </div>
-	</div>
+        <div class = "w3-half w3-border w3-cell" id="tree-container" ng-controller="ViewController">
 
-</div>
+        </div>
 
-<div id="lineCont">
-	<div id="line"></div>
-	<div id="span"></div>
-</div>
+
+        <div class="w3-quarter w3-border w3-container w3-cell solver-container" ng-controller="SolverController">
+            <p><b> SOLVERS </b></p>
+            <table>
+                <th ><b>Solver</b></th>
+                <th><b>Node</b></th>
+                <tr ng-repeat="x in entries" ng-click="clickEvent($event,x)">
+                    <td>{{ x.name}}</td>
+                    <td>{{ x.node}}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="w3-cell-row">
+        <div class="w3-container w3-border w3-quarter w3-cell task-handler">
+            <div class="position">
+            <b> Upload new instance: </b>
+            <form ref='uploadInstanceForm'
+                  id='uploadInstanceForm'
+                  action='http://localhost:3000/uploadInstance'
+                  method='post'
+                  encType="multipart/form-data">
+                <input type="file" name="instance" accept="" required>
+                <input type='submit' value='Upload!' />
+            </form>
+            <form action="http://localhost:3000/setTimout">
+                <b>Timeout:</b> <input type="text" style="width: 100px;" name="timeout" value="1000"><br> <input type="submit" name="setTimeout" value="Set"> <input type="submit" name="stopTimeout" value="Stop">
+            </form>
+            </div>
+        </div>
+        <div id="d5" class="w3-container w3-border w3-half w3-cell event-container" ng-controller="EventController">
+            <table id="d5_2" class="eventT etable">
+                <thead>
+                 <tr>
+                    <th><b>Nr</b></th>
+                    <!--<th><b>Id</b></th>-->
+                    <th><b>Time</b></th>
+                    <!--<td><b>Name</b></td>-->
+                    <th><b>Node</b></th>
+                    <th><b>Event</b></th>
+                    <th><b>Solver</b></th>
+                    <!--<th><b>Data</b></th>-->
+                 </tr>
+                </thead>
+                <tbody>
+                    <tr id="event{{x.id}}" ng-repeat="x in entries" ng-click="showEvent($event,$index,x)">
+                        <td>{{$index}}</td>
+                        <!--<td>{{ x.id }}</td>-->
+                        <td style="white-space: nowrap;" >{{ x.ts }} s </td>
+                        <!--<td>{{ x.name }}</td>-->
+                        <td>{{ x.node }}</td>
+                        <td>{{ x.event }}</td>
+                        <td>{{ x.solver }}</td>
+                        <!--<td>{{ x.data }}</td>-->
+                    </tr>
+                </tbody>
+            </table>
+
+        </div>
+
+        <div class="w3-container w3-border w3-quarter w3-cell data-container">
+            <div id="d6_1"><b> DATA </b></div>
+            <div id="d6_2"> </div>
+        </div>
+
+    </div>
+
+    <div id="lineCont">
+        <div id="line"></div>
+        <div id="span"></div>
+    </div >
 </body>
 
 <script type="text/javascript" src="scripts/angular.min.js"></script>
