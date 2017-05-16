@@ -28,7 +28,7 @@ module TreeManager{
             treeView = new Node([], "AND");
             // console.log(treeView)
 
-            for (var record = 0; record < howMany; record++) {
+            for (var record = 0; record <= howMany; record++) {
                 var parentNode = [];
 
                 var depth = JSON.parse(this.events[record].data);
@@ -99,6 +99,7 @@ module TreeManager{
         }
 
         updateNode(obj, node, event, data) {
+            console.log(obj)
             if (JSON.stringify(obj.name) == JSON.stringify(JSON.parse(node))) {
                 if (event == "+") {
                     // console.log("Adding solver " + data + "to node " + node);
@@ -106,6 +107,8 @@ module TreeManager{
                     // console.log(obj.solvers)
                 }
                 if (event == "-") {
+                    // console.log("REMOVING SOLVER from node")
+                    // console.log(obj.solvers)
                     var index = obj.solvers.indexOf(data);
                     // console.log("Removing solver " + data + " from node " + node);
                     if (index > -1) {
@@ -121,6 +124,7 @@ module TreeManager{
                 if (event == "SOLVED") {
                     obj.status = data;
                 }
+                console.log(obj)
                 return obj;
             }
 

@@ -64,12 +64,17 @@ angular.module('myApp', ['ngFileUpload'])
 
             $(".circle").click(function() {
                 var spanNum = $(this).attr("id");
+                // console.log(spanNum);
                 selectEvent(spanNum)
                 //Simulate event click to rebuild the tree
                 var find = "event" + spanNum;
                 var row = document.getElementById(find);
                 row.click();
+
                 // TODO: Scroll table till selected event
+                // NOT spanNum but table row!
+                // var ypos = $(".d5_2 tr:eq(' + spanNum +')").offset();
+                // $('.d5' ).scrollTop( ypos.top );
             });
         };
 
@@ -204,7 +209,7 @@ angular.module('myApp', ['ngFileUpload'])
                     // Initialize tree
                     sharedTree.tree = new TreeManager.Tree();
                     sharedTree.tree.createEvents(response.data);
-                    currentRow.value = response.data.length;
+                    currentRow.value = response.data.length - 1;
                     sharedTree.tree.initializeSolvers(response.data);
 
                     sharedService.broadcastItem(); // Show events, tree and solvers
