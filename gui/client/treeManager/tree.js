@@ -27,20 +27,20 @@ var TreeManager;
                 var depth = JSON.parse(this.events[record].data);
                 var event = this.events[record].event;
                 if (event == "OR") {
-                    // var node = new Node(JSON.parse(depth.node),"OR"); // This is for "db = prova.db" and the big database
-                    var node = new TreeManager.Node(depth.node, "OR"); // This is for "db = opensmt.db"
+                    var node = new TreeManager.Node(JSON.parse(depth.node), "OR"); // This is for "db = prova.db" and the big database
+                    // var node = new Node(depth.node,"OR"); // This is for "db = opensmt.db"
                     // var node = new Node(depth, "OR"); // This is for "db = global.db"
                     parentNode = JSON.parse(this.events[record].node);
                     treeView = this.insertNode(treeView, parentNode, node);
                 }
                 if (event == "AND") {
-                    // var node = new Node(JSON.parse(depth.node), "AND");
-                    var node = new TreeManager.Node(depth.node, "AND"); // This is for "db = opensmt.db"
-                    //find parent node (es. for [0,3,0,1] parent is [0,3,0])
-                    for (var i = 0; i < depth.node.length - 1; ++i) {
-                        // for (var i = 0; i < JSON.parse(depth.node).length - 1; ++i) {
-                        // parentNode.push(JSON.parse(depth.node)[i]);
-                        parentNode.push(depth.node[i]); // This is for "db = opensmt.db"
+                    var node = new TreeManager.Node(JSON.parse(depth.node), "AND");
+                    // var node = new Node(depth.node, "AND");// This is for "db = opensmt.db"
+                    // find parent node (es. for [0,3,0,1] parent is [0,3,0])
+                    // for (var i = 0; i < depth.node.length - 1; ++i) {// This is for "db = opensmt.db"
+                    for (var i = 0; i < JSON.parse(depth.node).length - 1; ++i) {
+                        parentNode.push(JSON.parse(depth.node)[i]);
+                        // parentNode.push(depth.node[i]); // This is for "db = opensmt.db"
                     }
                     //insert node in the tree
                     treeView = this.insertNode(treeView, parentNode, node);
@@ -76,7 +76,7 @@ var TreeManager;
             }
         };
         Tree.prototype.updateNode = function (obj, node, event, data) {
-            console.log(obj);
+            // console.log(obj)
             if (JSON.stringify(obj.name) == JSON.stringify(JSON.parse(node))) {
                 if (event == "+") {
                     // console.log("Adding solver " + data + "to node " + node);
@@ -101,7 +101,7 @@ var TreeManager;
                 if (event == "SOLVED") {
                     obj.status = data;
                 }
-                console.log(obj);
+                // console.log(obj)
                 return obj;
             }
             for (var i = 0; i < obj.children.length; i++) {
