@@ -161,7 +161,7 @@ angular.module('myApp', ['ngFileUpload'])
         $scope.load = function() {
             $http({
                 method : 'GET',
-                url : 'http://localhost:3000/getInstances'
+                url : '/getInstances'
             }).then(function successCallback(response) {
                 //put each entry of the response array in the table
                 $scope.entries = response.data;
@@ -198,7 +198,7 @@ angular.module('myApp', ['ngFileUpload'])
         $scope.getTree = function(x) {
             $http({
                 method : 'GET',
-                url : 'http://localhost:3000/get/' + x.name
+                url : '/get/' + x.name
             }).then(function successCallback(response) {
                 if(DBcontent.value != response.data){
                     //TODO: solve bug with DBcontent.value
@@ -231,6 +231,7 @@ angular.module('myApp', ['ngFileUpload'])
             sharedTree.tree.arrangeTree(currentRow.value);
             var treeView = sharedTree.tree.getTreeView();
             getTreeJson(treeView);
+
         });
 
     }]);

@@ -25,7 +25,7 @@
             <b> Upload new database file: </b>
             <form ref='uploadForm'
                   id='uploadForm'
-                  action='http://localhost:3000/upload'
+                  action='/upload'
                   method='post'
                   encType="multipart/form-data">
                 <input type="file" name="db" accept=".db" required>
@@ -66,13 +66,13 @@
             <b> Upload new instance: </b>
             <form ref='uploadInstanceForm'
                   id='uploadInstanceForm'
-                  action='http://localhost:3000/uploadInstance'
+                  action='/uploadInstance'
                   method='post'
                   encType="multipart/form-data">
                 <input type="file" name="instance" accept="" required>
                 <input type='submit' value='Upload!' />
             </form>
-            <form action="http://localhost:3000/setTimout">
+            <form action="/setTimout">
                 <b>Timeout:</b> <input type="text" style="width: 100px;" name="timeout" value="1000"><br> <input type="submit" name="setTimeout" value="Set"> <input type="submit" name="stopTimeout" value="Stop">
             </form>
             </div>
