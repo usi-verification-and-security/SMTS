@@ -31,10 +31,6 @@ angular.module('myApp', ['ngFileUpload'])
 
     })
 
-    .controller('TreeController',['$scope','$rootScope','currentRow','$window','$http','sharedService',function($scope,$rootScope, currentRow,$window,$http,sharedService){
-
-    }])
-
     .controller('EventController',['$scope','$rootScope','currentRow','sharedTree','$window','$http', 'sharedService',function($scope,$rootScope, currentRow,sharedTree,$window,$http,sharedService){
 
         $scope.$on('handleBroadcast', function() { // This is called when an instance is selected

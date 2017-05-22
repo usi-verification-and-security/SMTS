@@ -17,6 +17,7 @@ button:hover {
 
 
 table, th , td {
+    margin: 1%;
     border: 1px solid grey;
     border-collapse: collapse;
     padding: 5px;
@@ -46,27 +47,37 @@ table.etable {
 }
 
 .title {
-    text-shadow: 1px 1px 0 #7CFC00;
+    text-shadow: 1px 1px #7CFC00;
     font-size: 300%;
+    √: center;
+    font-weight: bold;
+    display: table-cell;
+    vertical-align: middle;
+    height: 140px;
 }
 
 .instance-container {
     max-height: 500px;
-    overflow: auto;
+    /*overflow: auto;*/
+    overflow-y: scroll;
 }
 
 #tree-container {
-    height: 500px;
+    width: 100%;
+    height: 650px;
 }
 
 .solver-container {
-    max-height: 500px;
-    overflow:auto;
+    height: 650px;
+    /*overflow:auto;*/
+    overflow-y: scroll;
+    overflow-x: hidden;
 }
 
 .event-container {
     max-height: 400px;
-    overflow: auto;
+    /*overflow: auto;*/
+    overflow-y: scroll;
     height: 400px;
 }
 
@@ -85,4 +96,17 @@ table.etable {
 
 .highlight{
     background-color: #7CFC00;
+}
+
+.solver-container > table > tr {
+    white-space: nowrap;
+}
+
+#lineCont {
+    width: 100%;
+    height: 10%;
+}
+
+.views{
+    height: 90%;
 }
