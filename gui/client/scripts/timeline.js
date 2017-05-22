@@ -39,19 +39,19 @@ function makeCircles() {
         var lineLength = 1 / timelineEvents[timelineEvents.length-1].ts;
 
         //Draw first date circle
-        $("#line").append('<div class="circle" id="' + timelineEvents[0].id + '" style="left: ' + 0 + '%;"><div class="popupSpan">' + timelineEvents[0].ts + ' s' + '</div></div>');
+        $("#line").append('<div class="dash" id="' + timelineEvents[0].id + '" style="left: ' + 0 + '%;"><div class="popupSpan">' + timelineEvents[0].ts + ' s' + '</div></div>');
 
         //Loop through middle circles
         for (i = 1; i < timelineEvents.length - 1; i++) {
             relativeInt = lineLength * timelineEvents[i].ts * 100;
 
             //Draw the circle
-           $("#line").append('<div class="circle" id="' + timelineEvents[i].id + '" style="left: ' + relativeInt + '%;"><div class="popupSpan">' + timelineEvents[i].ts + ' s' + '</div></div>');
+           $("#line").append('<div class="dash" id="' + timelineEvents[i].id + '" style="left: ' + relativeInt + '%;"><div class="popupSpan">' + timelineEvents[i].ts + ' s' + '</div></div>');
         }
 
         relativeInt = lineLength * timelineEvents[timelineEvents.length-1].ts * 100;
         //Draw the last circle
-        $("#line").append('<div class="circle" id="' + timelineEvents[timelineEvents.length-1].id + '" style="left: ' + relativeInt + '%;"><div class="popupSpan">' + timelineEvents[timelineEvents.length-1].ts + ' s' + '</div></div>');
+        $("#line").append('<div class="dash" id="' + timelineEvents[timelineEvents.length-1].id + '" style="left: ' + relativeInt + '%;"><div class="popupSpan">' + timelineEvents[timelineEvents.length-1].ts + ' s' + '</div></div>');
     }
 
     $(".circle:first").addClass("active");
@@ -59,8 +59,8 @@ function makeCircles() {
 
 function selectEvent(selector) {
     $selector = "#" + selector;
-    $spanSelector = $selector.replace("circle", "span");
-    var current = $selector.replace("circle", "");
+    $spanSelector = $selector.replace("dash", "span");
+    var current = $selector.replace("dash", "");
 
     $(".active").removeClass("active");
     $($selector).addClass("active");

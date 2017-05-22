@@ -38,3 +38,22 @@
 .ghostCircle, .activeDrag .ghostCircle{
     display: none;
 }
+
+/**/
+circle.nodeCircle.sat{
+    fill: green;
+}
+
+circle.nodeCircle.unsat{
+    fill: #FF0000;
+
+}
+
+circle.nodeCircle.unknown{
+    fill: #FFE4C4
+
+}
+
+circle.nodeCircle.orNode {
+    fill: #C0C0C0;
+}

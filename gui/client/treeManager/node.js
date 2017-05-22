@@ -4,9 +4,10 @@ var TreeManager;
         function Node(name, type) {
             this.children = [];
             this.solvers = []; // solvers working on it
+            this.status = "unknown"; // initially "unknown"
             this.name = name;
             this.type = type;
-            this.status = "unknown";
+            // this.status = "unknown";
         }
         Node.prototype.test = function () {
         };

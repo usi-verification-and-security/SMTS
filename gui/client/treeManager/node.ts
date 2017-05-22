@@ -5,12 +5,12 @@ module TreeManager {
         type: string; // AND or OR
         children: Node[] = [];
         solvers: string[] = []; // solvers working on it
-        status: string; // initially "unknown"
+        status: string = "unknown"; // initially "unknown"
 
         constructor(name, type: string) {
             this.name = name;
             this.type = type;
-            this.status = "unknown";
+            // this.status = "unknown";
 
         }
 

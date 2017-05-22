@@ -35,7 +35,7 @@
         <div class="w3-container w3-border w3-quarter w3-cell instance-container" ng-controller="InstancesController" ng-init='load()'>
             <table>
                 <th> <b>Instances</b></th>
-                <tr ng-repeat="x in entries" ng-click="clickEvent($event,x)">
+                <tr data-instance="{{x.name}}" ng-repeat="x in entries" ng-click="clickEvent($event,x)">
                     <td>{{ x.name }}</td>
                 </tr>
             </table>
@@ -52,7 +52,7 @@
             <table>
                 <th ><b>Solver</b></th>
                 <th><b>Node</b></th>
-                <tr ng-repeat="x in entries" ng-click="clickEvent($event,x)">
+                <tr data-node="{{x.node}}" ng-repeat="x in entries" ng-click="clickEvent($event,x)">
                     <td>{{ x.name}}</td>
                     <td>{{ x.node}}</td>
                 </tr>
@@ -92,7 +92,7 @@
                  </tr>
                 </thead>
                 <tbody>
-                    <tr id="event{{x.id}}" ng-repeat="x in entries" ng-click="showEvent($event,$index,x)">
+                    <tr id="event{{x.id}}" data-event="{{x.id}}" ng-repeat="x in entries" ng-click="showEvent($event,$index,x)">
                         <td>{{$index}}</td>
                         <!--<td>{{ x.id }}</td>-->
                         <td style="white-space: nowrap;" >{{ x.ts }} s </td>

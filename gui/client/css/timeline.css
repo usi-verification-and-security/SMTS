@@ -25,7 +25,7 @@
     color: gray;
 }
 
-.circle {
+.dash {
     width: 1px;
     height: 30px;
     /*background: white;*/
@@ -37,19 +37,8 @@
     border: 2px solid gray;
     cursor: pointer;
 }
-.circle:before {
-    /*content: '';*/
-    /*width: 2px;*/
-    /*height: 20px;*/
-    /*!*background: white;*!*/
-    /*background: gray;*/
-    /*position: absolute;*/
-    /*!*border-radius: 100%;*!*/
-    /*top: 2px;*/
-    /*left: 2px;*/
-    /*display: none;*/
-}
-.circle .popupSpan {
+
+.dash .popupSpan {
     width: auto;
     height: auto;
     padding: 10px;
@@ -63,13 +52,13 @@
     display: none;
     transition: all 0.1s ease-out;
 }
-.circle.hover:before, .circle.active:before {
+.dash.hover:before, .circle.active:before {
     display: block;
 }
-.circle.hover .popupSpan, .circle.active .popupSpan {
+.dash.hover .popupSpan, .circle.active .popupSpan {
     display: block;
 }
-.circle.active .popupSpan {
+.dash.active .popupSpan {
     top: -40px;
 }
 .active {

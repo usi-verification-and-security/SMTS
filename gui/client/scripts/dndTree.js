@@ -200,22 +200,97 @@ function getTreeJson(treeData) {
             })
             .on('click', click);
 
+        // nodeEnter.forEach(function (d) {
+        //     console.log(d);
+        //     if(d.type == "AND"){
+        //         console.log("Inside AND")
+        //         d.append("circle")
+        //             .attr("r", 0)
+        //             .attr('class',function(d) {
+        //                 var c = "nodeCircle ";
+        //                 // if(d.type == "OR"){
+        //                 //     c += 'orNode';
+        //                 //     return c;
+        //                 // }
+        //                 // else{
+        //                     if(d.status == "sat"){
+        //                         c += 'sat';
+        //                         return c;
+        //                     }
+        //                     else if(d.status == "unsat"){
+        //                         c += 'unsat';
+        //                         return c;
+        //                     }
+        //                     else{
+        //                         c += 'unknown';
+        //                         return c;
+        //                     }
+        //
+        //                 // }
+        //             });
+        //     }
+        //     else{
+        //         d.append("rect")
+        //             .attr("width", 0)
+        //             .attr("height", 0)
+        //             .attr("class", 'orNode');
+        //     }
+        // });
+
+
+        // nodeEnter.append("rect")
+        //     .attr("x", -4.5)
+        //     .attr("y", -4.5)
+        //     .attr("width", 9)
+        //     .attr("height", 9)
+        //     .attr('class',function(d) {
+        //         var c = "nodeCircle ";
+        //         if(d.type == "OR"){
+        //             c += 'orNode';
+        //             return c;
+        //         }
+        //         else{
+        //             if(d.status == "sat"){
+        //                 c += 'sat';
+        //                 return c;
+        //             }
+        //             else if(d.status == "unsat"){
+        //                 c += 'unsat';
+        //                 return c;
+        //             }
+        //             else{
+        //                 c += 'unknown';
+        //                 return c;
+        //             }
+        //
+        //         }
+        //     });
+
+        // console.log(nodeEnter)
         nodeEnter.append("circle")
-            .attr('class', 'nodeCircle')
             .attr("r", 0)
-            // .style("fill", function(d) {
-            //     return d._children ? "lightsteelblue" : "#fff";
-            // })
-            .style("fill", function (d) {
-                // console.log(d.children);
-                if (d.type == "OR") {
-                    return "#C0C0C0";
+            .attr('class',function(d) {
+                var c = "nodeCircle ";
+                if(d.type == "OR"){
+                    c += 'orNode';
+                        return c;
                 }
-                else {
-                    return "#FFE4C4";
+                else{
+                    if(d.status == "sat"){
+                        c += 'sat';
+                        return c;
+                    }
+                    else if(d.status == "unsat"){
+                        c += 'unsat';
+                        return c;
+                    }
+                    else{
+                        c += 'unknown';
+                        return c;
+                    }
+
                 }
-                // return (d.type == "OR") ? "pink" : "blue";
-            });
+             });
 
         nodeEnter.append("text")
             .attr("x", function (d) {
@@ -264,29 +339,28 @@ function getTreeJson(treeData) {
         // Change the circle fill depending on whether it has children and is collapsed
         node.select("circle.nodeCircle")
             .attr("r", 4.5)
-            // .style("fill", function(d) {
-            //     // console.log(d.children);
-            //     return d._children ? "lightsteelblue" : "#fff";
-            // });
-            .style("fill", function (d) {
-                // console.log(d.children);
-                if (d.type == "OR") {
-                    return "#C0C0C0";
+            .attr('class',function(d) {
+                var c = "nodeCircle ";
+                if(d.type == "OR"){
+                    c += 'orNode';
+                    return c;
                 }
-                else {
-                    if (d.status == "unsat") {
-                        return "#FF0000";
+                else{
+                    if(d.status == "sat"){
+                        c += 'sat';
+                        return c;
                     }
-                    else {
-                        return "#FFE4C4";
+                    else if(d.status == "unsat"){
+                        c += 'unsat';
+                        return c;
+                    }
+                    else{
+                        c += 'unknown';
+                        return c;
                     }
 
                 }
             });
-        // .style("border-color", function(d) {
-        // // console.log(d.children);
-        // return d.type == "OR" ? "pink" : "blue";
-        // });
 
         // Transition nodes to their new position.
         var nodeUpdate = node.transition()
@@ -390,8 +464,14 @@ function getTreeJson(treeData) {
     }
 }
 
-// Show node's info in data
 function click(d) {
+    showNodeData(d);
+    highlightSolvers(d);
+
+}
+
+// This function shows node data in data view
+function showNodeData(d) {
     var object ={};
     object.name = d.name.toString(); // transform to string or it will show and array
     object.type = d.type;
@@ -408,5 +488,15 @@ function click(d) {
     else{
         item.appendChild(ppTable);
     }
+
+}
+
+// This function highlights in solver view the solvers working on the clicked node
+function highlightSolvers(d) {
+        var node = "[" + d.name.toString() + "]";
+        var query = '.solver-container table tr[data-node="' + node +'"]';
+
+        $('.solver-container table tr').removeClass("highlight");
+        $(query).addClass("highlight");
 
 }

@@ -4,10 +4,6 @@ angular.module('myApp', ['ngFileUpload'])
     // Variable used to keep track how many rows of the db needs to be read
     .value('currentRow', { value: 0})
 
-    .value('eventRow', { value: undefined})
-
-    .value('instanceRow', { value: undefined})
-
     .value('realTimeDB', { value: false})
 
     .value('DBcontent', { value: null})
@@ -39,7 +35,7 @@ angular.module('myApp', ['ngFileUpload'])
 
     }])
 
-    .controller('EventController',['$scope','$rootScope','currentRow','eventRow','sharedTree','$window','$http', 'sharedService',function($scope,$rootScope, currentRow,eventRow,sharedTree,$window,$http,sharedService){
+    .controller('EventController',['$scope','$rootScope','currentRow','sharedTree','$window','$http', 'sharedService',function($scope,$rootScope, currentRow,sharedTree,$window,$http,sharedService){
 
         $scope.$on('handleBroadcast', function() { // This is called when an instance is selected
             var eventEntries = sharedTree.tree.getEvents(currentRow.value);
@@ -54,15 +50,15 @@ angular.module('myApp', ['ngFileUpload'])
             allEvents = events;
             makeCircles();
 
-            $(".circle").mouseenter(function() {
+            $(".dash").mouseenter(function() {
                 $(this).addClass("hover");
             });
 
-            $(".circle").mouseleave(function() {
+            $(".dash").mouseleave(function() {
                 $(this).removeClass("hover");
             });
 
-            $(".circle").click(function() {
+            $(".dash").click(function() {
                 var spanNum = $(this).attr("id");
                 // console.log(spanNum);
                 selectEvent(spanNum)
@@ -80,11 +76,10 @@ angular.module('myApp', ['ngFileUpload'])
 
         // Show tree up to clicked event
         $scope.showEvent = function($event,$index,x){
-            if(eventRow.value != undefined){
-                eventRow.value.style.color= "black";
-            }
-            eventRow.value = $event.currentTarget;
-            $event.currentTarget.style.color= "#0073e6";
+            // Highlight selected event
+            $('.event-container table tr').removeClass("highlight");
+            var query = '.event-container table tr[data-event="' + x.id +'"]';
+            $(query).addClass("highlight");
 
             currentRow.value = $index;
             sharedTree.tree.arrangeTree(currentRow.value);
@@ -132,6 +127,7 @@ angular.module('myApp', ['ngFileUpload'])
         });
 
         $scope.showSolver = function() {
+            $('.solver-container table tr').removeClass("highlight");
             sharedTree.tree.assignSolvers(0,currentRow.value);
             $scope.entries = sharedTree.tree.solvers;
 
@@ -156,7 +152,7 @@ angular.module('myApp', ['ngFileUpload'])
 
     }])
 
-    .controller('InstancesController',['$scope','$rootScope','currentRow','instanceRow','sharedTree','realTimeDB','DBcontent','$window','$http','sharedService',function($scope,$rootScope, currentRow,instanceRow,sharedTree,realTimeDB,DBcontent,$window,$http,sharedService){
+    .controller('InstancesController',['$scope','$rootScope','currentRow','sharedTree','realTimeDB','DBcontent','$window','$http','sharedService',function($scope,$rootScope, currentRow,sharedTree,realTimeDB,DBcontent,$window,$http,sharedService){
 
         $scope.load = function() {
             $http({
@@ -174,11 +170,10 @@ angular.module('myApp', ['ngFileUpload'])
         };
 
         $scope.clickEvent = function($event,x){
-            if(instanceRow.value != undefined){
-                instanceRow.value.style.color= "black";
-            }
-            instanceRow.value = $event.currentTarget;
-            $event.currentTarget.style.color= "#0073e6";
+            // Highlight selected instance
+            $('.instance-container table tr').removeClass("highlight");
+            var query = '.instance-container table tr[data-instance="' + x.name +'"]';
+            $(query).addClass("highlight");
 
             // If real-time analysis ask every 10 seconds for db content otherwise just once
             if(realTimeDB.value) {
