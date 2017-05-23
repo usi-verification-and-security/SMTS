@@ -38,7 +38,7 @@ function getTreeJson(treeData) {
     var draggingNode = null;
     // Misc. variables
     var i = 0;
-    var duration = 750;
+    var duration = 0;
 
     // size of the diagram
     var viewerWidth = document.getElementById("tree-container").offsetWidth;
@@ -200,73 +200,6 @@ function getTreeJson(treeData) {
             })
             .on('click', click);
 
-        // nodeEnter.forEach(function (d) {
-        //     console.log(d);
-        //     if(d.type == "AND"){
-        //         console.log("Inside AND")
-        //         d.append("circle")
-        //             .attr("r", 0)
-        //             .attr('class',function(d) {
-        //                 var c = "nodeCircle ";
-        //                 // if(d.type == "OR"){
-        //                 //     c += 'orNode';
-        //                 //     return c;
-        //                 // }
-        //                 // else{
-        //                     if(d.status == "sat"){
-        //                         c += 'sat';
-        //                         return c;
-        //                     }
-        //                     else if(d.status == "unsat"){
-        //                         c += 'unsat';
-        //                         return c;
-        //                     }
-        //                     else{
-        //                         c += 'unknown';
-        //                         return c;
-        //                     }
-        //
-        //                 // }
-        //             });
-        //     }
-        //     else{
-        //         d.append("rect")
-        //             .attr("width", 0)
-        //             .attr("height", 0)
-        //             .attr("class", 'orNode');
-        //     }
-        // });
-
-
-        // nodeEnter.append("rect")
-        //     .attr("x", -4.5)
-        //     .attr("y", -4.5)
-        //     .attr("width", 9)
-        //     .attr("height", 9)
-        //     .attr('class',function(d) {
-        //         var c = "nodeCircle ";
-        //         if(d.type == "OR"){
-        //             c += 'orNode';
-        //             return c;
-        //         }
-        //         else{
-        //             if(d.status == "sat"){
-        //                 c += 'sat';
-        //                 return c;
-        //             }
-        //             else if(d.status == "unsat"){
-        //                 c += 'unsat';
-        //                 return c;
-        //             }
-        //             else{
-        //                 c += 'unknown';
-        //                 return c;
-        //             }
-        //
-        //         }
-        //     });
-
-        // console.log(nodeEnter)
         nodeEnter.append("circle")
             .attr("r", 0)
             .attr('class',function(d) {
