@@ -68,7 +68,7 @@ module TreeManager{
                 var status = JSON.parse(this.events[record].data);
 
                 if (event == "STATUS") {
-                    this.updateNode(treeView, this.events[record].node, event, status.status);
+                    this.updateNode(treeView, this.events[record].node, event, status.report);
                 }
                 if (event == "SOLVED") {
                     this.updateNode(treeView, this.events[record].node, event, status.status);
