@@ -16,27 +16,32 @@ button:hover {
 
 
 
-table, th , td {
+table, th , tr, td {
     margin: 1%;
     border: 1px solid grey;
     border-collapse: collapse;
     padding: 5px;
     /*text-align: center;*/
+    max-width: 100%;
+    cursor: pointer;
+    /*table-layout:fixed;*/
+    word-break: break-all
 }
 
-tr {
-    cursor: pointer;
-    overflow-y: scroll;
-}
-tr:hover {
-    color: #0073e6;
+/*tr {*/
+    /*cursor: pointer;*/
+    /*!*overflow-y: scroll;*!*/
+/*}*/
+
+tbody tr:hover{
+    background:#BDC3C7;
 }
 
 th{
     background-color: #00cc00;
 }
 table.etable {
-    width: 1076px;
+    width: 100%;
 }
 
 /*Views*/
@@ -60,6 +65,7 @@ table.etable {
     max-height: 500px;
     /*overflow: auto;*/
     overflow-y: scroll;
+    overflow-x: hidden;
 }
 
 #tree-container {
@@ -78,6 +84,7 @@ table.etable {
     max-height: 400px;
     /*overflow: auto;*/
     overflow-y: scroll;
+    overflow-x: hidden;
     height: 400px;
 }
 
@@ -109,4 +116,23 @@ table.etable {
 
 .views{
     height: 90%;
+}
+
+
+/*For maintaining fix header in table */
+thead {
+    display: table-header-group;
+    vertical-align: middle;
+    border-color: inherit;
+}
+.fixed{
+    top:0;
+    position:fixed;
+    width:auto;
+    display:none;
+    border:none;
+}
+.container{
+    width:100%;
+    margin:auto;
 }

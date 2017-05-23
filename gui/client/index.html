@@ -19,11 +19,15 @@
             <div class="w3-container title"> SMT Viewer </div>
             <!--Instance-->
             <div class="w3-container instance-container" ng-controller="InstancesController" ng-init='load()'>
-                <table>
-                    <th> <b>Instances</b></th>
-                    <tr data-instance="{{x.name}}" ng-repeat="x in entries" ng-click="clickEvent($event,x)">
-                        <td>{{ x.name }}</td>
-                    </tr>
+                <table class="etable">
+                    <thead>
+                        <th> <b>Instances</b></th>
+                    </thead>
+                    <tbody>
+                        <tr data-instance="{{x.name}}" ng-repeat="x in entries" ng-click="clickEvent($event,x)">
+                            <td>{{ x.name }}</td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
 
@@ -63,7 +67,7 @@
             <div class = "w3-container w3-border" id="tree-container" ng-controller="ViewController"></div>
             <!--Event view-->
             <div id="d5" class="w3-container w3-border event-container" ng-controller="EventController">
-                <table id="d5_2" class="eventT etable">
+                <table id="d5_2" class="etable">
                     <thead>
                     <tr>
                         <th><b>Nr</b></th>
@@ -99,13 +103,17 @@
             <!--Solver view-->
             <div class="w3-container w3-border solver-container" ng-controller="SolverController">
                 <p><b> SOLVERS </b></p>
-                <table>
-                    <th ><b>Solver</b></th>
-                    <th><b>Node</b></th>
-                    <tr data-node="{{x.node}}" ng-repeat="x in entries" ng-click="clickEvent($event,x)">
-                        <td>{{ x.name}}</td>
-                        <td>{{ x.node}}</td>
-                    </tr>
+                <table class="etable">
+                    <thead>
+                        <th ><b>Solver</b></th>
+                        <th><b>Node</b></th>
+                    </thead>
+                    <tbody>
+                        <tr data-node="{{x.node}}" ng-repeat="x in entries" ng-click="clickEvent($event,x)">
+                            <td>{{ x.name}}</td>
+                            <td>{{ x.node}}</td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
 
@@ -138,5 +146,6 @@
 <script src="treeManager/solver.js"></script>
 <script src="treeManager/tree.js"></script>
 <script src="scripts/timeline.js"></script>
+<!--<script src="scripts/table.js"></script>-->
 
 </html>
