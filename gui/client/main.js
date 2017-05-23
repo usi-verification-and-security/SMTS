@@ -87,7 +87,21 @@ angular.module('myApp', ['ngFileUpload'])
             if(object == null){
                 object = {};
             }
-            var ppTable = prettyPrint(object);
+            //sort object by key values
+            var keys = [], k, i, len;
+            var sortedObj = {};
+            for (k in object) {
+                if (object.hasOwnProperty(k)) {
+                    keys.push(k);
+                }
+            }
+            keys.sort();
+            len = keys.length;
+            for (i = 0; i < len; i++) {
+                k = keys[i];
+                sortedObj[k] = object[k];
+            }
+            var ppTable = prettyPrint(sortedObj);
             var tableName = "Event " + x.event;
             document.getElementById('d6_1').innerHTML = tableName.bold();
             var item = document.getElementById('d6_2');
