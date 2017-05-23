@@ -57,16 +57,17 @@ angular.module('myApp', ['ngFileUpload'])
             $(".dash").click(function() {
                 var spanNum = $(this).attr("id");
                 // console.log(spanNum);
-                selectEvent(spanNum)
+                selectEvent(spanNum);
                 //Simulate event click to rebuild the tree
                 var find = "event" + spanNum;
                 var row = document.getElementById(find);
                 row.click();
-
+                // console.log("Find: " + find);
+                var query = "#" + find;
                 // TODO: Scroll table till selected event
-                // NOT spanNum but table row!
-                // var ypos = $(".d5_2 tr:eq(' + spanNum +')").offset();
-                // $('.d5' ).scrollTop( ypos.top );
+
+                d5.scrollTop = 0;
+                $('#d5').scrollTop($(query).offset().top - $('#d5').offset().top)
             });
         };
 

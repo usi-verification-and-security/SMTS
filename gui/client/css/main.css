@@ -25,8 +25,9 @@ table, th , tr, td {
     max-width: 100%;
     cursor: pointer;
     /*table-layout:fixed;*/
-    word-break: break-all
+    word-break: break-all;
 }
+
 
 /*tr {*/
     /*cursor: pointer;*/
@@ -105,8 +106,9 @@ table.etable {
     background-color: #7CFC00;
 }
 
-.solver-container > table > tr {
+.solver-container > table > tr >td{
     white-space: nowrap;
+    word-break: keep-all;
 }
 
 #lineCont {
