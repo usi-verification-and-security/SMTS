@@ -3,10 +3,13 @@
     const fileUpload = require('express-fileupload');
     var bodyParser = require('body-parser');
     var sqlite = require('sqlite3').verbose();
+    var pjson = require('./package.json');
 
-    var database = process.argv[2]; // use "global.db" for testing
+    var database; // use "global.db" for testing
 
     var fs = require('fs');
+
+    var port;
 
     app.use(function(req, res, next) { //allow cross origin requests
         res.setHeader("Access-Control-Allow-Methods", "POST, PUT, OPTIONS, DELETE, GET");
@@ -136,7 +139,7 @@
     // Delete all files in temp directory before killing the process
     function exitHandler(options, err) {
         if (options.cleanup){
-            console.log('Cleaning databases..');
+            // console.log('Cleaning databases..');
             fs.readdir('./temp/', function(err, items) {
                 for (var i=0; i<items.length; i++) {
                     console.log(items[i]);
@@ -159,6 +162,59 @@
     //catches uncaught exceptions
     process.on('uncaughtException', exitHandler.bind(null, {exit:true}));
 
-    app.listen('3000', function(){
-        console.log('Server running on 3000...');
-    });
+
+    initialize();
+
+
+    function initialize() {
+        if(process.argv[2] && (process.argv[2] == "--help" || process.argv[2] == "-h")){
+            showHelp();
+        }
+        else if(process.argv[2] == "-v" || process.argv[2] == "--version"){
+            console.log(pjson.version);
+            process.exit();
+
+        }
+        else{
+            for(var i=2; i< process.argv.length -1; i++){
+                switch(process.argv[i]){
+                    // Port
+                    case '-p':
+                        var p = parseInt(process.argv[i+1], 10);
+                        if(p >= 0 && p < 65536 ){
+                            port = p;
+                            // console.log(port)
+                        }
+                        else{
+                            console.log("Bad or no port provided: 'port' argument must be >= 0 and < 65536");
+                        }
+                        break;
+
+                    // Database
+                    case '-d':
+                        database = process.argv[i+1];
+                        break;
+                }
+            }
+
+            // Default port
+            if(port == undefined){
+                port = '3000';
+            }
+
+            app.listen(port, function(){
+                console.log('Server running on ' + port + '...');
+            });
+        }
+    }
+
+    function showHelp() {
+        console.log("Usage: node app.js [-h] [-v] [-p PORT] [-d DATABASE]");
+        console.log("");
+        console.log("Options:");
+        console.log("-h, --help                            show help message");
+        console.log("-v, --version                         print SMT Viewer version");
+        console.log("-p PORT, --port PORT                  set port");
+        console.log("-d DATABASE, --database DATABASE      set database");
+        process.exit();
+    }
