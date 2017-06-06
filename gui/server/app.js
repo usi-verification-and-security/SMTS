@@ -179,7 +179,7 @@
             for(var i=2; i< process.argv.length -1; i++){
                 switch(process.argv[i]){
                     // Port
-                    case '-p':
+                    case '-p': // TODO: put PORT and DATABASE
                         var p = parseInt(process.argv[i+1], 10);
                         if(p >= 0 && p < 65536 ){
                             port = p;
