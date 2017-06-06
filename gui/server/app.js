@@ -179,7 +179,17 @@
             for(var i=2; i< process.argv.length -1; i++){
                 switch(process.argv[i]){
                     // Port
-                    case '-p': // TODO: put PORT and DATABASE
+                    case '-p':
+                        var p = parseInt(process.argv[i+1], 10);
+                        if(p >= 0 && p < 65536 ){
+                            port = p;
+                            // console.log(port)
+                        }
+                        else{
+                            console.log("Bad or no port provided: 'port' argument must be >= 0 and < 65536");
+                        }
+                        break;
+                    case '--port':
                         var p = parseInt(process.argv[i+1], 10);
                         if(p >= 0 && p < 65536 ){
                             port = p;
@@ -192,6 +202,9 @@
 
                     // Database
                     case '-d':
+                        database = process.argv[i+1];
+                        break;
+                    case '--database':
                         database = process.argv[i+1];
                         break;
                 }
