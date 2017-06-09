@@ -4,12 +4,14 @@
     var bodyParser = require('body-parser');
     var sqlite = require('sqlite3').verbose();
     var pjson = require('./package.json');
-
-    var database; // use "global.db" for testing
-
+    var taskHandler = require('./taskHandler');
+    var sys = require('util');
+    var exec = require('child_process').exec;
     var fs = require('fs');
 
-    var port;
+    var database; // For past execution analysis
+    var port; //Default port 3000
+    var serverIp; // For real-time analysis
 
     app.use(function(req, res, next) { //allow cross origin requests
         res.setHeader("Access-Control-Allow-Methods", "POST, PUT, OPTIONS, DELETE, GET");
@@ -17,6 +19,8 @@
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
         next();
     });
+
+    app.use(bodyParser.urlencoded({ extended : false }));
 
     app.use(express.static( '../client'));
     app.use(bodyParser.json());
@@ -124,6 +128,24 @@
         });
     });
 
+    app.get('/getServerData', function(req, res) {
+        var response = taskHandler.executeAll(exec);
+        res.json(response);
+    });
+
+    app.post('/change', function (req, res) {
+        console.log(req.body.timeout);
+        res.redirect('back');
+    });
+
+    app.post('/stop', function (req, res) {
+        // console.log(req.body.timeout);
+        console.log("Stopping solving server execution..")
+        res.redirect('back');
+    });
+
+
+
     function deleteFile (file) {
         fs.unlink(file, function (err) {
             if (err) {
@@ -207,6 +229,16 @@
                     case '--database':
                         database = process.argv[i+1];
                         break;
+
+                    // Server
+                    case '-s':
+                        serverIp = taskHandler.getDatabase(exec);
+                        // console.log("server IP: " + serverIp);
+                        if(serverIp == ""){
+                            console.log("There is no database on the server provided. Closing SMT Viewer.")
+                            process.exit();
+                        }
+                        break;
                 }
             }
 
@@ -227,6 +259,7 @@
         console.log("Options:");
         console.log("-h, --help                            show help message");
         console.log("-v, --version                         print SMT Viewer version");
+        console.log("-s sever                              set server ip address");
         console.log("-p PORT, --port PORT                  set port");
         console.log("-d DATABASE, --database DATABASE      set database");
         process.exit();

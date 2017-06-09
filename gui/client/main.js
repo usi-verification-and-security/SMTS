@@ -239,7 +239,46 @@ angular.module('myApp', ['ngFileUpload'])
 
         });
 
+    }])
+
+    .controller('TaskHandler',['$scope','$window','$http','realTimeDB',function($scope,$window,$http, realTimeDB){
+        $scope.load = function() {
+            // If real-time analysis execute every 5 seconds task Handler functions
+            if(realTimeDB.value) {
+                var interval = setInterval(function () {
+                    console.log("Contacting server....");
+                    $scope.getServerData();
+                }, 5000);
+            }
+
+        };
+
+        $scope.getServerData = function() {
+            $http({
+                method : 'GET',
+                url : '/getServerData'
+            }).then(function successCallback(response) {
+                //put each entry of the response array in the table
+                // $scope.entries = response.data;
+                console.log(response.data)
+
+                // Write which instance is being solved
+                $('#solInst').removeClass('hidden');
+                $('#solvingInstance').innerHTML = response.data[0]; // TODO: why is not writing????????
+
+                // console.log(response.data[0])
+
+
+
+            }, function errorCallback(response) {
+                // called asynchronously if an error occurs
+                // or server returns response with an error status.
+                $window.alert('An error occured!');
+            });
+        }
+
     }]);
+
 
 
 

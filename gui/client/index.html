@@ -32,8 +32,12 @@
             </div>
 
             <!--Task Handeler-->
-            <div class="w3-container task-handler">
+            <div class="w3-container task-handler" ng-controller="TaskHandler" ng-init='load()'>
                 <div class="position">
+                    <p id="solInst" class="hidden">
+                    <b> Solving Instance: </b> <h id="solvingInstance" ></h>
+                    </p>
+
                     <b> Upload new database file: </b>
                     <form ref='uploadForm'
                           id='uploadForm'
@@ -54,8 +58,11 @@
                         <input type='submit' value='Upload!' />
                     </form>
 
-                    <form action="/setTimout">
-                        <b>Timeout:</b> <input type="text" style="width: 100px;" name="timeout" value="1000"><br> <input type="submit" name="setTimeout" value="Set"> <input type="submit" name="stopTimeout" value="Stop">
+                    <form action="/setTimout"
+                          method='post'>
+                        <b>Timeout:</b> <input type="text" style="width: 100px;" name="timeout" value="1000"><br>
+                        <input type="submit" formaction="/change" name="changeTimeout" value="Set">
+                        <input type="submit" formaction="/stop" name="stopTimeout" value="Stop">
                     </form>
                 </div>
             </div>
