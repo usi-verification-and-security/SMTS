@@ -35,11 +35,12 @@
             <div class="w3-container task-handler" ng-controller="TaskHandler" ng-init='load()'>
                 <div class="position">
                     <p id="solInst" class="hidden">
-                    <b> Solving Instance: </b> <h id="solvingInstance" ></h>
+                    <b> Solving Instance: </b> <h id="solvingInstance" >{{solvingInstance}}</h>
                     </p>
 
                     <b> Upload new database file: </b>
-                    <form ref='uploadForm'
+                    <form
+                        ref='uploadForm'
                           id='uploadForm'
                           action='/upload'
                           method='post'

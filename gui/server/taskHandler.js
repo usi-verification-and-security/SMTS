@@ -7,9 +7,9 @@ module.exports = {
 
     getDatabase:function (exec) {
         exec("echo 'self.config.db().execute(\"PRAGMA database_list\").fetchall()[0][2] if self.config.db() else \"Empty\"'|../../server/client.py 127.0.0.1:3000", putsDb);
-        var res = db;
-        db = "";
-        return res;
+        var result = res;
+        res = "";
+        return result;
     },
 
     executeAll: function (exec) {
@@ -19,11 +19,24 @@ module.exports = {
         var res = response;
         response = [];
         return res;
+    },
+
+    setTimeout: function (exec) {
+        // self.config.solving_timeout
+
+    },
+
+    stopSolving: function (exec) {
+        // self.config.solving_timeout
+        exec("echo 'self.current.stop() if self.current else \"Nothing to stop\" '|../../server/client.py 127.0.0.1:3000", putsDb);
+        var result = res;
+        res = "";
+        return result;
     }
 
 };
 var response = [];
-var db = "";
+var res = "";
 /*
     response[0] = instance
  */
@@ -44,6 +57,6 @@ function puts(error, stdout, stderr) {
 
 function putsDb(error, stdout, stderr) {
     if(stdout){
-        db = stdout;
+        res = stdout;
     }
 }

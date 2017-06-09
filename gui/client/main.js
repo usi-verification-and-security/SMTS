@@ -8,6 +8,8 @@ angular.module('myApp', ['ngFileUpload'])
 
     .value('DBcontent', { value: null})
 
+    .value('timeOut', { value: 1000})
+
     .factory('sharedService', function($rootScope) {
     var sharedService = {};
 
@@ -170,7 +172,13 @@ angular.module('myApp', ['ngFileUpload'])
                 url : '/getInstances'
             }).then(function successCallback(response) {
                 //put each entry of the response array in the table
+               console.log(response.data)
                 $scope.entries = response.data;
+                if(response.data.length != 0){ // Hide Real-time part if a new db gets loaded
+                    $('#solInst').addClass('hidden');
+                    realTimeDB.value = false;
+                }
+
 
             }, function errorCallback(response) {
                 // called asynchronously if an error occurs
@@ -245,11 +253,14 @@ angular.module('myApp', ['ngFileUpload'])
         $scope.load = function() {
             // If real-time analysis execute every 5 seconds task Handler functions
             if(realTimeDB.value) {
+                $('#solInst').removeClass('hidden');
+
                 var interval = setInterval(function () {
                     console.log("Contacting server....");
                     $scope.getServerData();
                 }, 5000);
             }
+
 
         };
 
@@ -258,16 +269,25 @@ angular.module('myApp', ['ngFileUpload'])
                 method : 'GET',
                 url : '/getServerData'
             }).then(function successCallback(response) {
-                //put each entry of the response array in the table
-                // $scope.entries = response.data;
                 console.log(response.data)
 
                 // Write which instance is being solved
-                $('#solInst').removeClass('hidden');
-                $('#solvingInstance').innerHTML = response.data[0]; // TODO: why is not writing????????
+                //TODO: check why the first call gives empty answer
+                $scope.solvingInstance = response.data[0];
 
-                // console.log(response.data[0])
+            }, function errorCallback(response) {
+                // called asynchronously if an error occurs
+                // or server returns response with an error status.
+                $window.alert('An error occured!');
+            });
+        };
 
+        $scope.setTimeout = function () {
+            $http({
+                method : 'POST',
+                url : '/change'
+            }).then(function successCallback(response) {
+                //put each entry of the response array in the table
 
 
             }, function errorCallback(response) {
@@ -275,7 +295,40 @@ angular.module('myApp', ['ngFileUpload'])
                 // or server returns response with an error status.
                 $window.alert('An error occured!');
             });
-        }
+        };
+
+        $scope.stopSS = function () {
+            $http({
+                method : 'POST',
+                url : '/stop'
+            }).then(function successCallback(response) {
+                //put each entry of the response array in the table
+
+
+            }, function errorCallback(response) {
+                // called asynchronously if an error occurs
+                // or server returns response with an error status.
+                $window.alert('An error occured!');
+            });
+        };
+
+        $scope.uploadDb = function (file) {
+            console.log(file)
+            $http({
+                method : 'POST',
+                url : '/upload',
+                encType : "multipart/form-data",
+                params : {'files': file}
+            }).then(function successCallback(response) {
+                //put each entry of the response array in the table
+
+
+            }, function errorCallback(response) {
+                // called asynchronously if an error occurs
+                // or server returns response with an error status.
+                $window.alert('An error occured!');
+            });
+        };
 
     }]);
 

@@ -109,6 +109,7 @@
 
     app.post('/upload', function(req, res) {
         console.log('Uploading db file...');
+        console.log(req.files)
         if (!req.files)
             return res.status(400).send('No files were uploaded.');
 
@@ -135,12 +136,14 @@
 
     app.post('/change', function (req, res) {
         console.log(req.body.timeout);
+        //TODO: Change timeout
         res.redirect('back');
     });
 
     app.post('/stop', function (req, res) {
-        // console.log(req.body.timeout);
         console.log("Stopping solving server execution..")
+        //TODO: Check if it really stops
+        taskHandler.stopSolving(exec);
         res.redirect('back');
     });
 
