@@ -136,7 +136,9 @@
 
     app.post('/change', function (req, res) {
         console.log(req.body.timeout);
-        //TODO: Change timeout
+        //TODO: Check if it really changes
+        // TODO: update timeout in index.html (when refreshing, and also try to prevent refresh)
+        taskHandler.setTimeout(exec, req.body.timeout);
         res.redirect('back');
     });
 

@@ -21,13 +21,13 @@ module.exports = {
         return res;
     },
 
-    setTimeout: function (exec) {
+    setTimeout: function (exec, timeout) {
         // self.config.solving_timeout
+        exec("echo 'self.config.solving_timeout=" + timeout + " if self.config.solving_timeout else \"Nothing to reset\" '|../../server/client.py 127.0.0.1:3000", putsDb);
 
     },
 
     stopSolving: function (exec) {
-        // self.config.solving_timeout
         exec("echo 'self.current.stop() if self.current else \"Nothing to stop\" '|../../server/client.py 127.0.0.1:3000", putsDb);
         var result = res;
         res = "";
@@ -35,6 +35,7 @@ module.exports = {
     }
 
 };
+
 var response = [];
 var res = "";
 /*
