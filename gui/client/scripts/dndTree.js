@@ -25,9 +25,10 @@
  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 
+// Maintain position when reconstructing the tree
 
 // Get JSON data
-function getTreeJson(treeData) {
+function getTreeJson(treeData, position) {
     var root = treeData;
 
     // Calculate total nodes, max label length
@@ -146,9 +147,12 @@ function getTreeJson(treeData) {
         y = -source.x0;
         x = x * scale + viewerWidth / 2;
         y = y * scale + viewerHeight / 2;
+
+        position = "translate(" + x + "," + y + ")scale(" + scale + ")";
+
         d3.select('g').transition()
             .duration(duration)
-            .attr("transform", "translate(" + x + "," + y + ")scale(" + scale + ")");
+            .attr("transform", position);
         zoomListener.scale(scale);
         zoomListener.translate([x, y]);
     }
@@ -393,7 +397,17 @@ function getTreeJson(treeData) {
 
         // Layout the tree initially and center on the root node.
         update(root);
-        centerNode(root);
+        if(!position) {
+            centerNode(root);
+        }
+        else{
+            d3.select('g').transition()
+                .duration(duration)
+                .attr("transform", position);
+            zoomListener.scale(scale);
+            zoomListener.translate([x, y]);
+        }
+
     }
 }
 

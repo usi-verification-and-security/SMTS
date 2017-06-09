@@ -82,7 +82,8 @@ angular.module('myApp', ['ngFileUpload'])
             currentRow.value = $index;
             sharedTree.tree.arrangeTree(currentRow.value);
             var treeView = sharedTree.tree.getTreeView();
-            getTreeJson(treeView);
+            var position = $('g')[0].getAttribute("transform");
+            getTreeJson(treeView, position);
 
             // Show event's data in dataView
             var object = JSON.parse(x.data);
@@ -172,7 +173,7 @@ angular.module('myApp', ['ngFileUpload'])
                 url : '/getInstances'
             }).then(function successCallback(response) {
                 //put each entry of the response array in the table
-               console.log(response.data)
+               // console.log(response.data)
                 $scope.entries = response.data;
                 if(response.data.length != 0){ // Hide Real-time part if a new db gets loaded
                     $('#solInst').addClass('hidden');
@@ -243,7 +244,7 @@ angular.module('myApp', ['ngFileUpload'])
         $scope.$on('handleBroadcast', function() { // This is called when an instance is selected
             sharedTree.tree.arrangeTree(currentRow.value);
             var treeView = sharedTree.tree.getTreeView();
-            getTreeJson(treeView);
+            getTreeJson(treeView, null);
 
         });
 
@@ -282,6 +283,7 @@ angular.module('myApp', ['ngFileUpload'])
             });
         };
 
+        // TODO: to prevent page redirection after posting move posting here and use "event.preventDefault();"
         $scope.setTimeout = function () {
             $http({
                 method : 'POST',
