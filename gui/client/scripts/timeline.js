@@ -24,8 +24,8 @@ function findElwithSameTS(time){
     }
 }
 
-//Main function. Draw your circles.
-function makeCircles() {
+//Main function.
+function makeTimeline() {
     // If in allEvents the are more events with the sam timeStamp just the first one will be left
     refactorEvents(allEvents);
 
@@ -38,23 +38,23 @@ function makeCircles() {
         var relativeInt;
         var lineLength = 1 / timelineEvents[timelineEvents.length-1].ts;
 
-        //Draw first date circle
+        //Draw first line
         $("#line").append('<div class="dash" id="' + timelineEvents[0].id + '" style="left: ' + 0 + '%;"><div class="popupSpan">' + timelineEvents[0].ts + ' s' + '</div></div>');
 
-        //Loop through middle circles
+        //Loop through middle lines
         for (i = 1; i < timelineEvents.length - 1; i++) {
             relativeInt = lineLength * timelineEvents[i].ts * 100;
 
-            //Draw the circle
+            //Draw the line
            $("#line").append('<div class="dash" id="' + timelineEvents[i].id + '" style="left: ' + relativeInt + '%;"><div class="popupSpan">' + timelineEvents[i].ts + ' s' + '</div></div>');
         }
 
         relativeInt = lineLength * timelineEvents[timelineEvents.length-1].ts * 100;
-        //Draw the last circle
+        //Draw the last line
         $("#line").append('<div class="dash" id="' + timelineEvents[timelineEvents.length-1].id + '" style="left: ' + relativeInt + '%;"><div class="popupSpan">' + timelineEvents[timelineEvents.length-1].ts + ' s' + '</div></div>');
     }
 
-    $(".circle:first").addClass("active");
+    $(".line:first").addClass("active");
 }
 
 function selectEvent(selector) {

@@ -13,7 +13,7 @@ app.controller('EventController',['$scope','$rootScope','currentRow','sharedTree
     $scope.initTimeline = function(events){
         clearTimeline();
         allEvents = events;
-        makeCircles();
+        makeTimeline();
 
         $(".dash").mouseenter(function() {
             $(this).addClass("hover");

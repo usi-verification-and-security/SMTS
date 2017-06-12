@@ -4,6 +4,7 @@ app.controller('TaskHandler',['$scope','$window','$http','realTimeDB',function($
         // If real-time analysis execute every 5 seconds task Handler functions
         if(realTimeDB.value) {
             $('#solInst').removeClass('hidden');
+            $('#task').removeClass('hidden');
 
             var interval = setInterval(function () {
                 console.log("Contacting server....");

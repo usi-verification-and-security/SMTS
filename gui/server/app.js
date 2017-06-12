@@ -259,12 +259,12 @@
     }
 
     function showHelp() {
-        console.log("Usage: node app.js [-h] [-v] [-p PORT] [-d DATABASE]");
+        console.log("Usage: node app.js [-h] [-v] [-s SERVER] [-p PORT] [-d DATABASE]");
         console.log("");
         console.log("Options:");
         console.log("-h, --help                            show help message");
         console.log("-v, --version                         print SMT Viewer version");
-        console.log("-s sever                              set server ip address");
+        console.log("-s SERVER                             set server ip address");
         console.log("-p PORT, --port PORT                  set port");
         console.log("-d DATABASE, --database DATABASE      set database");
         process.exit();

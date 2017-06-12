@@ -49,6 +49,7 @@
                         <input type='submit' value='Upload!' />
                     </form>
 
+
                     <b> Upload new instance: </b>
                     <form ref='uploadInstanceForm'
                           id='uploadInstanceForm'
@@ -58,13 +59,14 @@
                         <input type="file" name="instance" accept="" required>
                         <input type='submit' value='Upload!' />
                     </form>
-
-                    <form action="/setTimout"
-                          method='post'>
-                        <b>Timeout:</b> <input type="text" style="width: 100px;" name="timeout" value="1000"><br>
-                        <input type="submit" formaction="/change" name="changeTimeout" value="Set">
-                        <input type="submit" formaction="/stop" name="stopTimeout" value="Stop">
-                    </form>
+                    <div id="task" class="hidden">
+                        <form action="/setTimout"
+                              method='post'>
+                            <b>Timeout:</b> <input type="text" style="width: 100px;" name="timeout" value="1000"><br>
+                            <input type="submit" formaction="/change" name="changeTimeout" value="Set">
+                            <input type="submit" formaction="/stop" name="stopTimeout" value="Stop">
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>

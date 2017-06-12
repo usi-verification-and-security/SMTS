@@ -9,12 +9,10 @@ app.controller('InstancesController',['$scope','$rootScope','currentRow','shared
             //put each entry of the response array in the table
             // console.log(response.data)
             $scope.entries = response.data;
-            if(response.data.length != 0){ // Hide Real-time part if a new db gets loaded
+            if(realTimeDB.value == false){
                 $('#solInst').addClass('hidden');
-                realTimeDB.value = false;
+                $('#task').addClass('hidden');
             }
-
-
         }, function errorCallback(response) {
             // called asynchronously if an error occurs
             // or server returns response with an error status.
