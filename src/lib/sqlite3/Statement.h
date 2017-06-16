@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 02/12/2016.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SERVER_STATEMENT_H
-#define CLAUSE_SERVER_STATEMENT_H
+#ifndef SMTS_LIB_SQLITE3_STATEMENT_H
+#define SMTS_LIB_SQLITE3_STATEMENT_H
 
 
 namespace SQLite3 {
@@ -33,4 +33,4 @@ namespace SQLite3 {
 }
 
 
-#endif //CLAUSE_SERVER_STATEMENT_H
+#endif

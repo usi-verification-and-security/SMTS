@@ -1,9 +1,9 @@
 //
-// Created by Matteo Marescotti on 02/12/15.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SHARING_PROCESS_H
-#define CLAUSE_SHARING_PROCESS_H
+#ifndef SMTS_LIB_PROCESS_H
+#define SMTS_LIB_PROCESS_H
 
 #include "Exception.h"
 #include "net.h"
@@ -46,4 +46,4 @@ public:
 };
 
 
-#endif //CLAUSE_SHARING_PROCESS_H
+#endif

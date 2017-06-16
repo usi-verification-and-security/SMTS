@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 09/12/15.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SHARING_EXCEPTION_H
-#define CLAUSE_SHARING_EXCEPTION_H
+#ifndef SMTS_LIB_EXCEPTION_H
+#define SMTS_LIB_EXCEPTION_H
 
 #include <exception>
 #include <iostream>
@@ -23,4 +23,4 @@ public:
     const char *what() const throw() { return this->msg.c_str(); }
 };
 
-#endif //CLAUSE_SHARING_EXCEPTION_H
+#endif

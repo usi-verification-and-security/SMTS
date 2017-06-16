@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 07/11/2016.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SERVER_LEMMA_H
-#define CLAUSE_SERVER_LEMMA_H
+#ifndef SMTS_LIB_NET_LEMMA_H
+#define SMTS_LIB_NET_LEMMA_H
 
 #include <vector>
 #include <sstream>
@@ -31,4 +31,4 @@ namespace net {
     };
 }
 
-#endif //CLAUSE_SERVER_LEMMA_H
+#endif

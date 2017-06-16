@@ -1,5 +1,5 @@
 //
-// Created by Matteo on 24/10/2016.
+// Author: Matteo Marescotti
 //
 
 #include <iostream>
@@ -26,7 +26,7 @@ int main() {
     std::cout << h << "\n";
 //    std::cout << h << "\n";
 //
-//
+// Author: Matteo Marescotti
 //    std::cout << h.copy(net::Header::parameter, h.keys(net::Header::parameter)) << "\n";
 //    std::cout << h.copy({"asd"}) << "\n";
 

@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 11/08/16.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SERVER_NODE_H
-#define CLAUSE_SERVER_NODE_H
+#ifndef SMTS_LEMMASERVER_NODE_H
+#define SMTS_LEMMASERVER_NODE_H
 
 #include <string>
 #include <map>
@@ -51,4 +51,4 @@ public:
 
 };
 
-#endif //CLAUSE_SERVER_NODE_H
+#endif

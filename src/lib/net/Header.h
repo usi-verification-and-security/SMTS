@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 02/12/2016.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SERVER_HEADER_H
-#define CLAUSE_SERVER_HEADER_H
+#ifndef SMTS_LIB_NET_HEADER_H
+#define SMTS_LIB_NET_HEADER_H
 
 #include <map>
 #include <memory>
@@ -41,4 +41,4 @@ namespace net {
     };
 }
 
-#endif //CLAUSE_SERVER_HEADER_H
+#endif

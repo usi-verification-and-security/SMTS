@@ -1,9 +1,9 @@
 //
-// Created by Matteo Marescotti on 02/12/15.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SHARING_THREAD_H
-#define CLAUSE_SHARING_THREAD_H
+#ifndef SMTS_LIB_THREAD_H
+#define SMTS_LIB_THREAD_H
 
 #include <thread>
 #include <mutex>
@@ -99,4 +99,4 @@ public:
 };
 
 
-#endif //CLAUSE_SHARING_THREAD_H
+#endif

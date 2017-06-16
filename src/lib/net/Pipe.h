@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 12/08/16.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SERVER_PIPE_H
-#define CLAUSE_SERVER_PIPE_H
+#ifndef SMTS_LIB_NET_PIPE_H
+#define SMTS_LIB_NET_PIPE_H
 
 #include "Socket.h"
 
@@ -29,4 +29,4 @@ namespace net {
 }
 
 
-#endif //CLAUSE_SERVER_PIPE_H
+#endif

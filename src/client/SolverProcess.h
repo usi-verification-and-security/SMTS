@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 21/07/16.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SHARING_PROCESSSOLVER_H
-#define CLAUSE_SHARING_PROCESSSOLVER_H
+#ifndef SMTS_CLIENT_SOLVERPROCESS_H
+#define SMTS_CLIENT_SOLVERPROCESS_H
 
 #include <atomic>
 #include <random>
@@ -255,4 +255,4 @@ public:
     static const char *solver;
 };
 
-#endif //CLAUSE_SHARING_PROCESSSOLVER_H
+#endif

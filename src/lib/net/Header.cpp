@@ -1,5 +1,5 @@
 //
-// Created by Matteo on 02/12/2016.
+// Author: Matteo Marescotti
 //
 
 #include <array>

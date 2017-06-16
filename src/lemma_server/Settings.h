@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 21/07/16.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SHARING_SETTINGS_H
-#define CLAUSE_SHARING_SETTINGS_H
+#ifndef SMTS_LEMMASERVER_SETTINGS_H
+#define SMTS_LEMMASERVER_SETTINGS_H
 
 #include <string>
 
@@ -20,4 +20,4 @@ public:
     std::string db_filename;
 };
 
-#endif //CLAUSE_SHARING_SETTINGS_H
+#endif

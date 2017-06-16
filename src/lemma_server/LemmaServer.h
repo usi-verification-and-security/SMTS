@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 21/07/16.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SHARING_CLAUSESERVER_H
-#define CLAUSE_SHARING_CLAUSESERVER_H
+#ifndef SMTS_LEMMASERVER_LEMMASERVER_H
+#define SMTS_LEMMASERVER_LEMMASERVER_H
 
 #include <map>
 #include <ctime>
@@ -34,4 +34,4 @@ public:
     LemmaServer(uint16_t, const std::string &, const std::string &, bool send_again);
 };
 
-#endif //CLAUSE_SHARING_CLAUSESERVER_H
+#endif

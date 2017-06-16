@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 11/08/16.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SERVER_LIB_H
-#define CLAUSE_SERVER_LIB_H
+#ifndef SMTS_LIB_LIB_H
+#define SMTS_LIB_LIB_H
 
 #include <string>
 #include <sstream>
@@ -71,4 +71,4 @@ const std::string to_string(const T &obj) {
 #include "sqlite3.h"
 #include "net.h"
 
-#endif //CLAUSE_SERVER_LIB_H
+#endif

@@ -1,9 +1,9 @@
 //
-// Created by Matteo Marescotti on 07/12/15.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SHARING_SOCKET_H
-#define CLAUSE_SHARING_SOCKET_H
+#ifndef SMTS_LIB_NET_H
+#define SMTS_LIB_NET_H
 
 #include "net/Address.h"
 #include "net/Header.h"
@@ -13,4 +13,4 @@
 #include "net/Socket.h"
 
 
-#endif //CLAUSE_SHARING_SOCKET_H
+#endif

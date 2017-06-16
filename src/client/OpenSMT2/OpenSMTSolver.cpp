@@ -1,5 +1,5 @@
 //
-// Created by Matteo on 22/07/16.
+// Author: Matteo Marescotti
 //
 
 #include "lib/lib.h"

@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 02/12/2016.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SERVER_EXCEPTION_H
-#define CLAUSE_SERVER_EXCEPTION_H
+#ifndef SMTS_LIB_SQLITE3_EXCEPTION_H
+#define SMTS_LIB_SQLITE3_EXCEPTION_H
 
 #include "lib/Exception.h"
 
@@ -17,4 +17,4 @@ namespace SQLite3 {
     };
 }
 
-#endif //CLAUSE_SERVER_EXCEPTION_H
+#endif

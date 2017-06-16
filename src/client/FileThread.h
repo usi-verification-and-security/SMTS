@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 22/07/16.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SERVER_FILETHREAD_H
-#define CLAUSE_SERVER_FILETHREAD_H
+#ifndef SMTS_CLIENT_FILETHREAD_H
+#define SMTS_CLIENT_FILETHREAD_H
 
 #include "lib/Thread.h"
 #include "Settings.h"
@@ -23,4 +23,4 @@ public:
 };
 
 
-#endif //CLAUSE_SERVER_FILETHREAD_H
+#endif

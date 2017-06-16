@@ -1,12 +1,12 @@
 //
-// Created by Matteo on 02/12/2016.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SERVER_SQLITE3_H_H
-#define CLAUSE_SERVER_SQLITE3_H_H
+#ifndef SMTS_LIB_SQLITE3_H
+#define SMTS_LIB_SQLITE3_H
 
 #include "sqlite3/Connection.h"
 #include "sqlite3/Statement.h"
 
 
-#endif //CLAUSE_SERVER_SQLITE3_H_H
+#endif

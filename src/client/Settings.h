@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 21/07/16.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SHARING_SETTINGS_H
-#define CLAUSE_SHARING_SETTINGS_H
+#ifndef SMTS_CLIENT_SETTINGS_H
+#define SMTS_CLIENT_SETTINGS_H
 
 #include <list>
 #include <map>
@@ -24,4 +24,4 @@ public:
     net::Header parameters;
 };
 
-#endif //CLAUSE_SHARING_SETTINGS_H
+#endif

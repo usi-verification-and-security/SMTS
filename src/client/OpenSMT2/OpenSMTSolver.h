@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 22/07/16.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SERVER_OPENSMTSOLVER_H
-#define CLAUSE_SERVER_OPENSMTSOLVER_H
+#ifndef SMTS_CLIENT_OPENSMT2_OPENSMTSOLVER_H
+#define SMTS_CLIENT_OPENSMT2_OPENSMTSOLVER_H
 
 #include <vector>
 #include <functional>
@@ -64,4 +64,4 @@ public:
 };
 
 
-#endif //CLAUSE_SERVER_OPENSMTSOLVER_H
+#endif

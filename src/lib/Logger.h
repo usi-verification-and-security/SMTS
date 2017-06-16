@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 19/07/16.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SHARING_LOG_H
-#define CLAUSE_SHARING_LOG_H
+#ifndef SMTS_LIB_LOGGER_H
+#define SMTS_LIB_LOGGER_H
 
 #include <assert.h>
 #include <ctime>
@@ -63,4 +63,4 @@ public:
 };
 
 
-#endif //CLAUSE_SHARING_LOG_H
+#endif

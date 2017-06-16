@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 12/08/16.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SERVER_SOCKET_H
-#define CLAUSE_SERVER_SOCKET_H
+#ifndef SMTS_LIB_NET_SOCKET_H
+#define SMTS_LIB_NET_SOCKET_H
 
 #include <map>
 #include <memory>
@@ -64,4 +64,4 @@ namespace net {
 }
 
 
-#endif //CLAUSE_SERVER_SOCKET_H
+#endif

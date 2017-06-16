@@ -1,5 +1,5 @@
 //
-// Created by Matteo Marescotti.
+// Author: Matteo Marescotti
 //
 
 #include <iostream>

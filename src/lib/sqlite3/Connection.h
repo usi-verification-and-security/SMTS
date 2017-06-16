@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 02/12/2016.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SERVER_CONNECTION_H
-#define CLAUSE_SERVER_CONNECTION_H
+#ifndef SMTS_LIB_SQLITE3_CONNECTION_H
+#define SMTS_LIB_SQLITE3_CONNECTION_H
 
 #include <functional>
 #include "Statement.h"
@@ -30,4 +30,4 @@ namespace SQLite3 {
     };
 }
 
-#endif //CLAUSE_SERVER_CONNECTION_H
+#endif

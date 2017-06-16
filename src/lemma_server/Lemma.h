@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 27/07/16.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SERVER_SMTLITERAL_H
-#define CLAUSE_SERVER_SMTLITERAL_H
+#ifndef SMTS_LEMMASERVER_LEMMA_H
+#define SMTS_LEMMASERVER_LEMMA_H
 
 #include <string>
 #include <list>
@@ -47,4 +47,4 @@ public:
 };
 
 
-#endif //CLAUSE_SERVER_SMTLITERAL_H
+#endif

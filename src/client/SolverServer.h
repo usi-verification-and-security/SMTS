@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 22/07/16.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SHARING_SOLVERSERVER_H
-#define CLAUSE_SHARING_SOLVERSERVER_H
+#ifndef SMTS_CLIENT_SOLVERSERVER_H
+#define SMTS_CLIENT_SOLVERSERVER_H
 
 //#include <ctime>
 #include "lib/net.h"
@@ -37,4 +37,4 @@ public:
 };
 
 
-#endif //CLAUSE_SHARING_SOLVERSERVER_H
+#endif

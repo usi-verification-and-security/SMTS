@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 25/10/2016.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SERVER_FIXEDPOINT_H
-#define CLAUSE_SERVER_FIXEDPOINT_H
+#ifndef SMTS_CLIENT_Z3SPACER_FIXEDPOINT_H
+#define SMTS_CLIENT_Z3SPACER_FIXEDPOINT_H
 
 #include "z3++.h"
 
@@ -43,4 +43,4 @@ namespace z3 {
     };
 }
 
-#endif //CLAUSE_SERVER_FIXEDPOINT_H
+#endif

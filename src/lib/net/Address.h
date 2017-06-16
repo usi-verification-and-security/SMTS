@@ -1,9 +1,9 @@
 //
-// Created by Matteo on 12/08/16.
+// Author: Matteo Marescotti
 //
 
-#ifndef CLAUSE_SERVER_ADDRESS_H
-#define CLAUSE_SERVER_ADDRESS_H
+#ifndef SMTS_LIB_NET_ADDRESS_H
+#define SMTS_LIB_NET_ADDRESS_H
 
 #include <string>
 #include <sstream>
@@ -28,4 +28,4 @@ namespace net {
 }
 
 
-#endif //CLAUSE_SERVER_ADDRESS_H
+#endif
