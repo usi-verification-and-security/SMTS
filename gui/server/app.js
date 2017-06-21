@@ -20,7 +20,9 @@
         next();
     });
 
-    app.use(bodyParser.urlencoded({ extended : false }));
+    // app.use(bodyParser.urlencoded({ extended : false,limit: '50mb' }));
+    app.use(bodyParser.json({limit: '50mb'}));
+    app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
     app.use(express.static( '../client'));
     app.use(bodyParser.json());
@@ -109,7 +111,6 @@
 
     app.post('/upload', function(req, res) {
         console.log('Uploading db file...');
-        console.log(req.files)
         if (!req.files)
             return res.status(400).send('No files were uploaded.');
 
@@ -129,23 +130,37 @@
         });
     });
 
+    // app.post('/upload', function(req, res) {
+    //     console.log('Uploading db file...');
+    //     console.log(req.body)
+    //     console.log(req.body.file)
+    //     // console.log(req.data)
+    //     // console.log(req.file)
+    //     res.json("");
+    // });
+
     app.get('/getServerData', function(req, res) {
         var response = taskHandler.executeAll(exec);
         res.json(response);
     });
 
-    app.post('/change', function (req, res) {
-        console.log(req.body.timeout);
-        //TODO: Check if it really changes
+    app.post('/changeTimeout', function (req, res) {
+        // console.log(req.body.timeout);
+        // console.log(req.body.type);
+        if(req.body.type == "increase"){
+            taskHandler.increaseTimeout(req.body.timeout);
+        }
+        else{
+            taskHandler.decreaseTimeout(req.body.timeout);
+        }
         // TODO: update timeout in index.html (when refreshing, and also try to prevent refresh)
-        taskHandler.setTimeout(exec, req.body.timeout);
         res.redirect('back');
     });
 
     app.post('/stop', function (req, res) {
         console.log("Stopping solving server execution..")
         //TODO: Check if it really stops
-        taskHandler.stopSolving(exec);
+        taskHandler.stopSolving();
         res.redirect('back');
     });
 
@@ -230,13 +245,26 @@
                     // Database
                     case '-d':
                         database = process.argv[i+1];
+                        if(serverIp){
+                            console.log("You can't provide both a server and a database Closing SMT Viewer.")
+                            process.exit();
+                        }
                         break;
                     case '--database':
                         database = process.argv[i+1];
+                        if(serverIp){
+                            console.log("You can't provide both a server and a database Closing SMT Viewer.")
+                            process.exit();
+                        }
                         break;
 
                     // Server
                     case '-s':
+                        if(database){
+                            console.log("You can't provide both a server and a database Closing SMT Viewer.")
+                            process.exit();
+                        }
+
                         serverIp = taskHandler.getDatabase(exec);
                         // console.log("server IP: " + serverIp);
                         if(serverIp == ""){
@@ -255,6 +283,8 @@
             app.listen(port, function(){
                 console.log('Server running on ' + port + '...');
             });
+
+
         }
     }
 

@@ -35,21 +35,26 @@
             <div class="w3-container task-handler" ng-controller="TaskHandler" ng-init='load()'>
                 <div class="position">
                     <p id="solInst" class="hidden">
-                    <b> Solving Instance: </b> <h id="solvingInstance" >{{solvingInstance}}</h>
+                    <b> Solving Instance: </b> <h id="solvingInstance" >{{solvingInstance}}{{solvingInstanceRemaining}}</h>
                     </p>
 
                     <b> Upload new database file: </b>
-                    <form
+                    <form id="uploadDB"
                         ref='uploadForm'
                           id='uploadForm'
                           action='/upload'
                           method='post'
-                          encType="multipart/form-data">
-                        <input type="file" name="db" accept=".db" required>
+                          encType="multipart/form-data"
+                            >
+                        <input id="db" type="file" name="db" accept=".db" required>
                         <input type='submit' value='Upload!' />
                     </form>
+                    <!--<form id="uploadDB">-->
+                        <!--<input id="db" type="file" name="db" accept=".db" required>-->
+                        <!--<input type='submit' value='Upload!' />-->
+                    <!--</form>-->
 
-
+                    <div id="newInst" class="hidden">
                     <b> Upload new instance: </b>
                     <form ref='uploadInstanceForm'
                           id='uploadInstanceForm'
@@ -59,12 +64,13 @@
                         <input type="file" name="instance" accept="" required>
                         <input type='submit' value='Upload!' />
                     </form>
+                    </div>
                     <div id="task" class="hidden">
-                        <form action="/setTimout"
-                              method='post'>
-                            <b>Timeout:</b> <input type="text" style="width: 100px;" name="timeout" value="1000"><br>
-                            <input type="submit" formaction="/change" name="changeTimeout" value="Set">
-                            <input type="submit" formaction="/stop" name="stopTimeout" value="Stop">
+                        <form>
+                            <b>Timeout:</b> <input type="text" style="width: 100px;" name="timeout"><br>
+                            <input type="submit" value="Increase" ng-click="increaseTimeout()">
+                            <input type="submit" value="Decrease" ng-click="decreaseTimeout()">
+                            <input type="submit" name="stopTimeout" value="Stop" ng-click="stopSS()">
                         </form>
                     </div>
                 </div>
@@ -142,14 +148,13 @@
     </div >
 
 </body>
-
-    <script type="text/javascript" src="scripts/angular.min.js"></script>
+    <script type="text/javascript" src="https://code.angularjs.org/1.5.3/angular.min.js"></script>>
     <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
     <script type="text/javascript" src="angular/main.js"></script>
     <script type="text/javascript" src="angular/EventController.js"></script>
     <script type="text/javascript" src="angular/InstancesController.js"></script>
     <script type="text/javascript" src="angular/SolverController.js"></script>
-    <script type="text/javascript" src="angular/TaskHandler.js"></script>
+    <script type="text/javascript" src="angular/TaskHandlerController.js"></script>
     <script type="text/javascript" src="angular/ViewController.js"></script>
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script type="text/javascript" src="scripts/dndTree.js"></script>

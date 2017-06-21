@@ -1,37 +1,47 @@
 
+var exec = require('child_process').exec;
+
 module.exports = {
 
-    getInstance: function (exec) {
+    getInstance: function () {
         exec("echo 'self.current.root.name if self.current else \"Empty\"'| python3.6 ../../server/client.py 3000", puts);
     },
 
-    getDatabase:function (exec) {
+    getRemainingTime: function () {
+        exec("echo 'self.current.when_timeout if self.current else \"Empty\"'| python3.6 ../../server/client.py 3000", puts);
+    },
+
+    getDatabase:function () {
         exec("echo 'self.config.db().execute(\"PRAGMA database_list\").fetchall()[0][2] if self.config.db() else \"Empty\"'|../../server/client.py 127.0.0.1:3000", putsDb);
         var result = res;
         res = "";
         return result;
     },
 
-    executeAll: function (exec) {
-        this.getInstance(exec);
-        // this.whatever(exec);
+    executeAll: function () {
+
+        this.getInstance();
+        this.getRemainingTime();
 
         var res = response;
         response = [];
         return res;
     },
 
-    setTimeout: function (exec, timeout) {
-        // self.config.solving_timeout
-        exec("echo 'self.config.solving_timeout=" + timeout + " if self.config.solving_timeout else \"Nothing to reset\" '|../../server/client.py 127.0.0.1:3000", putsDb);
+    increaseTimeout: function (timeout) {
+        console.log("Increasing solver timeout by " + timeout);
+        exec("echo 'exec('self.current.timeout+='"+ timeout + "')' if self.current != 'None' else \"Nothing to reset\" '|../../server/client.py 127.0.0.1:3000", putsDb);
 
     },
 
-    stopSolving: function (exec) {
-        exec("echo 'self.current.stop() if self.current else \"Nothing to stop\" '|../../server/client.py 127.0.0.1:3000", putsDb);
-        var result = res;
-        res = "";
-        return result;
+    decreaseTimeout: function (timeout) {
+        console.log("Decreasing solver timeout by " + timeout);
+        exec("echo 'exec('self.current.timeout-='"+ timeout + "')' if self.current != 'None' else \"Nothing to reset\" '|../../server/client.py 127.0.0.1:3000", putsDb);
+
+    },
+
+    stopSolving: function () {
+        exec("echo 'exec('self.current.timeout=1')' if self.current != 'None' else \"Nothing to reset\" '|../../server/client.py 127.0.0.1:3000", putsDb);
     }
 
 };
@@ -40,20 +50,18 @@ var response = [];
 var res = "";
 /*
     response[0] = instance
+    response[1] = remaining time
  */
 
+
 function puts(error, stdout, stderr) {
-    // console.log(stdout);
     if(stdout){
         response.push(stdout);
     }
 
-    // if(stderr){
-        // console.log("Empty");
-        // response.push("Empty");
-    // }
-    // return stdout;
-    // console.log(stderr);
+    if(stderr){
+        response.push("Empty");
+    }
 }
 
 function putsDb(error, stdout, stderr) {

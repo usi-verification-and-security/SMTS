@@ -25,8 +25,6 @@
  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 
-// Maintain position when reconstructing the tree
-
 // Get JSON data
 function getTreeJson(treeData, position) {
     var root = treeData;

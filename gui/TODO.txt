@@ -1,0 +1,6 @@
+TODO:
+
+DURING REAL-TIME ANALYSIS
+- If the user uploads a passed db file hide task handler functionalities and stop following solving server
+- when SMT Viewer is initialized for real-time analysis set “realTimeDB.value” in gui/client/angular/main.js to “true” (for now to follow you have to do it by hand before starting the server)
+- Destory angular timers when server gets closed (inside gui/client/angular/TaskHandlerController.js and gui/client/angular/InstancesController.js)

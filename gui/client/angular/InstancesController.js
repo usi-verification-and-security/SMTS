@@ -1,5 +1,5 @@
 
-app.controller('InstancesController',['$scope','$rootScope','currentRow','sharedTree','realTimeDB','DBcontent','$window','$http','sharedService',function($scope,$rootScope, currentRow,sharedTree,realTimeDB,DBcontent,$window,$http,sharedService){
+app.controller('InstancesController',['$scope','$rootScope','currentRow','sharedTree','realTimeDB', 'timeOut','DBcontent','$window','$http','sharedService',function($scope,$rootScope, currentRow,sharedTree,realTimeDB,timeOut,DBcontent,$window,$http,sharedService){
 
     $scope.load = function() {
         $http({
@@ -11,8 +11,13 @@ app.controller('InstancesController',['$scope','$rootScope','currentRow','shared
             $scope.entries = response.data;
             if(realTimeDB.value == false){
                 $('#solInst').addClass('hidden');
+                $('#newInst').addClass('hidden');
                 $('#task').addClass('hidden');
             }
+            else{
+                $("input[name='timeout']").val(timeOut.value);
+            }
+
         }, function errorCallback(response) {
             // called asynchronously if an error occurs
             // or server returns response with an error status.

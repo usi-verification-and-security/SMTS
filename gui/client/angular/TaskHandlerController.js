@@ -1,7 +1,7 @@
 
-app.controller('TaskHandler',['$scope','$window','$http','realTimeDB',function($scope,$window,$http, realTimeDB){
+app.controller('TaskHandler',['$scope','$window','$http','realTimeDB', 'timeOut',function($scope,$window,$http, realTimeDB,timeOut){
     $scope.load = function() {
-        // If real-time analysis execute every 5 seconds task Handler functions
+        // If real-time analysis execute every 3 seconds task Handler functions
         if(realTimeDB.value) {
             $('#solInst').removeClass('hidden');
             $('#task').removeClass('hidden');
@@ -9,7 +9,7 @@ app.controller('TaskHandler',['$scope','$window','$http','realTimeDB',function($
             var interval = setInterval(function () {
                 console.log("Contacting server....");
                 $scope.getServerData();
-            }, 5000);
+            }, 3000);
         }
 
 
@@ -20,11 +20,12 @@ app.controller('TaskHandler',['$scope','$window','$http','realTimeDB',function($
             method : 'GET',
             url : '/getServerData'
         }).then(function successCallback(response) {
-            console.log(response.data)
+            console.log(response.data);
 
             // Write which instance is being solved
             //TODO: check why the first call gives empty answer
             $scope.solvingInstance = response.data[0];
+            $scope.solvingInstanceRemaining = response.data[1];
 
         }, function errorCallback(response) {
             // called asynchronously if an error occurs
@@ -34,13 +35,33 @@ app.controller('TaskHandler',['$scope','$window','$http','realTimeDB',function($
     };
 
     // TODO: to prevent page redirection after posting move posting here and use "event.preventDefault();"
-    $scope.setTimeout = function () {
+    $scope.increaseTimeout = function () {
         $http({
             method : 'POST',
-            url : '/change'
+            url : '/changeTimeout',
+            data: {
+                'timeout': $("input[name='timeout']").val(),
+                'type' : "increase"
+            },
         }).then(function successCallback(response) {
-            //put each entry of the response array in the table
+            event.preventDefault();
 
+        }, function errorCallback(response) {
+            // called asynchronously if an error occurs
+            // or server returns response with an error status.
+            $window.alert('An error occured!');
+        });
+    };
+
+    $scope.decreaseTimeout = function () {
+        $http({
+            method : 'POST',
+            url : '/changeTimeout',
+            data: {
+                'timeout': $("input[name='timeout']").val(),
+                'type' : "decrease"
+            },
+        }).then(function successCallback(response) {
 
         }, function errorCallback(response) {
             // called asynchronously if an error occurs
@@ -54,8 +75,6 @@ app.controller('TaskHandler',['$scope','$window','$http','realTimeDB',function($
             method : 'POST',
             url : '/stop'
         }).then(function successCallback(response) {
-            //put each entry of the response array in the table
-
 
         }, function errorCallback(response) {
             // called asynchronously if an error occurs
@@ -64,22 +83,31 @@ app.controller('TaskHandler',['$scope','$window','$http','realTimeDB',function($
         });
     };
 
-    $scope.uploadDb = function (file) {
-        console.log(file)
-        $http({
-            method : 'POST',
-            url : '/upload',
-            encType : "multipart/form-data",
-            params : {'files': file}
-        }).then(function successCallback(response) {
-            //put each entry of the response array in the table
-
-
-        }, function errorCallback(response) {
-            // called asynchronously if an error occurs
-            // or server returns response with an error status.
-            $window.alert('An error occured!');
-        });
-    };
+    // Attempt for submitting a db from angular
+    // $( "#uploadDB" ).submit(function( event ) {
+    //     event.preventDefault();
+    //     var file_data = $("#db").prop("files")[0];
+    //     console.log(file_data);
+    //     // var formData = new FormData();
+    //     // formData.append("file", file_data)
+    //     // console.log(formData)
+    //     var db = {"file": file_data};
+    //     console.log(db)
+    //
+    //     $http({
+    //         method : 'POST',
+    //         url : '/upload',
+    //         encType : "multipart/form-data",
+    //         data: db
+    //     }).then(function successCallback(response) {
+    //         //put each entry of the response array in the table
+    //
+    //
+    //     }, function errorCallback(response) {
+    //         // called asynchronously if an error occurs
+    //         // or server returns response with an error status.
+    //         $window.alert('An error occured!');
+    //     });
+    // });
 
 }]);
