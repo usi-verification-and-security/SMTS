@@ -54,6 +54,17 @@
 
     });
 
+    app.get('/getRealTime', function(req, res) {
+        if(serverIp){
+            res.json("True");
+        }
+        else{
+            res.json("False");
+        }
+
+    });
+
+
     app.get('/get/:instance', function(req, res) { // Get content of a specific instance
         if(database ==  undefined){
             console.log("No database was provided.");

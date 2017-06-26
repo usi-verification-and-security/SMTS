@@ -1,19 +1,15 @@
 
-app.controller('TaskHandler',['$scope','$window','$http','realTimeDB', 'timeOut',function($scope,$window,$http, realTimeDB,timeOut){
-    $scope.load = function() {
-        // If real-time analysis execute every 3 seconds task Handler functions
-        if(realTimeDB.value) {
-            $('#solInst').removeClass('hidden');
-            $('#task').removeClass('hidden');
+app.controller('TaskHandler',['$scope','$window','$http','realTimeDB', 'timeOut','sharedService',function($scope,$window,$http, realTimeDB,timeOut, sharedService){
 
-            var interval = setInterval(function () {
-                console.log("Contacting server....");
-                $scope.getServerData();
-            }, 3000);
-        }
+    var interval;
 
+    $scope.$on('handleBroadcast3', function() { // This is called we are in a situation of real-time analysis
+        interval = setInterval(function () {
+            console.log("Contacting server....");
+            $scope.getServerData();
+        }, 3000);
 
-    };
+    });
 
     $scope.getServerData = function() {
         $http({
@@ -28,9 +24,9 @@ app.controller('TaskHandler',['$scope','$window','$http','realTimeDB', 'timeOut'
             $scope.solvingInstanceRemaining = response.data[1];
 
         }, function errorCallback(response) {
-            // called asynchronously if an error occurs
-            // or server returns response with an error status.
-            $window.alert('An error occured!');
+            // Stop intervall when the connection with the server is lost
+            setInterval.cancel(interval);
+            // $window.alert('An error occured!');
         });
     };
 

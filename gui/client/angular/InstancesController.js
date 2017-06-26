@@ -2,26 +2,46 @@
 app.controller('InstancesController',['$scope','$rootScope','currentRow','sharedTree','realTimeDB', 'timeOut','DBcontent','$window','$http','sharedService',function($scope,$rootScope, currentRow,sharedTree,realTimeDB,timeOut,DBcontent,$window,$http,sharedService){
 
     $scope.load = function() {
+        this.isRealTime();
+
         $http({
             method : 'GET',
             url : '/getInstances'
         }).then(function successCallback(response) {
-            //put each entry of the response array in the table
-            // console.log(response.data)
             $scope.entries = response.data;
-            if(realTimeDB.value == false){
-                $('#solInst').addClass('hidden');
-                $('#newInst').addClass('hidden');
-                $('#task').addClass('hidden');
+
+        }, function errorCallback(response) {
+            $window.alert('An error occured: ' + response);
+        });
+    };
+
+    // Check if is real time analysis or not
+    $scope.isRealTime = function () {
+        $http({
+            method : 'GET',
+            url : '/getRealTime'
+        }).then(function successCallback(response) {
+            // console.log(response.data)
+            if(response.data == "True"){
+                realTimeDB.value = true;
+
+                $("input[name='timeout']").val(timeOut.value);
+
+                $('#solInst').removeClass('hidden');
+                $('#task').removeClass('hidden');
+                $('#newInst').removeClass('hidden');
+
+                $('#newDB').addClass('hidden');
+
+                sharedService.broadcastItem3(); // Show events, tree and solvers
             }
             else{
-                $("input[name='timeout']").val(timeOut.value);
+                realTimeDB.value = false;
+                $('#newDB').removeClass('hidden');
             }
 
         }, function errorCallback(response) {
-            // called asynchronously if an error occurs
-            // or server returns response with an error status.
-            $window.alert('An error occured!');
+            $window.alert('An error occured: ' + response);
         });
     };
 
@@ -69,7 +89,8 @@ app.controller('InstancesController',['$scope','$rootScope','currentRow','shared
         }, function errorCallback(response) {
             // called asynchronously if an error occurs
             // or server returns response with an error status.
-            $window.alert('An error occured!');
+            // $window.alert('An error occured!');
+            console.log(response);
         });
 
 
