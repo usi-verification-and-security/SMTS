@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(clause_server C CXX)
+project(SMTS C CXX)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 if (NOT CMAKE_BUILD_TYPE)

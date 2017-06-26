@@ -16,19 +16,27 @@ void Settings::load(int argc, char **argv) {
     while ((opt = getopt(argc, argv, "hap:s:d:")) != -1)
         switch (opt) {
             case 'h':
-                std::cout << "Usage: " << argv[0] << "\n";
+                new(this) Settings();
+                std::cout << "Usage: " << argv[0] << "\n"
+                        "[-h] display this message\n"
+                        "[-s server-host:port]\n"
+                        "[-p listening-port] default: " << this->port << "\n"
+                                  "[-d lemma_database-file] not used if empty\n"
+                                  "[-a] send lemmas again to solvers\n"
+                                  "\n";
                 exit(0);
-            case 'a':
-                this->send_again = true;
+
+            case 's':
+                this->server = optarg;
                 break;
             case 'p':
                 this->port = (uint16_t) atoi(optarg);
                 break;
-            case 's':
-                this->server = optarg;
-                break;
             case 'd':
                 this->db_filename = optarg;
+                break;
+            case 'a':
+                this->send_again = true;
                 break;
             default:
                 std::cout << "unknown option '" << opt << "'" << "\n";

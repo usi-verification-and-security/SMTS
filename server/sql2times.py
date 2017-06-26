@@ -15,6 +15,10 @@ class Benchmark:
         self.ts_end = None
         self.data = None
 
+    @property
+    def status(self):
+        return self.data['status'] if self.data and 'status' in self.data else 'unknown'
+
     def __repr__(self):
         return '<{},{},{}>'.format(self.name, self.ts_start, self.ts_end)
 
@@ -89,7 +93,7 @@ def main():
                 file_times.write(
                     '{} {} {}\n'.format(
                         benchmark.name,
-                        benchmark.data['status'] if benchmark.data and 'status' in benchmark.data else 'unknown',
+                        benchmark.status,
                         benchmark.ts_end - benchmark.ts_start))
                 total_time += benchmark.ts_end - benchmark.ts_start
         print('TOTAL for ' + arg + ': {}'.format(total_time))

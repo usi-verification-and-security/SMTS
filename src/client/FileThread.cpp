@@ -63,7 +63,7 @@ void FileThread::main() {
         } while (header.count("report") == 0 || (
                 header["report"] != "sat" && header["report"] != "unsat" && header["report"] != "unknown"
         ));
-        if (lemmas and this->settings.clear_lemmas) {
+        if (lemmas and !this->settings.keep_lemmas) {
             try {
                 header["lemmas"] = "0";
                 lemmas->write(header, "");

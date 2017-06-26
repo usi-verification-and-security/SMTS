@@ -20,7 +20,7 @@ public:
     std::string server;
     std::string lemmas;
     std::list<std::string> files;
-    bool clear_lemmas;
+    bool keep_lemmas;
     net::Header parameters;
 };
 

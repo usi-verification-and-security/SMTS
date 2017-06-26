@@ -5,6 +5,11 @@
 #include "lib.h"
 
 
+template<>
+const std::string to_string<bool>(const bool &b) {
+    return b ? "true" : "false";
+}
+
 std::istream &split(std::istream &stream,
                     const char delimiter,
                     std::function<void(const std::string &)> callback) {

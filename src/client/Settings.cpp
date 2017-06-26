@@ -4,38 +4,42 @@
 
 #include <getopt.h>
 #include <sstream>
-#include "lib/Logger.h"
+#include "lib/lib.h"
 #include "Settings.h"
 
 
 Settings::Settings() :
         verbose(false),
-        clear_lemmas(false) {}
+        keep_lemmas(false) {}
 
 void Settings::load(int argc, char **argv) {
     int opt;
-    while ((opt = getopt(argc, argv, "hvs:l:cp:r:")) != -1)
+    while ((opt = getopt(argc, argv, "hvs:l:kp:r:")) != -1)
         switch (opt) {
             case 'h':
-                std::cout << "Usage: " << argv[0] <<
-                          " [-s server-host:port]"
-                                  "[-l lemma_server-host:port]"
-                                  "[-hvc]"
-                                  "[-p parameter-json]"
-                                  "[-r parameter-key=value]"
-                                  "\n";
+                new(this) Settings();
+                std::cout << "Usage: " << argv[0] << "\n"
+                        "[-h] display this message\n"
+                        "[-s server-host:port] if empty then file mode is enabled\n"
+                        "[-l lemma_server-host:port]\n"
+                        "[-v] verbose\n"
+                        "[-k] (only for file mode) keep lemmas in lemma server after solving\n"
+                        "[-p parameter-json] (only for file mode)\n"
+                        "[-r parameter-key=value] (only for file mode)\n"
+                        "[file1 ...] (only for file mode)\n";
                 exit(0);
-            case 'v':
-                this->verbose = true;
-                break;
+
             case 's':
                 this->server = optarg;
                 break;
             case 'l':
                 this->lemmas = optarg;
                 break;
-            case 'c':
-                this->clear_lemmas = true;
+            case 'v':
+                this->verbose = true;
+                break;
+            case 'k':
+                this->keep_lemmas = true;
                 break;
             case 'p':
                 std::istringstream(optarg) >> this->parameters;
