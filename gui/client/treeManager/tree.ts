@@ -57,51 +57,38 @@ module TreeManager {
             return this.treeView;
         }
 
-        assignSolvers2(x: number, y: number) {
+        assignSolvers(begin: number, end: number) {
 
             // Reset solvers
             for (let i = 0; i < this.solvers.length; ++i) {
-                this.solvers[i].node = null;
-                this.solvers[i].data = null;
-            }
-        }
-
-        // assignSolvers tells which solver is working on which node
-        assignSolvers(x: number, y: number) {
-            let i = x;
-
-            // clear previous assignments of solvers
-            for (let u = 0; u < this.solvers.length; u++) {
-                this.solvers[u].node = null;
-                this.solvers[u].data = null;
+                this.solvers[i].setNode(null);
+                this.solvers[i].setData(null);
             }
 
-            // assign
-            for (i; i <= y; i++) {
-                if (this.events[i].event == "+") {
-
-                    for (let u = 0; u < this.solvers.length; u++) {
-                        if (this.solvers[u].name == this.events[i].solver) {
-                            // console.log("Assigning solver " + this.events[i].solver + " to node " + JSON.parse(this.events[i].node));
-                            this.solvers[u].node = JSON.parse(this.events[i].node);
-                            this.solvers[u].setData(this.events[i].data);
+            for (let i = begin; i <= end; ++i) {
+                let event = this.events[i];
+                switch (event.event) {
+                    case '+':
+                        for (let j = 0; j < this.solvers.length; ++j) {
+                            let solver = this.solvers[j];
+                            if (solver.name == event.name) {
+                                solver.setNode(JSON.parse(event.node));
+                                solver.setData(event.data);
+                            }
                         }
-                    }
-                }
+                        break;
 
-                if (this.events[i].event == "-") {
-
-                    for (let u = 0; u < this.solvers.length; u++) {
-                        if (this.solvers[u].name == this.events[i].solver) {
-                            // console.log("Removing solver " + this.events[i].solver + " from node " + JSON.parse(this.events[i].node));
-                            this.solvers[u].node = null;
-                            this.solvers[u].data = null;
+                    case '-':
+                        for (let j = 0; j < this.solvers.length; ++j) {
+                            let solver = this.solvers[j];
+                            if (solver.name == event.name) {
+                                solver.setNode(null);
+                                solver.setData(null);
+                            }
                         }
-                    }
+                        break;
                 }
-
             }
-
         }
 
         //getEvents(x) returns the first x events

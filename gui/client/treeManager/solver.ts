@@ -12,5 +12,9 @@ module TreeManager {
         setData(data: Object) {
             this.data = data;
         }
+
+        setNode(node) {
+            this.node = node;
+        }
     }
 }
