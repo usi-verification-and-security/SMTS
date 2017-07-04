@@ -1,4 +1,3 @@
-
 module TreeManager {
     export class Event {
         id: number;
@@ -17,11 +16,10 @@ module TreeManager {
             this.event = value.event;
             this.solver = value.solver;
             this.data = value.data;
-
         }
 
-        setTs(value: number){
-            this.ts =value;
+        setTs(value: number) {
+            this.ts = value;
         }
 
     }

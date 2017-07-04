@@ -1,4 +1,4 @@
-var app = angular.module('myApp', ['ngFileUpload'])
+let app = angular.module('myApp', ['ngFileUpload'])
 
 // Variable used to keep track how many rows of the db needs to be read
     .value('currentRow', {value: 0})
@@ -10,7 +10,7 @@ var app = angular.module('myApp', ['ngFileUpload'])
     .value('timeOut', {value: 1000})
 
     .factory('sharedService', function ($rootScope) {
-        var sharedService = {};
+        let sharedService = {};
 
         // This is used to show solvers, tree and events when an instance is selected
         sharedService.broadcastItem = function () {
@@ -32,7 +32,5 @@ var app = angular.module('myApp', ['ngFileUpload'])
 
     //Tree
     .factory('sharedTree', function () {
-        var tree = new TreeManager.Tree();
-        return tree;
-
+        return new TreeManager.Tree();
     });

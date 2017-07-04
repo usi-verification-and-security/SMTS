@@ -4,8 +4,7 @@ app.controller(
         function ($scope, $rootScope, currentRow, sharedTree, $window, $http, sharedService) {
 
             $scope.$on('handleBroadcast', function () { // This is called when an instance is selected
-                var eventEntries = sharedTree.tree.getEvents(currentRow.value);
-                // console.log(eventEntries)
+                let eventEntries = sharedTree.tree.getEvents(currentRow.value);
                 $scope.entries = eventEntries;
                 $scope.initTimeline(eventEntries); // Initialize timeline
 
@@ -25,16 +24,16 @@ app.controller(
                 });
 
                 $(".dash").click(function () {
-                    var spanNum = $(this).attr("id");
+                    let spanNum = $(this).attr("id");
                     selectEvent(spanNum);
 
                     //Simulate event click to rebuild the tree
-                    var find = "event" + spanNum;
-                    var row = document.getElementById(find);
+                    let find = "event" + spanNum;
+                    let row = document.getElementById(find);
                     row.click();
 
                     // Scroll event table to selected event
-                    var query = "#" + find;
+                    let query = "#" + find;
                     d5.scrollTop = 0;
                     $('#d5').scrollTop($(query).offset().top - $('#d5').offset().top)
                 });
@@ -44,23 +43,23 @@ app.controller(
             $scope.showEvent = function ($event, $index, x) {
                 // Highlight selected event
                 $('.event-container table tr').removeClass("highlight");
-                var query = '.event-container table tr[data-event="' + x.id + '"]';
+                let query = '.event-container table tr[data-event="' + x.id + '"]';
                 $(query).addClass("highlight");
 
                 currentRow.value = $index;
                 sharedTree.tree.arrangeTree(currentRow.value);
-                var treeView = sharedTree.tree.getTreeView();
-                var position = $('g')[0].getAttribute("transform");
+                let treeView = sharedTree.tree.getTreeView();
+                let position = $('g')[0].getAttribute("transform");
                 getTreeJson(treeView, position);
 
                 // Show event's data in dataView
-                var object = JSON.parse(x.data);
+                let object = JSON.parse(x.data);
                 if (object == null) {
                     object = {};
                 }
                 //sort object by key values
-                var keys = [], k, i, len;
-                var sortedObj = {};
+                let keys = [], k, i, len;
+                let sortedObj = {};
                 for (k in object) {
                     if (object.hasOwnProperty(k)) {
                         keys.push(k);
@@ -72,10 +71,10 @@ app.controller(
                     k = keys[i];
                     sortedObj[k] = object[k];
                 }
-                var ppTable = prettyPrint(sortedObj);
-                var tableName = "Event " + x.event;
+                let ppTable = prettyPrint(sortedObj);
+                let tableName = "Event " + x.event;
                 document.getElementById('d6_1').innerHTML = tableName.bold();
-                var item = document.getElementById('d6_2');
+                let item = document.getElementById('d6_2');
 
                 if (item.childNodes[0]) {
                     item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table
@@ -85,12 +84,12 @@ app.controller(
                 }
 
                 //Update timeline
-                var circle = document.getElementById(x.id);
-                if (circle != null) {
+                let circle = document.getElementById(x.id);
+                if (circle !== null) {
                     selectEvent(x.id);
                 }
-                else if ((circle == null) && (timelineEvents.length > 1)) { // if timelineEvents.length < 2 then there isn' the timeline
-                    var index = findElwithSameTS(x.ts);
+                else if ((circle === null) && (timelineEvents.length > 1)) { // if timelineEvents.length < 2 then there isn' the timeline
+                    let index = findElwithSameTS(x.ts);
                     selectEvent(index);
                 }
 
