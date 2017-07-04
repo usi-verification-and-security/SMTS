@@ -1,0 +1,10 @@
+.idea/
+build/
+cmake-build-debug/CMakeCache.txt
+cmake-build-debug/CMakeFiles/
+gui/.idea/
+gui/server/node_modules/
+server/__pycache__/
+server/config/config.py
+server/config/__pycache__/
+tests/
