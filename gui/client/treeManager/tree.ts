@@ -45,18 +45,12 @@ module TreeManager {
 
                     case 'SOLVED':
                         treeView.updateNode(event.node, type, data.status);
-                        this.rootSolved(treeView, data.status);
+                        treeView.setStatus(data.status);
                         break;
                 }
             }
 
             this.treeView = treeView;
-        }
-
-        // rootSolved sets the status of the root to sat or unsat
-        rootSolved(obj, data) {
-            obj.status = data;
-            return obj;
         }
 
         getTreeView() {

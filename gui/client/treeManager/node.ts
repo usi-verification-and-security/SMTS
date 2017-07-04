@@ -1,7 +1,7 @@
 module TreeManager {
     export class Node {
         name: number[]; // es. [0,3]
-        type: string; // AND or OR
+        type: string;   // 'AND', 'OR', '+', '-', 'STATUS' or 'SOLVED'
         children: Node[] = [];
         solvers: string[] = []; // solvers working on it
         status: string = "unknown"; // initially "unknown"
@@ -54,6 +54,10 @@ module TreeManager {
                     node.status = data;
                     break;
             }
+        }
+
+        setStatus(status) {
+            this.status = status;
         }
     }
 }
