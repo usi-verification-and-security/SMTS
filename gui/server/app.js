@@ -8,9 +8,9 @@ const taskHandler = require('./taskHandler');
 const sys = require('util');
 const fs = require('fs');
 
-let database; // For past execution analysis
-let isRealTime; // true database is running on server
-let port; // Default port 3000
+let database;           // For past execution analysis
+let isRealTime = false; // true if database is running on server
+let port = 3000;        // Default port 3000
 
 app.use(function (req, res, next) { //allow cross origin requests
     res.setHeader("Access-Control-Allow-Methods", "POST, PUT, OPTIONS, DELETE, GET");
@@ -257,11 +257,6 @@ function initialize() {
         if (!database) {
             console.log('Error: no database wa provided');
             process.exit();
-        }
-
-        // Default port
-        if (port === undefined) {
-            port = '3000';
         }
 
         app.listen(port, function () {
