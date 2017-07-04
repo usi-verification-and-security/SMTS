@@ -92,35 +92,27 @@ module TreeManager {
         }
 
         //getEvents(x) returns the first x events
-        getEvents(x: number) {
-            if (x == this.events.length) {
+        getEvents(n: number) {
+            if (n == this.events.length) {
                 return this.events;
             }
-            else {
-                var events = [];
-                for (var i = 0; i < x; i++) {
-                    events.push(this.events[i]);
-                }
-                return events;
-            }
+            return this.events.slice(0, n);
         }
 
+        // Insert solvers in this.solvers only if not already present
         initializeSolvers(array) {
-            var present;
-            for (var item of array) {
-                present = 0;
-                for (var i of this.solvers) {
-                    if (i.name == item.solver) {
-                        present = 1;
+            let isPresent;
+            for (let item of array) {
+                isPresent = false;
+                for (let solver of this.solvers) {
+                    if (solver.name == item.solver) {
+                        isPresent = true;
                     }
                 }
-                if (present == 0) {
+                if (!isPresent) {
                     this.solvers.push(new Solver(item.solver));
                 }
             }
         }
-
-
     }
-
 }
