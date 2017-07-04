@@ -3,6 +3,7 @@ build/
 cmake-build-debug/CMakeCache.txt
 cmake-build-debug/CMakeFiles/
 gui/.idea/
+gui/client/treeManager/*.js
 gui/server/node_modules/
 server/__pycache__/
 server/config/config.py

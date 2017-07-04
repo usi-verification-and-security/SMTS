@@ -10,20 +10,22 @@ module TreeManager {
             this.name = name;
             this.type = type;
             // this.status = "unknown";
-
-        }
-
-        test() {
-
         }
 
         getName() {
             console.log(this.name);
-
         }
 
         addChild(child: Node) {
             this.children.push(child);
+        }
+
+        insertNode(child: Node) {
+            let node: Node = this;
+            for (let i = 0; i < child.name.length - 1; ++i) {
+                node = node.children[child.name[i]];
+            }
+            node.children[child.name[child.name.length - 1]] = child;
         }
     }
 }
