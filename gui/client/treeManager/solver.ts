@@ -1,4 +1,3 @@
-
 module TreeManager {
     export class Solver {
         name: string;
@@ -8,12 +7,10 @@ module TreeManager {
         constructor(name: string) {
             this.name = name;
             this.node = [];
-
         }
 
-        setData(data: Object){
+        setData(data: Object) {
             this.data = data;
         }
     }
-    ;
 }

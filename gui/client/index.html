@@ -21,7 +21,7 @@
             <div class="w3-container instance-container" ng-controller="InstancesController" ng-init='load()'>
                 <table class="etable">
                     <thead>
-                        <th> <b>Instances</b></th>
+                        <th><b>Instances</b></th>
                     </thead>
                     <tbody>
                         <tr data-instance="{{x.name}}" ng-repeat="x in entries" ng-click="clickEvent($event,x)">
@@ -41,7 +41,7 @@
                     <div id="newDB" class="hidden">
                     <b> Upload new database file: </b>
                     <form id="uploadDB"
-                        ref='uploadForm'
+                          ref='uploadForm'
                           id='uploadForm'
                           action='/upload'
                           method='post'
@@ -163,10 +163,10 @@
     <script type="text/javascript" src="scripts/ng-file-upload.min.js"></script>
     <script type="text/javascript" src="scripts/ng-file-upload-shim.min.js"></script>
     <script src="scripts/prettyprint.js"></script>
-    <script src="treeManager/event.js"></script>
-    <script src="treeManager/node.js"></script>
-    <script src="treeManager/solver.js"></script>
-    <script src="treeManager/tree.js"></script>
+    <script src="treeManager/Event.js"></script>
+    <script src="treeManager/Node.js"></script>
+    <script src="treeManager/Solver.js"></script>
+    <script src="treeManager/Tree.js"></script>
     <script src="scripts/timeline.js"></script>
 
 </html>

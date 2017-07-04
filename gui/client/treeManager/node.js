@@ -20,6 +20,4 @@ var TreeManager;
         return Node;
     }());
     TreeManager.Node = Node;
-    ;
 })(TreeManager || (TreeManager = {}));
-//# sourceMappingURL=node.js.map

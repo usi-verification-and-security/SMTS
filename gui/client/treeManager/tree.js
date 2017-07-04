@@ -17,19 +17,53 @@ var TreeManager;
                 this.events.push(event);
             }
         };
+        Tree.prototype.arrangeTree = function (n) {
+            var treeView = new TreeManager.Node([], 'AND'); // The root is an 'AND'
+            for (var i = 0; i <= n; ++i) {
+                var event_1 = this.events[i];
+                var type = event_1.event;
+                var data = JSON.parse(event_1.data);
+                console.log(treeView);
+                switch (type) {
+                    case 'OR':
+                        treeView = this.insertNode(treeView, JSON.parse(event_1.node), new TreeManager.Node(JSON.parse(data.node), 'OR'));
+                        break;
+                    case 'AND':
+                        var parentNode = [];
+                        var dataNode = JSON.parse(data.node);
+                        for (var j = 0; j < dataNode.length - 1; ++j) {
+                            parentNode.push(dataNode[j]);
+                        }
+                        //console.log(treeView);
+                        treeView = this.insertNode(treeView, parentNode, new TreeManager.Node(dataNode, 'AND'));
+                        break;
+                    case '+':
+                    case '-':
+                        this.updateNode(treeView, event_1.node, type, event_1.solver);
+                        break;
+                    case 'STATUS':
+                        this.updateNode(treeView, event_1.node, type, data.report);
+                        break;
+                    case 'SOLVED':
+                        this.updateNode(treeView, event_1.node, type, data.status);
+                        this.rootSolved(treeView, data.status);
+                        break;
+                }
+            }
+            this.treeView = treeView;
+        };
         //variable howMany tells how many rows need to be read from the db
-        Tree.prototype.arrangeTree = function (howMany) {
+        Tree.prototype.arrangeTree1 = function (howMany) {
             var treeView;
             treeView = new TreeManager.Node([], "AND");
-            // console.log(treeView)
             for (var record = 0; record <= howMany; record++) {
                 var parentNode = [];
+                //console.log(this.events[record]);
                 var depth = JSON.parse(this.events[record].data);
                 var event = this.events[record].event;
                 if (event == "OR") {
                     var node = new TreeManager.Node(JSON.parse(depth.node), "OR"); // This is for "db = prova.db" and the big database
                     // var node = new Node(depth.node,"OR"); // This is for "db = opensmt.db"
-                    // var node = new Node(depth, "OR"); // This is for "db = global.db"
                     parentNode = JSON.parse(this.events[record].node);
                     treeView = this.insertNode(treeView, parentNode, node);
                 }
@@ -182,4 +216,3 @@ var TreeManager;
     }());
     TreeManager.Tree = Tree;
 })(TreeManager || (TreeManager = {}));
-//# sourceMappingURL=tree.js.map

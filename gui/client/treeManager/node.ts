@@ -1,4 +1,3 @@
-
 module TreeManager {
     export class Node {
         name: number[]; // es. [0,3]
@@ -27,5 +26,4 @@ module TreeManager {
             this.children.push(child);
         }
     }
-    ;
 }

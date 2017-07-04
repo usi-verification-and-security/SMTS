@@ -1,11 +1,10 @@
-
-module TreeManager{
+module TreeManager {
 
     export class Tree {
         events: Event[] = [];
         solver: Array<[string, string]> = [];
         solvers: Solver[] = [];
-        treeView: TreeManager.Node; // This is the tree seen in the visualization
+        treeView: Node; // This is the tree seen in the visualization
 
         constructor() {
         }
@@ -21,63 +20,42 @@ module TreeManager{
             }
         }
 
-        //variable howMany tells how many rows need to be read from the db
-        arrangeTree(howMany) {
-            var treeView;
+        arrangeTree(n) {
+            let treeView = new Node([], 'AND'); // The root is an 'AND'
 
-            treeView = new Node([], "AND");
-            // console.log(treeView)
+            for (let i = 0; i <= n; ++i) {
+                let event = this.events[i];
+                let type = event.event;
+                let data = JSON.parse(event.data);
 
-            for (var record = 0; record <= howMany; record++) {
-                var parentNode = [];
+                switch (type) {
+                    case 'OR':
+                        treeView = this.insertNode(treeView, JSON.parse(event.node), new Node(JSON.parse(data.node), 'OR'));
+                        break;
 
-                var depth = JSON.parse(this.events[record].data);
-                var event = this.events[record].event;
+                    case 'AND':
+                        let parentNode = [];
+                        let dataNode = JSON.parse(data.node);
+                        for (let j = 0; j < dataNode.length - 1; ++j) {
+                            parentNode.push(dataNode[j]);
+                        }
+                        treeView = this.insertNode(treeView, parentNode, new Node(dataNode, 'AND'));
+                        break;
 
-                if (event == "OR") {
-                    var node = new Node(JSON.parse(depth.node),"OR"); // This is for "db = prova.db" and the big database
-                    // var node = new Node(depth.node,"OR"); // This is for "db = opensmt.db"
-                    // var node = new Node(depth, "OR"); // This is for "db = global.db"
+                    case '+':
+                    case '-':
+                        this.updateNode(treeView, event.node, type, event.solver);
+                        break;
 
-                    parentNode = JSON.parse(this.events[record].node);
-                    treeView = this.insertNode(treeView, parentNode, node);
+                    case 'STATUS':
+                        this.updateNode(treeView, event.node, type, data.report);
+                        break;
+
+                    case 'SOLVED':
+                        this.updateNode(treeView, event.node, type, data.status);
+                        this.rootSolved(treeView, data.status);
+                        break;
                 }
-
-                if (event == "AND") {
-                    var node = new Node(JSON.parse(depth.node), "AND");
-                    // var node = new Node(depth.node, "AND");// This is for "db = opensmt.db"
-
-
-                    // find parent node (es. for [0,3,0,1] parent is [0,3,0])
-                    // for (var i = 0; i < depth.node.length - 1; ++i) {// This is for "db = opensmt.db"
-                        for (var i = 0; i < JSON.parse(depth.node).length - 1; ++i) {
-                        parentNode.push(JSON.parse(depth.node)[i]);
-                        // parentNode.push(depth.node[i]); // This is for "db = opensmt.db"
-
-                    }
-
-                    //insert node in the tree
-                    treeView = this.insertNode(treeView, parentNode, node);
-                }
-
-                if (event == "+" || event == "-") {
-                    // console.log(treeView)
-                    this.updateNode(treeView, this.events[record].node, event, this.events[record].solver);
-                }
-
-                var status = JSON.parse(this.events[record].data);
-
-                if (event == "STATUS") {
-                    this.updateNode(treeView, this.events[record].node, event, status.report);
-                }
-                if (event == "SOLVED") {
-                    this.updateNode(treeView, this.events[record].node, event, status.status);
-                    this.rootSolved(treeView, status.status);
-                    // console.log("SOLVED! Problem "+ this.events[record].name +" is " + status.status);
-                }
-
-                // console.log(treeView)
-
             }
 
             this.treeView = treeView;
@@ -151,7 +129,7 @@ module TreeManager{
             var i = x;
 
             // clear previous assignments of solvers
-            for(var u= 0; u < this.solvers.length; u++){
+            for (var u = 0; u < this.solvers.length; u++) {
                 this.solvers[u].node = null;
                 this.solvers[u].data = null;
             }
@@ -198,21 +176,20 @@ module TreeManager{
             }
         }
 
-        initializeSolvers(array){
+        initializeSolvers(array) {
             var present;
             for (var item of array) {
                 present = 0;
                 for (var i of this.solvers) {
-                    if(i.name == item.solver){
+                    if (i.name == item.solver) {
                         present = 1;
                     }
                 }
-                if(present== 0){
+                if (present == 0) {
                     this.solvers.push(new Solver(item.solver));
                 }
             }
         }
-
 
 
     }

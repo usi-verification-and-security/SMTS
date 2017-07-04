@@ -16,6 +16,4 @@ var TreeManager;
         return Event;
     }());
     TreeManager.Event = Event;
-    ;
 })(TreeManager || (TreeManager = {}));
-//# sourceMappingURL=event.js.map

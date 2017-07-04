@@ -5,7 +5,7 @@
   "description": "Jelena's bachelor project",
   "scripts": {
     "dev": "npm run build:live",
-    "build:live": "nodemon --exec ./node_modules/.bin/ts-node -- ../client/ts/*.ts"
+    "build:live": "nodemon --exec ./node_modules/.bin/tsc -- ../client/treeManager/*.ts"
   },
   "repository": {},
   "author": "",

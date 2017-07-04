@@ -11,6 +11,4 @@ var TreeManager;
         return Solver;
     }());
     TreeManager.Solver = Solver;
-    ;
 })(TreeManager || (TreeManager = {}));
-//# sourceMappingURL=solver.js.map
