@@ -27,5 +27,33 @@ module TreeManager {
             }
             node.children[child.name[child.name.length - 1]] = child;
         }
+
+        updateNode(nodeName, event, data) {
+            nodeName = JSON.parse(nodeName);
+            let node: Node = this;
+
+            // Get corresponding node in tree
+            for (let i = 0; i < nodeName.length; ++i) {
+                node = node.children[nodeName[i]];
+            }
+
+            switch (event) {
+                case '+':
+                    node.solvers.push(data);
+                    break;
+
+                case '-':
+                    let index = node.solvers.indexOf(data);
+                    if (index > -1) {
+                        node.solvers.splice(index, 1);
+                    }
+                    break;
+
+                case 'STATUS':
+                case 'SOLVED':
+                    node.status = data;
+                    break;
+            }
+        }
     }
 }

@@ -36,49 +36,21 @@ module TreeManager {
 
                     case '+':
                     case '-':
-                        this.updateNode(treeView, event.node, type, event.solver);
+                        treeView.updateNode(event.node, type, event.solver);
                         break;
 
                     case 'STATUS':
-                        this.updateNode(treeView, event.node, type, data.report);
+                        treeView.updateNode(event.node, type, data.report);
                         break;
 
                     case 'SOLVED':
-                        this.updateNode(treeView, event.node, type, data.status);
+                        treeView.updateNode(event.node, type, data.status);
                         this.rootSolved(treeView, data.status);
                         break;
                 }
             }
 
             this.treeView = treeView;
-        }
-
-        updateNode(obj, node, event, data) {
-            if (JSON.stringify(obj.name) == JSON.stringify(JSON.parse(node))) {
-                if (event == "+") {
-                    obj.solvers.push(data);
-                }
-                if (event == "-") {
-                    var index = obj.solvers.indexOf(data);
-                    if (index > -1) {
-                        obj.solvers.splice(index, 1);
-                    }
-                }
-                if (event == "STATUS") {
-                    obj.status = data;
-                }
-                if (event == "SOLVED") {
-                    obj.status = data;
-                }
-                return obj;
-            }
-
-            for (var i = 0; i < obj.children.length; i++) {
-                var result = this.updateNode(obj.children[i], node, event, data);
-                if (result) {
-                    return obj;
-                }
-            }
         }
 
         // rootSolved sets the status of the root to sat or unsat
