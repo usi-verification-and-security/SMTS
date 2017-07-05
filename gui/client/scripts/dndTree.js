@@ -26,28 +26,27 @@
  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 
 // Get JSON data
-function getTreeJson(treeData, position) {
-    let root = treeData;
+function getTreeJson(root, position) {
 
     // Calculate total nodes, max label length
-    let maxLabelLength = getMaxLabelLength(treeData);
-
-    // Drag/drop
-    let selectedNode = null;
-    let draggingNode = null;
+    let maxLabelLength = getMaxLabelLength(root);
 
     // Misc.
     let i = 0;
     let duration = 0;
 
+    // Scale and tranlate values
+    let scale;
+    let x, y;
+
     // Size of the diagram
     let viewerWidth = document.getElementById("tree-container").offsetWidth;
     let viewerHeight = document.getElementById("tree-container").offsetHeight;
 
-    // ???
+    // Create tree
     let tree = d3.layout.tree().size([viewerHeight, viewerWidth]);
 
-    // Define a d3 diagonal projection for use by the node paths later on.
+    // Define a d3 diagonal projection for use by the node paths later on
     let diagonal = d3.svg.diagonal().projection(function (d) {
         return [d.y, d.x];
     });
@@ -75,7 +74,6 @@ function getTreeJson(treeData, position) {
     let svgGroup = baseSvg.append("g");
 
     // Define the root
-    root = treeData;
     if (root) {
         root.x0 = viewerHeight / 2;
         root.y0 = 0;
@@ -95,9 +93,6 @@ function getTreeJson(treeData, position) {
             zoomListener.translate([x, y]);
         }
     }
-
-
-    // FUNCTIONS
 
     // Get the max length of a label of all nodes in the given tree
     function getMaxLabelLength(tree) {
@@ -120,12 +115,10 @@ function getTreeJson(treeData, position) {
     // Function to center node when clicked/dropped so node doesn't get lost when collapsing/moving with large amount of children.
     function centerNode(source) {
         scale = zoomListener.scale();
-        x = -source.y0;
-        y = -source.x0;
-        x = x * scale + viewerWidth / 2;
-        y = y * scale + viewerHeight / 2;
+        x = -source.y0 * scale + viewerWidth / 2;
+        y = -source.x0 * scale + viewerHeight / 2;
 
-        position = "translate(" + x + "," + y + ")scale(" + scale + ")";
+        position = `translate(${x},${y})scale(${scale})`;
 
         d3.select('g').transition()
             .duration(duration)
@@ -138,36 +131,40 @@ function getTreeJson(treeData, position) {
         // Compute the new height, function counts total children of root node and sets tree height accordingly.
         // This prevents the layout looking squashed when new nodes are made visible or looking sparse when nodes are removed
         // This makes the layout more consistent.
-        let levelWidth = [1];
-        let childCount = function (level, n) {
 
-            if (n.children && n.children.length > 0) {
-                if (levelWidth.length <= level + 1) levelWidth.push(0);
+        function getNewHeight() {
+            let levelWidth = [1];
+            getMaxLevelWidthRec(0, root);
+            return d3.max(levelWidth) * 25; // 25px per line
 
-                levelWidth[level + 1] += n.children.length;
-                n.children.forEach(function (d) {
-                    childCount(level + 1, d);
-                });
+            function getMaxLevelWidthRec(level, n) {
+                if (n.children && n.children.length > 0) {
+                    if (levelWidth.length <= level + 1) {
+                        levelWidth.push(0);
+                    }
+                    levelWidth[level + 1] += n.children.length;
+                    n.children.forEach(function (d) {
+                        getMaxLevelWidthRec(level + 1, d);
+                    });
+                }
             }
-        };
-        childCount(0, root);
-        let newHeight = d3.max(levelWidth) * 25; // 25 pixels per line
+        }
+
+        let newHeight = getNewHeight(); // 25 pixels per line
+
         tree = tree.size([newHeight, viewerWidth]);
 
         // Compute the new tree layout.
-        let nodes = tree.nodes(root).reverse(),
-            links = tree.links(nodes);
+        let nodes = tree.nodes(root).reverse();
+        let links = tree.links(nodes);
 
         // Set widths between levels based on maxLabelLength.
         nodes.forEach(function (d) {
-            d.y = (d.depth * (maxLabelLength * 10)); //maxLabelLength * 10px
-            // alternatively to keep a fixed scale one can set a fixed depth per level
-            // Normalize for fixed-depth by commenting out below line
-            // d.y = (d.depth * 500); //500px per level.
+            d.y = (d.depth * (maxLabelLength * 10));
         });
 
-        // Update the nodes…
-        node = svgGroup.selectAll("g.node")
+        // Update the nodes
+        let node = svgGroup.selectAll("g.node")
             .data(nodes, function (d) {
                 return d.id || (d.id = ++i);
             });
@@ -176,31 +173,31 @@ function getTreeJson(treeData, position) {
         let nodeEnter = node.enter().append("g")
         // .call(dragListener)
             .attr("class", "node")
-            .attr("transform", function (d) {
-                return "translate(" + source.y0 + "," + source.x0 + ")";
+            .attr("transform", function () {
+                return `translate(${source.y0},${source.x0})`;
             })
             .on('click', click);
 
         nodeEnter.append("circle")
             .attr("r", 0)
             .attr('class', function (d) {
-                let c = "nodeCircle ";
+                let className = "nodeCircle ";
                 if (d.type === "OR") {
-                    c += 'orNode';
-                    return c;
+                    className += 'orNode';
+                    return className;
                 }
                 else {
                     if (d.status === "sat") {
-                        c += 'sat';
-                        return c;
+                        className += 'sat';
+                        return className;
                     }
                     else if (d.status === "unsat") {
-                        c += 'unsat';
-                        return c;
+                        className += 'unsat';
+                        return className;
                     }
                     else {
-                        c += 'unknown';
-                        return c;
+                        className += 'unknown';
+                        return className;
                     }
 
                 }
@@ -220,7 +217,7 @@ function getTreeJson(treeData, position) {
             })
             .style("fill-opacity", 0);
 
-        // Update the text to reflect whether node has children or not.
+        // Update the text to reflect whether node has children or not
         node.select('text')
             .attr("x", function (d) {
                 return d.children || d._children ? -10 : 10;
@@ -231,7 +228,7 @@ function getTreeJson(treeData, position) {
             .text(function (d) {
                 // return d.name;
                 if (d.type === "AND") {
-                    return d.solvers.length; //label is number of solvers working on the node
+                    return d.solvers.length; // Label is number of solvers working on the node
                 }
                 return null;
             });
@@ -240,25 +237,22 @@ function getTreeJson(treeData, position) {
         node.select("circle.nodeCircle")
             .attr("r", 4.5)
             .attr('class', function (d) {
-                let c = "nodeCircle ";
+                let className = "nodeCircle ";
                 if (d.type === "OR") {
-                    c += 'orNode';
-                    return c;
+                    className += 'orNode';
+                    return className;
+                }
+                else if (d.status === "sat") {
+                    className += 'sat';
+                    return className;
+                }
+                else if (d.status === "unsat") {
+                    className += 'unsat';
+                    return className;
                 }
                 else {
-                    if (d.status === "sat") {
-                        c += 'sat';
-                        return c;
-                    }
-                    else if (d.status === "unsat") {
-                        c += 'unsat';
-                        return c;
-                    }
-                    else {
-                        c += 'unknown';
-                        return c;
-                    }
-
+                    className += 'unknown';
+                    return className;
                 }
             });
 
@@ -266,7 +260,7 @@ function getTreeJson(treeData, position) {
         let nodeUpdate = node.transition()
             .duration(duration)
             .attr("transform", function (d) {
-                return "translate(" + d.y + "," + d.x + ")";
+                return `translate(${d.y},${d.x})`;
             });
 
         // Fade the text in
@@ -277,7 +271,7 @@ function getTreeJson(treeData, position) {
         let nodeExit = node.exit().transition()
             .duration(duration)
             .attr("transform", function (d) {
-                return "translate(" + source.y + "," + source.x + ")";
+                return `translate(${source.y},${source.x})`;
             })
             .remove();
 
@@ -353,7 +347,6 @@ function getTreeJson(treeData, position) {
 function click(d) {
     showNodeData(d);
     highlightSolvers(d);
-
 }
 
 // This function shows node data in data view
@@ -374,15 +367,13 @@ function showNodeData(d) {
     else {
         item.appendChild(ppTable);
     }
-
 }
 
 // This function highlights in solver view the solvers working on the clicked node
 function highlightSolvers(d) {
-    let node = "[" + d.name.toString() + "]";
-    let query = '.solver-container table tr[data-node="' + node + '"]';
+    let node = `[${d.name.toString()}]`;
+    let query = `.solver-container table tr[data-node="${node}"]`;
 
     $('.solver-container table tr').removeClass("highlight");
     $(query).addClass("highlight");
-
 }
