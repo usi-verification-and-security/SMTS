@@ -57,3 +57,8 @@ circle.nodeCircle.unknown{
 circle.nodeCircle.orNode {
     fill: #C0C0C0;
 }
+
+circle.nodeCircle.selectedNode {
+    fill: rgba(0, 0, 255, 0.1);
+    stroke: none;
+}

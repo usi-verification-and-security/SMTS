@@ -26,7 +26,7 @@
  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 
 // Get JSON data
-function getTreeJson(root, position) {
+function getTreeJson(root, position, selectedNode) {
 
     // Calculate total nodes, max label length
     let maxLabelLength = getMaxLabelLength(root);
@@ -34,10 +34,6 @@ function getTreeJson(root, position) {
     // Misc.
     let i = 0;
     let duration = 0;
-
-    // Scale and tranlate values
-    let scale;
-    let x, y;
 
     // Size of the diagram
     let viewerWidth = document.getElementById("tree-container").offsetWidth;
@@ -200,6 +196,16 @@ function getTreeJson(root, position) {
                         return className;
                     }
 
+                }
+            });
+
+        nodeEnter.append("circle")
+            .attr("r", 20)
+            .attr("class", function(d) {
+                if (JSON.stringify(d.name) === selectedNode) {
+                    return "nodeCircle selectedNode";
+                } else {
+                    return "hidden";
                 }
             });
 
