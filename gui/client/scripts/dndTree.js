@@ -117,36 +117,6 @@ function getTreeJson(treeData, position) {
         }
     }
 
-    // Update the temporary connector indicating dragging affiliation
-    function updateTempConnector() {
-        let data = [];
-        if (draggingNode !== null && selectedNode !== null) {
-            console.log('DRAGGING');
-            // Flip the source coordinates since we did this for the existing connectors on the original tree
-            data = [{
-                source: {
-                    x: selectedNode.y0,
-                    y: selectedNode.x0
-                },
-                target: {
-                    x: draggingNode.y0,
-                    y: draggingNode.x0
-                }
-            }];
-        }
-
-        let link = svgGroup.selectAll(".templink").data(data);
-
-        link.enter().append("path")
-            .attr("class", "templink")
-            .attr("d", d3.svg.diagonal())
-            .attr('pointer-events', 'none');
-
-        link.attr("d", d3.svg.diagonal());
-
-        link.exit().remove();
-    }
-
     // Function to center node when clicked/dropped so node doesn't get lost when collapsing/moving with large amount of children.
     function centerNode(source) {
         scale = zoomListener.scale();
@@ -215,16 +185,16 @@ function getTreeJson(treeData, position) {
             .attr("r", 0)
             .attr('class', function (d) {
                 let c = "nodeCircle ";
-                if (d.type == "OR") {
+                if (d.type === "OR") {
                     c += 'orNode';
                     return c;
                 }
                 else {
-                    if (d.status == "sat") {
+                    if (d.status === "sat") {
                         c += 'sat';
                         return c;
                     }
-                    else if (d.status == "unsat") {
+                    else if (d.status === "unsat") {
                         c += 'unsat';
                         return c;
                     }
@@ -250,22 +220,6 @@ function getTreeJson(treeData, position) {
             })
             .style("fill-opacity", 0);
 
-        // phantom node to give us mouseover in a radius around it
-        // nodeEnter.append("circle")
-        //     .attr('class', 'ghostCircle')
-        //     .attr("r", 30)
-        //     .attr("opacity", 1) // change this to zero to hide the target area
-        //     .style("fill", "red")
-        //     .attr('pointer-events', 'mouseover')
-        //     .on("mouseover", function (node) {
-        //         selectedNode = node;
-        //         updateTempConnector();
-        //     })
-        //     .on("mouseout", function () {
-        //         selectedNode = null;
-        //         updateTempConnector();
-        //     });
-
         // Update the text to reflect whether node has children or not.
         node.select('text')
             .attr("x", function (d) {
@@ -276,7 +230,7 @@ function getTreeJson(treeData, position) {
             })
             .text(function (d) {
                 // return d.name;
-                if (d.type == "AND") {
+                if (d.type === "AND") {
                     return d.solvers.length; //label is number of solvers working on the node
                 }
                 return null;
@@ -287,16 +241,16 @@ function getTreeJson(treeData, position) {
             .attr("r", 4.5)
             .attr('class', function (d) {
                 let c = "nodeCircle ";
-                if (d.type == "OR") {
+                if (d.type === "OR") {
                     c += 'orNode';
                     return c;
                 }
                 else {
-                    if (d.status == "sat") {
+                    if (d.status === "sat") {
                         c += 'sat';
                         return c;
                     }
-                    else if (d.status == "unsat") {
+                    else if (d.status === "unsat") {
                         c += 'unsat';
                         return c;
                     }
