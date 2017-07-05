@@ -38,7 +38,6 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
                 else {
                     realTimeDB.value = false;
                     $('#newDB').removeClass('hidden');
-                    $('#resize').removeClass('hidden');
                 }
 
             }, function errorCallback(response) {
