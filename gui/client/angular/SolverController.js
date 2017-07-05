@@ -10,8 +10,7 @@ app.controller('SolverController', ['$scope', '$rootScope', 'currentRow', 'share
         $scope.showSolver = function () {
             $('.solver-container table tr').removeClass("highlight");
             sharedTree.tree.assignSolvers(0, currentRow.value);
-            $scope.entries = sharedTree.tree.solvers;
-
+            $scope.solvers = sharedTree.tree.solvers;
         };
 
         $scope.clickEvent = function ($event, x) {
@@ -28,7 +27,5 @@ app.controller('SolverController', ['$scope', '$rootScope', 'currentRow', 'share
             else {
                 item.appendChild(ppTable);
             }
-
         }
-
     }]);

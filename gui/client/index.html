@@ -1,44 +1,46 @@
 <html>
-    <head>
-        <title>SMT Viewer</title>
-        <link rel="stylesheet" href="css/main.css">
-        <link rel="stylesheet" href="css/timeline.css">
-        <link rel="stylesheet" href="css/tree.css">
-        <style type="text/css"></style>
-        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-        <link rel="shortcut icon" type="image/x-icon" href="images/Logo_Budakovic.png" />
-        <base href="">
-    </head>
+<head>
+    <title>SMT Viewer</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/timeline.css">
+    <link rel="stylesheet" href="css/tree.css">
+    <style type="text/css"></style>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="shortcut icon" type="image/x-icon" href="images/Logo_Budakovic.png"/>
+    <base href="">
+</head>
 
-<body ng-app="myApp" >
+<body ng-app="myApp">
 
-    <div class="w3-cell-row w3-margin-top views">
-        <!--First column-->
-        <div class="w3-container w3-quarter w3-border w3-cell" style="height: 1053px">
-            <!--Title-->
-            <div class="w3-container title"> SMT Viewer </div>
-            <!--Instance-->
-            <div class="w3-container instance-container" ng-controller="InstancesController" ng-init='load()'>
-                <table class="etable">
-                    <thead>
-                        <th><b>Instances</b></th>
-                    </thead>
-                    <tbody>
-                        <tr data-instance="{{x.name}}" ng-repeat="x in entries" ng-click="clickEvent($event,x)">
-                            <td>{{x.name}}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+<div class="w3-cell-row w3-margin-top views">
+    <!--First column-->
+    <div class="w3-container w3-quarter w3-border w3-cell" style="height: 1053px">
+        <!--Title-->
+        <div class="w3-container title"> SMT Viewer</div>
+        <!--Instance-->
+        <div class="w3-container instance-container" ng-controller="InstancesController" ng-init='load()'>
+            <table class="etable">
+                <thead>
+                <th><b>Instances</b></th>
+                </thead>
+                <tbody>
+                <tr data-instance="{{instance.name}}" ng-repeat="instance in instances"
+                    ng-click="clickEvent($event,instance)">
+                    <td>{{instance.name}}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
 
-            <!--Task Handeler-->
-            <div class="w3-container task-handler" ng-controller="TaskHandler" ng-init='load()'>
-                <div class="position">
-                    <p id="solInst" class="hidden">
-                    <b> Solving Instance: </b> <h id="solvingInstance" >{{solvingInstance}}{{solvingInstanceRemaining}}</h>
-                    </p>
+        <!--Task Handeler-->
+        <div class="w3-container task-handler" ng-controller="TaskHandler" ng-init='load()'>
+            <div class="position">
+                <p id="solInst" class="hidden">
+                    <b> Solving Instance: </b>
+                    <h id="solvingInstance">{{solvingInstance}}{{solvingInstanceRemaining}}</h>
+                </p>
 
-                    <div id="newDB" class="hidden">
+                <div id="newDB" class="hidden">
                     <b> Upload new database file: </b>
                     <form id="uploadDB"
                           ref='uploadForm'
@@ -46,17 +48,13 @@
                           action='/upload'
                           method='post'
                           encType="multipart/form-data"
-                            >
+                    >
                         <input id="db" type="file" name="db" accept=".db" required>
-                        <input type='submit' value='Upload!' />
+                        <input type='submit' value='Upload!'/>
                     </form>
-                    </div>
-                    <!--<form id="uploadDB">-->
-                        <!--<input id="db" type="file" name="db" accept=".db" required>-->
-                        <!--<input type='submit' value='Upload!' />-->
-                    <!--</form>-->
+                </div>
 
-                    <div id="newInst" class="hidden">
+                <div id="newInst" class="hidden">
                     <b> Upload new instance: </b>
                     <form ref='uploadInstanceForm'
                           id='uploadInstanceForm'
@@ -64,109 +62,110 @@
                           method='post'
                           encType="multipart/form-data">
                         <input type="file" name="instance" accept="" required>
-                        <input type='submit' value='Upload!' />
+                        <input type='submit' value='Upload!'/>
                     </form>
-                    </div>
-                    <div id="task" class="hidden">
-                        <form>
-                            <b>Timeout:</b> <input type="text" style="width: 100px;" name="timeout"><br>
-                            <input type="submit" value="Increase" ng-click="increaseTimeout()">
-                            <input type="submit" value="Decrease" ng-click="decreaseTimeout()">
-                            <input type="submit" name="stopTimeout" value="Stop" ng-click="stopSS()">
-                        </form>
-                    </div>
+                </div>
+                <div id="task" class="hidden">
+                    <form>
+                        <b>Timeout:</b> <input type="text" style="width: 100px;" name="timeout"><br>
+                        <input type="submit" value="Increase" ng-click="increaseTimeout()">
+                        <input type="submit" value="Decrease" ng-click="decreaseTimeout()">
+                        <input type="submit" name="stopTimeout" value="Stop" ng-click="stopSS()">
+                    </form>
                 </div>
             </div>
         </div>
-
-        <!--Second column-->
-        <div class="w3-container w3-half w3-border w3-cell w3-cell-middle">
-            <!--Tree view-->
-            <div class = "w3-container w3-border" id="tree-container" ng-controller="ViewController"></div>
-            <!--Event view-->
-            <div id="d5" class="w3-container w3-border event-container" ng-controller="EventController">
-                <table id="d5_2" class="etable">
-                    <thead>
-                    <tr>
-                        <th><b>Nr</b></th>
-                        <!--<th><b>Id</b></th>-->
-                        <th><b>Time</b></th>
-                        <!--<td><b>Name</b></td>-->
-                        <th><b>Node</b></th>
-                        <th><b>Event</b></th>
-                        <th><b>Solver</b></th>
-                        <!--<th><b>Data</b></th>-->
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr id="event{{x.id}}" data-event="{{x.id}}" ng-repeat="x in entries" ng-click="showEvent($event,$index,x)">
-                        <td>{{$index}}</td>
-                        <!--<td>{{ x.id }}</td>-->
-                        <td style="white-space: nowrap;" >{{ x.ts }} s </td>
-                        <!--<td>{{ x.name }}</td>-->
-                        <td>{{ x.node }}</td>
-                        <td>{{ x.event }}</td>
-                        <td>{{ x.solver }}</td>
-                        <!--<td>{{ x.data }}</td>-->
-                    </tr>
-                    </tbody>
-                </table>
-
-            </div>
-
-        </div>
-
-        <!--Third column-->
-        <div class="w3-container w3-quarter w3-border w3-cell w3-cell-bottom">
-            <!--Solver view-->
-            <div class="w3-container w3-border solver-container" ng-controller="SolverController">
-                <p><b> SOLVERS </b></p>
-                <table class="etable">
-                    <thead>
-                        <th ><b>Solver</b></th>
-                        <th><b>Node</b></th>
-                    </thead>
-                    <tbody>
-                        <tr data-node="{{x.node}}" ng-repeat="x in entries" ng-click="clickEvent($event,x)">
-                            <td>{{x.name}}</td>
-                            <td>{{x.node}}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!--Data view-->
-            <div class="w3-container w3-border data-container">
-                <div id="d6_1"><b> DATA </b></div>
-                <div id="d6_2"> </div>
-            </div>
-
-        </div>
     </div>
 
-    <div id="lineCont">
-        <div id="line"></div>
-        <div id="span"></div>
-    </div >
+    <!--Second column-->
+    <div class="w3-container w3-half w3-border w3-cell w3-cell-middle">
+        <!--Tree view-->
+        <div class="w3-container w3-border" id="tree-container" ng-controller="ViewController"></div>
+        <!--Event view-->
+        <div id="d5" class="w3-container w3-border event-container" ng-controller="EventController">
+            <table id="d5_2" class="etable">
+                <thead>
+                <tr>
+                    <th><b>Nr</b></th>
+                    <!--<th><b>Id</b></th>-->
+                    <th><b>Time</b></th>
+                    <!--<td><b>Name</b></td>-->
+                    <th><b>Node</b></th>
+                    <th><b>Event</b></th>
+                    <th><b>Solver</b></th>
+                    <!--<th><b>Data</b></th>-->
+                </tr>
+                </thead>
+                <tbody>
+                <tr id="event{{event.id}}" data-event="{{event.id}}" ng-repeat="event in events" ng-click="showEvent($event,$index,event)">
+                    <td>{{$index}}</td>
+                    <!--<td>{{ event.id }}</td>-->
+                    <td style="white-space: nowrap;">{{ event.ts }} s</td>
+                    <!--<td>{{ event.name }}</td>-->
+                    <td>{{ event.node }}</td>
+                    <td>{{ event.event }}</td>
+                    <td>{{ event.solver }}</td>
+                    <!--<td>{{ event.data }}</td>-->
+                </tr>
+                </tbody>
+            </table>
+
+        </div>
+
+    </div>
+
+    <!--Third column-->
+    <div class="w3-container w3-quarter w3-border w3-cell w3-cell-bottom">
+        <!--Solver view-->
+        <div class="w3-container w3-border solver-container" ng-controller="SolverController">
+            <p><b>SOLVERS</b></p>
+            <table class="etable">
+                <thead>
+                <th><b>Solver</b></th>
+                <th><b>Node</b></th>
+                </thead>
+                <tbody>
+                <tr data-node="{{solver.node}}" ng-repeat="solver in solvers" ng-click="clickEvent($event,solver)">
+                    <td>{{solver.name}}</td>
+                    <td>{{solver.node}}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!--Data view-->
+        <div class="w3-container w3-border data-container">
+            <div id="d6_1"><b> DATA </b></div>
+            <div id="d6_2"></div>
+        </div>
+
+    </div>
+</div>
+
+<div id="lineCont">
+    <div id="line"></div>
+    <div id="span"></div>
+</div>
 
 </body>
-    <script type="text/javascript" src="https://code.angularjs.org/1.5.3/angular.min.js"></script>>
-    <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
-    <script type="text/javascript" src="angular/main.js"></script>
-    <script type="text/javascript" src="angular/EventController.js"></script>
-    <script type="text/javascript" src="angular/InstancesController.js"></script>
-    <script type="text/javascript" src="angular/SolverController.js"></script>
-    <script type="text/javascript" src="angular/TaskHandlerController.js"></script>
-    <script type="text/javascript" src="angular/ViewController.js"></script>
-    <script src="http://d3js.org/d3.v3.min.js"></script>
-    <script type="text/javascript" src="scripts/dndTree.js"></script>
-    <script type="text/javascript" src="scripts/ng-file-upload.min.js"></script>
-    <script type="text/javascript" src="scripts/ng-file-upload-shim.min.js"></script>
-    <script src="scripts/prettyprint.js"></script>
-    <script src="treeManager/Event.js"></script>
-    <script src="treeManager/Node.js"></script>
-    <script src="treeManager/Solver.js"></script>
-    <script src="treeManager/Tree.js"></script>
-    <script src="scripts/timeline.js"></script>
+<script type="text/javascript" src="https://code.angularjs.org/1.5.3/angular.min.js"></script>
+
+<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+<script type="text/javascript" src="angular/main.js"></script>
+<script type="text/javascript" src="angular/EventController.js"></script>
+<script type="text/javascript" src="angular/InstancesController.js"></script>
+<script type="text/javascript" src="angular/SolverController.js"></script>
+<script type="text/javascript" src="angular/TaskHandlerController.js"></script>
+<script type="text/javascript" src="angular/ViewController.js"></script>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script type="text/javascript" src="scripts/dndTree.js"></script>
+<script type="text/javascript" src="scripts/ng-file-upload.min.js"></script>
+<script type="text/javascript" src="scripts/ng-file-upload-shim.min.js"></script>
+<script src="scripts/prettyprint.js"></script>
+<script src="treeManager/Event.js"></script>
+<script src="treeManager/Node.js"></script>
+<script src="treeManager/Solver.js"></script>
+<script src="treeManager/Tree.js"></script>
+<script src="scripts/timeline.js"></script>
 
 </html>

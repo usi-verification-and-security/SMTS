@@ -5,9 +5,8 @@ app.controller(
 
             $scope.$on('handleBroadcast', function () { // This is called when an instance is selected
                 let eventEntries = sharedTree.tree.getEvents(currentRow.value);
-                $scope.entries = eventEntries;
+                $scope.events = eventEntries;
                 $scope.initTimeline(eventEntries); // Initialize timeline
-
             });
 
             $scope.initTimeline = function (events) {
@@ -95,5 +94,4 @@ app.controller(
 
                 sharedService.broadcastItem2();
             }
-
-        }])
+        }]);

@@ -8,7 +8,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
                 method: 'GET',
                 url: '/getInstances'
             }).then(function successCallback(response) {
-                $scope.entries = response.data;
+                $scope.instances = response.data;
 
             }, function errorCallback(response) {
                 $window.alert('An error occured: ' + response);
@@ -38,6 +38,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
                 else {
                     realTimeDB.value = false;
                     $('#newDB').removeClass('hidden');
+                    $('#resize').removeClass('hidden');
                 }
 
             }, function errorCallback(response) {
@@ -45,25 +46,25 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
             });
         };
 
-        $scope.clickEvent = function ($event, x) {
+        $scope.clickEvent = function ($event, instance) {
             // Highlight selected instance
-            $('.instance-container table tr').removeClass("highlight");
-            var query = '.instance-container table tr[data-instance="' + x.name + '"]';
-            $(query).addClass("highlight");
+
+            let row = $event.target.parentNode;
+            $(row.parentNode).children('tr').removeClass('highlight');
+            row.classList.add('highlight');
 
             // If real-time analysis ask every 10 seconds for db content otherwise just once
             if (realTimeDB.value) {
-                this.getTree(x);
+                this.getTree(instance);
                 setInterval(function () {
                     //console.log("DB content asked.");
-                    this.getTree(x);
+                    this.getTree(instance);
                 }, 10000);
             }
             else {
                 //console.log("DB content asked for passed execution.");
-                this.getTree(x); // show corresponding tree
+                this.getTree(instance); // show corresponding tree
             }
-
         };
 
         $scope.getTree = function (x) {
@@ -92,8 +93,5 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
                 // $window.alert('An error occured!');
                 console.log(response);
             });
-
-
         };
-
-    }])
+    }]);
