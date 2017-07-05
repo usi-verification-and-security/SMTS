@@ -53,8 +53,8 @@ app.controller(
                 getTreeJson(treeView, position);
 
                 // Show event's data in dataView
-                let object = JSON.parse(x.data);
-                if (object == null) {
+                let object = x.data;
+                if (object === null) {
                     object = {};
                 }
                 //sort object by key values

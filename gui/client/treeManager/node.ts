@@ -29,7 +29,6 @@ module TreeManager {
         }
 
         updateNode(nodeName, event, data) {
-            nodeName = JSON.parse(nodeName);
             let node: Node = this;
 
             // Get corresponding node in tree

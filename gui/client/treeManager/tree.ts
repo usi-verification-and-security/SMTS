@@ -26,12 +26,11 @@ module TreeManager {
             for (let i = 0; i <= n; ++i) {
                 let event = this.events[i];
                 let type = event.event;
-                let data = JSON.parse(event.data);
 
                 switch (type) {
                     case 'OR':
                     case 'AND':
-                        treeView.insertNode(new Node(JSON.parse(data.node), type));
+                        treeView.insertNode(new Node(JSON.parse(event.data.node), type));
                         break;
 
                     case '+':
@@ -40,12 +39,12 @@ module TreeManager {
                         break;
 
                     case 'STATUS':
-                        treeView.updateNode(event.node, type, data.report);
+                        treeView.updateNode(event.node, type, event.data.report);
                         break;
 
                     case 'SOLVED':
-                        treeView.updateNode(event.node, type, data.status);
-                        treeView.setStatus(data.status);
+                        treeView.updateNode(event.node, type, event.data.status);
+                        treeView.setStatus(event.data.status);
                         break;
                 }
             }
@@ -72,7 +71,7 @@ module TreeManager {
                         for (let j = 0; j < this.solvers.length; ++j) {
                             let solver = this.solvers[j];
                             if (solver.name == event.name) {
-                                solver.setNode(JSON.parse(event.node));
+                                solver.setNode(event.node);
                                 solver.setData(event.data);
                             }
                         }

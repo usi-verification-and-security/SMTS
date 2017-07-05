@@ -76,11 +76,10 @@ app.get('/get/:instance', function (req, res) { // Get content of a specific ins
                 result.push({
                     id: row.id,
                     ts: row.ts,
-                    name: row.name,
-                    node: row.node,
+                    node: JSON.parse(row.node),
                     event: row.event,
                     solver: row.solver,
-                    data: row.data
+                    data: JSON.parse(row.data)
                 });
             });
             res.json(result); // return result to the browser
