@@ -5,7 +5,6 @@ module TreeManager {
         solver: Array<[string, string]> = [];
         solvers: Solver[] = [];
         treeView: Node; // This is the tree seen in the visualization
-        selectedNodeName: number[];
 
         constructor() {
         }
@@ -25,47 +24,22 @@ module TreeManager {
             let treeView = new Node([], 'AND'); // The root is an 'AND'
 
             for (let i = 0; i <= n; ++i) {
-                let event = this.events[i];
-                let type = event.event;
-
-                switch (type) {
-                    case 'OR':
-                    case 'AND':
-                        treeView.insertNode(new Node(JSON.parse(event.data.node), type));
-                        break;
-
-                    case '+':
-                    case '-':
-                        treeView.updateNode(event.node, type, event.solver);
-                        break;
-
-                    case 'STATUS':
-                        treeView.updateNode(event.node, type, event.data.report);
-                        break;
-
-                    case 'SOLVED':
-                        treeView.updateNode(event.node, type, event.data.status);
-                        treeView.setStatus(event.data.status);
-                        break;
-                }
+                treeView.update(this.events[i]);
             }
 
-            let lastEvent = this.events[n];
-            this.selectedNodeName = lastEvent.data && lastEvent.data.node ? JSON.parse(lastEvent.data.node) : lastEvent.node;
-
             this.treeView = treeView;
+        }
+
+        getNodeName(n) {
+            let event = this.events[n];
+            return event.data && event.data.node ? JSON.parse(event.data.node) : event.node;
         }
 
         getTreeView() {
             return this.treeView;
         }
 
-        getSelectedNodeName() {
-            return this.selectedNodeName;
-        }
-
         assignSolvers(begin: number, end: number) {
-
             // Reset solvers
             for (let i = 0; i < this.solvers.length; ++i) {
                 this.solvers[i].setNode(null);
