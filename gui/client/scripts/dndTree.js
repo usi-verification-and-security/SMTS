@@ -26,7 +26,7 @@
  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 
 // Get JSON data
-function getTreeJson(root, position, selectedNode) {
+function getTreeJson(root, selectedNodeNames, position) {
 
     // Calculate total nodes, max label length
     let maxLabelLength = getMaxLabelLength(root);
@@ -40,7 +40,7 @@ function getTreeJson(root, position, selectedNode) {
     let viewerHeight = document.getElementById("tree-container").offsetHeight;
 
     // Create tree
-    let tree = d3.layout.tree().size([viewerHeight, viewerWidth]);
+    let svgTree = d3.layout.tree().size([viewerHeight, viewerWidth]);
 
     // Define a d3 diagonal projection for use by the node paths later on
     let diagonal = d3.svg.diagonal().projection(function (d) {
@@ -91,9 +91,9 @@ function getTreeJson(root, position, selectedNode) {
     }
 
     // Get the max length of a label of all nodes in the given tree
-    function getMaxLabelLength(tree) {
+    function getMaxLabelLength(svgTree) {
         let maxLabelLength = 0;
-        getMaxLabelLengthRec(tree);
+        getMaxLabelLengthRec(svgTree);
         return maxLabelLength;
 
         function getMaxLabelLengthRec(node) {
@@ -146,11 +146,11 @@ function getTreeJson(root, position, selectedNode) {
             }
         }
 
-        tree = tree.size([getNewHeight(), viewerWidth]);
+        svgTree = svgTree.size([getNewHeight(), viewerWidth]);
 
         // Compute the new tree layout.
-        let nodes = tree.nodes(root).reverse();
-        let links = tree.links(nodes);
+        let nodes = svgTree.nodes(root).reverse();
+        let links = svgTree.links(nodes);
 
         // Set widths between levels based on maxLabelLength.
         nodes.forEach(function (node) {
@@ -198,12 +198,14 @@ function getTreeJson(root, position, selectedNode) {
         nodeEnter.append("circle")
             .attr('r', '20')
             .attr("class", function (node) {
-                if (JSON.stringify(node.name) === JSON.stringify(selectedNode)) {
-                    return "selectedNode";
+                let nodeNameStr = JSON.stringify(node.name);
+                for (let selectedNodeName of selectedNodeNames) {
+                    if (nodeNameStr === JSON.stringify(selectedNodeName)) {
+                        // console.log(nodeNameStr, JSON.stringify(selectedNodeName));
+                        return 'selectedNode';
+                    }
                 }
-                else {
-                    return "hidden";
-                }
+                return 'hidden';
             });
 
         nodeEnter.append("text")

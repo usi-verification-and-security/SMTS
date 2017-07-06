@@ -30,9 +30,14 @@ module TreeManager {
             this.treeView = treeView;
         }
 
-        getNodeName(n) {
+        getSelectedNodeNames(n) {
             let event = this.events[n];
-            return event.data && event.data.node ? JSON.parse(event.data.node) : event.node;
+            let selectedNodeNames = [];
+            selectedNodeNames.push(event.node);
+            if (event.data && event.data.node) {
+                selectedNodeNames.push(JSON.parse(event.data.node));
+            }
+            return selectedNodeNames;
         }
 
         getTreeView() {

@@ -3,6 +3,6 @@ app.controller('ViewController', ['$scope', '$rootScope', 'currentRow', 'sharedT
         $scope.$on('handleBroadcast', function () { // This is called when an instance is selected
             sharedTree.tree.arrangeTree(currentRow.value);
             let treeView = sharedTree.tree.getTreeView();
-            getTreeJson(treeView, null, sharedTree.tree.getNodeName(currentRow.value));
+            getTreeJson(treeView, sharedTree.tree.getSelectedNodeNames(currentRow.value));
         });
     }]);
