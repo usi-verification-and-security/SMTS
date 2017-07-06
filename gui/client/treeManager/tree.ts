@@ -103,7 +103,7 @@ module TreeManager {
             if (n == this.events.length) {
                 return this.events;
             }
-            return this.events.slice(0, n);
+            return this.events.slice(0, n + 1);
         }
 
         // Insert solvers in this.solvers only if not already present
