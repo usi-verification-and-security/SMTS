@@ -4,7 +4,7 @@
     cursor: pointer;
 }
 
-.overlay{
+.overlay {
     background-color: #EEE;
 }
 
@@ -32,24 +32,24 @@
     stroke-width: 3px;
 }
 
-.ghostCircle.show{
-    display:block;
-}
-
-.ghostCircle, .activeDrag .ghostCircle{
-    display: none;
-}
-
 /**/
-circle.nodeCircle.sat{
+circle.sat {
     fill: green;
 }
 
-circle.nodeCircle.unsat{
+circle.sat.propagated {
+    fill: #66B266;
+}
+
+circle.unsat {
     fill: #FF0000;
 }
 
-circle.nodeCircle.unknown{
+circle.unsat.propagated {
+    fill: #FF6666;
+}
+
+circle.unknown {
     fill: #FFE4C4;
 }
 
@@ -60,5 +60,5 @@ circle.selectedNode {
 
 rect.nodeRect {
     fill: lightblue;
-    transform: rotate(45deg) translate(-50%,-50%);
+    transform: rotate(45deg) translate(-50%, -50%);
 }

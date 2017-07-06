@@ -191,7 +191,8 @@ function getTreeJson(root, position, selectedNode) {
             .classed('nodeCircle', true)
             .classed('sat', node => node.status === 'sat')
             .classed('unsat', node => node.status === 'unsat')
-            .classed('unknown', node => node.status !== 'sat' && node.status !== 'unsat');
+            .classed('unknown', node => node.status === 'unknown')
+            .classed('propagated', node => node.isStatusPropagated);
 
         // Make halo circle for selected node
         nodeEnter.append("circle")

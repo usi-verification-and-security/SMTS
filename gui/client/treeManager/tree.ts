@@ -1,10 +1,10 @@
 module TreeManager {
 
     export class Tree {
-        events: Event[] = [];
-        solver: Array<[string, string]> = [];
-        solvers: Solver[] = [];
-        treeView: Node; // This is the tree seen in the visualization
+        events: Event[] = [];                 // All events
+        solver: Array<[string, string]> = []; // ???
+        solvers: Solver[] = [];               // All existing solvers
+        treeView: Node;                       // Tree seen in the visualization
 
         constructor() {
         }
