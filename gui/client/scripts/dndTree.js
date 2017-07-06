@@ -146,33 +146,33 @@ function getTreeJson(root, position, selectedNode) {
             }
         }
 
-        let newHeight = getNewHeight(); // 25 pixels per line
-
-        tree = tree.size([newHeight, viewerWidth]);
+        tree = tree.size([getNewHeight(), viewerWidth]);
 
         // Compute the new tree layout.
         let nodes = tree.nodes(root).reverse();
         let links = tree.links(nodes);
 
         // Set widths between levels based on maxLabelLength.
-        nodes.forEach(function (d) {
-            d.y = (d.depth * (maxLabelLength * 10));
+        nodes.forEach(function (node) {
+            node.y = (node.depth * (maxLabelLength * 10));
         });
 
         // Update the nodes
-        let node = svgGroup.selectAll("g.node")
-            .data(nodes, function (d) {
-                return d.id || (d.id = ++i);
+        let svgNodes = svgGroup.selectAll("g.node")
+            .data(nodes, function (node) {
+                return node.id || (node.id = ++i);
             });
 
         // Enter any new nodes at the parent's previous position.
-        let nodeEnter = node.enter().append("g")
-        // .call(dragListener)
+        let nodeEnter = svgNodes.enter().append("g")
             .attr("class", "node")
             .attr("transform", function () {
                 return `translate(${source.y0},${source.x0})`;
             })
-            .on('click', click);
+            .on('click', function(d) {
+                showNodeData(d);
+                highlightSolvers(d);
+            });
 
         nodeEnter.append("circle")
             .attr("r", 0)
@@ -199,10 +199,11 @@ function getTreeJson(root, position, selectedNode) {
                 }
             });
 
+        // Make halo circle for selected node
         nodeEnter.append("circle")
             .attr("r", 20)
-            .attr("class", function(d) {
-                if (JSON.stringify(d.name) === selectedNode) {
+            .attr("class", function(node) {
+                if (JSON.stringify(node.name) === JSON.stringify(selectedNode)) {
                     return "nodeCircle selectedNode";
                 } else {
                     return "hidden";
@@ -224,7 +225,7 @@ function getTreeJson(root, position, selectedNode) {
             .style("fill-opacity", 0);
 
         // Update the text to reflect whether node has children or not
-        node.select('text')
+        svgNodes.select('text')
             .attr("x", function (d) {
                 return d.children || d._children ? -10 : 10;
             })
@@ -240,7 +241,7 @@ function getTreeJson(root, position, selectedNode) {
             });
 
         // Change the circle fill depending on whether it has children and is collapsed
-        node.select("circle.nodeCircle")
+        svgNodes.select("circle.nodeCircle")
             .attr("r", 4.5)
             .attr('class', function (d) {
                 let className = "nodeCircle ";
@@ -263,7 +264,7 @@ function getTreeJson(root, position, selectedNode) {
             });
 
         // Transition nodes to their new position.
-        let nodeUpdate = node.transition()
+        let nodeUpdate = svgNodes.transition()
             .duration(duration)
             .attr("transform", function (d) {
                 return `translate(${d.y},${d.x})`;
@@ -274,9 +275,9 @@ function getTreeJson(root, position, selectedNode) {
             .style("fill-opacity", 1);
 
         // Transition exiting nodes to the parent's new position.
-        let nodeExit = node.exit().transition()
+        let nodeExit = svgNodes.exit().transition()
             .duration(duration)
-            .attr("transform", function (d) {
+            .attr("transform", function () {
                 return `translate(${source.y},${source.x})`;
             })
             .remove();
@@ -333,11 +334,7 @@ function getTreeJson(root, position, selectedNode) {
             d.y0 = d.y;
         });
 
-
-        ///
-        let object = {};
-
-        let ppTable = prettyPrint(object);
+        let ppTable = prettyPrint({});
         document.getElementById('d6_1').innerHTML = "";
         let item = document.getElementById('d6_2');
 
@@ -348,11 +345,6 @@ function getTreeJson(root, position, selectedNode) {
             item.appendChild(ppTable);
         }
     }
-}
-
-function click(d) {
-    showNodeData(d);
-    highlightSolvers(d);
 }
 
 // This function shows node data in data view
@@ -377,7 +369,7 @@ function showNodeData(d) {
 
 // This function highlights in solver view the solvers working on the clicked node
 function highlightSolvers(d) {
-    let node = `[${d.name.toString()}]`;
+    let node = JSON.stringify(d.name);
     let query = `.solver-container table tr[data-node="${node}"]`;
 
     $('.solver-container table tr').removeClass("highlight");

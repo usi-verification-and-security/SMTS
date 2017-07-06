@@ -49,8 +49,7 @@ app.controller(
                 sharedTree.tree.arrangeTree(currentRow.value);
                 let treeView = sharedTree.tree.getTreeView();
                 let position = $('g')[0].getAttribute("transform");
-                let currentNode = $event.target.parentNode.children[2].innerHTML;
-                getTreeJson(treeView, position, currentNode);
+                getTreeJson(treeView, position, sharedTree.tree.getSelectedNodeName());
 
                 // Show event's data in dataView
                 let object = x.data;
