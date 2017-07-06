@@ -38,6 +38,8 @@ def db():
                    "solver TEXT, "
                    "data TEXT"
                    ");".format(table_prefix))
+    db.db.commit()
+    cursor = db.db.cursor()
     cursor.execute("VACUUM;")
     db.db.commit()
     return db()
