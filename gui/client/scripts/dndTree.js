@@ -166,7 +166,9 @@ function getTreeJson(root, position, selectedNode) {
 
         // Enter any new nodes at the parent's previous position.
         let nodeEnter = svgNodes.enter().append("g")
-            .attr("class", "node")
+            .classed('node', true)
+            .classed('nodeAnd', node => node.type === 'AND')
+            .classed('nodeOr', node => node.type === 'OR')
             .attr("transform", function () {
                 return `translate(${source.y0},${source.x0})`;
             })
@@ -175,47 +177,21 @@ function getTreeJson(root, position, selectedNode) {
                 highlightSolvers(node);
             });
 
-        nodeEnter.append(function (node) {
-            if (node.type === 'OR') {
-                let nodeOR = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                nodeOR.setAttribute('width', '10');
-                nodeOR.setAttribute('height', '10');
-                nodeOR.classList.add('nodeRect');
-                return nodeOR;
-            }
-            let nodeAND = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            nodeAND.setAttribute('r', '4.5');
-            nodeAND.classList.add('nodeCircle');
-            if (node.status === 'sat') {
-                nodeAND.classList.add('sat');
-            }
-            else if (node.status === 'unsat') {
-                nodeAND.classList.add('unsat');
-            }
-            else {
-                nodeAND.classList.add('unknown');
-            }
-            return nodeAND;
-        });
+        // Add rhombi to OR nodes
+        svgGroup.selectAll('.nodeOr')
+            .append('rect')
+            .attr('width', '10')
+            .attr('height', '10')
+            .classed('nodeRect', true);
 
-        // nodeEnter.append(function (node) {
-        //    if (node.type === 'OR') {
-        //        return document.createElement('rect');
-        //    }
-        //    return document.createElement('circle');
-        // }).attr(4.5);
-        //
-        // nodeEnter.select('circle')
-        //     .attr('r', 4.5)
-        //     .classed('nodeCircle', true)
-        //     .classed('sat', node => node.status === 'sat')
-        //     .classed('unsat', node => node.status === 'unsat')
-        //     .classed('unknown', node => node.status !== 'sat' && node.status !== 'unsat');
-        //
-        // nodeEnter.select('rect')
-        //     .attr('width', 4.5)
-        //     .attr('height', 4.5)
-        //     .classed('nodeRect');
+        // Add circles to AND nodes
+        svgGroup.selectAll('.nodeAnd')
+            .append('circle')
+            .attr('r', '4.5')
+            .classed('nodeCircle', true)
+            .classed('sat', node => node.status === 'sat')
+            .classed('unsat', node => node.status === 'unsat')
+            .classed('unknown', node => node.status !== 'sat' && node.status !== 'unsat');
 
         // Make halo circle for selected node
         nodeEnter.append("circle")
