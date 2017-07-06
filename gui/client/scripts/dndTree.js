@@ -163,49 +163,68 @@ function getTreeJson(root, position, selectedNode) {
                 return node.id || (node.id = ++i);
             });
 
+
         // Enter any new nodes at the parent's previous position.
         let nodeEnter = svgNodes.enter().append("g")
             .attr("class", "node")
             .attr("transform", function () {
                 return `translate(${source.y0},${source.x0})`;
             })
-            .on('click', function(d) {
-                showNodeData(d);
-                highlightSolvers(d);
+            .on('click', function (node) {
+                showNodeData(node);
+                highlightSolvers(node);
             });
 
-        nodeEnter.append("circle")
-            .attr("r", 0)
-            .attr('class', function (d) {
-                let className = "nodeCircle ";
-                if (d.type === "OR") {
-                    className += 'orNode';
-                    return className;
-                }
-                else {
-                    if (d.status === "sat") {
-                        className += 'sat';
-                        return className;
-                    }
-                    else if (d.status === "unsat") {
-                        className += 'unsat';
-                        return className;
-                    }
-                    else {
-                        className += 'unknown';
-                        return className;
-                    }
+        nodeEnter.append(function (node) {
+            if (node.type === 'OR') {
+                let nodeOR = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                nodeOR.setAttribute('width', '10');
+                nodeOR.setAttribute('height', '10');
+                nodeOR.classList.add('nodeRect');
+                return nodeOR;
+            }
+            let nodeAND = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            nodeAND.setAttribute('r', '4.5');
+            nodeAND.classList.add('nodeCircle');
+            if (node.status === 'sat') {
+                nodeAND.classList.add('sat');
+            }
+            else if (node.status === 'unsat') {
+                nodeAND.classList.add('unsat');
+            }
+            else {
+                nodeAND.classList.add('unknown');
+            }
+            return nodeAND;
+        });
 
-                }
-            });
+        // nodeEnter.append(function (node) {
+        //    if (node.type === 'OR') {
+        //        return document.createElement('rect');
+        //    }
+        //    return document.createElement('circle');
+        // }).attr(4.5);
+        //
+        // nodeEnter.select('circle')
+        //     .attr('r', 4.5)
+        //     .classed('nodeCircle', true)
+        //     .classed('sat', node => node.status === 'sat')
+        //     .classed('unsat', node => node.status === 'unsat')
+        //     .classed('unknown', node => node.status !== 'sat' && node.status !== 'unsat');
+        //
+        // nodeEnter.select('rect')
+        //     .attr('width', 4.5)
+        //     .attr('height', 4.5)
+        //     .classed('nodeRect');
 
         // Make halo circle for selected node
         nodeEnter.append("circle")
-            .attr("r", 20)
-            .attr("class", function(node) {
+            .attr('r', '20')
+            .attr("class", function (node) {
                 if (JSON.stringify(node.name) === JSON.stringify(selectedNode)) {
-                    return "nodeCircle selectedNode";
-                } else {
+                    return "selectedNode";
+                }
+                else {
                     return "hidden";
                 }
             });
@@ -238,29 +257,6 @@ function getTreeJson(root, position, selectedNode) {
                     return d.solvers.length; // Label is number of solvers working on the node
                 }
                 return null;
-            });
-
-        // Change the circle fill depending on whether it has children and is collapsed
-        svgNodes.select("circle.nodeCircle")
-            .attr("r", 4.5)
-            .attr('class', function (d) {
-                let className = "nodeCircle ";
-                if (d.type === "OR") {
-                    className += 'orNode';
-                    return className;
-                }
-                else if (d.status === "sat") {
-                    className += 'sat';
-                    return className;
-                }
-                else if (d.status === "unsat") {
-                    className += 'unsat';
-                    return className;
-                }
-                else {
-                    className += 'unknown';
-                    return className;
-                }
             });
 
         // Transition nodes to their new position.

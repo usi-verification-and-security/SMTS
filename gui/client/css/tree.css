@@ -5,18 +5,19 @@
 }
 
 .overlay{
-    background-color:#EEE;
+    background-color: #EEE;
 }
 
-.node circle {
+.node circle,
+.node rect {
     fill: #fff;
     stroke: steelblue;
     stroke-width: 1.5px;
 }
 
 .node text {
-    font-size:10px;
-    font-family:sans-serif;
+    font-size: 10px;
+    font-family: sans-serif;
 }
 
 .link {
@@ -46,19 +47,18 @@ circle.nodeCircle.sat{
 
 circle.nodeCircle.unsat{
     fill: #FF0000;
-
 }
 
 circle.nodeCircle.unknown{
-    fill: #FFE4C4
-
+    fill: #FFE4C4;
 }
 
-circle.nodeCircle.orNode {
-    fill: #C0C0C0;
-}
-
-circle.nodeCircle.selectedNode {
+circle.selectedNode {
     fill: rgba(0, 0, 255, 0.1);
     stroke: none;
+}
+
+rect.nodeRect {
+    fill: lightblue;
+    transform: rotate(45deg) translate(-50%,-50%);
 }
