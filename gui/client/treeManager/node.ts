@@ -50,13 +50,11 @@ module TreeManager {
                     break;
 
                 case 'SOLVED':
+                    console.log(event.data.status);
                     node.status = event.data.status;
+                    this.status = event.data.status;
                     break;
             }
-        }
-
-        setStatus(status) {
-            this.status = status;
         }
     }
 }
