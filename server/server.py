@@ -67,8 +67,10 @@ class Solver(net.Socket):
                   'query': query,
                   }
         self.write(header, smt)
+        self._db_log('-')
         self.started = time.time()
         self.node = node
+        self._db_log('+')
 
     def stop(self):
         if self.node is None:
@@ -100,7 +102,7 @@ class Solver(net.Socket):
         if not node:
             node = framework.OrNode(self.node)
         self.or_waiting.append(node)
-        self._db_log('OR', {'node': node.path()})
+        self._db_log('OR', {'node': str(node.path())})
 
     def read(self):
         header, payload = super().read()
@@ -115,7 +117,7 @@ class Solver(net.Socket):
                             if len(partition) == 0:
                                 continue
                             child = framework.AndNode(node, '(assert {})'.format(partition))
-                            self._db_log('AND', {'node': child.path(), 'smt': child.smt})
+                            self._db_log('AND', {'node': str(child.path()), 'smt': child.smt})
                     except BaseException as ex:
                         header['report'] = 'error:(server) error reading partitions: {}'.format(traceback.format_exc())
                         node.clear()
@@ -136,8 +138,9 @@ class Solver(net.Socket):
             status = framework.SolveStatus.__members__[header['report']]
             self._db_log('STATUS', header)
             self.node.status = status
-            if self.node.root.status != framework.SolveStatus.unknown:
-                self._db_log('SOLVED', {'status': self.node.root.status.name})
+            for node in self.node.path(True).reverse():
+                if node.status != framework.SolveStatus.unknown:
+                    self._db_log('SOLVED', {'status': node.status.name, 'node': str(node.path())})
             if status == framework.SolveStatus.unknown:
                 self.stop()
 

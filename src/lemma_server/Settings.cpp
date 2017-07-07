@@ -21,11 +21,10 @@ void Settings::load(int argc, char **argv) {
                         "[-h] display this message\n"
                         "[-s server-host:port]\n"
                         "[-p listening-port] default: " << this->port << "\n"
-                                  "[-d lemma_database-file] not used if empty\n"
+                                  "[-d lemma_database-file] not used if not set\n"
                                   "[-a] send lemmas again to solvers\n"
                                   "\n";
                 exit(0);
-
             case 's':
                 this->server = optarg;
                 break;

@@ -20,7 +20,7 @@ void Settings::load(int argc, char **argv) {
                 new(this) Settings();
                 std::cout << "Usage: " << argv[0] << "\n"
                         "[-h] display this message\n"
-                        "[-s server-host:port] if empty then file mode is enabled\n"
+                        "[-s server-host:port] if not set then file mode is enabled\n"
                         "[-l lemma_server-host:port]\n"
                         "[-v] verbose\n"
                         "[-k] (only for file mode) keep lemmas in lemma server after solving\n"
@@ -28,7 +28,6 @@ void Settings::load(int argc, char **argv) {
                         "[-r parameter-key=value] (only for file mode)\n"
                         "[file1 ...] (only for file mode)\n";
                 exit(0);
-
             case 's':
                 this->server = optarg;
                 break;

@@ -179,19 +179,18 @@ class SMT(Root):
 
 
 class Fixedpoint(Root):
-    def __init__(self, name, fixedpoint, queries):
-        self.fixedpoint = fixedpoint
-        self.queries = queries
-        s = self.fixedpoint.to_string([])
+    def __init__(self, name: str, fixedpoint, queries):
+        s = fixedpoint.to_string([])
+        self.query = str(queries[0].sexpr())
         super().__init__(name, s[s.index('(declare-rel '):])
 
-    def partition(self):
+    def partition(self, fixedpoint, queries):
         if len(self) > 0:
             raise ValueError('already partitioned')
-        _f = config.z3().Fixedpoint(ctx=self.fixedpoint.ctx)
-        query = self.queries[0]
+        _f = config.z3().Fixedpoint(ctx=fixedpoint.ctx)
+        query = queries[0]
         queries = []
-        for rule in self.fixedpoint.get_rules():
+        for rule in fixedpoint.get_rules():
             if config.z3().is_quantifier(rule):
                 imp = rule.body()
                 body = imp.arg(0)
@@ -207,7 +206,7 @@ class Fixedpoint(Root):
                     else:
                         _f.register_relation(body.decl())
                     if head.eq(query):
-                        head = config.z3().Bool(query.sexpr() + str(len(queries)), self.fixedpoint.ctx)
+                        head = config.z3().Bool(query.sexpr() + str(len(queries)), fixedpoint.ctx)
                         queries.append(head)
                     _f.register_relation(head.decl())
                     _f.add_rule(head, body)
@@ -226,7 +225,7 @@ class Fixedpoint(Root):
                                              str(self.path()),
                                              'OR',
                                              '',
-                                             '',  # str({'node': parent.path(), 'smt': parent.smt})
+                                             json.dumps({'node': str(parent.path())})
                                          ))
 
         for query in queries:
@@ -238,7 +237,7 @@ class Fixedpoint(Root):
                                                  str(self.path()),
                                                  'AND',
                                                  '',
-                                                 '',  # str({'node': child.path(), 'smt': child.smt})
+                                                 json.dumps({'node': str(child.path())})
                                              ))
 
         if config.db():
@@ -248,7 +247,7 @@ class Fixedpoint(Root):
         if node.root != self:
             raise ValueError
         if node is self:
-            return self.smt, '(query ' + self.queries[0].sexpr() + ')'
+            return self.smt, '(query ' + self.query + ')'
         elif isinstance(node, AndNode):
             return node.parent.smt, node.smt
 
@@ -294,10 +293,15 @@ def smt2json(smt):
 
 
 def parse(name: str, smt: str):
+    # TODO: I hardcode partitioning because keeping the fixedpoint object is too expensive and kills the solver
+    # something else should be done...
     context = config.z3().Context()
     fixedpoint = config.z3().Fixedpoint(ctx=context)
     queries = fixedpoint.parse_string(smt)
     if not queries:
         return SMT(name, smt)
     else:
-        return Fixedpoint(name, fixedpoint, queries)
+        root = Fixedpoint(name, fixedpoint, queries)
+        if config.fixedpoint_partition:
+            root.partition(fixedpoint, queries)
+        return root
