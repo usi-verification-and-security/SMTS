@@ -25,15 +25,27 @@
  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 
+
+
+/**********************************************************************************************************************/
+/* CONSTANTS                                                                                                               */
+/**********************************************************************************************************************/
+
+
+const TRANSITION_DURATION = 0;
+
+
+
 /**********************************************************************************************************************/
 /* CODE                                                                                                               */
 /**********************************************************************************************************************/
 
-// Make a d3 tree
 
+// Make a d3 tree
 function makeD3Tree(width, height) {
     return d3.layout.tree().size([height, width]); // Width and height have swapped order
 }
+
 
 // Make a d3 diagonal projection for use by the node paths
 function makeD3Diagonal() {
@@ -42,10 +54,12 @@ function makeD3Diagonal() {
     });
 }
 
+
 // Remove the previous svg element
 function clear() {
     d3.select('#tree-container').select('svg').remove();
 }
+
 
 // Make an svg element
 function makeSvg(width, height) {
@@ -56,10 +70,12 @@ function makeSvg(width, height) {
         .classed('overlay', true);
 }
 
+
 // Append a group which holds all nodes and on which the zoom Listener can act upon
 function makeSvgGroup(svgBase) {
     return svgBase.append('g');
 }
+
 
 // Make the zoomListener which calls the zoom function on the "zoom" event constrained within the scaleExtents
 function makeZoomListener(listener, target) {
@@ -69,6 +85,7 @@ function makeZoomListener(listener, target) {
     listener.call(zoomListener);
     return zoomListener;
 }
+
 
 // Get the max length of a label of all nodes in the given tree
 function getMaxLabelLength(tree) {
@@ -87,6 +104,7 @@ function getMaxLabelLength(tree) {
         }
     }
 }
+
 
 // Counts total children of tree and sets tree height accordingly
 // This prevents the layout looking squashed when new nodes are made visible or looking sparse when nodes are removed,
@@ -109,8 +127,9 @@ function getTreeHeight(tree) {
     }
 }
 
+
 // Center node when clicked/dropped so node doesn't get lost when collapsing/moving with large amount of children.
-function centerNode(node, width, height, duration, zoomListener) {
+function centerNode(node, width, height, zoomListener) {
     let scale = zoomListener.scale();
     x = -node.y0 * scale + width / 2;
     y = -node.x0 * scale + height / 2;
@@ -120,21 +139,22 @@ function centerNode(node, width, height, duration, zoomListener) {
     d3.select('g')
         .attr('transform', position)
         .transition()
-        .duration(duration);
+        .duration(TRANSITION_DURATION);
 
     zoomListener.scale(scale);
     zoomListener.translate([x, y]);
 }
 
+
 // Get JSON data
 function getTreeJson(root, selectedNodeNames, position) {
 
+    if (!root) {
+        return;
+    }
+
     // Calculate total nodes, max label length
     let maxLabelLength = getMaxLabelLength(root);
-
-    // Misc.
-    let i = 0;
-    let duration = 0;
 
     // Size of the diagram
     let viewerWidth = document.getElementById("tree-container").offsetWidth;
@@ -147,48 +167,53 @@ function getTreeJson(root, selectedNodeNames, position) {
     let zoomListener = makeZoomListener(svg, svgGroup);
 
     // Define the root
-    if (root) {
-        root.x0 = viewerHeight / 2;
-        root.y0 = 0;
+    root.x0 = viewerHeight / 2;
+    root.y0 = 0;
 
-        // Layout the tree initially and center on the root node.
-        update(root);
+    // ???
+    let d3Tree = makeD3Tree(viewerWidth, getTreeHeight(root));
+    let d3Diagonal = makeD3Diagonal();
 
-        if (!position) {
-            centerNode(root, viewerWidth, viewerHeight, duration, zoomListener);
-        }
-        else {
-            d3.select('g')
-                .transition()
-                .duration(duration)
-                .attr("transform", position);
-            //zoomListener.scale(scale);
-            //zoomListener.translate([x, y]);
-        }
+    // Compute the new tree layout
+    let d3Nodes = d3Tree.nodes(root).reverse();
+    let d3Links = d3Tree.links(d3Nodes);
+
+    // Set widths between levels based on maxLabelLength
+    d3Nodes.forEach(function (node) {
+        node.y = (node.depth * (maxLabelLength * 10));
+    });
+
+    // Layout the tree initially and center on the root node.
+    update(root);
+
+    if (!position) {
+        centerNode(root, viewerWidth, viewerHeight, zoomListener);
+    }
+    else {
+        d3.select('g')
+            .transition()
+            .duration(TRANSITION_DURATION)
+            .attr("transform", position);
+        //zoomListener.scale(scale);
+        //zoomListener.translate([x, y]);
+    }
+
+    function makeNodes() {
+
     }
 
     function update(source) {
 
-        let d3Tree = makeD3Tree(viewerWidth, getTreeHeight(root));
-        let d3Diagonal = makeD3Diagonal();
-
-        // Compute the new tree layout
-        let nodes = d3Tree.nodes(root).reverse();
-        let links = d3Tree.links(nodes);
-
-        // Set widths between levels based on maxLabelLength
-        nodes.forEach(function (node) {
-            node.y = (node.depth * (maxLabelLength * 10));
-        });
-
         // Update the nodes
+        let id = 0;
         let svgNodes = svgGroup.selectAll("g.node")
-            .data(nodes, function (node) {
-                return node.id || (node.id = ++i);
+            .data(d3Nodes, function (node) {
+                return node.id || (node.id = ++id);
             });
 
         // Enter any new nodes at the parent's previous position.
-        let nodeEnter = svgNodes.enter().append("g")
+        let svgNodeGs = svgNodes.enter()
+            .append("g")
             .classed('node', true)
             .classed('nodeAnd', node => node.type === 'AND')
             .classed('nodeOr', node => node.type === 'OR')
@@ -217,62 +242,26 @@ function getTreeJson(root, selectedNodeNames, position) {
             .classed('propagated', node => node.isStatusPropagated);
 
         // Make halo circle for selected node
-        nodeEnter.append("circle")
+        svgNodeGs.append("circle")
             .attr('r', '20')
-            .attr("class", function (node) {
-                let nodeNameStr = JSON.stringify(node.name);
-                for (let selectedNodeName of selectedNodeNames) {
-                    if (nodeNameStr === JSON.stringify(selectedNodeName)) {
-                        return 'selected';
-                    }
-                }
-                return 'hidden';
-            });
+            .attr("class", node => isSelectedNode(node.name, selectedNodeNames) ? 'selected' : 'hidden');
 
-        nodeEnter.append("text")
-            .attr("x", function (d) {
-                return d.children || d._children ? -10 : 10;
-            })
+        // Make text
+        svgNodeGs.append("text")
+            .attr("x", node => node.children ? -10 : 10)
             .attr("dy", ".35em")
-            .attr('class', 'nodeText')
-            .attr("text-anchor", function (d) {
-                return d.children || d._children ? "end" : "start";
-            })
-            .text(function (d) {
-                return d.name;
-            })
-            .style("fill-opacity", 0);
-
-        // Update the text to reflect whether node has children or not
-        svgNodes.select('text')
-            .attr("x", function (d) {
-                return d.children || d._children ? -10 : 10;
-            })
-            .attr("text-anchor", function (d) {
-                return d.children || d._children ? "end" : "start";
-            })
-            .text(function (d) {
-                // return d.name;
-                if (d.type === "AND") {
-                    return d.solvers.length; // Label is number of solvers working on the node
-                }
-                return null;
-            });
+            .attr("text-anchor", function (node) { return node.children ? "end" : "start"; })
+            .text(node => node.type === 'AND' ? node.solvers.length : null);
 
         // Transition nodes to their new position.
-        let nodeUpdate = svgNodes.transition()
-            .duration(duration)
-            .attr("transform", function (d) {
-                return `translate(${d.y},${d.x})`;
-            });
-
-        // Fade the text in
-        nodeUpdate.select("text")
-            .style("fill-opacity", 1);
+        svgNodes.transition()
+            .duration(TRANSITION_DURATION)
+            .attr("transform", node => `translate(${node.y},${node.x})`)
+            .style('fill-opacity', 1);
 
         // Transition exiting nodes to the parent's new position.
         let nodeExit = svgNodes.exit().transition()
-            .duration(duration)
+            .duration(TRANSITION_DURATION)
             .attr("transform", function () {
                 return `translate(${source.y},${source.x})`;
             })
@@ -284,14 +273,14 @@ function getTreeJson(root, selectedNodeNames, position) {
         nodeExit.select("text")
             .style("fill-opacity", 0);
 
-        // Update the links…
-        let link = svgGroup.selectAll("path.link")
-            .data(links, function (d) {
+        // Update the links
+        let svgLink = svgGroup.selectAll("path.link")
+            .data(d3Links, function (d) {
                 return d.target.id;
             });
 
         // Enter any new links at the parent's previous position.
-        link.enter().insert("path", "g")
+        svgLink.enter().insert("path", "g")
             .attr("class", "link")
             .attr("d", function (d) {
                 let o = {
@@ -305,13 +294,13 @@ function getTreeJson(root, selectedNodeNames, position) {
             });
 
         // Transition links to their new position.
-        link.transition()
-            .duration(duration)
+        svgLink.transition()
+            .duration(TRANSITION_DURATION)
             .attr("d", d3Diagonal);
 
         // Transition exiting nodes to the parent's new position.
-        link.exit().transition()
-            .duration(duration)
+        svgLink.exit().transition()
+            .duration(TRANSITION_DURATION)
             .attr("d", function (d) {
                 let o = {
                     x: source.x,
@@ -325,7 +314,7 @@ function getTreeJson(root, selectedNodeNames, position) {
             .remove();
 
         // Stash the old positions for transition.
-        nodes.forEach(function (d) {
+        d3Nodes.forEach(function (d) {
             d.x0 = d.x;
             d.y0 = d.y;
         });
@@ -370,4 +359,25 @@ function highlightSolvers(d) {
 
     $('.solver-container table tr').removeClass("highlight");
     $(query).addClass("highlight");
+}
+
+function arrayEqual(a1, a2) {
+    if (a1.length !== a2.length) {
+        return false;
+    }
+    for (let i = 0; i < a1.length; ++i) {
+        if (a1[i] !== a2[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function isSelectedNode(nodeName, selectedNodeNames) {
+    for (let selectedNodeName of selectedNodeNames) {
+        if (arrayEqual(nodeName, selectedNodeName)) {
+            return true;
+        }
+    }
+    return false;
 }
