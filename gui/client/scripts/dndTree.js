@@ -28,15 +28,16 @@
 
 
 /**********************************************************************************************************************/
-/* CONSTANTS                                                                                                               */
+/* CONSTANTS                                                                                                          */
 /**********************************************************************************************************************/
 
 
 const TRANSITION_DURATION = 0;
 
 
+
 /**********************************************************************************************************************/
-/* CODE                                                                                                               */
+/* D3                                                                                                                 */
 /**********************************************************************************************************************/
 
 
@@ -54,8 +55,14 @@ function makeD3Diagonal() {
 }
 
 
+
+/**********************************************************************************************************************/
+/* SVG                                                                                                                */
+/**********************************************************************************************************************/
+
+
 // Remove the previous svg element
-function clear() {
+function clearSvg() {
     d3.select('#tree-container').select('svg').remove();
 }
 
@@ -76,6 +83,12 @@ function makeSvgGroup(svgBase) {
 }
 
 
+
+/**********************************************************************************************************************/
+/* LISTENERS                                                                                                          */
+/**********************************************************************************************************************/
+
+
 // Make the zoomListener which calls the zoom function on the "zoom" event constrained within the scaleExtents
 function makeZoomListener(listener, target) {
     let zoomListener = d3.behavior.zoom().scaleExtent([0.1, 3]).on('zoom', function () {
@@ -84,6 +97,12 @@ function makeZoomListener(listener, target) {
     listener.call(zoomListener);
     return zoomListener;
 }
+
+
+
+/**********************************************************************************************************************/
+/* UTILS                                                                                                              */
+/**********************************************************************************************************************/
 
 
 // Get the max length of a label of all nodes in the given tree
@@ -127,7 +146,38 @@ function getTreeHeight(tree) {
 }
 
 
-// Center node when clicked/dropped so node doesn't get lost when collapsing/moving with large amount of children.
+// Check if two array have same content
+function arrayEqual(a1, a2) {
+    if (a1.length !== a2.length) {
+        return false;
+    }
+    for (let i = 0; i < a1.length; ++i) {
+        if (a1[i] !== a2[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+// Check if nodeName is equal to at least one of the selectedNodeNames
+function isSelectedNode(nodeName, selectedNodeNames) {
+    for (let selectedNodeName of selectedNodeNames) {
+        if (arrayEqual(nodeName, selectedNodeName)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+
+/**********************************************************************************************************************/
+/* POSITIONING                                                                                                        */
+/**********************************************************************************************************************/
+
+
+// Center node when clicked/dropped so node doesn't get lost when collapsing/moving with large amount of children
 function centerNode(node, width, height, zoomListener) {
     let scale = zoomListener.scale();
     x = -node.y0 * scale + width / 2;
@@ -145,6 +195,105 @@ function centerNode(node, width, height, zoomListener) {
 }
 
 
+
+/**********************************************************************************************************************/
+/* DOM TREE ELEMENTS                                                                                                  */
+/**********************************************************************************************************************/
+
+
+// Make nodes, put them in correct position and assign styles
+function makeNodes(root, svgGroup, d3Nodes, selectedNodeNames) {
+    let id = 0;
+    let svgNodes = svgGroup.selectAll('g.node')
+        .data(d3Nodes, function (node) {
+            return node.id || (node.id = ++id);
+        });
+
+    // Enter any new nodes at the parent's previous position
+    let svgNodeGs = svgNodes.enter()
+        .append('g')
+        .classed('node', true)
+        .classed('nodeAnd', node => node.type === 'AND')
+        .classed('nodeOr', node => node.type === 'OR')
+        .attr("transform", function () {
+            return `translate(${root.y0}, ${root.x0})`;
+        })
+        .on('click', function (node) {
+            showNodeData(node);
+            highlightSolvers(node);
+        });
+
+    // Add rhombi to OR nodes
+    svgGroup.selectAll('.nodeOr')
+        .append('rect')
+        .attr('width', '10')
+        .attr('height', '10')
+        .classed('nodeRect', true);
+
+    // Add circles to AND nodes
+    svgGroup.selectAll('.nodeAnd')
+        .append('circle')
+        .attr('r', '4.5')
+        .classed('sat', node => node.status === 'sat')
+        .classed('unsat', node => node.status === 'unsat')
+        .classed('unknown', node => node.status === 'unknown')
+        .classed('propagated', node => node.isStatusPropagated);
+
+    // Make halo circle for selected node
+    svgNodeGs.append('circle')
+        .attr('r', '20')
+        .attr('class', node => isSelectedNode(node.name, selectedNodeNames) ? 'selected' : 'hidden');
+
+    // Make text
+    svgNodeGs.append('text')
+        .attr('x', node => node.children ? -10 : 10)
+        .attr('dy', '.35em')
+        .attr('text-anchor', function (node) {
+            return node.children ? 'end' : 'start';
+        })
+        .text(node => node.type === 'AND' ? node.solvers.length : null);
+
+    // Transition nodes to their new position.
+    svgNodes.transition()
+        .duration(TRANSITION_DURATION)
+        .attr('transform', node => `translate(${node.y},${node.x})`)
+        .style('fill-opacity', 1);
+}
+
+
+// Make links between nodes, put them in correct position and assign styles
+function makeLinks(root, svgGroup, d3Links) {
+    let svgLinks = svgGroup.selectAll('path.link')
+        .data(d3Links, link => link.target.id);
+
+    let d3Diagonal = makeD3Diagonal();
+
+    // Enter any new links at the parent's previous position.
+    svgLinks.enter()
+        .insert('path', 'g')
+        .classed('link', true)
+        .attr('d', () => d3Diagonal({source: {x: root.x0, y: root.y0}, target: {x: root.x0, y: root.y0}}));
+
+    // Transition links to their new position.
+    svgLinks.transition()
+        .duration(TRANSITION_DURATION)
+        .attr('d', d3Diagonal);
+
+    // Transition exiting nodes to the parent's new position.
+    svgLinks.exit()
+        .transition()
+        .duration(TRANSITION_DURATION)
+        .attr('d', () => d3Diagonal({source: {x: root.x, y: root.y}, target: {x: root.x, y: root.y}}))
+        .remove();
+}
+
+
+
+/**********************************************************************************************************************/
+/* MAIN                                                                                                               */
+/**********************************************************************************************************************/
+
+
 // Get JSON data
 function getTreeJson(root, selectedNodeNames, position) {
 
@@ -160,7 +309,7 @@ function getTreeJson(root, selectedNodeNames, position) {
     let viewerHeight = document.getElementById("tree-container").offsetHeight;
 
     // SVG element setup
-    clear();
+    clearSvg();
     let svg = makeSvg(viewerWidth, viewerHeight);
     let svgGroup = makeSvgGroup(svg);
     let zoomListener = makeZoomListener(svg, svgGroup);
@@ -169,11 +318,8 @@ function getTreeJson(root, selectedNodeNames, position) {
     root.x0 = viewerHeight / 2;
     root.y0 = 0;
 
-    // ???
-    let d3Tree = makeD3Tree(viewerWidth, getTreeHeight(root));
-    let d3Diagonal = makeD3Diagonal();
-
     // Compute the new tree layout
+    let d3Tree = makeD3Tree(viewerWidth, getTreeHeight(root));
     let d3Nodes = d3Tree.nodes(root).reverse();
     let d3Links = d3Tree.links(d3Nodes);
 
@@ -182,9 +328,28 @@ function getTreeJson(root, selectedNodeNames, position) {
         node.y = (node.depth * (maxLabelLength * 10));
     });
 
-    // Layout the tree initially and center on the root node.
-    update(root);
+    // Generate DOM tree
+    makeNodes(root, svgGroup, d3Nodes, selectedNodeNames);
+    makeLinks(root, svgGroup, d3Links);
 
+    // Stash the old positions for transition
+    d3Nodes.forEach(function (node) {
+        node.x0 = node.x;
+        node.y0 = node.y;
+    });
+
+    let ppTable = prettyPrint({});
+    document.getElementById('d6_1').innerHTML = "";
+    let item = document.getElementById('d6_2');
+
+    if (item.childNodes[0]) {
+        item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table
+    }
+    else {
+        item.appendChild(ppTable);
+    }
+
+    // Set position
     if (!position) {
         centerNode(root, viewerWidth, viewerHeight, zoomListener);
     }
@@ -196,110 +361,14 @@ function getTreeJson(root, selectedNodeNames, position) {
         //zoomListener.scale(scale);
         //zoomListener.translate([x, y]);
     }
-
-    function makeNodes() {
-
-    }
-
-    function update(source) {
-
-        // Update the nodes
-        let id = 0;
-        let svgNodes = svgGroup.selectAll("g.node")
-            .data(d3Nodes, function (node) {
-                return node.id || (node.id = ++id);
-            });
-
-        // Enter any new nodes at the parent's previous position.
-        let svgNodeGs = svgNodes.enter()
-            .append("g")
-            .classed('node', true)
-            .classed('nodeAnd', node => node.type === 'AND')
-            .classed('nodeOr', node => node.type === 'OR')
-            .attr("transform", function () {
-                return `translate(${source.y0},${source.x0})`;
-            })
-            .on('click', function (node) {
-                showNodeData(node);
-                highlightSolvers(node);
-            });
-
-        // Add rhombi to OR nodes
-        svgGroup.selectAll('.nodeOr')
-            .append('rect')
-            .attr('width', '10')
-            .attr('height', '10')
-            .classed('nodeRect', true);
-
-        // Add circles to AND nodes
-        svgGroup.selectAll('.nodeAnd')
-            .append('circle')
-            .attr('r', '4.5')
-            .classed('sat', node => node.status === 'sat')
-            .classed('unsat', node => node.status === 'unsat')
-            .classed('unknown', node => node.status === 'unknown')
-            .classed('propagated', node => node.isStatusPropagated);
-
-        // Make halo circle for selected node
-        svgNodeGs.append("circle")
-            .attr('r', '20')
-            .attr('class', node => isSelectedNode(node.name, selectedNodeNames) ? 'selected' : 'hidden');
-
-        // Make text
-        svgNodeGs.append("text")
-            .attr("x", node => node.children ? -10 : 10)
-            .attr("dy", ".35em")
-            .attr("text-anchor", function (node) {
-                return node.children ? "end" : "start";
-            })
-            .text(node => node.type === 'AND' ? node.solvers.length : null);
-
-        // Transition nodes to their new position.
-        svgNodes.transition()
-            .duration(TRANSITION_DURATION)
-            .attr("transform", node => `translate(${node.y},${node.x})`)
-            .style('fill-opacity', 1);
-
-        // Update the links
-        let svgLinks = svgGroup.selectAll("path.link")
-            .data(d3Links, link => link.target.id);
-
-        // Enter any new links at the parent's previous position.
-        svgLinks.enter()
-            .insert('path', 'g')
-            .classed('link', true)
-            .attr('d', () => d3Diagonal({source: {x: source.x0, y: source.y0}, target: {x: source.x0, y: source.y0}}));
-
-        // Transition links to their new position.
-        svgLinks.transition()
-            .duration(TRANSITION_DURATION)
-            .attr('d', d3Diagonal);
-
-        // Transition exiting nodes to the parent's new position.
-        svgLinks.exit()
-            .transition()
-            .duration(TRANSITION_DURATION)
-            .attr('d', () => d3Diagonal({source: {x: source.x, y: source.y}, target: {x: source.x, y: source.y}}))
-            .remove();
-
-        // Stash the old positions for transition.
-        d3Nodes.forEach(function (d) {
-            d.x0 = d.x;
-            d.y0 = d.y;
-        });
-
-        let ppTable = prettyPrint({});
-        document.getElementById('d6_1').innerHTML = "";
-        let item = document.getElementById('d6_2');
-
-        if (item.childNodes[0]) {
-            item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table
-        }
-        else {
-            item.appendChild(ppTable);
-        }
-    }
 }
+
+
+
+/**********************************************************************************************************************/
+/* OTHER                                                                                                              */
+/**********************************************************************************************************************/
+
 
 // This function shows node data in data view
 function showNodeData(d) {
@@ -321,6 +390,7 @@ function showNodeData(d) {
     }
 }
 
+
 // This function highlights in solver view the solvers working on the clicked node
 function highlightSolvers(d) {
     let node = JSON.stringify(d.name);
@@ -328,25 +398,4 @@ function highlightSolvers(d) {
 
     $('.solver-container table tr').removeClass("highlight");
     $(query).addClass("highlight");
-}
-
-function arrayEqual(a1, a2) {
-    if (a1.length !== a2.length) {
-        return false;
-    }
-    for (let i = 0; i < a1.length; ++i) {
-        if (a1[i] !== a2[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-
-function isSelectedNode(nodeName, selectedNodeNames) {
-    for (let selectedNodeName of selectedNodeNames) {
-        if (arrayEqual(nodeName, selectedNodeName)) {
-            return true;
-        }
-    }
-    return false;
 }
