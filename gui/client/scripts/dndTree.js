@@ -93,6 +93,7 @@ function makeSvgGroup(svgBase) {
 function makeZoomListener(listener, target) {
     let zoomListener = d3.behavior.zoom().scaleExtent([0.1, 3]).on('zoom', function () {
         target.attr('transform', `translate(${d3.event.translate}) scale(${d3.event.scale})`);
+        scaleSelectedCircle(d3.event.scale);
     });
     listener.call(zoomListener);
     return zoomListener;
@@ -283,6 +284,11 @@ function makeLinks(root, svgGroup, d3Links) {
 /**********************************************************************************************************************/
 
 
+function scaleSelectedCircle(scale) {
+    let circles = document.querySelectorAll('circle.selected');
+    circles.forEach(circle => circle.setAttribute('r', (20 / scale).toString()));
+}
+
 function move(zoomListener, x, y, scale) {
     let position = `translate(${x}, ${y}) scale(${scale})`;
 
@@ -290,6 +296,8 @@ function move(zoomListener, x, y, scale) {
         .attr('transform', position)
         .transition()
         .duration(TRANSITION_DURATION);
+
+    scaleSelectedCircle(scale);
 
     zoomListener.scale(scale);
     zoomListener.translate([x, y]);
