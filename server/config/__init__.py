@@ -40,7 +40,7 @@ def db():
                    ");".format(table_prefix))
     db.db.commit()
     cursor = db.db.cursor()
-    cursor.execute("VACUUM;")
+    #cursor.execute("VACUUM;")
     db.db.commit()
     return db()
 

@@ -171,27 +171,22 @@ function isSelectedNode(nodeName, selectedNodeNames) {
 }
 
 
+// Return `[x, y]` from a transform string of the form 'translate(x, y) scale(z)', null if no translate
+function getTranslate(position) {
+    if (position && position.includes('translate')) {
+        let values = position.match(/translate\(([^)]+)\)/)[1].split(',');
+        return [parseFloat(values[0]), parseFloat(values[1])];
+    }
+    return null;
+}
 
-/**********************************************************************************************************************/
-/* POSITIONING                                                                                                        */
-/**********************************************************************************************************************/
 
-
-// Center node when clicked/dropped so node doesn't get lost when collapsing/moving with large amount of children
-function centerNode(node, width, height, zoomListener) {
-    let scale = zoomListener.scale();
-    x = -node.y0 * scale + width / 2;
-    y = -node.x0 * scale + height / 2;
-
-    let position = `translate(${x},${y}) scale(${scale})`;
-
-    d3.select('g')
-        .attr('transform', position)
-        .transition()
-        .duration(TRANSITION_DURATION);
-
-    zoomListener.scale(scale);
-    zoomListener.translate([x, y]);
+// Return `z` from a transform string of the form 'translate(x, y) scale(z)', null if no scale
+function getScale(position) {
+    if (position && position.includes('scale')) {
+        return parseFloat(position.match(/scale\(([^)]+)\)/)[1]);
+    }
+    return null;
 }
 
 
@@ -205,19 +200,15 @@ function centerNode(node, width, height, zoomListener) {
 function makeNodes(root, svgGroup, d3Nodes, selectedNodeNames) {
     let id = 0;
     let svgNodes = svgGroup.selectAll('g.node')
-        .data(d3Nodes, function (node) {
-            return node.id || (node.id = ++id);
-        });
+        .data(d3Nodes, node => node.id || (node.id = ++id));
 
     // Enter any new nodes at the parent's previous position
     let svgNodeGs = svgNodes.enter()
         .append('g')
         .classed('node', true)
-        .classed('nodeAnd', node => node.type === 'AND')
-        .classed('nodeOr', node => node.type === 'OR')
-        .attr("transform", function () {
-            return `translate(${root.y0}, ${root.x0})`;
-        })
+        .classed('nodeAnd', node => node.type === 'AND') // Class needed as selector
+        .classed('nodeOr', node => node.type === 'OR')   // Class needed as selector
+        .attr('transform', `translate(${root.y0}, ${root.x0})`)
         .on('click', function (node) {
             showNodeData(node);
             highlightSolvers(node);
@@ -248,9 +239,7 @@ function makeNodes(root, svgGroup, d3Nodes, selectedNodeNames) {
     svgNodeGs.append('text')
         .attr('x', node => node.children ? -10 : 10)
         .attr('dy', '.35em')
-        .attr('text-anchor', function (node) {
-            return node.children ? 'end' : 'start';
-        })
+        .attr('text-anchor', node => node.children ? 'end' : 'start')
         .text(node => node.type === 'AND' ? node.solvers.length : null);
 
     // Transition nodes to their new position.
@@ -290,19 +279,50 @@ function makeLinks(root, svgGroup, d3Links) {
 
 
 /**********************************************************************************************************************/
+/* POSITIONING                                                                                                        */
+/**********************************************************************************************************************/
+
+
+function move(zoomListener, x, y, scale) {
+    let position = `translate(${x}, ${y}) scale(${scale})`;
+
+    d3.select('g')
+        .attr('transform', position)
+        .transition()
+        .duration(TRANSITION_DURATION);
+
+    zoomListener.scale(scale);
+    zoomListener.translate([x, y]);
+}
+
+
+function center(zoomListener, x, y, width, height, scale) {
+    move(zoomListener, -y * scale + width / 2, -x * scale + height / 2, scale);
+}
+
+
+// Check if position is between bounds
+function isInBounds(x, y, left, right, bottom, top) {
+    let errX = (right - left) * 0.0125;
+    let errY = (top - bottom) * 0.0125;
+    console.log(left + errX, ':', x, ':', right - errX);
+    console.log(bottom + errY, ':', y, ':', top - errY);
+    return left + errX <= x && x < right - errX && bottom + errY <= y && y < top - errY;
+}
+
+
+
+/**********************************************************************************************************************/
 /* MAIN                                                                                                               */
 /**********************************************************************************************************************/
 
 
 // Get JSON data
-function getTreeJson(root, selectedNodeNames, position) {
+function getTreeJson(root, selectedNodeNames, positionFrame) {
 
     if (!root) {
         return;
     }
-
-    // Calculate total nodes, max label length
-    let maxLabelLength = getMaxLabelLength(root);
 
     // Size of the diagram
     let viewerWidth = document.getElementById("tree-container").offsetWidth;
@@ -318,15 +338,17 @@ function getTreeJson(root, selectedNodeNames, position) {
     root.x0 = viewerHeight / 2;
     root.y0 = 0;
 
+    // Calculate max label length
+    // This has to be computed before reversing the root
+    let maxLabelLength = getMaxLabelLength(root);
+
     // Compute the new tree layout
     let d3Tree = makeD3Tree(viewerWidth, getTreeHeight(root));
     let d3Nodes = d3Tree.nodes(root).reverse();
     let d3Links = d3Tree.links(d3Nodes);
 
     // Set widths between levels based on maxLabelLength
-    d3Nodes.forEach(function (node) {
-        node.y = (node.depth * (maxLabelLength * 10));
-    });
+    d3Nodes.forEach(node => node.y = (node.depth * (maxLabelLength * 10)));
 
     // Generate DOM tree
     makeNodes(root, svgGroup, d3Nodes, selectedNodeNames);
@@ -338,28 +360,39 @@ function getTreeJson(root, selectedNodeNames, position) {
         node.y0 = node.y;
     });
 
+    // ???
     let ppTable = prettyPrint({});
-    document.getElementById('d6_1').innerHTML = "";
+    document.getElementById('d6_1').innerHTML = '';
     let item = document.getElementById('d6_2');
 
+    // ???
     if (item.childNodes[0]) {
-        item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table
+        item.replaceChild(ppTable, item.childNodes[0]); // Replace existing table
     }
     else {
         item.appendChild(ppTable);
     }
 
     // Set position
-    if (!position) {
-        centerNode(root, viewerWidth, viewerHeight, zoomListener);
+    if (positionFrame) {
+        let positionSelected = document.querySelector('circle.selected').parentNode.getAttribute('transform');
+        let translateSelected = getTranslate(positionSelected);
+        let translateFrame = getTranslate(positionFrame);
+        let scale = getScale(positionFrame) || zoomListener.scale();
+        let x = translateSelected[0] * scale + translateFrame[0];
+        let y = translateSelected[1] * scale + translateFrame[1];
+
+        if (isInBounds(x, y, 0, viewerWidth, 0, viewerHeight)) {
+            move(zoomListener, translateFrame[0], translateFrame[1], scale);
+        }
+        else {
+            let node = root.getNode(selectedNodeNames[0]);
+            center(zoomListener, node.x0, node.y0, viewerWidth, viewerHeight, getScale(positionFrame) || zoomListener.scale());
+        }
     }
     else {
-        d3.select('g')
-            .transition()
-            .duration(TRANSITION_DURATION)
-            .attr("transform", position);
-        //zoomListener.scale(scale);
-        //zoomListener.translate([x, y]);
+        let node = root.getNode(selectedNodeNames[0]);
+        center(zoomListener, node.x0, node.y0, viewerWidth, viewerHeight, zoomListener.scale());
     }
 }
 
