@@ -35,7 +35,6 @@
 const TRANSITION_DURATION = 0;
 
 
-
 /**********************************************************************************************************************/
 /* CODE                                                                                                               */
 /**********************************************************************************************************************/
@@ -244,13 +243,15 @@ function getTreeJson(root, selectedNodeNames, position) {
         // Make halo circle for selected node
         svgNodeGs.append("circle")
             .attr('r', '20')
-            .attr("class", node => isSelectedNode(node.name, selectedNodeNames) ? 'selected' : 'hidden');
+            .attr('class', node => isSelectedNode(node.name, selectedNodeNames) ? 'selected' : 'hidden');
 
         // Make text
         svgNodeGs.append("text")
             .attr("x", node => node.children ? -10 : 10)
             .attr("dy", ".35em")
-            .attr("text-anchor", function (node) { return node.children ? "end" : "start"; })
+            .attr("text-anchor", function (node) {
+                return node.children ? "end" : "start";
+            })
             .text(node => node.type === 'AND' ? node.solvers.length : null);
 
         // Transition nodes to their new position.
@@ -259,58 +260,26 @@ function getTreeJson(root, selectedNodeNames, position) {
             .attr("transform", node => `translate(${node.y},${node.x})`)
             .style('fill-opacity', 1);
 
-        // Transition exiting nodes to the parent's new position.
-        let nodeExit = svgNodes.exit().transition()
-            .duration(TRANSITION_DURATION)
-            .attr("transform", function () {
-                return `translate(${source.y},${source.x})`;
-            })
-            .remove();
-
-        nodeExit.select("circle")
-            .attr("r", 0);
-
-        nodeExit.select("text")
-            .style("fill-opacity", 0);
-
         // Update the links
-        let svgLink = svgGroup.selectAll("path.link")
-            .data(d3Links, function (d) {
-                return d.target.id;
-            });
+        let svgLinks = svgGroup.selectAll("path.link")
+            .data(d3Links, link => link.target.id);
 
         // Enter any new links at the parent's previous position.
-        svgLink.enter().insert("path", "g")
-            .attr("class", "link")
-            .attr("d", function (d) {
-                let o = {
-                    x: source.x0,
-                    y: source.y0
-                };
-                return d3Diagonal({
-                    source: o,
-                    target: o
-                });
-            });
+        svgLinks.enter()
+            .insert('path', 'g')
+            .classed('link', true)
+            .attr('d', () => d3Diagonal({source: {x: source.x0, y: source.y0}, target: {x: source.x0, y: source.y0}}));
 
         // Transition links to their new position.
-        svgLink.transition()
+        svgLinks.transition()
             .duration(TRANSITION_DURATION)
-            .attr("d", d3Diagonal);
+            .attr('d', d3Diagonal);
 
         // Transition exiting nodes to the parent's new position.
-        svgLink.exit().transition()
+        svgLinks.exit()
+            .transition()
             .duration(TRANSITION_DURATION)
-            .attr("d", function (d) {
-                let o = {
-                    x: source.x,
-                    y: source.y
-                };
-                return d3Diagonal({
-                    source: o,
-                    target: o
-                });
-            })
+            .attr('d', () => d3Diagonal({source: {x: source.x, y: source.y}, target: {x: source.x, y: source.y}}))
             .remove();
 
         // Stash the old positions for transition.
