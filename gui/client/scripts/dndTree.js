@@ -284,11 +284,14 @@ function makeLinks(root, svgGroup, d3Links) {
 /**********************************************************************************************************************/
 
 
+// Scale selected node halo when zooming in or out
 function scaleSelectedCircle(scale) {
     let circles = document.querySelectorAll('circle.selected');
     circles.forEach(circle => circle.setAttribute('r', (20 / scale).toString()));
 }
 
+
+// Move frame to x, y coordinates
 function move(zoomListener, x, y, scale) {
     let position = `translate(${x}, ${y}) scale(${scale})`;
 
@@ -304,6 +307,7 @@ function move(zoomListener, x, y, scale) {
 }
 
 
+// Move frame centering x, y coordinates
 function center(zoomListener, x, y, width, height, scale) {
     move(zoomListener, -y * scale + width / 2, -x * scale + height / 2, scale);
 }
@@ -313,8 +317,6 @@ function center(zoomListener, x, y, width, height, scale) {
 function isInBounds(x, y, left, right, bottom, top) {
     let errX = (right - left) * 0.0125;
     let errY = (top - bottom) * 0.0125;
-    console.log(left + errX, ':', x, ':', right - errX);
-    console.log(bottom + errY, ':', y, ':', top - errY);
     return left + errX <= x && x < right - errX && bottom + errY <= y && y < top - errY;
 }
 
@@ -325,8 +327,8 @@ function isInBounds(x, y, left, right, bottom, top) {
 /**********************************************************************************************************************/
 
 
-// Get JSON data
-function getTreeJson(root, selectedNodeNames, positionFrame) {
+// Generate DOM tree
+function generateDomTree(root, selectedNodeNames, positionFrame) {
 
     if (!root) {
         return;
