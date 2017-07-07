@@ -5,7 +5,7 @@
 }
 
 .overlay {
-    background-color: #EEE;
+    background-color: #eee;
 }
 
 .node circle,
@@ -26,35 +26,28 @@
     stroke-width: 1.5px;
 }
 
-.templink {
-    fill: none;
-    stroke: red;
-    stroke-width: 3px;
-}
-
-/**/
 circle.sat {
-    fill: green;
+    fill: #008000; /* Green */
 }
 
 circle.sat.propagated {
-    fill: #66B266;
+    fill: #99CC99; /* Light green */
 }
 
 circle.unsat {
-    fill: #FF0000;
+    fill: #FF0000; /* Red */
 }
 
 circle.unsat.propagated {
-    fill: #FF6666;
+    fill: #FF9999; /* Light red */
 }
 
 circle.unknown {
-    fill: #FFE4C4;
+    fill: #FFE4C4; /* Bisque */
 }
 
-circle.selectedNode {
-    fill: rgba(0, 0, 255, 0.1);
+circle.selected {
+    fill: rgba(0, 0, 255, 0.1); /* Blue */
     stroke: none;
 }
 

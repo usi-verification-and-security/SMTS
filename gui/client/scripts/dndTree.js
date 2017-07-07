@@ -162,8 +162,7 @@ function getTreeJson(root, selectedNodeNames, position) {
             .data(nodes, function (node) {
                 return node.id || (node.id = ++i);
             });
-
-
+        
         // Enter any new nodes at the parent's previous position.
         let nodeEnter = svgNodes.enter().append("g")
             .classed('node', true)
@@ -188,7 +187,6 @@ function getTreeJson(root, selectedNodeNames, position) {
         svgGroup.selectAll('.nodeAnd')
             .append('circle')
             .attr('r', '4.5')
-            .classed('nodeCircle', true)
             .classed('sat', node => node.status === 'sat')
             .classed('unsat', node => node.status === 'unsat')
             .classed('unknown', node => node.status === 'unknown')
@@ -201,8 +199,7 @@ function getTreeJson(root, selectedNodeNames, position) {
                 let nodeNameStr = JSON.stringify(node.name);
                 for (let selectedNodeName of selectedNodeNames) {
                     if (nodeNameStr === JSON.stringify(selectedNodeName)) {
-                        // console.log(nodeNameStr, JSON.stringify(selectedNodeName));
-                        return 'selectedNode';
+                        return 'selected';
                     }
                 }
                 return 'hidden';
