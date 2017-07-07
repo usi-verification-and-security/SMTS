@@ -25,6 +25,107 @@
  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 
+/**********************************************************************************************************************/
+/* CODE                                                                                                               */
+/**********************************************************************************************************************/
+
+// Make a d3 tree
+
+function makeD3Tree(width, height) {
+    return d3.layout.tree().size([height, width]); // Width and height have swapped order
+}
+
+// Make a d3 diagonal projection for use by the node paths
+function makeD3Diagonal() {
+    return d3.svg.diagonal().projection(function (node) {
+        return [node.y, node.x];
+    });
+}
+
+// Remove the previous svg element
+function clear() {
+    d3.select('#tree-container').select('svg').remove();
+}
+
+// Make an svg element
+function makeSvg(width, height) {
+    return d3.select('#tree-container')
+        .append('svg')
+        .attr('viewBox', `0 0 ${width} ${height}`)
+        .attr('preserveAspectRatio', 'xMinYMin meet')
+        .classed('overlay', true);
+}
+
+// Append a group which holds all nodes and on which the zoom Listener can act upon
+function makeSvgGroup(svgBase) {
+    return svgBase.append('g');
+}
+
+// Make the zoomListener which calls the zoom function on the "zoom" event constrained within the scaleExtents
+function makeZoomListener(listener, target) {
+    let zoomListener = d3.behavior.zoom().scaleExtent([0.1, 3]).on('zoom', function () {
+        target.attr('transform', `translate(${d3.event.translate}) scale(${d3.event.scale})`);
+    });
+    listener.call(zoomListener);
+    return zoomListener;
+}
+
+// Get the max length of a label of all nodes in the given tree
+function getMaxLabelLength(tree) {
+    let maxLabelLength = 0;
+    getMaxLabelLengthRec(tree);
+    return maxLabelLength;
+
+    function getMaxLabelLengthRec(node) {
+        if (!node) {
+            return;
+        }
+        maxLabelLength = Math.max(node.name.length, maxLabelLength);
+        // Repete for children
+        for (let child of node.children) {
+            getMaxLabelLengthRec(child);
+        }
+    }
+}
+
+// Counts total children of tree and sets tree height accordingly
+// This prevents the layout looking squashed when new nodes are made visible or looking sparse when nodes are removed,
+// making the layout more consistent.
+function getTreeHeight(tree) {
+    let levelWidth = [1];
+    getMaxLevelWidthRec(0, tree);
+    return d3.max(levelWidth) * 25; // 25px per line
+
+    function getMaxLevelWidthRec(level, node) {
+        if (node.children && node.children.length > 0) {
+            if (levelWidth.length <= level + 1) {
+                levelWidth.push(0);
+            }
+            levelWidth[level + 1] += node.children.length;
+            node.children.forEach(function (child) {
+                getMaxLevelWidthRec(level + 1, child);
+            });
+        }
+    }
+}
+
+// Center node when clicked/dropped so node doesn't get lost when collapsing/moving with large amount of children.
+function centerNode(node, width, height, duration, zoomListener) {
+    let scale = zoomListener.scale();
+    x = -node.y0 * scale + width / 2;
+    y = -node.x0 * scale + height / 2;
+
+    let position = `translate(${x},${y}) scale(${scale})`;
+
+    d3.select('g')
+        .attr('transform', position)
+        .transition()
+        .duration(duration);
+
+    zoomListener.scale(scale);
+    zoomListener.translate([x, y]);
+}
+
 // Get JSON data
 function getTreeJson(root, selectedNodeNames, position) {
 
@@ -39,35 +140,11 @@ function getTreeJson(root, selectedNodeNames, position) {
     let viewerWidth = document.getElementById("tree-container").offsetWidth;
     let viewerHeight = document.getElementById("tree-container").offsetHeight;
 
-    // Create tree
-    let svgTree = d3.layout.tree().size([viewerHeight, viewerWidth]);
-
-    // Define a d3 diagonal projection for use by the node paths later on
-    let diagonal = d3.svg.diagonal().projection(function (d) {
-        return [d.y, d.x];
-    });
-
-    // Define the zoomListener which calls the zoom function on the "zoom" event constrained within the scaleExtents
-    let zoomListener = d3.behavior.zoom().scaleExtent([0.1, 3]).on("zoom", function () {
-        svgGroup.attr("transform", `translate(${d3.event.translate}) scale(${d3.event.scale})`);
-    });
-
-    // Define the baseSvg, attaching a class for styling and the zoomListener
-    d3.select("#tree-container").select("svg").remove(); // Delete previous treeView
-
-    // Create svg element
-    let baseSvg = d3.select("#tree-container")
-        .append("svg")
-        //for responsiveness
-        .attr("viewBox", `0 0 ${viewerWidth} ${viewerHeight}`)
-        .attr("preserveAspectRatio", "xMinYMin meet")
-        // .attr("width", viewerWidth)
-        // .attr("height", viewerHeight)
-        .attr("class", "overlay")
-        .call(zoomListener);
-
-    // Append a group which holds all nodes and which the zoom Listener can act upon.
-    let svgGroup = baseSvg.append("g");
+    // SVG element setup
+    clear();
+    let svg = makeSvg(viewerWidth, viewerHeight);
+    let svgGroup = makeSvgGroup(svg);
+    let zoomListener = makeZoomListener(svg, svgGroup);
 
     // Define the root
     if (root) {
@@ -78,81 +155,28 @@ function getTreeJson(root, selectedNodeNames, position) {
         update(root);
 
         if (!position) {
-            centerNode(root);
+            centerNode(root, viewerWidth, viewerHeight, duration, zoomListener);
         }
         else {
             d3.select('g')
                 .transition()
                 .duration(duration)
                 .attr("transform", position);
-            zoomListener.scale(scale);
-            zoomListener.translate([x, y]);
+            //zoomListener.scale(scale);
+            //zoomListener.translate([x, y]);
         }
-    }
-
-    // Get the max length of a label of all nodes in the given tree
-    function getMaxLabelLength(svgTree) {
-        let maxLabelLength = 0;
-        getMaxLabelLengthRec(svgTree);
-        return maxLabelLength;
-
-        function getMaxLabelLengthRec(node) {
-            if (!node) {
-                return;
-            }
-            maxLabelLength = Math.max(node.name.length, maxLabelLength);
-            // Repete for children
-            for (let child of node.children) {
-                getMaxLabelLengthRec(child);
-            }
-        }
-    }
-
-    // Function to center node when clicked/dropped so node doesn't get lost when collapsing/moving with large amount of children.
-    function centerNode(source) {
-        scale = zoomListener.scale();
-        x = -source.y0 * scale + viewerWidth / 2;
-        y = -source.x0 * scale + viewerHeight / 2;
-
-        position = `translate(${x},${y})scale(${scale})`;
-
-        d3.select('g').transition()
-            .duration(duration)
-            .attr("transform", position);
-        zoomListener.scale(scale);
-        zoomListener.translate([x, y]);
     }
 
     function update(source) {
-        // Compute the new height, function counts total children of root node and sets tree height accordingly.
-        // This prevents the layout looking squashed when new nodes are made visible or looking sparse when nodes are removed
-        // This makes the layout more consistent.
 
-        function getNewHeight() {
-            let levelWidth = [1];
-            getMaxLevelWidthRec(0, root);
-            return d3.max(levelWidth) * 25; // 25px per line
+        let d3Tree = makeD3Tree(viewerWidth, getTreeHeight(root));
+        let d3Diagonal = makeD3Diagonal();
 
-            function getMaxLevelWidthRec(level, n) {
-                if (n.children && n.children.length > 0) {
-                    if (levelWidth.length <= level + 1) {
-                        levelWidth.push(0);
-                    }
-                    levelWidth[level + 1] += n.children.length;
-                    n.children.forEach(function (d) {
-                        getMaxLevelWidthRec(level + 1, d);
-                    });
-                }
-            }
-        }
+        // Compute the new tree layout
+        let nodes = d3Tree.nodes(root).reverse();
+        let links = d3Tree.links(nodes);
 
-        svgTree = svgTree.size([getNewHeight(), viewerWidth]);
-
-        // Compute the new tree layout.
-        let nodes = svgTree.nodes(root).reverse();
-        let links = svgTree.links(nodes);
-
-        // Set widths between levels based on maxLabelLength.
+        // Set widths between levels based on maxLabelLength
         nodes.forEach(function (node) {
             node.y = (node.depth * (maxLabelLength * 10));
         });
@@ -162,7 +186,7 @@ function getTreeJson(root, selectedNodeNames, position) {
             .data(nodes, function (node) {
                 return node.id || (node.id = ++i);
             });
-        
+
         // Enter any new nodes at the parent's previous position.
         let nodeEnter = svgNodes.enter().append("g")
             .classed('node', true)
@@ -274,7 +298,7 @@ function getTreeJson(root, selectedNodeNames, position) {
                     x: source.x0,
                     y: source.y0
                 };
-                return diagonal({
+                return d3Diagonal({
                     source: o,
                     target: o
                 });
@@ -283,7 +307,7 @@ function getTreeJson(root, selectedNodeNames, position) {
         // Transition links to their new position.
         link.transition()
             .duration(duration)
-            .attr("d", diagonal);
+            .attr("d", d3Diagonal);
 
         // Transition exiting nodes to the parent's new position.
         link.exit().transition()
@@ -293,7 +317,7 @@ function getTreeJson(root, selectedNodeNames, position) {
                     x: source.x,
                     y: source.y
                 };
-                return diagonal({
+                return d3Diagonal({
                     source: o,
                     target: o
                 });
