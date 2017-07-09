@@ -383,27 +383,32 @@ function generateDomTree(root, selectedNodeNames, positionFrame) {
         item.appendChild(ppTable);
     }
 
-    // Set position
-    if (positionFrame) {
-        let positionSelected = document.querySelector('circle.selected').parentNode.getAttribute('transform');
-        let translateSelected = getTranslate(positionSelected);
-        let translateFrame = getTranslate(positionFrame);
-        let scale = getScale(positionFrame) || zoomListener.scale();
-        let x = translateSelected[0] * scale + translateFrame[0];
-        let y = translateSelected[1] * scale + translateFrame[1];
+    // Move view in right position
+    // Center selected node if not in visible frame, otherwise restore the view as it was before.
+    // Function is in callback because it has to wait until the translate positions are updated inside the `g` elements.
+    setTimeout(function() {
+        if (positionFrame) {
+            let positionSelected = document.querySelector('circle.selected').parentNode.getAttribute('transform');
+            let translateSelected = getTranslate(positionSelected);
+            let translateFrame = getTranslate(positionFrame);
+            let scale = getScale(positionFrame) || zoomListener.scale();
+            let x = translateSelected[0] * scale + translateFrame[0];
+            let y = translateSelected[1] * scale + translateFrame[1];
 
-        if (isInBounds(x, y, 0, viewerWidth, 0, viewerHeight)) {
-            move(zoomListener, translateFrame[0], translateFrame[1], scale);
+            if (isInBounds(x, y, 0, viewerWidth, 0, viewerHeight)) {
+                move(zoomListener, translateFrame[0], translateFrame[1], scale);
+            }
+            else {
+                let node = root.getNode(selectedNodeNames[0]);
+                let scale = getScale(positionFrame) || zoomListener.scale();
+                center(zoomListener, node.x0, node.y0, viewerWidth, viewerHeight, scale);
+            }
         }
         else {
             let node = root.getNode(selectedNodeNames[0]);
-            center(zoomListener, node.x0, node.y0, viewerWidth, viewerHeight, getScale(positionFrame) || zoomListener.scale());
+            center(zoomListener, node.x0, node.y0, viewerWidth, viewerHeight, zoomListener.scale());
         }
-    }
-    else {
-        let node = root.getNode(selectedNodeNames[0]);
-        center(zoomListener, node.x0, node.y0, viewerWidth, viewerHeight, zoomListener.scale());
-    }
+    }, 0);
 }
 
 
