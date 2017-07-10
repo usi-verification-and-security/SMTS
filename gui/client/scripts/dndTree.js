@@ -104,7 +104,7 @@ function generateDomTree(root, selectedNodeNames, positionFrame) {
         node.y0 = node.y;
     });
 
-    // Update d6_2 table with selected node data
+    // Update data table with selected node data
     let selectedNode = root.getNode(selectedNodeNames[0]);
     showNodeData(selectedNode);
     highlightSolvers(selectedNode);
@@ -424,8 +424,8 @@ function showNodeData(node) {
 
     let ppTable = prettyPrint(ppNode);
 
-    document.getElementById('d6_1').innerHTML = "Node".bold();
-    let item = document.getElementById('d6_2');
+    document.getElementById('data-container-title').innerHTML = 'NODE'.bold();
+    let item = document.getElementById('data-container-content');
 
     if (item.childNodes[0]) {
         item.replaceChild(ppTable, item.childNodes[0]); // Replace existing table
@@ -438,10 +438,10 @@ function showNodeData(node) {
 
 // This function highlights in solver view the solvers working on the clicked node
 function highlightSolvers(node) {
-    let solvers = document.querySelectorAll('.solver-container table tr');
+    let solvers = document.querySelectorAll('#solver-container table tr');
     solvers.forEach(solver => solver.classList.remove('highlight'));
 
-    let query = `.solver-container table tr[data-node="${JSON.stringify(node.name)}"]`;
+    let query = `#solver-container table tr[data-node="${JSON.stringify(node.name)}"]`;
     let selectedSolvers = document.querySelectorAll(query);
     selectedSolvers.forEach(selectedSolver => selectedSolver.classList.add('highlight'));
 }

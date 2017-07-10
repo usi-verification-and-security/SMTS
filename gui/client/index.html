@@ -14,17 +14,18 @@
 
 <div class="w3-cell-row w3-margin-top views">
     <!--First column-->
-    <div class="w3-container w3-quarter w3-border w3-cell" style="height: 1053px">
+    <div class="w3-container w3-quarter w3-border w3-cell column">
         <!--Title-->
-        <div class="w3-container title"> SMT Viewer</div>
+        <div id="title" class="w3-container">SMT Viewer</div>
         <!--Instance-->
-        <div class="w3-container instance-container" ng-controller="InstancesController" ng-init='load()'>
+        <div id="instance-container" class="w3-container" ng-controller="InstancesController" ng-init='load()'>
             <table class="etable">
                 <thead>
                 <th><b>Instances</b></th>
                 </thead>
                 <tbody>
-                <tr data-instance="{{instance.name}}" ng-repeat="instance in instances"
+                <tr data-instance="{{instance.name}}"
+                    ng-repeat="instance in instances"
                     ng-click="clickEvent($event,instance)">
                     <td>{{instance.name}}</td>
                 </tr>
@@ -33,12 +34,12 @@
         </div>
 
         <!--Task Handeler-->
-        <div class="w3-container task-handler" ng-controller="TaskHandler" ng-init='load()'>
+        <div id="task-handler" class="w3-container" ng-controller="TaskHandler" ng-init='load()'>
             <div class="position">
-                <p id="solInst" class="hidden">
+                <div id="solInst" class="hidden">
                     <b> Solving Instance: </b>
                     <h id="solvingInstance">{{solvingInstance}}{{solvingInstanceRemaining}}</h>
-                </p>
+                </div>
 
                 <div id="newDB" class="hidden">
                     <b> Upload new database file: </b>
@@ -47,8 +48,7 @@
                           id='uploadForm'
                           action='/upload'
                           method='post'
-                          encType="multipart/form-data"
-                    >
+                          encType="multipart/form-data">
                         <input id="db" type="file" name="db" accept=".db" required>
                         <input type='submit' value='Upload!'/>
                     </form>
@@ -67,7 +67,7 @@
                 </div>
                 <div id="task" class="hidden">
                     <form>
-                        <b>Timeout:</b> <input type="text" style="width: 100px;" name="timeout"><br>
+                        <b>Timeout:</b><input type="text" style="width: 100px;" name="timeout"><br>
                         <input type="submit" value="Increase" ng-click="increaseTimeout()">
                         <input type="submit" value="Decrease" ng-click="decreaseTimeout()">
                         <input type="submit" name="stopTimeout" value="Stop" ng-click="stopSS()">
@@ -78,11 +78,11 @@
     </div>
 
     <!--Second column-->
-    <div class="w3-container w3-half w3-border w3-cell w3-cell-middle">
+    <div class="w3-container w3-half w3-border w3-cell w3-cell-middle column">
         <!--Tree view-->
-        <div class="w3-container w3-border" id="tree-container" ng-controller="ViewController"></div>
+        <div id="tree-container" class="w3-container w3-border" ng-controller="ViewController"></div>
         <!--Event view-->
-        <div id="d5" class="w3-container w3-border event-container" ng-controller="EventController">
+        <div id="event-container" class="w3-container w3-border" ng-controller="EventController">
             <table id="d5_2" class="etable">
                 <thead>
                 <tr>
@@ -115,9 +115,9 @@
     </div>
 
     <!--Third column-->
-    <div class="w3-container w3-quarter w3-border w3-cell w3-cell-bottom">
+    <div class="w3-container w3-quarter w3-border w3-cell w3-cell-bottom column">
         <!--Solver view-->
-        <div class="w3-container w3-border solver-container" ng-controller="SolverController">
+        <div id="solver-container" class="w3-container w3-border" ng-controller="SolverController">
             <p><b>SOLVERS</b></p>
             <table class="etable">
                 <thead>
@@ -134,9 +134,9 @@
         </div>
 
         <!--Data view-->
-        <div class="w3-container w3-border data-container">
-            <div id="d6_1"><b> DATA </b></div>
-            <div id="d6_2"></div>
+        <div id="data-container" class="w3-container w3-border">
+            <p id="data-container-title"></p>
+            <div id="data-container-content"></div>
         </div>
 
     </div>

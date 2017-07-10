@@ -8,7 +8,7 @@ app.controller('SolverController', ['$scope', '$rootScope', 'currentRow', 'share
         });
 
         $scope.showSolver = function () {
-            $('.solver-container table tr').removeClass("highlight");
+            $('#solver-container table tr').removeClass("highlight");
             sharedTree.tree.assignSolvers(0, currentRow.value);
             $scope.solvers = sharedTree.tree.solvers;
         };
@@ -18,8 +18,8 @@ app.controller('SolverController', ['$scope', '$rootScope', 'currentRow', 'share
                 x.node = x.node.toString(); // transform to string or it will show and array
             }
             let ppTable = prettyPrint(x);
-            document.getElementById('d6_1').innerHTML = "Solver".bold();
-            let item = document.getElementById('d6_2');
+            document.getElementById('data-container-title').innerHTML = "Solver".bold();
+            let item = document.getElementById('data-container-content');
 
             if (item.childNodes[0]) {
                 item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table

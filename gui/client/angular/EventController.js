@@ -33,16 +33,15 @@ app.controller(
 
                     // Scroll event table to selected event
                     let query = "#" + find;
-                    d5.scrollTop = 0;
-                    $('#d5').scrollTop($(query).offset().top - $('#d5').offset().top)
+                    $('#event-container').scrollTop($(query).offset().top - $('#event-container').offset().top)
                 });
             };
 
             // Show tree up to clicked event
             $scope.showEvent = function ($event, $index, x) {
                 // Highlight selected event
-                $('.event-container table tr').removeClass("highlight");
-                let query = '.event-container table tr[data-event="' + x.id + '"]';
+                $('#event-container table tr').removeClass("highlight");
+                let query = '#event-container table tr[data-event="' + x.id + '"]';
                 $(query).addClass("highlight");
 
                 currentRow.value = $index;
@@ -72,8 +71,8 @@ app.controller(
                 }
                 let ppTable = prettyPrint(sortedObj);
                 let tableName = "Event " + x.event;
-                document.getElementById('d6_1').innerHTML = tableName.bold();
-                let item = document.getElementById('d6_2');
+                document.getElementById('data-container-title').innerHTML = tableName.bold();
+                let item = document.getElementById('data-container-content');
 
                 if (item.childNodes[0]) {
                     item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table

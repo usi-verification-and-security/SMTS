@@ -1,143 +1,150 @@
-/*Basics*/
+/* Basics */
+
+html {
+    /*height: 100vh;*/
+}
 
 html, body {
-    height: 100%;
     width: 100%;
     overflow: auto;
     margin: 0;
     padding: 0;
 }
 
-/*button:hover {*/
-    /*color: #00cc00;*/
-    /*border-radius: 12px;*/
-    /*box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);*/
-/*}*/
+body {
+    height: 100%;
+    display: flex;
+    flex-flow: column;
+    align-items: stretch;
+}
 
 
-table, th , tr, td {
+/* Tables */
+
+table, th, tr, td {
     margin: 1%;
     border: 1px solid grey;
     border-collapse: collapse;
     padding: 5px;
-    /*text-align: center;*/
     max-width: 100%;
     cursor: pointer;
-    /*table-layout:fixed;*/
     word-break: break-all;
 }
 
-
-/*tr {*/
-    /*cursor: pointer;*/
-    /*!*overflow-y: scroll;*!*/
-/*}*/
-
-tbody tr:hover{
-    background:#BDC3C7;
+tbody tr:hover {
+    background: #BDC3C7;
 }
 
-th{
+th {
     background-color: #00cc00;
 }
+
 table.etable {
     width: 100%;
+    font-size: 0.8em;
 }
 
-/*Views*/
+/* Views */
 
-.position {
-    top: 50%;
-    transform: translateY(50%);
+.views {
+    height: 90%;
 }
 
-.title {
+.column {
+    height: 100%;
+    overflow: auto;
+}
+
+
+/* Column 1 */
+
+#title {
     text-shadow: 1px 1px #7CFC00;
-    font-size: 300%;
-    √: center;
+    font-size: 4vh;
     font-weight: bold;
-    display: table-cell;
     vertical-align: middle;
-    height: 140px;
+    height: 10%;
 }
 
-.instance-container {
-    max-height: 500px;
-    /*overflow: auto;*/
-    overflow-y: scroll;
-    overflow-x: hidden;
+#instance-container {
+    height: 60%;
+    overflow: auto;
 }
+
+#task-handler {
+    height: 30%;
+}
+
+
+/* Column 2 */
 
 #tree-container {
     width: 100%;
-    height: 650px;
+    height: 55%;
+    margin: 16px 0;
+    padding: 0;
 }
 
-.solver-container {
-    height: 650px;
-    /*overflow:auto;*/
-    overflow-y: scroll;
-    overflow-x: hidden;
+#event-container {
+    overflow: auto;
+    height: 40%;
 }
 
-.event-container {
-    max-height: 400px;
-    /*overflow: auto;*/
-    overflow-y: scroll;
-    overflow-x: hidden;
-    height: 400px;
+
+/* Column 3 */
+
+#solver-container {
+    height: 70%;
+    overflow: auto;
 }
 
-.task-handler {
-    height: 400px;
-}
-
-.data-container {
-    height: 400px;
-}
-
-#d6_2 {
-    max-height: 350px;
-    overflow:auto;
-}
-
-.highlight{
-    background-color: #7CFC00;
-}
-
-.solver-container > table > tr >td{
+#solver-container > table > tr > td {
     white-space: nowrap;
     word-break: keep-all;
 }
 
-#lineCont {
-    width: 100%;
-    height: 10%;
+#data-container {
+    height: 30%;
+    overflow: auto;
 }
 
-.views{
+#data-container-content {
+    overflow: auto;
+}
+
+/* Timeline */
+
+#lineCont {
+    width: 100%;
     height: 90%;
 }
 
 
-/*For maintaining fix header in table */
+/* For maintaining fix header in table */
+
 thead {
     display: table-header-group;
     vertical-align: middle;
     border-color: inherit;
 }
-.fixed{
-    top:0;
-    position:fixed;
-    width:auto;
-    display:none;
-    border:none;
-}
-.container{
-    width:100%;
-    margin:auto;
+
+.highlight {
+    background-color: #7CFC00;
 }
 
-.hidden{
-    visibility: hidden;
+.fixed {
+    top: 0;
+    position: fixed;
+    width: auto;
+    display: none;
+    border: none;
+}
+
+.container {
+    width: 100%;
+    margin: auto;
+}
+
+.hidden {
+    display: none;
 }
