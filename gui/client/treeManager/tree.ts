@@ -78,7 +78,7 @@ module TreeManager {
                     case '+':
                         for (let j = 0; j < this.solvers.length; ++j) {
                             let solver = this.solvers[j];
-                            if (solver.name == event.name) {
+                            if (solver.name === event.solver) {
                                 solver.setNode(event.node);
                                 solver.setData(event.data);
                             }
@@ -88,7 +88,7 @@ module TreeManager {
                     case '-':
                         for (let j = 0; j < this.solvers.length; ++j) {
                             let solver = this.solvers[j];
-                            if (solver.name == event.name) {
+                            if (solver.name === event.solver) {
                                 solver.setNode(null);
                                 solver.setData(null);
                             }
