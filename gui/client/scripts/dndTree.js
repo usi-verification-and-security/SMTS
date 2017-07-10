@@ -32,39 +32,107 @@
 /**********************************************************************************************************************/
 
 
+// Node spacing
 const LINE_HEIGHT = 25; // Space between to nodes (in pixels)
 const LINK_LENGTH = 10; // Distance between two nodes (in pixels)
 
+// Nodes
 const NODE_AND_RADIUS      = 4.5; // Radius of circle (in pixels)
 const NODE_OR_SIDE         = 10;  // Width of rhombus side (in pixels)
 const NODE_SELECTED_RADIUS = 20;  // Radius of selected node circle (in pixels)
 const TEXT_OFFSET          = 10;  // Text offset with respect to the center of the circle/rhombus node (in pixels)
 
+// Frame
 const BOUNDS_ERROR_FACTOR = 0.0125; // Factor to compute the margin of the visible frame
 
+// Scale
 const SCALE_MIN = 0.1; // Minimum scale factor
 const SCALE_MAX = 3.0; // Maximum scale factor
 
+// Frame movement
 const TRANSITION_DURATION = 0; // Duration of frame transition to another node (in milliseconds)
 
 
 
 /**********************************************************************************************************************/
-/* D3                                                                                                                 */
+/* MAIN                                                                                                               */
 /**********************************************************************************************************************/
 
 
-// Make a d3 tree
-function makeD3Tree(width, height) {
-    return d3.layout.tree().size([height, width]); // Width and height have swapped order
-}
+// Generate DOM tree
+function generateDomTree(root, selectedNodeNames, positionFrame) {
 
+    if (!root) {
+        return;
+    }
 
-// Make a d3 diagonal projection for use by the node paths
-function makeD3Diagonal() {
-    return d3.svg.diagonal().projection(function (node) {
-        return [node.y, node.x];
+    // Size of the diagram
+    let viewerWidth = document.getElementById("tree-container").offsetWidth;
+    let viewerHeight = document.getElementById("tree-container").offsetHeight;
+
+    // SVG element setup
+    clearSvg();
+    let svg = makeSvg(viewerWidth, viewerHeight);
+    let svgGroup = makeSvgGroup(svg);
+    let zoomListener = makeZoomListener(svg, svgGroup);
+
+    // Define the root
+    root.x0 = viewerHeight / 2;
+    root.y0 = 0;
+
+    // Calculate max label length
+    // This has to be computed before reversing the root.
+    let maxLabelLength = root.getMaxLabelLength();
+
+    // Compute the new tree layout
+    // Using `getMaxLevelWidth` prevents the layout looking squashed when new nodes are made visible or looking sparse
+    // when nodes are removed, making the layout more consistent.
+    let d3Tree = makeD3Tree(viewerWidth, getMaxLevelWidth(root) * LINE_HEIGHT);
+    let d3Nodes = d3Tree.nodes(root).reverse();
+    let d3Links = d3Tree.links(d3Nodes);
+
+    // Set widths between levels based on maxLabelLength
+    d3Nodes.forEach(node => node.y = (node.depth * (maxLabelLength * LINK_LENGTH)));
+
+    // Generate DOM tree
+    makeNodes(root, svgGroup, d3Nodes, selectedNodeNames);
+    makeLinks(root, svgGroup, d3Links);
+
+    // Stash the old positions for transition
+    d3Nodes.forEach(function (node) {
+        node.x0 = node.x;
+        node.y0 = node.y;
     });
+
+    // ???
+    let selectedNode = root.getNode(selectedNodeNames[0]);
+    showNodeData(selectedNode);
+    highlightSolvers(selectedNode);
+
+    // Move view in right position
+    // Center selected node if not in visible frame, otherwise restore the view as it was before.
+    // Function is in callback because it has to wait until the translate positions are updated inside the `g` elements.
+    setTimeout(function() {
+        if (positionFrame) {
+            let positionSelected = document.querySelector('circle.selected').parentNode.getAttribute('transform');
+            let translateSelected = getTranslate(positionSelected);
+            let translateFrame = getTranslate(positionFrame);
+            let scale = getScale(positionFrame) || zoomListener.scale();
+            let x = translateSelected[0] * scale + translateFrame[0];
+            let y = translateSelected[1] * scale + translateFrame[1];
+
+            if (isInBounds(x, y, 0, viewerWidth, 0, viewerHeight)) {
+                move(zoomListener, translateFrame[0], translateFrame[1], scale);
+            }
+            else {
+                let scale = getScale(positionFrame) || zoomListener.scale();
+                center(zoomListener, selectedNode.x0, selectedNode.y0, viewerWidth, viewerHeight, scale);
+            }
+        }
+        else {
+            center(zoomListener, selectedNode.x0, selectedNode.y0, viewerWidth, viewerHeight, zoomListener.scale());
+        }
+    }, 0);
 }
 
 
@@ -98,7 +166,27 @@ function makeSvgGroup(svgBase) {
 
 
 /**********************************************************************************************************************/
-/* LISTENERS                                                                                                          */
+/* D3                                                                                                                 */
+/**********************************************************************************************************************/
+
+
+// Make a d3 tree
+function makeD3Tree(width, height) {
+    return d3.layout.tree().size([height, width]); // Width and height have swapped order
+}
+
+
+// Make a d3 diagonal projection for use by the node paths
+function makeD3Diagonal() {
+    return d3.svg.diagonal().projection(function (node) {
+        return [node.y, node.x];
+    });
+}
+
+
+
+/**********************************************************************************************************************/
+/* ZOOM LISTENER                                                                                                      */
 /**********************************************************************************************************************/
 
 
@@ -110,74 +198,6 @@ function makeZoomListener(listener, target) {
     });
     listener.call(zoomListener);
     return zoomListener;
-}
-
-
-
-/**********************************************************************************************************************/
-/* UTILS                                                                                                              */
-/**********************************************************************************************************************/
-
-
-// Count total number of nodes in each level of depth, and return the greatest
-function getMaxLevelWidth(tree) {
-    let levelWidths = [1];
-    getMaxLevelWidthRec(tree, 0);
-    return d3.max(levelWidths);
-
-    function getMaxLevelWidthRec(node, level) {
-        if (node.children && node.children.length > 0) {
-            if (levelWidths.length <= level + 1) {
-                levelWidths.push(0);
-            }
-            levelWidths[level + 1] += node.children.length;
-            node.children.forEach(child => getMaxLevelWidthRec(child, level + 1));
-        }
-    }
-}
-
-
-// Check if two array have same content
-function arrayEqual(a1, a2) {
-    if (a1.length !== a2.length) {
-        return false;
-    }
-    for (let i = 0; i < a1.length; ++i) {
-        if (a1[i] !== a2[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-
-
-// Check if nodeName is equal to at least one of the selectedNodeNames
-function isSelectedNode(nodeName, selectedNodeNames) {
-    for (let selectedNodeName of selectedNodeNames) {
-        if (arrayEqual(nodeName, selectedNodeName)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-
-// Return `[x, y]` from a transform string of the form 'translate(x, y) scale(z)', null if no translate
-function getTranslate(position) {
-    if (position && position.includes('translate')) {
-        let values = position.match(/translate\(([^)]+)\)/)[1].split(',');
-        return [parseFloat(values[0]), parseFloat(values[1])];
-    }
-    return null;
-}
-
-
-// Return `z` from a transform string of the form 'translate(x, y) scale(z)', null if no scale
-function getScale(position) {
-    if (position && position.includes('scale')) {
-        return parseFloat(position.match(/scale\(([^)]+)\)/)[1]);
-    }
-    return null;
 }
 
 
@@ -236,8 +256,7 @@ function makeNodes(root, svgGroup, d3Nodes, selectedNodeNames) {
     // Transition nodes to their new position.
     svgNodes.transition()
         .duration(TRANSITION_DURATION)
-        .attr('transform', node => `translate(${node.y},${node.x})`)
-        .style('fill-opacity', 1);
+        .attr('transform', node => `translate(${node.y},${node.x})`);
 }
 
 
@@ -313,94 +332,69 @@ function isInBounds(x, y, left, right, bottom, top) {
 
 
 /**********************************************************************************************************************/
-/* MAIN                                                                                                               */
+/* UTILS                                                                                                              */
 /**********************************************************************************************************************/
 
 
-// Generate DOM tree
-function generateDomTree(root, selectedNodeNames, positionFrame) {
+// Count total number of nodes in each level of depth, and return the greatest
+function getMaxLevelWidth(tree) {
+    let levelWidths = [1];
+    getMaxLevelWidthRec(tree, 0);
+    return d3.max(levelWidths);
 
-    if (!root) {
-        return;
-    }
-
-    // Size of the diagram
-    let viewerWidth = document.getElementById("tree-container").offsetWidth;
-    let viewerHeight = document.getElementById("tree-container").offsetHeight;
-
-    // SVG element setup
-    clearSvg();
-    let svg = makeSvg(viewerWidth, viewerHeight);
-    let svgGroup = makeSvgGroup(svg);
-    let zoomListener = makeZoomListener(svg, svgGroup);
-
-    // Define the root
-    root.x0 = viewerHeight / 2;
-    root.y0 = 0;
-
-    // Calculate max label length
-    // This has to be computed before reversing the root.
-    let maxLabelLength = root.getMaxLabelLength();
-
-    // Compute the new tree layout
-    // Using `getMaxLevelWidth` prevents the layout looking squashed when new nodes are made visible or looking sparse
-    // when nodes are removed, making the layout more consistent.
-    let d3Tree = makeD3Tree(viewerWidth, getMaxLevelWidth(root) * LINE_HEIGHT);
-    let d3Nodes = d3Tree.nodes(root).reverse();
-    let d3Links = d3Tree.links(d3Nodes);
-
-    // Set widths between levels based on maxLabelLength
-    d3Nodes.forEach(node => node.y = (node.depth * (maxLabelLength * LINK_LENGTH)));
-
-    // Generate DOM tree
-    makeNodes(root, svgGroup, d3Nodes, selectedNodeNames);
-    makeLinks(root, svgGroup, d3Links);
-
-    // Stash the old positions for transition
-    d3Nodes.forEach(function (node) {
-        node.x0 = node.x;
-        node.y0 = node.y;
-    });
-
-    // ???
-    let ppTable = prettyPrint({});
-    document.getElementById('d6_1').innerHTML = '';
-    let item = document.getElementById('d6_2');
-
-    // ???
-    if (item.childNodes[0]) {
-        item.replaceChild(ppTable, item.childNodes[0]); // Replace existing table
-    }
-    else {
-        item.appendChild(ppTable);
-    }
-
-    // Move view in right position
-    // Center selected node if not in visible frame, otherwise restore the view as it was before.
-    // Function is in callback because it has to wait until the translate positions are updated inside the `g` elements.
-    setTimeout(function() {
-        if (positionFrame) {
-            let positionSelected = document.querySelector('circle.selected').parentNode.getAttribute('transform');
-            let translateSelected = getTranslate(positionSelected);
-            let translateFrame = getTranslate(positionFrame);
-            let scale = getScale(positionFrame) || zoomListener.scale();
-            let x = translateSelected[0] * scale + translateFrame[0];
-            let y = translateSelected[1] * scale + translateFrame[1];
-
-            if (isInBounds(x, y, 0, viewerWidth, 0, viewerHeight)) {
-                move(zoomListener, translateFrame[0], translateFrame[1], scale);
+    function getMaxLevelWidthRec(node, level) {
+        if (node.children && node.children.length > 0) {
+            if (levelWidths.length <= level + 1) {
+                levelWidths.push(0);
             }
-            else {
-                let node = root.getNode(selectedNodeNames[0]);
-                let scale = getScale(positionFrame) || zoomListener.scale();
-                center(zoomListener, node.x0, node.y0, viewerWidth, viewerHeight, scale);
-            }
+            levelWidths[level + 1] += node.children.length;
+            node.children.forEach(child => getMaxLevelWidthRec(child, level + 1));
         }
-        else {
-            let node = root.getNode(selectedNodeNames[0]);
-            center(zoomListener, node.x0, node.y0, viewerWidth, viewerHeight, zoomListener.scale());
+    }
+}
+
+
+// Check if two array have same content
+function arrayEqual(a1, a2) {
+    if (a1.length !== a2.length) {
+        return false;
+    }
+    for (let i = 0; i < a1.length; ++i) {
+        if (a1[i] !== a2[i]) {
+            return false;
         }
-    }, 0);
+    }
+    return true;
+}
+
+
+// Check if nodeName is equal to at least one of the selectedNodeNames
+function isSelectedNode(nodeName, selectedNodeNames) {
+    for (let selectedNodeName of selectedNodeNames) {
+        if (arrayEqual(nodeName, selectedNodeName)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+// Return `[x, y]` from a transform string of the form 'translate(x, y) scale(z)', null if no translate
+function getTranslate(position) {
+    if (position && position.includes('translate')) {
+        let values = position.match(/translate\(([^)]+)\)/)[1].split(',');
+        return [parseFloat(values[0]), parseFloat(values[1])];
+    }
+    return null;
+}
+
+
+// Return `z` from a transform string of the form 'translate(x, y) scale(z)', null if no scale
+function getScale(position) {
+    if (position && position.includes('scale')) {
+        return parseFloat(position.match(/scale\(([^)]+)\)/)[1]);
+    }
+    return null;
 }
 
 
@@ -411,31 +405,36 @@ function generateDomTree(root, selectedNodeNames, positionFrame) {
 
 
 // This function shows node data in data view
-function showNodeData(d) {
-    let object = {};
-    object.name = d.name.toString(); // transform to string or it will show and array
-    object.type = d.type;
-    object.solvers = d.solvers;
-    object.status = d.status;
+function showNodeData(node) {
+    let ppNode = {};
 
-    let ppTable = prettyPrint(object);
+    if (node) {
+        ppNode.name = node.name.toString(); // transform to string or it will show and array
+        ppNode.type = node.type;
+        ppNode.solvers = node.solvers;
+        ppNode.status = node.status;
+    }
+
+    let ppTable = prettyPrint(ppNode);
+
     document.getElementById('d6_1').innerHTML = "Node".bold();
     let item = document.getElementById('d6_2');
 
     if (item.childNodes[0]) {
-        item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table
+        item.replaceChild(ppTable, item.childNodes[0]); // Replace existing table
     }
     else {
-        item.appendChild(ppTable);
+        item.appendChild(ppTable);                      // Add new table
     }
 }
 
 
 // This function highlights in solver view the solvers working on the clicked node
 function highlightSolvers(node) {
-    let node = JSON.stringify(node.name);
-    let query = `.solver-container table tr[data-node="${node}"]`;
+    let solvers = document.querySelectorAll('.solver-container table tr');
+    solvers.forEach(solver => solver.classList.remove('highlight'));
 
-    $('.solver-container table tr').removeClass("highlight");
-    $(query).addClass("highlight");
+    let query = `.solver-container table tr[data-node="${JSON.stringify(node.name)}"]`;
+    let selectedSolvers = document.querySelectorAll(query);
+    selectedSolvers.forEach(selectedSolver => selectedSolver.classList.add('highlight'));
 }
