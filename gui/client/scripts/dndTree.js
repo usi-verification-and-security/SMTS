@@ -32,7 +32,20 @@
 /**********************************************************************************************************************/
 
 
-const TRANSITION_DURATION = 0;
+const LINE_HEIGHT = 25; // Space between to nodes (in pixels)
+const LINK_LENGTH = 10; // Distance between two nodes (in pixels)
+
+const NODE_AND_RADIUS      = 4.5; // Radius of circle (in pixels)
+const NODE_OR_SIDE         = 10;  // Width of rhombus side (in pixels)
+const NODE_SELECTED_RADIUS = 20;  // Radius of selected node circle (in pixels)
+const TEXT_OFFSET          = 10;  // Text offset with respect to the center of the circle/rhombus node (in pixels)
+
+const BOUNDS_ERROR_FACTOR = 0.0125; // Factor to compute the margin of the visible frame
+
+const SCALE_MIN = 0.1; // Minimum scale factor
+const SCALE_MAX = 3.0; // Maximum scale factor
+
+const TRANSITION_DURATION = 0; // Duration of frame transition to another node (in milliseconds)
 
 
 
@@ -91,7 +104,7 @@ function makeSvgGroup(svgBase) {
 
 // Make the zoomListener which calls the zoom function on the "zoom" event constrained within the scaleExtents
 function makeZoomListener(listener, target) {
-    let zoomListener = d3.behavior.zoom().scaleExtent([0.1, 3]).on('zoom', function () {
+    let zoomListener = d3.behavior.zoom().scaleExtent([SCALE_MIN, SCALE_MAX]).on('zoom', function () {
         target.attr('transform', `translate(${d3.event.translate}) scale(${d3.event.scale})`);
         scaleSelectedCircle(d3.event.scale);
     });
@@ -106,42 +119,19 @@ function makeZoomListener(listener, target) {
 /**********************************************************************************************************************/
 
 
-// Get the max length of a label of all nodes in the given tree
-function getMaxLabelLength(tree) {
-    let maxLabelLength = 0;
-    getMaxLabelLengthRec(tree);
-    return maxLabelLength;
+// Count total number of nodes in each level of depth, and return the greatest
+function getMaxLevelWidth(tree) {
+    let levelWidths = [1];
+    getMaxLevelWidthRec(tree, 0);
+    return d3.max(levelWidths);
 
-    function getMaxLabelLengthRec(node) {
-        if (!node) {
-            return;
-        }
-        maxLabelLength = Math.max(node.name.length, maxLabelLength);
-        // Repete for children
-        for (let child of node.children) {
-            getMaxLabelLengthRec(child);
-        }
-    }
-}
-
-
-// Counts total children of tree and sets tree height accordingly
-// This prevents the layout looking squashed when new nodes are made visible or looking sparse when nodes are removed,
-// making the layout more consistent.
-function getTreeHeight(tree) {
-    let levelWidth = [1];
-    getMaxLevelWidthRec(0, tree);
-    return d3.max(levelWidth) * 25; // 25px per line
-
-    function getMaxLevelWidthRec(level, node) {
+    function getMaxLevelWidthRec(node, level) {
         if (node.children && node.children.length > 0) {
-            if (levelWidth.length <= level + 1) {
-                levelWidth.push(0);
+            if (levelWidths.length <= level + 1) {
+                levelWidths.push(0);
             }
-            levelWidth[level + 1] += node.children.length;
-            node.children.forEach(function (child) {
-                getMaxLevelWidthRec(level + 1, child);
-            });
+            levelWidths[level + 1] += node.children.length;
+            node.children.forEach(child => getMaxLevelWidthRec(child, level + 1));
         }
     }
 }
@@ -218,14 +208,14 @@ function makeNodes(root, svgGroup, d3Nodes, selectedNodeNames) {
     // Add rhombi to OR nodes
     svgGroup.selectAll('.nodeOr')
         .append('rect')
-        .attr('width', '10')
-        .attr('height', '10')
+        .attr('width', NODE_OR_SIDE)
+        .attr('height', NODE_OR_SIDE)
         .classed('nodeRect', true);
 
     // Add circles to AND nodes
     svgGroup.selectAll('.nodeAnd')
         .append('circle')
-        .attr('r', '4.5')
+        .attr('r', NODE_AND_RADIUS)
         .classed('sat', node => node.status === 'sat')
         .classed('unsat', node => node.status === 'unsat')
         .classed('unknown', node => node.status === 'unknown')
@@ -233,12 +223,12 @@ function makeNodes(root, svgGroup, d3Nodes, selectedNodeNames) {
 
     // Make halo circle for selected node
     svgNodeGs.append('circle')
-        .attr('r', '20')
+        .attr('r', NODE_SELECTED_RADIUS)
         .attr('class', node => isSelectedNode(node.name, selectedNodeNames) ? 'selected' : 'hidden');
 
     // Make text
     svgNodeGs.append('text')
-        .attr('x', node => node.children ? -10 : 10)
+        .attr('x', node => node.children ? -TEXT_OFFSET : TEXT_OFFSET)
         .attr('dy', '.35em')
         .attr('text-anchor', node => node.children ? 'end' : 'start')
         .text(node => node.type === 'AND' ? node.solvers.length : null);
@@ -287,7 +277,7 @@ function makeLinks(root, svgGroup, d3Links) {
 // Scale selected node halo when zooming in or out
 function scaleSelectedCircle(scale) {
     let circles = document.querySelectorAll('circle.selected');
-    circles.forEach(circle => circle.setAttribute('r', (20 / scale).toString()));
+    circles.forEach(circle => circle.setAttribute('r', (NODE_SELECTED_RADIUS / scale).toString()));
 }
 
 
@@ -315,8 +305,8 @@ function center(zoomListener, x, y, width, height, scale) {
 
 // Check if position is between bounds
 function isInBounds(x, y, left, right, bottom, top) {
-    let errX = (right - left) * 0.0125;
-    let errY = (top - bottom) * 0.0125;
+    let errX = (right - left) * BOUNDS_ERROR_FACTOR;
+    let errY = (top - bottom) * BOUNDS_ERROR_FACTOR;
     return left + errX <= x && x < right - errX && bottom + errY <= y && y < top - errY;
 }
 
@@ -349,16 +339,18 @@ function generateDomTree(root, selectedNodeNames, positionFrame) {
     root.y0 = 0;
 
     // Calculate max label length
-    // This has to be computed before reversing the root
-    let maxLabelLength = getMaxLabelLength(root);
+    // This has to be computed before reversing the root.
+    let maxLabelLength = root.getMaxLabelLength();
 
     // Compute the new tree layout
-    let d3Tree = makeD3Tree(viewerWidth, getTreeHeight(root));
+    // Using `getMaxLevelWidth` prevents the layout looking squashed when new nodes are made visible or looking sparse
+    // when nodes are removed, making the layout more consistent.
+    let d3Tree = makeD3Tree(viewerWidth, getMaxLevelWidth(root) * LINE_HEIGHT);
     let d3Nodes = d3Tree.nodes(root).reverse();
     let d3Links = d3Tree.links(d3Nodes);
 
     // Set widths between levels based on maxLabelLength
-    d3Nodes.forEach(node => node.y = (node.depth * (maxLabelLength * 10)));
+    d3Nodes.forEach(node => node.y = (node.depth * (maxLabelLength * LINK_LENGTH)));
 
     // Generate DOM tree
     makeNodes(root, svgGroup, d3Nodes, selectedNodeNames);
@@ -440,8 +432,8 @@ function showNodeData(d) {
 
 
 // This function highlights in solver view the solvers working on the clicked node
-function highlightSolvers(d) {
-    let node = JSON.stringify(d.name);
+function highlightSolvers(node) {
+    let node = JSON.stringify(node.name);
     let query = `.solver-container table tr[data-node="${node}"]`;
 
     $('.solver-container table tr').removeClass("highlight");

@@ -7,11 +7,37 @@ module TreeManager {
         status: string = "unknown";          // 'sat', 'unsat' or 'unknown'
         isStatusPropagated: boolean = false; // Tell if the status 'sat' or 'unsat' has been propagated from children
 
+
+        //
         constructor(name, type: string) {
             this.name = name;
             this.type = type;
         }
 
+
+        // Get height of the tree
+        getHeight() {
+            let depthMax = 0;
+            for (let child of this.children) {
+                let depthChild = child.getHeight() + 1;
+                depthMax = depthChild > depthMax ? depthChild : depthMax;
+            }
+            return depthMax;
+        }
+
+
+        // Get the max length of a label of all nodes in the given tree
+        getMaxLabelLength() {
+            let labelLengthMax = this.name.length;
+            for (let child of this.children) {
+                let labelLengthChild = child.getMaxLabelLength();
+                labelLengthMax = labelLengthChild > labelLengthMax ? labelLengthChild : labelLengthMax;
+            }
+            return labelLengthMax;
+        }
+
+
+        // Get node in tree with corresponding node name
         getNode(nodeName) {
             let node: Node = this;
             for (let i = 0; i < nodeName.length; ++i) {
@@ -20,6 +46,8 @@ module TreeManager {
             return node;
         }
 
+
+        // Update the tree, given an event
         update(event) {
             let node: Node = this.getNode(event.node);
 

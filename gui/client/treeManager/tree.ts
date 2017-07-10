@@ -6,9 +6,25 @@ module TreeManager {
         solvers: Solver[] = [];               // All existing solvers
         treeView: Node;                       // Tree seen in the visualization
 
+
+        //
         constructor() {
         }
 
+
+        //
+        arrangeTree(n) {
+            let treeView = new Node([], 'AND'); // The root is an 'AND'
+
+            for (let i = 0; i <= n; ++i) {
+                treeView.update(this.events[i]);
+            }
+
+            this.treeView = treeView;
+        }
+
+
+        //
         createEvents(array) {
             let time = array[0].ts;
             let diff;
@@ -20,16 +36,17 @@ module TreeManager {
             }
         }
 
-        arrangeTree(n) {
-            let treeView = new Node([], 'AND'); // The root is an 'AND'
 
-            for (let i = 0; i <= n; ++i) {
-                treeView.update(this.events[i]);
+        // Returns the first `n` events
+        getEvents(n: number) {
+            if (n == this.events.length) {
+                return this.events;
             }
-
-            this.treeView = treeView;
+            return this.events.slice(0, n + 1);
         }
 
+
+        // Get name of selected node(s)
         getSelectedNodeNames(n) {
             let event = this.events[n];
             let selectedNodeNames = [];
@@ -40,10 +57,14 @@ module TreeManager {
             return selectedNodeNames;
         }
 
+
+        // Get `this.treeView`
         getTreeView() {
             return this.treeView;
         }
 
+
+        //
         assignSolvers(begin: number, end: number) {
             // Reset solvers
             for (let i = 0; i < this.solvers.length; ++i) {
@@ -77,15 +98,8 @@ module TreeManager {
             }
         }
 
-        //getEvents(x) returns the first x events
-        getEvents(n: number) {
-            if (n == this.events.length) {
-                return this.events;
-            }
-            return this.events.slice(0, n + 1);
-        }
 
-        // Insert solvers in this.solvers only if not already present
+        // Insert solvers in `this.solvers`, only if the solvers are not already present
         initializeSolvers(array) {
             let isPresent;
             for (let item of array) {
