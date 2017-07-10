@@ -18,9 +18,11 @@ module TreeManager {
         // Get height of the tree
         getHeight() {
             let depthMax = 0;
-            for (let child of this.children) {
-                let depthChild = child.getHeight() + 1;
-                depthMax = depthChild > depthMax ? depthChild : depthMax;
+            if (this.children) {
+                for (let child of this.children) {
+                    let depthChild = child.getHeight() + 1;
+                    depthMax = depthChild > depthMax ? depthChild : depthMax;
+                }
             }
             return depthMax;
         }
@@ -29,9 +31,11 @@ module TreeManager {
         // Get the max length of a label of all nodes in the given tree
         getMaxLabelLength() {
             let labelLengthMax = this.name.length;
-            for (let child of this.children) {
-                let labelLengthChild = child.getMaxLabelLength();
-                labelLengthMax = labelLengthChild > labelLengthMax ? labelLengthChild : labelLengthMax;
+            if (this.children) {
+                for (let child of this.children) {
+                    let labelLengthChild = child.getMaxLabelLength();
+                    labelLengthMax = labelLengthChild > labelLengthMax ? labelLengthChild : labelLengthMax;
+                }
             }
             return labelLengthMax;
         }

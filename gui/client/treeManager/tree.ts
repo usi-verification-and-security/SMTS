@@ -4,7 +4,7 @@ module TreeManager {
         events: Event[] = [];                 // All events
         solver: Array<[string, string]> = []; // ???
         solvers: Solver[] = [];               // All existing solvers
-        treeView: Node;                       // Tree seen in the visualization
+        root: Node;                           // Tree seen in the visualization
 
 
         //
@@ -12,15 +12,15 @@ module TreeManager {
         }
 
 
-        //
+        // Populate the tree up until the n-th event (included)
         arrangeTree(n) {
-            let treeView = new Node([], 'AND'); // The root is an 'AND'
+            let root = new Node([], 'AND'); // The root is an 'AND'
 
             for (let i = 0; i <= n; ++i) {
-                treeView.update(this.events[i]);
+                root.update(this.events[i]);
             }
 
-            this.treeView = treeView;
+            this.root = root;
         }
 
 
@@ -58,9 +58,9 @@ module TreeManager {
         }
 
 
-        // Get `this.treeView`
-        getTreeView() {
-            return this.treeView;
+        // Get `this.root`
+        getRoot() {
+            return this.root;
         }
 
 

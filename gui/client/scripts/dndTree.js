@@ -104,7 +104,7 @@ function generateDomTree(root, selectedNodeNames, positionFrame) {
         node.y0 = node.y;
     });
 
-    // ???
+    // Update d6_2 table with selected node data
     let selectedNode = root.getNode(selectedNodeNames[0]);
     showNodeData(selectedNode);
     highlightSolvers(selectedNode);
@@ -400,7 +400,7 @@ function getScale(position) {
 
 
 /**********************************************************************************************************************/
-/* OTHER                                                                                                              */
+/* DATA VIEW AND HIGHLIGHTS                                                                                           */
 /**********************************************************************************************************************/
 
 
@@ -409,10 +409,17 @@ function showNodeData(node) {
     let ppNode = {};
 
     if (node) {
-        ppNode.name = node.name.toString(); // transform to string or it will show and array
+        ppNode.name = JSON.stringify(node.name); // transform to string or it will show and array
         ppNode.type = node.type;
         ppNode.solvers = node.solvers;
         ppNode.status = node.status;
+        ppNode.depth = node.getHeight();
+        if (node.children) {
+            ppNode.depths = {};
+            for (let child of node.children) {
+                ppNode.depths[JSON.stringify(child.name)] = child.getHeight();
+            }
+        }
     }
 
     let ppTable = prettyPrint(ppNode);

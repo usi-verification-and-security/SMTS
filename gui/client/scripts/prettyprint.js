@@ -180,9 +180,10 @@ var prettyPrint = (function(){
 		},
 		
 		shorten: function(str) {
-			var max = 40;
-			str = str.replace(/^\s\s*|\s\s*$|\n/g,'');
-			return str.length > max ? (str.substring(0, max-1) + '...') : str;
+			// var max = 40;
+			// str = str.replace(/^\s\s*|\s\s*$|\n/g,'');
+			// return str.length > max ? (str.substring(0, max-1) + '...') : str;
+			return str;
 		},
 		
 		htmlentities: function(str) {
@@ -738,7 +739,7 @@ var prettyPrint = (function(){
 			'default': {
 				table: {
 					borderCollapse: 'collapse',
-					width: '100%'
+					width: '99%'
 				},
 				td: {
 					padding: '5px',

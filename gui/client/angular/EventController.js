@@ -47,9 +47,9 @@ app.controller(
 
                 currentRow.value = $index;
                 sharedTree.tree.arrangeTree(currentRow.value);
-                let treeView = sharedTree.tree.getTreeView();
+                let root = sharedTree.tree.getRoot();
                 let position = $('g')[0].getAttribute("transform");
-                generateDomTree(treeView, sharedTree.tree.getSelectedNodeNames(currentRow.value), position);
+                generateDomTree(root, sharedTree.tree.getSelectedNodeNames(currentRow.value), position);
 
                 // Show event's data in dataView
                 let object = x.data;
