@@ -13,19 +13,18 @@ app.controller('SolverController', ['$scope', '$rootScope', 'currentRow', 'share
             $scope.solvers = sharedTree.tree.solvers;
         };
 
-        $scope.clickEvent = function ($event, x) {
-            if (x.node) {
-                x.node = x.node.toString(); // transform to string or it will show and array
-            }
-            let ppTable = prettyPrint(x);
-            document.getElementById('data-container-title').innerHTML = "Solver".bold();
-            let item = document.getElementById('data-container-content');
+        $scope.clickEvent = function ($event, solver) {
+            // Make solver object to show in table
+            let ppSolver = {};
+            ppSolver.name = solver.name;
+            ppSolver.node = JSON.stringify(solver.node); // Transform to string or it will show and array
+            ppSolver.data = solver.data;
+            let ppTable = prettyPrint(ppSolver);
 
-            if (item.childNodes[0]) {
-                item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table
-            }
-            else {
-                item.appendChild(ppTable);
-            }
+            // Update data table in DOM
+            document.getElementById('data-container-title').innerHTML = "SOLVER".bold();
+            let dataContent = document.getElementById('data-container-content');
+            dataContent.innerHTML = '';
+            dataContent.appendChild(ppTable);
         }
     }]);
