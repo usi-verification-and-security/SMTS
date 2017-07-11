@@ -18,12 +18,13 @@ const char *SolverProcess::solver = "Spacer";
 z3::context context;
 z3::fixedpoint fixedpoint(context);
 SolverProcess *solverProcess;
+uint8_t level = 0;
 
 void push(Z3_fixedpoint_lemma_set s) {
     std::vector<net::Lemma> lemmas;
     Z3_fixedpoint_lemma *lemma;
     while ((lemma = Z3_fixedpoint_lemma_pop(context, s))) {
-        lemmas.push_back(net::Lemma(std::to_string(lemma->level) + " " + lemma->str, solverProcess->header.level()));
+        lemmas.push_back(net::Lemma(std::to_string(lemma->level) + " " + lemma->str, level));
         free(lemma->str);
         free(lemma);
     }
@@ -86,6 +87,7 @@ void SolverProcess::solve() {
 
     Z3_fixedpoint_set_lemma_pull_callback(context, fixedpoint, pull);
     Z3_fixedpoint_set_lemma_push_callback(context, fixedpoint, push);
+    level = this->header.level();
 
     z3::solver solver(context);
     std::string smtlib = this->instance;

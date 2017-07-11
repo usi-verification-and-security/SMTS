@@ -27,26 +27,18 @@ void SolverServer::log(uint8_t level, std::string message) {
         ::replace(message, "\n", "\n    ");
         message = "\n" + message;
     }
-    Logger::log(level, (this->solver ? this->solver->header["name"] + this->solver->header["node"] + "\t" : "") +
-                       message);
+    Logger::log(level, message);
 }
-
-
-bool SolverServer::check_header(net::Header &header) {
-    if (this->solver == nullptr)
-        return false;
-    return header["name"] == this->solver->header["name"] && header["node"] == this->solver->header["node"];
-}
-
 
 void SolverServer::handle_close(net::Socket &socket) {
     if (&socket == &this->server) {
         this->log(Logger::INFO, "server closed the connection");
         this->stop_solver();
     } else if (this->solver && &socket == this->solver->reader()) {
-        this->log(Logger::ERROR, "solver quit unexpected");
-        this->solver->header["report"] = "unknown";
-        this->server.write(this->solver->header, "");
+        this->log(Logger::ERROR, "unexpected solver quit");
+        net::Header header;
+        header["report"] = "error: unexpected solver quit";
+        this->server.write(header, "");
         this->stop_solver();
     }
 }
@@ -85,27 +77,18 @@ void SolverServer::handle_message(net::Socket &socket, net::Header &header, std:
             this->lemmas_address = header["lemmas"];
             this->update_lemmas();
         } else if (header["command"] == "solve") {
-            if (this->check_header(header)) {
-                return;
-            }
             this->stop_solver();
             header.erase("command");
             this->solver = new SolverProcess(header, payload);
             this->update_lemmas();
             this->add_socket(this->solver->reader());
         } else if (header["command"] == "stop") {
-            if (!this->check_header(header)) {
-                return;
-            }
             this->stop_solver();
-        } else if (this->check_header(header)) {
-            this->solver->writer()->write(header, payload);
         } else {
-            this->log(Logger::WARNING, "incorrect name received in command");
+            this->solver->writer()->write(header, payload);
         }
     } else if (this->solver && &socket == this->solver->reader()) {
         this->server.write(header, payload);
-        this->solver->header = header;
         if (header.count("report")) {
             auto report = ::split(header["report"], ":", 2);
             uint8_t level = Logger::INFO;
@@ -116,7 +99,6 @@ void SolverServer::handle_message(net::Socket &socket, net::Header &header, std:
                     level = Logger::WARNING;
             }
             this->log(level, "solver report: " + report.back());
-            this->solver->header.erase("report");
         }
     }
 }
