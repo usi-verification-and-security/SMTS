@@ -4,7 +4,6 @@
 
 #include <unistd.h>
 #include <thread>
-#include <chrono>
 #include "lib/Logger.h"
 #include "SolverServer.h"
 
@@ -82,6 +81,7 @@ void SolverServer::handle_message(net::Socket &socket, net::Header &header, std:
             this->solver = new SolverProcess(header, payload);
             this->update_lemmas();
             this->add_socket(this->solver->reader());
+            this->log(Logger::INFO, "solver started: " + header["name"] + header["node"]);
         } else if (header["command"] == "stop") {
             this->stop_solver();
         } else {
