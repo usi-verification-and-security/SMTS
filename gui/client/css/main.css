@@ -29,11 +29,9 @@ body {
 }
 
 .smts-table, .smts-table th, .smts-table tr, .smts-table td  {
-    /*margin: 1%;*/
     padding: 5px;
     border: 1px solid grey;
     border-collapse: collapse;
-
     max-width: 100%;
 }
 
@@ -47,7 +45,7 @@ body {
 }
 
 .smts-container {
-    padding: 0.01em 16px;
+    /* Nothing */
 }
 
 
@@ -59,12 +57,20 @@ body {
     height: 90%;
 }
 
+#smts-views-row {
+    margin: 0;
+}
+
 .smts-column {
     height: 100%;
     overflow: auto;
     border-right: 1px solid lightgray;
     border-left: 1px solid lightgray;
     border-bottom: 2px solid lightgray;
+}
+
+.smts-column, #smts-task-handler, #smts-event-navbar, #smts-data-container {
+    padding-top: 16px;
 }
 
 
@@ -93,9 +99,12 @@ body {
 #smts-tree-container {
     width: 100%;
     height: 55%;
-    margin: 16px 0;
     padding: 0;
     background-color: #eee;
+}
+
+#smts-event-navbar {
+    padding-bottom: 16px;
 }
 
 #smts-event-container {
