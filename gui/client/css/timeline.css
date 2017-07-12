@@ -1,5 +1,5 @@
 
-#line {
+#smts-timeline-line {
     height: 6px;
     width: 70%;
     /*background: white;*/
@@ -11,7 +11,7 @@
     position: relative;
 }
 
-#span {
+#smts-timeline-span {
     display: none;
     width: 70%;
     margin: auto;
@@ -21,26 +21,21 @@
     color: gray;
 }
 
-.dash {
+.smts-timeline-dash {
     width: 1px;
     height: 30px;
-    /*background: white;*/
     background: gray;
-    /*border-radius: 15px;*/
     position: absolute;
     top: -10px;
-    /*border: 3px solid white;*/
     border: 2px solid gray;
     cursor: pointer;
 }
 
-.dash .popupSpan {
+.smts-timeline-dash .smts-timeline-popupSpan {
     width: auto;
     height: auto;
     padding: 10px;
     white-space: nowrap;
-    display: inline-block;
-    /*color: white;*/
     color: gray;
     position: absolute;
     top: 20px;
@@ -48,17 +43,21 @@
     display: none;
     transition: all 0.1s ease-out;
 }
-.dash.hover:before, .circle.active:before {
+
+.smts-timeline-dash.hover:before,
+.smts-timeline-circle.smts-timeline-active:before {
     display: block;
 }
-.dash.hover .popupSpan, .circle.active .popupSpan {
+
+.smts-timeline-dash.hover.smts-timeline-popupSpan,
+.smts-timeline-circle.smts-timeline-active.smts-timeline-popupSpan {
     display: block;
 }
-.dash.active .popupSpan {
+
+.smts-timeline-dash.smts-timeline-active.smts-timeline-popupSpan {
     top: -40px;
 }
-.active {
-    /*background: #00cc00;*/
-    /*color: #00cc00;*/
+
+.smts-timeline-active {
     border: 2px solid #00cc00;
 }

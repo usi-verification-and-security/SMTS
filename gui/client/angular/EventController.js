@@ -14,15 +14,15 @@ app.controller(
                 allEvents = events;
                 makeTimeline();
 
-                $(".dash").mouseenter(function () {
+                $(".smts-timeline-dash").mouseenter(function () {
                     $(this).addClass("hover");
                 });
 
-                $(".dash").mouseleave(function () {
+                $(".smts-timeline-dash").mouseleave(function () {
                     $(this).removeClass("hover");
                 });
 
-                $(".dash").click(function () {
+                $(".smts-timeline-dash").click(function () {
                     let spanNum = $(this).attr("id");
                     selectEvent(spanNum);
 
@@ -33,16 +33,16 @@ app.controller(
 
                     // Scroll event table to selected event
                     let query = "#" + find;
-                    $('#event-container').scrollTop($(query).offset().top - $('#event-container').offset().top)
+                    $('#smts-event-container').scrollTop($(query).offset().top - $('#smts-event-container').offset().top)
                 });
             };
 
             // Show tree up to clicked event
             $scope.showEvent = function ($event, $index, x) {
                 // Highlight selected event
-                $('#event-container table tr').removeClass("highlight");
-                let query = '#event-container table tr[data-event="' + x.id + '"]';
-                $(query).addClass("highlight");
+                $('#smts-event-container table tr').removeClass("smts-highlight");
+                let query = '#smts-event-container table tr[data-event="' + x.id + '"]';
+                $(query).addClass("smts-highlight");
 
                 currentRow.value = $index;
                 sharedTree.tree.arrangeTree(currentRow.value);
@@ -55,6 +55,7 @@ app.controller(
                 if (object === null) {
                     object = {};
                 }
+
                 //sort object by key values
                 let keys = [], k, i, len;
                 let sortedObj = {};
@@ -70,9 +71,9 @@ app.controller(
                     sortedObj[k] = object[k];
                 }
                 let ppTable = prettyPrint(sortedObj);
-                let tableName = "Event " + x.event;
-                document.getElementById('data-container-title').innerHTML = tableName.bold();
-                let item = document.getElementById('data-container-content');
+                let tableName = "EVENT " + x.event;
+                document.getElementById('smts-data-container-title').innerHTML = tableName.bold();
+                let item = document.getElementById('smts-data-container-content');
 
                 if (item.childNodes[0]) {
                     item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table

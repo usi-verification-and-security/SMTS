@@ -30,7 +30,7 @@ function makeTimeline() {
 
     //Forget the timeline if there's only one event
     if (timelineEvents.length < 2) {
-        $("#line").hide();
+        $("#smts-timeline-line").hide();
 
         //This is what you really want.
     } else if (timelineEvents.length >= 2) {
@@ -38,44 +38,44 @@ function makeTimeline() {
         let lineLength = 1 / timelineEvents[timelineEvents.length - 1].ts;
 
         //Draw first line
-        $("#line").append(`<div class="dash" id="${timelineEvents[0].id}" style="left: 0;"><div class="popupSpan">${timelineEvents[0].ts} s</div></div>`);
+        $("#smts-timeline-line").append(`<div class="smts-timeline-dash" id="${timelineEvents[0].id}" style="left: 0;"><div class="smts-timeline-popupSpan">${timelineEvents[0].ts} s</div></div>`);
 
         //Loop through middle lines
         for (let i = 1; i < timelineEvents.length - 1; i++) {
             relativeInt = lineLength * timelineEvents[i].ts * 100;
 
             //Draw the line
-            $("#line").append(`<div class="dash" id="${timelineEvents[i].id}" style="left: ${relativeInt}%;"><div class="popupSpan">${timelineEvents[i].ts} s</div></div>`);
+            $("#smts-timeline-line").append(`<div class="smts-timeline-dash" id="${timelineEvents[i].id}" style="left: ${relativeInt}%;"><div class="smts-timeline-popupSpan">${timelineEvents[i].ts} s</div></div>`);
         }
 
         relativeInt = lineLength * timelineEvents[timelineEvents.length - 1].ts * 100;
         //Draw the last line
-        $("#line").append(`<div class="dash" id="${timelineEvents[timelineEvents.length - 1].id}" style="left: ${relativeInt}%;"><div class="popupSpan">${timelineEvents[timelineEvents.length - 1].ts} s</div></div>`);
+        $("#smts-timeline-line").append(`<div class="smts-timeline-dash" id="${timelineEvents[timelineEvents.length - 1].id}" style="left: ${relativeInt}%;"><div class="smts-timeline-popupSpan">${timelineEvents[timelineEvents.length - 1].ts} s</div></div>`);
     }
 
-    $(".line:first").addClass("active");
+    $(".smts-timeline-line:first").addClass("smts-timeline-active");
 }
 
 function selectEvent(selector) {
     $selector = "#" + selector;
-    $spanSelector = $selector.replace("dash", "span");
+    $spanSelector = $selector.replace("smts-timeline-dash", "smts-timeline-span");
 
-    $(".active").removeClass("active");
-    $($selector).addClass("active");
+    $(".smts-timeline-active").removeClass("smts-timeline-active");
+    $($selector).addClass("smts-timeline-active");
 
-    if ($($spanSelector).hasClass("right")) {
-        $(".center").removeClass("center").addClass("left")
-        $($spanSelector).addClass("center");
-        $($spanSelector).removeClass("right")
-    } else if ($($spanSelector).hasClass("left")) {
-        $(".center").removeClass("center").addClass("right");
-        $($spanSelector).addClass("center");
-        $($spanSelector).removeClass("left");
+    if ($($spanSelector).hasClass("smts-timeline-right")) {
+        $(".smts-timeline-center").removeClass("smts-timeline-center").addClass("smts-timeline-left")
+        $($spanSelector).addClass("smts-timeline-center");
+        $($spanSelector).removeClass("smts-timeline-right")
+    } else if ($($spanSelector).hasClass("smts-timeline-left")) {
+        $(".smts-timeline-center").removeClass("center").addClass("smts-timeline-right");
+        $($spanSelector).addClass("smts-timeline-center");
+        $($spanSelector).removeClass("smts-timeline-left");
     }
 }
 
 function clearTimeline() {
-    let el = document.getElementById('line');
+    let el = document.getElementById('smts-timeline-line');
     if (el.childNodes.length !== 0) {
         $(el).empty();
     }

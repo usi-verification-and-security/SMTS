@@ -1,57 +1,57 @@
 /*Tree construction*/
 
-.node {
+.smts-node {
     cursor: pointer;
 }
 
-.overlay {
+.smts-overlay {
     background-color: #eee;
 }
 
-.node circle,
-.node rect {
+.smts-node circle,
+.smts-node rect {
     fill: #fff;
     stroke: steelblue;
     stroke-width: 1.5px;
 }
 
-.node text {
+.smts-node text {
     font-size: 10px;
     font-family: sans-serif;
 }
 
-.link {
+.smts-link {
     fill: none;
     stroke: #ccc;
     stroke-width: 1.5px;
 }
 
-circle.sat {
+circle.smts-sat {
     fill: #008000; /* Green */
 }
 
-circle.sat.propagated {
+circle.smts-sat.smts-propagated {
     fill: #99CC99; /* Light green */
 }
 
-circle.unsat {
+circle.smts-unsat {
     fill: #FF0000; /* Red */
 }
 
-circle.unsat.propagated {
+circle.smts-unsat.smts-propagated {
     fill: #FF9999; /* Light red */
 }
 
-circle.unknown {
+circle.smts-unknown {
     fill: #FFE4C4; /* Bisque */
 }
 
-circle.selected {
+circle.smts-selected {
     fill: rgba(0, 0, 255, 0.1); /* Blue */
     stroke: none;
 }
 
-rect.nodeRect {
+rect.smts-nodeRect {
     fill: lightblue;
     transform: rotate(45deg) translate(-50%, -50%);
 }

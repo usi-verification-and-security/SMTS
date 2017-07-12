@@ -27,17 +27,17 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
 
                     $("input[name='timeout']").val(timeOut.value);
 
-                    $('#solInst').removeClass('hidden');
-                    $('#task').removeClass('hidden');
-                    $('#newInst').removeClass('hidden');
+                    $('#solInst').removeClass('smts-hidden');
+                    $('#task').removeClass('smts-hidden');
+                    $('#newInst').removeClass('smts-hidden');
 
-                    $('#newDB').addClass('hidden');
+                    $('#newDB').addClass('smts-hidden');
 
                     sharedService.broadcastItem3(); // Show events, tree and solvers
                 }
                 else {
                     realTimeDB.value = false;
-                    $('#newDB').removeClass('hidden');
+                    $('#newDB').removeClass('smts-hidden');
                 }
 
             }, function errorCallback(response) {
@@ -49,8 +49,8 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
             // Highlight selected instance
 
             let row = $event.target.parentNode;
-            $(row.parentNode).children('tr').removeClass('highlight');
-            row.classList.add('highlight');
+            $(row.parentNode).children('tr').removeClass('smts-highlight');
+            row.classList.add('smts-highlight');
 
             // If real-time analysis ask every 10 seconds for db content otherwise just once
             if (realTimeDB.value) {

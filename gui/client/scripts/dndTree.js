@@ -67,8 +67,8 @@ function generateDomTree(root, selectedNodeNames, positionFrame) {
     }
 
     // Size of the diagram
-    let viewerWidth = document.getElementById("tree-container").offsetWidth;
-    let viewerHeight = document.getElementById("tree-container").offsetHeight;
+    let viewerWidth = document.getElementById("smts-tree-container").offsetWidth;
+    let viewerHeight = document.getElementById("smts-tree-container").offsetHeight;
 
     // SVG element setup
     clearSvg();
@@ -114,7 +114,7 @@ function generateDomTree(root, selectedNodeNames, positionFrame) {
     // Function is in callback because it has to wait until the translate positions are updated inside the `g` elements.
     setTimeout(function() {
         if (positionFrame) {
-            let positionSelected = document.querySelector('circle.selected').parentNode.getAttribute('transform');
+            let positionSelected = document.querySelector('circle.smts-selected').parentNode.getAttribute('transform');
             let translateSelected = getTranslate(positionSelected);
             let translateFrame = getTranslate(positionFrame);
             let scale = getScale(positionFrame) || zoomListener.scale();
@@ -144,17 +144,17 @@ function generateDomTree(root, selectedNodeNames, positionFrame) {
 
 // Remove the previous svg element
 function clearSvg() {
-    d3.select('#tree-container').select('svg').remove();
+    d3.select('#smts-tree-container').select('svg').remove();
 }
 
 
 // Make an svg element
 function makeSvg(width, height) {
-    return d3.select('#tree-container')
+    return d3.select('#smts-tree-container')
         .append('svg')
         .attr('viewBox', `0 0 ${width} ${height}`)
         .attr('preserveAspectRatio', 'xMinYMin meet')
-        .classed('overlay', true);
+        .classed('smts-overlay', true);
 }
 
 
@@ -210,15 +210,15 @@ function makeZoomListener(listener, target) {
 // Make nodes, put them in correct position and assign styles
 function makeNodes(root, svgGroup, d3Nodes, selectedNodeNames) {
     let id = 0;
-    let svgNodes = svgGroup.selectAll('g.node')
+    let svgNodes = svgGroup.selectAll('g.smts-node')
         .data(d3Nodes, node => node.id || (node.id = ++id));
 
     // Enter any new nodes at the parent's previous position
     let svgNodeGs = svgNodes.enter()
         .append('g')
-        .classed('node', true)
-        .classed('nodeAnd', node => node.type === 'AND') // Class needed as selector
-        .classed('nodeOr', node => node.type === 'OR')   // Class needed as selector
+        .classed('smts-node', true)
+        .classed('smts-nodeAnd', node => node.type === 'AND') // Class needed as selector
+        .classed('smts-nodeOr', node => node.type === 'OR')   // Class needed as selector
         .attr('transform', `translate(${root.y0}, ${root.x0})`)
         .on('click', function (node) {
             showNodeData(node);
@@ -226,25 +226,25 @@ function makeNodes(root, svgGroup, d3Nodes, selectedNodeNames) {
         });
 
     // Add rhombi to OR nodes
-    svgGroup.selectAll('.nodeOr')
+    svgGroup.selectAll('.smts-nodeOr')
         .append('rect')
         .attr('width', NODE_OR_SIDE)
         .attr('height', NODE_OR_SIDE)
-        .classed('nodeRect', true);
+        .classed('smts-nodeRect', true);
 
     // Add circles to AND nodes
-    svgGroup.selectAll('.nodeAnd')
+    svgGroup.selectAll('.smts-nodeAnd')
         .append('circle')
         .attr('r', NODE_AND_RADIUS)
-        .classed('sat', node => node.status === 'sat')
-        .classed('unsat', node => node.status === 'unsat')
-        .classed('unknown', node => node.status === 'unknown')
-        .classed('propagated', node => node.isStatusPropagated);
+        .classed('smts-sat', node => node.status === 'sat')
+        .classed('smts-unsat', node => node.status === 'unsat')
+        .classed('smts-unknown', node => node.status === 'unknown')
+        .classed('smts-propagated', node => node.isStatusPropagated);
 
     // Make halo circle for selected node
     svgNodeGs.append('circle')
         .attr('r', NODE_SELECTED_RADIUS)
-        .attr('class', node => isSelectedNode(node.name, selectedNodeNames) ? 'selected' : 'hidden');
+        .attr('class', node => isSelectedNode(node.name, selectedNodeNames) ? 'smts-selected' : 'smts-hidden');
 
     // Make text
     svgNodeGs.append('text')
@@ -262,7 +262,7 @@ function makeNodes(root, svgGroup, d3Nodes, selectedNodeNames) {
 
 // Make links between nodes, put them in correct position and assign styles
 function makeLinks(root, svgGroup, d3Links) {
-    let svgLinks = svgGroup.selectAll('path.link')
+    let svgLinks = svgGroup.selectAll('path.smts-link')
         .data(d3Links, link => link.target.id);
 
     let d3Diagonal = makeD3Diagonal();
@@ -270,7 +270,7 @@ function makeLinks(root, svgGroup, d3Links) {
     // Enter any new links at the parent's previous position.
     svgLinks.enter()
         .insert('path', 'g')
-        .classed('link', true)
+        .classed('smts-link', true)
         .attr('d', () => d3Diagonal({source: {x: root.x0, y: root.y0}, target: {x: root.x0, y: root.y0}}));
 
     // Transition links to their new position.
@@ -295,7 +295,7 @@ function makeLinks(root, svgGroup, d3Links) {
 
 // Scale selected node halo when zooming in or out
 function scaleSelectedCircle(scale) {
-    let circles = document.querySelectorAll('circle.selected');
+    let circles = document.querySelectorAll('circle.smts-selected');
     circles.forEach(circle => circle.setAttribute('r', (NODE_SELECTED_RADIUS / scale).toString()));
 }
 
@@ -413,35 +413,30 @@ function showNodeData(node) {
         ppNode.type = node.type;
         ppNode.solvers = node.solvers;
         ppNode.status = node.status;
-        ppNode.depth = node.getHeight();
+        ppNode.depth = node.getDepth();
         if (node.children) {
             ppNode.depths = {};
             for (let child of node.children) {
-                ppNode.depths[JSON.stringify(child.name)] = child.getHeight();
+                ppNode.depths[JSON.stringify(child.name)] = child.getDepth();
             }
         }
     }
 
     let ppTable = prettyPrint(ppNode);
 
-    document.getElementById('data-container-title').innerHTML = 'NODE'.bold();
-    let item = document.getElementById('data-container-content');
-
-    if (item.childNodes[0]) {
-        item.replaceChild(ppTable, item.childNodes[0]); // Replace existing table
-    }
-    else {
-        item.appendChild(ppTable);                      // Add new table
-    }
+    document.getElementById('smts-data-container-title').innerHTML = 'NODE'.bold();
+    let item = document.getElementById('smts-data-container-content');
+    item.innerText = '';
+    item.appendChild(ppTable);
 }
 
 
 // This function highlights in solver view the solvers working on the clicked node
 function highlightSolvers(node) {
-    let solvers = document.querySelectorAll('#solver-container table tr');
-    solvers.forEach(solver => solver.classList.remove('highlight'));
+    let solvers = document.querySelectorAll('#smts-solver-container table tr');
+    solvers.forEach(solver => solver.classList.remove('smts-highlight'));
 
-    let query = `#solver-container table tr[data-node="${JSON.stringify(node.name)}"]`;
+    let query = `#smts-solver-container table tr[data-node="${JSON.stringify(node.name)}"]`;
     let selectedSolvers = document.querySelectorAll(query);
-    selectedSolvers.forEach(selectedSolver => selectedSolver.classList.add('highlight'));
+    selectedSolvers.forEach(selectedSolver => selectedSolver.classList.add('smts-highlight'));
 }

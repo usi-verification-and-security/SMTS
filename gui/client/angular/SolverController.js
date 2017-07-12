@@ -8,7 +8,7 @@ app.controller('SolverController', ['$scope', '$rootScope', 'currentRow', 'share
         });
 
         $scope.showSolver = function () {
-            $('#solver-container table tr').removeClass("highlight");
+            $('#smts-solver-container table tr').removeClass("smts-highlight");
             sharedTree.tree.assignSolvers(0, currentRow.value);
             $scope.solvers = sharedTree.tree.solvers;
         };
@@ -22,8 +22,8 @@ app.controller('SolverController', ['$scope', '$rootScope', 'currentRow', 'share
             let ppTable = prettyPrint(ppSolver);
 
             // Update data table in DOM
-            document.getElementById('data-container-title').innerHTML = "SOLVER".bold();
-            let dataContent = document.getElementById('data-container-content');
+            document.getElementById('smts-data-container-title').innerHTML = "SOLVER".bold();
+            let dataContent = document.getElementById('smts-data-container-content');
             dataContent.innerHTML = '';
             dataContent.appendChild(ppTable);
         }

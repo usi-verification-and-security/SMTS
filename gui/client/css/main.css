@@ -17,40 +17,43 @@ body {
 
 /* Tables */
 
-table, th, tr, td {
-    margin: 1%;
-    padding: 5px;
-    border: 1px solid grey;
-    border-collapse: collapse;
-    max-width: 100%;
+.smts-table {
+    width: 100%;
+    font-size: 0.8em;
+
     word-break: break-all;
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
 
-.etable tbody tr:hover {
+.smts-table, .smts-table th, .smts-table tr, .smts-table td  {
+    margin: 1%;
+    padding: 5px;
+    border: 1px solid grey;
+    border-collapse: collapse;
+
+    max-width: 100%;
+}
+
+.smts-table th {
+    background-color: #00cc00;
+}
+
+.smts-table-interactive tr:hover {
     cursor: pointer;
     background: #BDC3C7;
 }
 
-th {
-    background-color: #00cc00;
-}
-
-.etable, .data-table {
-    width: 100%;
-    font-size: 0.8em;
-}
 
 /* Views */
 
-#views {
+#smts-views {
     margin: 0;
     padding: 0;
     height: 90%;
 }
 
-.column {
+.smts-column {
     height: 100%;
     overflow: auto;
 }
@@ -58,7 +61,7 @@ th {
 
 /* Column 1 */
 
-#title {
+#smts-title {
     text-shadow: 1px 1px #7CFC00;
     font-size: 4vh;
     font-weight: bold;
@@ -66,26 +69,26 @@ th {
     height: 10%;
 }
 
-#instance-container {
+#smts-instance-container {
     height: 60%;
     overflow: auto;
 }
 
-#task-handler {
+#smts-task-handler {
     height: 30%;
 }
 
 
 /* Column 2 */
 
-#tree-container {
+#smts-tree-container {
     width: 100%;
     height: 55%;
     margin: 16px 0;
     padding: 0;
 }
 
-#event-container {
+#smts-event-container {
     overflow: auto;
     height: 40%;
 }
@@ -93,29 +96,25 @@ th {
 
 /* Column 3 */
 
-#solver-container {
+#smts-solver-container {
     height: 70%;
     overflow: auto;
 }
 
-#solver-container > table > tr > td {
+#smts-solver-container > table > tr > td {
     white-space: nowrap;
     word-break: keep-all;
 }
 
-#data-container {
+#smts-data-container {
     height: 30%;
     overflow: auto;
-}
-
-.data-table {
-
 }
 
 
 /* Timeline */
 
-#lineCont {
+#smts-timeline {
     width: 100%;
     height: 10%;
 }
@@ -129,23 +128,10 @@ thead {
     border-color: inherit;
 }
 
-.highlight {
+.smts-highlight {
     background-color: #7CFC00;
 }
 
-.fixed {
-    top: 0;
-    position: fixed;
-    width: auto;
-    display: none;
-    border: none;
-}
-
-.container {
-    width: 100%;
-    margin: auto;
-}
-
-.hidden {
+.smts-hidden {
     display: none;
 }
