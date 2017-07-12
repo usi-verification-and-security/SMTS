@@ -7,9 +7,11 @@ app.controller('ViewController', ['$scope', '$rootScope', 'currentRow', 'sharedT
         });
 
         $(window).resize(function() {
-            sharedTree.tree.arrangeTree(currentRow.value);
-            let root = sharedTree.tree.getRoot();
-            let position = $('g')[0].getAttribute("transform");
-            generateDomTree(root, sharedTree.tree.getSelectedNodeNames(currentRow.value), position);
+            if (sharedTree.tree) {
+                sharedTree.tree.arrangeTree(currentRow.value);
+                let root = sharedTree.tree.getRoot();
+                let position = $('g')[0].getAttribute("transform");
+                generateDomTree(root, sharedTree.tree.getSelectedNodeNames(currentRow.value), position);
+            }
         });
     }]);
