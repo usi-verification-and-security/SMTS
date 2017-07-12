@@ -1,7 +1,7 @@
 module TreeManager {
     export class Node {
         name: number[];                      // Path that identifies the node, e.g. [0,3,4,0,1]
-        type: string;                        // 'AND', 'OR', '+', '-', 'STATUS' or 'SOLVED'
+        type: string;                        // 'AND' or 'OR'
         children: Node[] = [];               // Children nodes
         solvers: string[] = [];              // Solvers working on node
         status: string = "unknown";          // 'sat', 'unsat' or 'unknown'
@@ -25,6 +25,25 @@ module TreeManager {
                 }
             }
             return depthMax;
+        }
+
+
+        // Get ratio between the average height and the maximum height of the children nodes
+        getBalanceness() {
+            if (!this.children || this.children.length === 0) {
+                return 1;
+            }
+
+            let heightSum = 0, heightMax = 0;
+            for (let child of this.children) {
+                let heightChild = child.getHeight() + 1;
+                heightSum += heightChild;
+                if (heightChild > heightMax) {
+                    heightMax = heightChild;
+                }
+            }
+            let heightAvg = heightSum / this.children.length;
+            return heightAvg / heightMax;
         }
 
 

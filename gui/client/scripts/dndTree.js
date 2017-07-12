@@ -37,10 +37,11 @@ const LINE_HEIGHT = 25; // Space between to nodes (in pixels)
 const LINK_LENGTH = 10; // Distance between two nodes (in pixels)
 
 // Nodes
-const NODE_AND_RADIUS      = 4.5; // Radius of circle (in pixels)
-const NODE_OR_SIDE         = 10;  // Width of rhombus side (in pixels)
-const NODE_SELECTED_RADIUS = 20;  // Radius of selected node circle (in pixels)
-const TEXT_OFFSET          = 10;  // Text offset with respect to the center of the circle/rhombus node (in pixels)
+const NODE_AND_RADIUS         = 4.5; // Radius of circle (in pixels)
+const NODE_OR_SIDE            = 10;  // Width of rhombus side (in pixels)
+const NODE_SELECTED_RADIUS    = 20;  // Radius of selected node circle (in pixels)
+const NODE_BALANCENESS_RADIUS = 30;  // Radius of height ratio circle (in pixels)
+const TEXT_OFFSET             = 10;  // Text offset with respect to the center of the circle/rhombus node (in pixels)
 
 // Frame
 const BOUNDS_ERROR_FACTOR = 0.0125; // Factor to compute the margin of the visible frame
@@ -232,6 +233,18 @@ function makeNodes(root, svgGroup, d3Nodes, selectedNodeNames) {
         .attr('height', NODE_OR_SIDE)
         .classed('smts-nodeRect', true);
 
+    // Make balanceness circle for OR nodes
+    svgGroup.selectAll('.smts-nodeOr')
+        .append('circle')
+        .attr('r', NODE_BALANCENESS_RADIUS)
+        .classed('smts-balanceness', true)
+        .style('fill', function(node) {
+            let balanceness = node.getBalanceness();
+            let red = Math.round(255 * (1 - balanceness));
+            let green = Math.round(255 * balanceness);
+            return `rgb(${red}, ${green}, 0)`;
+        });
+
     // Add circles to AND nodes
     svgGroup.selectAll('.smts-nodeAnd')
         .append('circle')
@@ -413,13 +426,7 @@ function showNodeData(node) {
         ppNode.type = node.type;
         ppNode.solvers = node.solvers;
         ppNode.status = node.status;
-        ppNode.depth = node.getDepth();
-        if (node.children) {
-            ppNode.depths = {};
-            for (let child of node.children) {
-                ppNode.depths[JSON.stringify(child.name)] = child.getDepth();
-            }
-        }
+        ppNode.balanceness = node.getBalanceness();
     }
 
     let ppTable = prettyPrint(ppNode);

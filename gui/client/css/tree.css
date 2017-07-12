@@ -51,6 +51,11 @@ circle.smts-selected {
     stroke: none;
 }
 
+circle.smts-balanceness {
+    stroke: none;
+    fill-opacity: 0.3;
+}
+
 rect.smts-nodeRect {
     fill: lightblue;
     transform: rotate(45deg) translate(-50%, -50%);
