@@ -98,13 +98,13 @@
             <div id="smts-tree-container" class="smts-container" ng-controller="ViewController"></div>
 
             <!--Event view-->
-            <ul id="smts-event-navbar" class="nav nav-tabs">
-                <li class="active"><a data-toggle="tab" href="" onclick="showAll()">All</a></li>
-                <li><a data-toggle="tab" href="" onclick="showSelected()">Selected</a></li>
+            <ul id="smts-event-navbar" class="nav nav-tabs" ng-controller="EventController">
+                <li id="smts-event-navbar-all" class="active"><a data-toggle="tab" href="" ng-click="showAll()">All</a></li>
+                <li id="smts-event-navbar-selected" ><a data-toggle="tab" href="" ng-click="showSelected()">Selected</a></li>
             </ul>
 
             <div id="smts-event-container" class="smts-container" ng-controller="EventController">
-                <table class="smts-table smts-table-interactive">
+                <table id="smts-event-table" class="smts-table smts-table-interactive">
                     <thead>
                     <tr>
                         <th>Nr</th>
@@ -171,15 +171,16 @@
 <script type="text/javascript" src="angular/TaskHandlerController.js"></script>
 <script type="text/javascript" src="angular/ViewController.js"></script>
 <script src="http://d3js.org/d3.v3.min.js"></script>
+<script type="text/javascript" src="scripts/utils.js"></script>
+<script type="text/javascript" src="scripts/options.js"></script>
 <script type="text/javascript" src="scripts/dndTree.js"></script>
 <script type="text/javascript" src="scripts/ng-file-upload.min.js"></script>
 <script type="text/javascript" src="scripts/ng-file-upload-shim.min.js"></script>
-<script src="scripts/prettyprint.js"></script>
-<script src="scripts/options.js"></script>
-<script src="treeManager/Event.js"></script>
-<script src="treeManager/Node.js"></script>
-<script src="treeManager/Solver.js"></script>
-<script src="treeManager/Tree.js"></script>
-<script src="scripts/timeline.js"></script>
+<script type="text/javascript" src="scripts/prettyprint.js"></script>
+<script type="text/javascript" src="treeManager/Event.js"></script>
+<script type="text/javascript" src="treeManager/Node.js"></script>
+<script type="text/javascript" src="treeManager/Solver.js"></script>
+<script type="text/javascript" src="treeManager/Tree.js"></script>
+<script type="text/javascript" src="scripts/timeline.js"></script>
 
 </html>

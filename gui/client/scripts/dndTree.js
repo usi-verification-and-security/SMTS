@@ -224,13 +224,14 @@ function makeNodes(tree, svgGroup, d3Nodes) {
         // Classes needed as selectors
         .classed('smts-nodeAnd', node => node.type === 'AND')
         .classed('smts-nodeOr', node => node.type === 'OR')
-        .classed('smts-nodeSelected', node => isSelectedNode(node, tree.selectedNodes))
+        // Check if node matches any element of tree.selectedNodes
+        .classed('smts-nodeSelected', node => isNodeInNodes(node, tree.selectedNodes))
         .attr('transform', `translate(${tree.root.y0}, ${tree.root.x0})`)
         .on('click', function(node) {
             showNodeData(node);
             highlightSolvers(node);
             tree.setSelectedNodes([node]);
-            updateSelectedNode(this);      // `this` is the DOM element
+            updateSelectedNode(this, tree); // `this` is the DOM element
         });
 
     // Add rhombi to OR nodes
@@ -316,6 +317,71 @@ function makeLinks(tree, svgGroup, d3Links) {
 
 
 /**********************************************************************************************************************/
+/* NODE SELECTION                                                                                                     */
+/**********************************************************************************************************************/
+
+
+// This function shows node data in data view
+function showNodeData(node) {
+    let ppNode = {};
+
+    if (node) {
+        ppNode.name = JSON.stringify(node.name); // transform to string or it will show and array
+        ppNode.type = node.type;
+        ppNode.solvers = node.solvers;
+        ppNode.status = node.status;
+        ppNode.balanceness = node.getBalanceness();
+    }
+
+    let ppTable = prettyPrint(ppNode);
+
+    document.getElementById('smts-data-container-title').innerHTML = 'NODE'.bold();
+    let item = document.getElementById('smts-data-container-content');
+    item.innerText = '';
+    item.appendChild(ppTable);
+}
+
+
+// This function highlights in solver view the solvers working on the clicked node
+function highlightSolvers(node) {
+    let solvers = document.querySelectorAll('#smts-solver-container table tr');
+    solvers.forEach(solver => solver.classList.remove('smts-highlight'));
+
+    let query = `#smts-solver-container table tr[data-node="${JSON.stringify(node.name)}"]`;
+    let selectedSolvers = document.querySelectorAll(query);
+    selectedSolvers.forEach(selectedSolver => selectedSolver.classList.add('smts-highlight'));
+}
+
+
+// Update selected node
+function updateSelectedNode(node, tree) {
+    // Remove previous selections
+    d3.selectAll('.smts-nodeSelected')
+        .classed('smts-nodeSelected', false)
+        .selectAll('.smts-selected')
+        .remove();
+
+    // Select new node
+    d3.select(node)
+        .classed('smts-nodeSelected', true)
+        .append('circle')
+        .attr('r', NODE_SELECTED_RADIUS / g_scale)
+        .classed('smts-selected', true);
+
+    // Update events if 'Selected' tab is selected
+    if (document.getElementById('smts-event-navbar-selected').classList.contains('active')) {
+        d3.selectAll('#smts-event-table > tbody > tr')
+            .classed('smts-hidden', false) // Remove hidden class to cleanup
+            .classed('smts-hidden', function () {
+                let nodeName = JSON.parse(this.children[2].innerHTML);
+                return isNotNodeInNodes({name: nodeName}, tree.selectedNodes);
+            });
+    }
+}
+
+
+
+/**********************************************************************************************************************/
 /* POSITIONING                                                                                                        */
 /**********************************************************************************************************************/
 
@@ -388,31 +454,6 @@ function getMaxLevelWidth(tree) {
 }
 
 
-// Check if two array have same content
-function arrayEqual(a1, a2) {
-    if (a1.length !== a2.length) {
-        return false;
-    }
-    for (let i = 0; i < a1.length; ++i) {
-        if (a1[i] !== a2[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-
-
-// Check if node is equal to at least one of the selectedNodes
-function isSelectedNode(node, selectedNodes) {
-    for (let selectedNode of selectedNodes) {
-        if (arrayEqual(node.name, selectedNode.name)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-
 // Return `[x, y]` from a transform string of the form 'translate(x, y) scale(z)', null if no translate
 function getTranslate(position) {
     if (position && position.includes('translate')) {
@@ -429,59 +470,4 @@ function getScale(position) {
         return parseFloat(position.match(/scale\(([^)]+)\)/)[1]);
     }
     return null;
-}
-
-
-
-/**********************************************************************************************************************/
-/* DATA VIEW AND HIGHLIGHTS                                                                                           */
-/**********************************************************************************************************************/
-
-
-// This function shows node data in data view
-function showNodeData(node) {
-    let ppNode = {};
-
-    if (node) {
-        ppNode.name = JSON.stringify(node.name); // transform to string or it will show and array
-        ppNode.type = node.type;
-        ppNode.solvers = node.solvers;
-        ppNode.status = node.status;
-        ppNode.balanceness = node.getBalanceness();
-    }
-
-    let ppTable = prettyPrint(ppNode);
-
-    document.getElementById('smts-data-container-title').innerHTML = 'NODE'.bold();
-    let item = document.getElementById('smts-data-container-content');
-    item.innerText = '';
-    item.appendChild(ppTable);
-}
-
-
-// This function highlights in solver view the solvers working on the clicked node
-function highlightSolvers(node) {
-    let solvers = document.querySelectorAll('#smts-solver-container table tr');
-    solvers.forEach(solver => solver.classList.remove('smts-highlight'));
-
-    let query = `#smts-solver-container table tr[data-node="${JSON.stringify(node.name)}"]`;
-    let selectedSolvers = document.querySelectorAll(query);
-    selectedSolvers.forEach(selectedSolver => selectedSolver.classList.add('smts-highlight'));
-}
-
-
-// Update selected node
-function updateSelectedNode(node) {
-    // Remove previous selections
-    d3.selectAll('.smts-nodeSelected')
-        .classed('smts-nodeSelected', false)
-        .selectAll('.smts-selected')
-        .remove();
-
-    // Select new node
-    d3.select(node)
-        .classed('smts-nodeSelected', true)
-        .append('circle')
-        .attr('r', NODE_SELECTED_RADIUS / g_scale)
-        .classed('smts-selected', true);
 }

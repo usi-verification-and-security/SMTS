@@ -1,28 +1,28 @@
 app.controller(
     'EventController',
     ['$scope', '$rootScope', 'currentRow', 'sharedTree', '$window', '$http', 'sharedService',
-        function ($scope, $rootScope, currentRow, sharedTree, $window, $http, sharedService) {
+        function($scope, $rootScope, currentRow, sharedTree, $window, $http, sharedService) {
 
-            $scope.$on('handleBroadcast', function () { // This is called when an instance is selected
+            $scope.$on('handleBroadcast', function() { // This is called when an instance is selected
                 let eventEntries = sharedTree.tree.getEvents(currentRow.value + 1);
                 $scope.events = eventEntries;
                 $scope.initTimeline(eventEntries); // Initialize timeline
             });
 
-            $scope.initTimeline = function (events) {
+            $scope.initTimeline = function(events) {
                 clearTimeline();
                 allEvents = events;
                 makeTimeline();
 
-                $(".smts-timeline-dash").mouseenter(function () {
+                $(".smts-timeline-dash").mouseenter(function() {
                     $(this).addClass("hover");
                 });
 
-                $(".smts-timeline-dash").mouseleave(function () {
+                $(".smts-timeline-dash").mouseleave(function() {
                     $(this).removeClass("hover");
                 });
 
-                $(".smts-timeline-dash").click(function () {
+                $(".smts-timeline-dash").click(function() {
                     let spanNum = $(this).attr("id");
                     selectEvent(spanNum);
 
@@ -38,7 +38,7 @@ app.controller(
             };
 
             // Show tree up to clicked event
-            $scope.showEvent = function ($event, $index, x) {
+            $scope.showEvent = function($event, $index, x) {
                 // Highlight selected event
                 $('#smts-event-container table tr').removeClass("smts-highlight");
                 let query = '#smts-event-container table tr[data-event="' + x.id + '"]';
@@ -92,5 +92,24 @@ app.controller(
                 }
 
                 sharedService.broadcastItem2();
-            }
+            };
+
+            // Show all events
+            $scope.showAll = function() {
+                let rows = document.querySelectorAll('#smts-event-table > tbody > tr');
+                for (let row of rows) {
+                    row.classList.remove('smts-hidden');
+                }
+            };
+
+            // Show only events related to selected nodes
+            $scope.showSelected = function() {
+                let rows = document.querySelectorAll('#smts-event-table > tbody > tr');
+                for (let row of rows) {
+                    let nodeName = JSON.parse(row.children[2].innerHTML);
+                    if (isNotNodeInNodes({name: nodeName}, sharedTree.tree.selectedNodes)) {
+                        row.classList.add('smts-hidden');
+                    }
+                }
+            };
         }]);
