@@ -234,10 +234,13 @@ function makeNodes(root, svgGroup, d3Nodes, selectedNodeNames) {
         .classed('smts-nodeRect', true);
 
     // Make balanceness circle for OR nodes
+    let balancenessOption = document.getElementById('smts-option-balanceness');
     svgGroup.selectAll('.smts-nodeOr')
         .append('circle')
         .attr('r', NODE_BALANCENESS_RADIUS)
         .classed('smts-balanceness', true)
+        // Hide if balancenessOption doesn't exists or if the checkbox is unchecked
+        .classed('smts-hidden', !balancenessOption || !balancenessOption.checked)
         .style('fill', function(node) {
             let balanceness = node.getBalanceness();
             let red = Math.round(255 * (1 - balanceness));

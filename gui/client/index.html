@@ -41,7 +41,7 @@
             </div>
 
             <!--Task Handeler-->
-            <div id="smts-task-handler" class="smts-container" ng-controller="TaskHandler" ng-init='load()'>
+            <div id="smts-task-handler" class="smts-hidden smts-container" ng-controller="TaskHandler" ng-init='load()'>
                 <div id="solInst" class="smts-hidden">
                     <b>Solving Instance:</b>
                     <h id="solvingInstance">{{solvingInstance}}{{solvingInstanceRemaining}}</h>
@@ -78,6 +78,19 @@
                         <input type="submit" value="Decrease" ng-click="decreaseTimeout()">
                         <input type="submit" name="stopTimeout" value="Stop" ng-click="stopSS()">
                     </form>
+                </div>
+            </div>
+
+            <!-- Tree options -->
+            <div id="smts-tree-container-options">
+                <p><b>OPTIONS</b></p>
+                <div class="checkbox">
+                    <label><input id="smts-option-balanceness"
+                                  type="checkbox"
+                                  checked
+                                  onclick="updateOptionBalanceness()">
+                        Show balanceness
+                    </label>
                 </div>
             </div>
         </div>
@@ -165,6 +178,7 @@
 <script type="text/javascript" src="scripts/ng-file-upload.min.js"></script>
 <script type="text/javascript" src="scripts/ng-file-upload-shim.min.js"></script>
 <script src="scripts/prettyprint.js"></script>
+<script src="scripts/options.js"></script>
 <script src="treeManager/Event.js"></script>
 <script src="treeManager/Node.js"></script>
 <script src="treeManager/Solver.js"></script>
