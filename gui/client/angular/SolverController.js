@@ -3,6 +3,7 @@ app.controller('SolverController', ['$scope', '$rootScope', 'currentRow', 'share
         $scope.$on('handleBroadcast', function () { // This is called when an instance is selected
             $scope.showSolver();
         });
+
         $scope.$on('handleBroadcast2', function () { // This is called when an event is selected and the new tree shows up
             $scope.showSolver();
         });
@@ -27,4 +28,23 @@ app.controller('SolverController', ['$scope', '$rootScope', 'currentRow', 'share
             dataContent.innerHTML = '';
             dataContent.appendChild(ppTable);
         }
+
+        // Show all solvers
+        $scope.showAll = function() {
+            let rows = document.querySelectorAll('#smts-solver-table > tbody > tr');
+            for (let row of rows) {
+                row.classList.remove('smts-hidden');
+            }
+        };
+
+        // Show only solvers related to selected nodes
+        $scope.showSelected = function() {
+            let rows = document.querySelectorAll('#smts-solver-table > tbody > tr');
+            for (let row of rows) {
+                let nodeName = row.children[1].innerHTML;
+                if (!nodeName || isNotNodeInNodes({name: JSON.parse(nodeName)}, sharedTree.tree.selectedNodes)) {
+                    row.classList.add('smts-hidden');
+                }
+            }
+        };
     }]);

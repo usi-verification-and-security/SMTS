@@ -106,8 +106,8 @@ app.controller(
             $scope.showSelected = function() {
                 let rows = document.querySelectorAll('#smts-event-table > tbody > tr');
                 for (let row of rows) {
-                    let nodeName = JSON.parse(row.children[2].innerHTML);
-                    if (isNotNodeInNodes({name: nodeName}, sharedTree.tree.selectedNodes)) {
+                    let nodeName = row.children[2].innerHTML;
+                    if (!nodeName || isNotNodeInNodes({name: JSON.parse(nodeName)}, sharedTree.tree.selectedNodes)) {
                         row.classList.add('smts-hidden');
                     }
                 }

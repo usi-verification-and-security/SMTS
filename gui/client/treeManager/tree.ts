@@ -108,17 +108,20 @@ module TreeManager {
 
 
         // Insert solvers in `this.solvers`, only if the solvers are not already present
-        initializeSolvers(array) {
+        initializeSolvers(nodes) {
             let isPresent;
-            for (let item of array) {
+            for (let node of nodes) {
+                if (!node.solver) {
+                    continue;
+                }
                 isPresent = false;
                 for (let solver of this.solvers) {
-                    if (solver.name == item.solver) {
+                    if (solver.name == node.solver) {
                         isPresent = true;
                     }
                 }
                 if (!isPresent) {
-                    this.solvers.push(new Solver(item.solver));
+                    this.solvers.push(new Solver(node.solver));
                 }
             }
         }

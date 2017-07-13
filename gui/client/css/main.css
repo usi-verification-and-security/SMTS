@@ -117,8 +117,13 @@ body {
 
 /* Column 3 */
 
+#smts-solver-navbar {
+    height: 8%;
+    padding: 0 0 var(--padding) 0;
+}
+
 #smts-solver-container {
-    height: 70%;
+    height: 62%;
     overflow: auto;
 }
 

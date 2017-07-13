@@ -373,8 +373,18 @@ function updateSelectedNode(node, tree) {
         d3.selectAll('#smts-event-table > tbody > tr')
             .classed('smts-hidden', false) // Remove hidden class to cleanup
             .classed('smts-hidden', function () {
-                let nodeName = JSON.parse(this.children[2].innerHTML);
-                return isNotNodeInNodes({name: nodeName}, tree.selectedNodes);
+                let nodeName = this.children[2].innerHTML;
+                return nodeName ? isNotNodeInNodes({name: JSON.parse(nodeName)}, tree.selectedNodes) : true;
+            });
+    }
+
+    // Update solvers if 'Selected' tab is selected
+    if (document.getElementById('smts-solver-navbar-selected').classList.contains('active')) {
+        d3.selectAll('#smts-solver-table > tbody > tr')
+            .classed('smts-hidden', false) // Remove hidden class to cleanup
+            .classed('smts-hidden', function () {
+                let nodeName = this.children[1].innerHTML;
+                return nodeName ? isNotNodeInNodes({name: JSON.parse(nodeName)}, tree.selectedNodes) : true;
             });
     }
 }

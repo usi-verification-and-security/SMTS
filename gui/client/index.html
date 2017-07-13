@@ -130,9 +130,14 @@
         <!--Third column-->
         <div id="smts-column-3" class="col-sm-3 smts-column">
                 <!--Solver view-->
+                <ul id="smts-solver-navbar" class="nav nav-tabs" ng-controller="SolverController">
+                    <li id="smts-solver-navbar-all" class="active"><a data-toggle="tab" href="" ng-click="showAll()">All</a></li>
+                    <li id="smts-solver-navbar-selected" ><a data-toggle="tab" href="" ng-click="showSelected()">Selected</a></li>
+                </ul>
+
                 <div id="smts-solver-container" class="smts-container" ng-controller="SolverController">
                     <p><b>SOLVERS</b></p>
-                    <table class="smts-table smts-table-interactive">
+                    <table id="smts-solver-table" class="smts-table smts-table-interactive">
                         <thead>
                         <th>Solver</th>
                         <th>Node</th>
