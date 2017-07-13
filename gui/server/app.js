@@ -181,15 +181,14 @@ process.stdin.resume();//so the program will not close instantly
 // Delete all files in temp directory before killing the process
 function exitHandler(options, err) {
     if (options.cleanup) {
-        // console.log('Cleaning databases..');
         fs.readdir('./temp/', function (err, items) {
-            for (let i = 0; i < items.length; i++) {
-                console.log(items[i]);
-                deleteFile('./temp/' + items[i]);
+            if (items) {
+                for (let item of items) {
+                    deleteFile('./temp/' + item);
+                }
             }
             process.exit(0);
         });
-
     }
     if (err) console.log(err.stack);
     if (options.exit) process.exit();
