@@ -28,7 +28,7 @@
 
 
 /**********************************************************************************************************************/
-/* CONSTANTS                                                                                                          */
+/* CONSTANTS AND GLOBAL VARIABLES                                                                                     */
 /**********************************************************************************************************************/
 
 
@@ -49,6 +49,7 @@ const BOUNDS_ERROR_FACTOR = 0.0125; // Factor to compute the margin of the visib
 // Scale
 const SCALE_MIN = 0.1; // Minimum scale factor
 const SCALE_MAX = 3.0; // Maximum scale factor
+let g_scale = 1;
 
 // Frame movement
 const TRANSITION_DURATION = 0; // Duration of frame transition to another node (in milliseconds)
@@ -61,7 +62,9 @@ const TRANSITION_DURATION = 0; // Duration of frame transition to another node (
 
 
 // Generate DOM tree
-function generateDomTree(root, selectedNodeNames, positionFrame) {
+function generateDomTree(tree, positionFrame) {
+
+    let root = tree.root;
 
     if (!root) {
         return;
@@ -96,8 +99,8 @@ function generateDomTree(root, selectedNodeNames, positionFrame) {
     d3Nodes.forEach(node => node.y = (node.depth * (maxLabelLength * LINK_LENGTH)));
 
     // Generate DOM tree
-    makeNodes(root, svgGroup, d3Nodes, selectedNodeNames);
-    makeLinks(root, svgGroup, d3Links);
+    makeNodes(tree, svgGroup, d3Nodes);
+    makeLinks(tree, svgGroup, d3Links);
 
     // Stash the old positions for transition
     d3Nodes.forEach(function (node) {
@@ -106,7 +109,7 @@ function generateDomTree(root, selectedNodeNames, positionFrame) {
     });
 
     // Update data table with selected node data
-    let selectedNode = root.getNode(selectedNodeNames[0]);
+    let selectedNode = tree.selectedNodes[0];
     showNodeData(selectedNode);
     highlightSolvers(selectedNode);
 
@@ -195,7 +198,7 @@ function makeD3Diagonal() {
 function makeZoomListener(listener, target) {
     let zoomListener = d3.behavior.zoom().scaleExtent([SCALE_MIN, SCALE_MAX]).on('zoom', function () {
         target.attr('transform', `translate(${d3.event.translate}) scale(${d3.event.scale})`);
-        scaleSelectedCircle(d3.event.scale);
+        setScale(d3.event.scale);
     });
     listener.call(zoomListener);
     return zoomListener;
@@ -209,7 +212,7 @@ function makeZoomListener(listener, target) {
 
 
 // Make nodes, put them in correct position and assign styles
-function makeNodes(root, svgGroup, d3Nodes, selectedNodeNames) {
+function makeNodes(tree, svgGroup, d3Nodes) {
     let id = 0;
     let svgNodes = svgGroup.selectAll('g.smts-node')
         .data(d3Nodes, node => node.id || (node.id = ++id));
@@ -221,11 +224,13 @@ function makeNodes(root, svgGroup, d3Nodes, selectedNodeNames) {
         // Classes needed as selectors
         .classed('smts-nodeAnd', node => node.type === 'AND')
         .classed('smts-nodeOr', node => node.type === 'OR')
-        .classed('smts-nodeSelected', node => isSelectedNode(node.name, selectedNodeNames))
-        .attr('transform', `translate(${root.y0}, ${root.x0})`)
-        .on('click', function (node) {
+        .classed('smts-nodeSelected', node => isSelectedNode(node, tree.selectedNodes))
+        .attr('transform', `translate(${tree.root.y0}, ${tree.root.x0})`)
+        .on('click', function(node) {
             showNodeData(node);
             highlightSolvers(node);
+            tree.setSelectedNodes([node]);
+            updateSelectedNode(this);      // `this` is the DOM element
         });
 
     // Add rhombi to OR nodes
@@ -280,7 +285,10 @@ function makeNodes(root, svgGroup, d3Nodes, selectedNodeNames) {
 
 
 // Make links between nodes, put them in correct position and assign styles
-function makeLinks(root, svgGroup, d3Links) {
+function makeLinks(tree, svgGroup, d3Links) {
+
+    let root = tree.root;
+
     let svgLinks = svgGroup.selectAll('path.smts-link')
         .data(d3Links, link => link.target.id);
 
@@ -312,10 +320,17 @@ function makeLinks(root, svgGroup, d3Links) {
 /**********************************************************************************************************************/
 
 
+// Set global scale value and call all scaling functions
+function setScale(scale) {
+    g_scale = scale;
+    scaleSelectedCircles();
+}
+
+
 // Scale selected node halo when zooming in or out
-function scaleSelectedCircle(scale) {
+function scaleSelectedCircles() {
     let circles = document.querySelectorAll('circle.smts-selected');
-    circles.forEach(circle => circle.setAttribute('r', (NODE_SELECTED_RADIUS / scale).toString()));
+    circles.forEach(circle => circle.setAttribute('r', (NODE_SELECTED_RADIUS / g_scale).toString()));
 }
 
 
@@ -328,7 +343,7 @@ function move(zoomListener, x, y, scale) {
         .transition()
         .duration(TRANSITION_DURATION);
 
-    scaleSelectedCircle(scale);
+    setScale(scale);
 
     zoomListener.scale(scale);
     zoomListener.translate([x, y]);
@@ -387,10 +402,10 @@ function arrayEqual(a1, a2) {
 }
 
 
-// Check if nodeName is equal to at least one of the selectedNodeNames
-function isSelectedNode(nodeName, selectedNodeNames) {
-    for (let selectedNodeName of selectedNodeNames) {
-        if (arrayEqual(nodeName, selectedNodeName)) {
+// Check if node is equal to at least one of the selectedNodes
+function isSelectedNode(node, selectedNodes) {
+    for (let selectedNode of selectedNodes) {
+        if (arrayEqual(node.name, selectedNode.name)) {
             return true;
         }
     }
@@ -452,4 +467,21 @@ function highlightSolvers(node) {
     let query = `#smts-solver-container table tr[data-node="${JSON.stringify(node.name)}"]`;
     let selectedSolvers = document.querySelectorAll(query);
     selectedSolvers.forEach(selectedSolver => selectedSolver.classList.add('smts-highlight'));
+}
+
+
+// Update selected node
+function updateSelectedNode(node) {
+    // Remove previous selections
+    d3.selectAll('.smts-nodeSelected')
+        .classed('smts-nodeSelected', false)
+        .selectAll('.smts-selected')
+        .remove();
+
+    // Select new node
+    d3.select(node)
+        .classed('smts-nodeSelected', true)
+        .append('circle')
+        .attr('r', NODE_SELECTED_RADIUS / g_scale)
+        .classed('smts-selected', true);
 }

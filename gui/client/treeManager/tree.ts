@@ -1,10 +1,11 @@
 module TreeManager {
 
     export class Tree {
-        events: Event[] = [];                 // All events
+        events: Event[]                 = []; // All events
         solver: Array<[string, string]> = []; // ???
-        solvers: Solver[] = [];               // All existing solvers
+        solvers: Solver[]               = []; // All existing solvers
         root: Node;                           // Tree seen in the visualization
+        selectedNodes: Node[]           = []; // List of selected nodes
 
 
         //
@@ -14,13 +15,13 @@ module TreeManager {
 
         // Populate the tree up until the n-th event (included)
         arrangeTree(n) {
-            let root = new Node([], 'AND'); // The root is an 'AND'
+            this.root = new Node([], 'AND'); // The root is an 'AND'
 
             for (let i = 0; i <= n; ++i) {
-                root.update(this.events[i]);
+                this.root.update(this.events[i]);
             }
 
-            this.root = root;
+            this.updateSelectedNodes(n);
         }
 
 
@@ -46,15 +47,22 @@ module TreeManager {
         }
 
 
-        // Get name of selected node(s)
-        getSelectedNodeNames(n) {
-            let event = this.events[n];
-            let selectedNodeNames = [];
-            selectedNodeNames.push(event.node);
-            if (event.data && event.data.node) {
-                selectedNodeNames.push(JSON.parse(event.data.node));
+        // Set selected node
+        setSelectedNodes(nodes) {
+            this.selectedNodes.length = 0;
+            for (let node of nodes) {
+                this.selectedNodes.push(node);
             }
-            return selectedNodeNames;
+        }
+
+        // Update selected nodes
+        updateSelectedNodes(n) {
+            this.selectedNodes.length = 0; // Clear selected nodes
+            let event = this.events[n];
+            this.selectedNodes.push(this.root.getNode(event.node));
+            if (event.data && event.data.node) {
+                this.selectedNodes.push(this.root.getNode(JSON.parse(event.data.node)));
+            }
         }
 
 
