@@ -18,10 +18,10 @@
 
 <body ng-app="myApp">
 
-<div id="smts-views" class="container-fluid">
-    <div id="smts-views-row" class="row">
+<div id="smts-main">
+    <div id="smts-views" class="row container-fluid">
         <!--First column-->
-        <div id="smts-column-1" class="col-md-3 smts-column">
+        <div id="smts-column-1" class="col-sm-3 smts-column">
             <!--Title-->
             <div id="smts-title" class="">SMT Viewer</div>
             <!--Instance-->
@@ -83,7 +83,7 @@
         </div>
 
         <!--Second column-->
-        <div id="smts-column-2" class="col-md-6 smts-column">
+        <div id="smts-column-2" class="col-sm-6 container-fluid smts-column">
             <!--Tree view-->
             <div id="smts-tree-container" class="smts-container" ng-controller="ViewController"></div>
 
@@ -118,36 +118,36 @@
         </div>
 
         <!--Third column-->
-        <div id="smts-column-3" class="col-md-3 smts-column">
-            <!--Solver view-->
-            <div id="smts-solver-container" class="smts-container" ng-controller="SolverController">
-                <p><b>SOLVERS</b></p>
-                <table class="smts-table smts-table-interactive">
-                    <thead>
-                    <th>Solver</th>
-                    <th>Node</th>
-                    </thead>
-                    <tbody>
-                    <tr data-node="{{solver.node}}" ng-repeat="solver in solvers" ng-click="clickEvent($event,solver)">
-                        <td>{{solver.name}}</td>
-                        <td>{{solver.node}}</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
+        <div id="smts-column-3" class="col-sm-3 smts-column">
+                <!--Solver view-->
+                <div id="smts-solver-container" class="smts-container" ng-controller="SolverController">
+                    <p><b>SOLVERS</b></p>
+                    <table class="smts-table smts-table-interactive">
+                        <thead>
+                        <th>Solver</th>
+                        <th>Node</th>
+                        </thead>
+                        <tbody>
+                        <tr data-node="{{solver.node}}" ng-repeat="solver in solvers" ng-click="clickEvent($event,solver)">
+                            <td>{{solver.name}}</td>
+                            <td>{{solver.node}}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-            <!--Data view-->
-            <div id="smts-data-container" class="smts-container">
-                <p id="smts-data-container-title"></p>
-                <div id="smts-data-container-content"></div>
+                <!--Data view-->
+                <div id="smts-data-container" class="smts-container">
+                    <p id="smts-data-container-title"></p>
+                    <div id="smts-data-container-content"></div>
+                </div>
             </div>
-        </div>
     </div>
-</div>
 
-<div id="smts-timeline" class="">
-    <div id="smts-timeline-line"></div>
-    <div id="smts-timeline-span"></div>
+    <div id="smts-timeline" class="row">
+        <div id="smts-timeline-line"></div>
+        <div id="smts-timeline-span"></div>
+    </div>
 </div>
 
 </body>

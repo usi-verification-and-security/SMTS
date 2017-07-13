@@ -1,5 +1,9 @@
 /* Basics */
 
+* {
+    --padding: 15px;
+}
+
 html, body {
     height: 100%;
     width: 100%;
@@ -67,10 +71,7 @@ body {
     border-right: 1px solid lightgray;
     border-left: 1px solid lightgray;
     border-bottom: 2px solid lightgray;
-}
-
-.smts-column, #smts-task-handler, #smts-event-navbar, #smts-data-container {
-    padding-top: 16px;
+    padding: var(--padding);
 }
 
 
@@ -99,17 +100,17 @@ body {
 #smts-tree-container {
     width: 100%;
     height: 55%;
-    padding: 0;
     background-color: #eee;
 }
 
 #smts-event-navbar {
-    padding-bottom: 16px;
+    height: 10%;
+    padding: var(--padding) 0;
 }
 
 #smts-event-container {
     overflow: auto;
-    height: 40%;
+    height: 35%;
 }
 
 
@@ -127,6 +128,7 @@ body {
 
 #smts-data-container {
     height: 30%;
+    padding-top: var(--padding);
     overflow: auto;
 }
 
@@ -136,6 +138,13 @@ body {
 #smts-timeline {
     width: 100%;
     height: 10%;
+}
+
+
+/* Bootstrapt fixes */
+
+.nav-tabs > li > a {
+    height: 100%;
 }
 
 
@@ -153,4 +162,33 @@ thead {
 
 .smts-hidden {
     display: none;
+}
+
+
+/* Responsiveness */
+
+@media screen and (max-width: 768px) {
+
+    #smts-views,
+    #smts-title, #smts-instance-container, #smts-task-handler,
+    #smts-event-navbar, #smts-event-container,
+    #smts-solver-container, #smts-data-container,
+    .smts-column, .nav-tabs > li > a {
+        height: auto;
+    }
+
+    #smts-title, #smts-instance-container, #smts-task-handler,
+    #smts-event-navbar, #smts-event-container,
+    #smts-solver-container, #smts-data-container {
+        max-height: 200px;
+    }
+
+    #smts-timeline {
+        height: 100px;
+    }
+
+    #smts-tree-container {
+        height: 400px;
+    }
+
 }
