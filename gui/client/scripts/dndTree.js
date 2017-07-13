@@ -218,8 +218,10 @@ function makeNodes(root, svgGroup, d3Nodes, selectedNodeNames) {
     let svgNodeGs = svgNodes.enter()
         .append('g')
         .classed('smts-node', true)
-        .classed('smts-nodeAnd', node => node.type === 'AND') // Class needed as selector
-        .classed('smts-nodeOr', node => node.type === 'OR')   // Class needed as selector
+        // Classes needed as selectors
+        .classed('smts-nodeAnd', node => node.type === 'AND')
+        .classed('smts-nodeOr', node => node.type === 'OR')
+        .classed('smts-nodeSelected', node => isSelectedNode(node.name, selectedNodeNames))
         .attr('transform', `translate(${root.y0}, ${root.x0})`)
         .on('click', function (node) {
             showNodeData(node);
@@ -258,9 +260,10 @@ function makeNodes(root, svgGroup, d3Nodes, selectedNodeNames) {
         .classed('smts-propagated', node => node.isStatusPropagated);
 
     // Make halo circle for selected node
-    svgNodeGs.append('circle')
+    svgGroup.selectAll('.smts-nodeSelected')
+        .append('circle')
         .attr('r', NODE_SELECTED_RADIUS)
-        .attr('class', node => isSelectedNode(node.name, selectedNodeNames) ? 'smts-selected' : 'smts-hidden');
+        .classed('smts-selected', true);
 
     // Make text
     svgNodeGs.append('text')
