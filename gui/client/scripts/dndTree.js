@@ -111,7 +111,12 @@ function generateDomTree(tree, positionFrame) {
     // Update data table with selected node data
     let selectedNode = tree.selectedNodes[0];
     showNodeData(selectedNode);
-    highlightSolvers(selectedNode);
+
+    // TODO: fix this async shit
+    setTimeout(function() {
+        tables.events.update(tree.selectedNodes);
+        tables.solvers.update(tree.selectedNodes);
+    }, 0);
 
     // Move view in right position
     // Center selected node if not in visible frame, otherwise restore the view as it was before.
@@ -225,11 +230,10 @@ function makeNodes(tree, svgGroup, d3Nodes) {
         .classed('smts-nodeAnd', node => node.type === 'AND')
         .classed('smts-nodeOr', node => node.type === 'OR')
         // Check if node matches any element of tree.selectedNodes
-        .classed('smts-nodeSelected', node => isNodeInNodes(node, tree.selectedNodes))
+        .classed('smts-nodeSelected', node => node.equalAny(tree.selectedNodes))
         .attr('transform', `translate(${tree.root.y0}, ${tree.root.x0})`)
         .on('click', function(node) {
             showNodeData(node);
-            highlightSolvers(node);
             tree.setSelectedNodes([node]);
             updateSelectedNode(this, tree); // `this` is the DOM element
         });
@@ -342,17 +346,6 @@ function showNodeData(node) {
 }
 
 
-// This function highlights in solver view the solvers working on the clicked node
-function highlightSolvers(node) {
-    let solvers = document.querySelectorAll('#smts-solvers-table tr');
-    solvers.forEach(solver => solver.classList.remove('smts-highlight'));
-
-    let query = `#smts-solvers-table tr[data-node="${JSON.stringify(node.name)}"]`;
-    let selectedSolvers = document.querySelectorAll(query);
-    selectedSolvers.forEach(selectedSolver => selectedSolver.classList.add('smts-highlight'));
-}
-
-
 // Update selected node
 function updateSelectedNode(node, tree) {
     // Remove previous selections
@@ -369,24 +362,8 @@ function updateSelectedNode(node, tree) {
         .classed('smts-selected', true);
 
     // Update events if 'Selected' tab is selected
-    if (document.getElementById('smts-events-navbar-selected').classList.contains('active')) {
-        d3.selectAll('#smts-events-table > tbody > tr')
-            .classed('smts-hidden', false) // Remove hidden class to cleanup
-            .classed('smts-hidden', function () {
-                let nodeName = this.children[2].innerHTML;
-                return nodeName ? isNotNodeInNodes({name: JSON.parse(nodeName)}, tree.selectedNodes) : true;
-            });
-    }
-
-    // Update solvers if 'Selected' tab is selected
-    if (document.getElementById('smts-solvers-navbar-selected').classList.contains('active')) {
-        d3.selectAll('#smts-solvers-table > tbody > tr')
-            .classed('smts-hidden', false) // Remove hidden class to cleanup
-            .classed('smts-hidden', function () {
-                let nodeName = this.children[1].innerHTML;
-                return nodeName ? isNotNodeInNodes({name: JSON.parse(nodeName)}, tree.selectedNodes) : true;
-            });
-    }
+    tables.events.update(tree.selectedNodes);
+    tables.solvers.update(tree.selectedNodes);
 }
 
 

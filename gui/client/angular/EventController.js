@@ -96,20 +96,11 @@ app.controller(
 
             // Show all events
             $scope.showAll = function() {
-                let rows = document.querySelectorAll('#smts-events-table > tbody > tr');
-                for (let row of rows) {
-                    row.classList.remove('smts-hidden');
-                }
+                tables.events.showAll();
             };
 
             // Show only events related to selected nodes
             $scope.showSelected = function() {
-                let rows = document.querySelectorAll('#smts-events-table > tbody > tr');
-                for (let row of rows) {
-                    let nodeName = row.children[2].innerHTML;
-                    if (!nodeName || isNotNodeInNodes({name: JSON.parse(nodeName)}, sharedTree.tree.selectedNodes)) {
-                        row.classList.add('smts-hidden');
-                    }
-                }
+                tables.events.showSelected(sharedTree.tree.selectedNodes);
             };
         }]);

@@ -16,5 +16,14 @@ module TreeManager {
         setNode(node) {
             this.node = node;
         }
+
+        equalAny(solvers) {
+            for (let solver of solvers) {
+                if (this.name === solver.name) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }

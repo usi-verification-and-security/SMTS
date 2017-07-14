@@ -69,6 +69,27 @@ module TreeManager {
             return node;
         }
 
+        equalAny(nodes) {
+            function nameEqual(node1, node2) {
+                if (node1.length !== node2.length) {
+                    return false;
+                }
+                for (let i = 0; i < node1.length; ++i) {
+                    if (node1[i] !== node2[i]) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            for (let node of nodes) {
+                if (nameEqual(this.name, node.name)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
 
         // Update the tree, given an event
         update(event) {
