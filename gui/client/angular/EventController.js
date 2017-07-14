@@ -33,15 +33,15 @@ app.controller(
 
                     // Scroll event table to selected event
                     let query = "#" + find;
-                    $('#smts-event-container').scrollTop($(query).offset().top - $('#smts-event-container').offset().top)
+                    $('#smts-events-table-container').scrollTop($(query).offset().top - $('#smts-events-table-container').offset().top)
                 });
             };
 
             // Show tree up to clicked event
             $scope.showEvent = function($event, $index, x) {
                 // Highlight selected event
-                $('#smts-event-container table tr').removeClass("smts-highlight");
-                let query = '#smts-event-container table tr[data-event="' + x.id + '"]';
+                $('#smts-events-table tr').removeClass("smts-highlight");
+                let query = '#smts-events-table tr[data-event="' + x.id + '"]';
                 $(query).addClass("smts-highlight");
 
                 currentRow.value = $index;
@@ -71,14 +71,14 @@ app.controller(
                 }
                 let ppTable = prettyPrint(sortedObj);
                 let tableName = "EVENT " + x.event;
-                document.getElementById('smts-data-container-title').innerHTML = tableName.bold();
-                let item = document.getElementById('smts-data-container-content');
+                document.getElementById('smts-data-title').innerHTML = tableName.bold();
+                let dataTableContainer = document.getElementById('smts-data-table-container');
 
-                if (item.childNodes[0]) {
-                    item.replaceChild(ppTable, item.childNodes[0]); //Replace existing table
+                if (dataTableContainer.childNodes[0]) {
+                    dataTableContainer.replaceChild(ppTable, dataTableContainer.childNodes[0]); //Replace existing table
                 }
                 else {
-                    item.appendChild(ppTable);
+                    dataTableContainer.appendChild(ppTable);
                 }
 
                 //Update timeline
@@ -96,7 +96,7 @@ app.controller(
 
             // Show all events
             $scope.showAll = function() {
-                let rows = document.querySelectorAll('#smts-event-table > tbody > tr');
+                let rows = document.querySelectorAll('#smts-events-table > tbody > tr');
                 for (let row of rows) {
                     row.classList.remove('smts-hidden');
                 }
@@ -104,7 +104,7 @@ app.controller(
 
             // Show only events related to selected nodes
             $scope.showSelected = function() {
-                let rows = document.querySelectorAll('#smts-event-table > tbody > tr');
+                let rows = document.querySelectorAll('#smts-events-table > tbody > tr');
                 for (let row of rows) {
                     let nodeName = row.children[2].innerHTML;
                     if (!nodeName || isNotNodeInNodes({name: JSON.parse(nodeName)}, sharedTree.tree.selectedNodes)) {

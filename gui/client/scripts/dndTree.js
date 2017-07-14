@@ -335,8 +335,8 @@ function showNodeData(node) {
 
     let ppTable = prettyPrint(ppNode);
 
-    document.getElementById('smts-data-container-title').innerHTML = 'NODE'.bold();
-    let item = document.getElementById('smts-data-container-content');
+    document.getElementById('smts-data-title').innerHTML = 'NODE'.bold();
+    let item = document.getElementById('smts-data-table-container');
     item.innerText = '';
     item.appendChild(ppTable);
 }
@@ -344,10 +344,10 @@ function showNodeData(node) {
 
 // This function highlights in solver view the solvers working on the clicked node
 function highlightSolvers(node) {
-    let solvers = document.querySelectorAll('#smts-solver-container table tr');
+    let solvers = document.querySelectorAll('#smts-solvers-table tr');
     solvers.forEach(solver => solver.classList.remove('smts-highlight'));
 
-    let query = `#smts-solver-container table tr[data-node="${JSON.stringify(node.name)}"]`;
+    let query = `#smts-solvers-table tr[data-node="${JSON.stringify(node.name)}"]`;
     let selectedSolvers = document.querySelectorAll(query);
     selectedSolvers.forEach(selectedSolver => selectedSolver.classList.add('smts-highlight'));
 }
@@ -369,8 +369,8 @@ function updateSelectedNode(node, tree) {
         .classed('smts-selected', true);
 
     // Update events if 'Selected' tab is selected
-    if (document.getElementById('smts-event-navbar-selected').classList.contains('active')) {
-        d3.selectAll('#smts-event-table > tbody > tr')
+    if (document.getElementById('smts-events-navbar-selected').classList.contains('active')) {
+        d3.selectAll('#smts-events-table > tbody > tr')
             .classed('smts-hidden', false) // Remove hidden class to cleanup
             .classed('smts-hidden', function () {
                 let nodeName = this.children[2].innerHTML;
@@ -379,8 +379,8 @@ function updateSelectedNode(node, tree) {
     }
 
     // Update solvers if 'Selected' tab is selected
-    if (document.getElementById('smts-solver-navbar-selected').classList.contains('active')) {
-        d3.selectAll('#smts-solver-table > tbody > tr')
+    if (document.getElementById('smts-solvers-navbar-selected').classList.contains('active')) {
+        d3.selectAll('#smts-solvers-table > tbody > tr')
             .classed('smts-hidden', false) // Remove hidden class to cleanup
             .classed('smts-hidden', function () {
                 let nodeName = this.children[1].innerHTML;

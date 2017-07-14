@@ -9,29 +9,29 @@ app.controller('SolverController', ['$scope', '$rootScope', 'currentRow', 'share
         });
 
         $scope.showSolver = function () {
-            $('#smts-solver-container table tr').removeClass("smts-highlight");
+            $('#smts-solvers-table tr').removeClass("smts-highlight");
             sharedTree.tree.assignSolvers(0, currentRow.value);
             $scope.solvers = sharedTree.tree.solvers;
         };
 
         $scope.clickEvent = function ($event, solver) {
             // Make solver object to show in table
-            let ppSolver = {};
-            ppSolver.name = solver.name;
-            ppSolver.node = JSON.stringify(solver.node); // Transform to string or it will show and array
-            ppSolver.data = solver.data;
-            let ppTable = prettyPrint(ppSolver);
+            let dataTableSolver = {};
+            dataTableSolver.name = solver.name;
+            dataTableSolver.node = JSON.stringify(solver.node); // Transform to string or it will show and array
+            dataTableSolver.data = solver.data;
+            let dataTable = prettyPrint(dataTableSolver);
 
             // Update data table in DOM
-            document.getElementById('smts-data-container-title').innerHTML = "SOLVER".bold();
-            let dataContent = document.getElementById('smts-data-container-content');
-            dataContent.innerHTML = '';
-            dataContent.appendChild(ppTable);
-        }
+            document.getElementById('smts-data-title').innerHTML = "SOLVER".bold();
+            let dataTableContainer = document.getElementById('smts-data-table-container');
+            dataTableContainer.innerHTML = '';
+            dataTableContainer.appendChild(dataTable);
+        };
 
         // Show all solvers
         $scope.showAll = function() {
-            let rows = document.querySelectorAll('#smts-solver-table > tbody > tr');
+            let rows = document.querySelectorAll('#smts-solvers-table > tbody > tr');
             for (let row of rows) {
                 row.classList.remove('smts-hidden');
             }
@@ -39,7 +39,7 @@ app.controller('SolverController', ['$scope', '$rootScope', 'currentRow', 'share
 
         // Show only solvers related to selected nodes
         $scope.showSelected = function() {
-            let rows = document.querySelectorAll('#smts-solver-table > tbody > tr');
+            let rows = document.querySelectorAll('#smts-solvers-table > tbody > tr');
             for (let row of rows) {
                 let nodeName = row.children[1].innerHTML;
                 if (!nodeName || isNotNodeInNodes({name: JSON.parse(nodeName)}, sharedTree.tree.selectedNodes)) {

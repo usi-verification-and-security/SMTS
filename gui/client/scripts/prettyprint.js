@@ -1,6 +1,7 @@
 function prettyPrint(item) {
     if (item && typeof item === 'object') {
         let table = document.createElement('table');
+        table.id = 'smts-data-table';
         table.classList.add('smts-table');
 
         if (Object.keys(item).length > 0) {

@@ -2,20 +2,20 @@
 
 * {
     --padding: 15px;
+
+    --color-background: #BDC3C7;
+    --color-border-light: lightgray;
+    --color-border-dark: gray;
+    --color-highlight: #7CFC00;
+    --color-table-header: #00cc00;
+    --color-tree-view: #EEEEEE;
 }
 
 html, body {
     height: 100%;
     width: 100%;
-    overflow: auto;
     margin: 0;
     padding: 0;
-}
-
-body {
-    display: flex;
-    flex-flow: column;
-    align-items: stretch;
 }
 
 
@@ -34,22 +34,61 @@ body {
 
 .smts-table, .smts-table th, .smts-table tr, .smts-table td  {
     padding: 5px;
-    border: 1px solid grey;
+    border: 1px solid var(--color-border-dark);
     border-collapse: collapse;
     max-width: 100%;
 }
 
 .smts-table th {
-    background-color: #00cc00;
+    background-color: var(--color-table-header);
 }
 
 .smts-table-interactive tr:hover {
     cursor: pointer;
-    background: #BDC3C7;
+    background: var(--color-background);
 }
 
+
+/* Containers */
+
 .smts-container {
-    /* Nothing */
+    display: flex;
+    flex-flow: column;
+    overflow: auto;
+}
+
+.smts-table-container {
+    flex-grow: 1;
+    overflow: auto;
+}
+
+.smts-container-title {
+    padding: var(--padding) 0;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+
+/* Navbar */
+
+.smts-navbar {
+    padding: 0 0 10px 0;
+    border-bottom: none;
+}
+
+.smts-navbar > li > a {
+    padding: 5px 15px !important;
+}
+
+
+/* Other */
+
+.smts-highlight {
+    background-color: var(--color-highlight);
+}
+
+.smts-hidden {
+    display: none;
 }
 
 
@@ -61,16 +100,12 @@ body {
     height: 90%;
 }
 
-#smts-views-row {
-    margin: 0;
-}
-
 .smts-column {
     height: 100%;
     overflow: auto;
-    border-right: 1px solid lightgray;
-    border-left: 1px solid lightgray;
-    border-bottom: 2px solid lightgray;
+    border-right: 1px solid var(--color-border-light);
+    border-left: 1px solid var(--color-border-light);
+    border-bottom: 2px solid var(--color-border-light);
     padding: var(--padding);
 }
 
@@ -78,16 +113,15 @@ body {
 /* Column 1 */
 
 #smts-title {
-    text-shadow: 1px 1px #7CFC00;
+    text-shadow: 1px 1px var(--color-highlight);
     font-size: 4vh;
     font-weight: bold;
     vertical-align: middle;
     height: 10%;
 }
 
-#smts-instance-container {
+#smts-instances-container {
     height: 60%;
-    overflow: auto;
 }
 
 #smts-task-handler {
@@ -100,34 +134,23 @@ body {
 #smts-tree-container {
     width: 100%;
     height: 55%;
-    background-color: #eee;
+    background-color: var(--color-tree-view);
     cursor: move;
 }
 
-#smts-event-navbar {
-    height: 10%;
-    padding: var(--padding) 0;
-}
-
-#smts-event-container {
-    overflow: auto;
-    height: 35%;
+#smts-events-container {
+    height: 45%;
+    padding-top: var(--padding);
 }
 
 
 /* Column 3 */
 
-#smts-solver-navbar {
-    height: 8%;
-    padding: 0 0 var(--padding) 0;
+#smts-solvers-container {
+    height: 70%;
 }
 
-#smts-solver-container {
-    height: 62%;
-    overflow: auto;
-}
-
-#smts-solver-container > table > tr > td {
+#smts-solvers-table > tr > td {
     white-space: nowrap;
     word-break: keep-all;
 }
@@ -135,7 +158,6 @@ body {
 #smts-data-container {
     height: 30%;
     padding-top: var(--padding);
-    overflow: auto;
 }
 
 
@@ -147,45 +169,15 @@ body {
 }
 
 
-/* Bootstrapt fixes */
-
-.nav-tabs > li > a {
-    height: 100%;
-}
-
-
-/* For maintaining fix header in table */
-
-thead {
-    display: table-header-group;
-    vertical-align: middle;
-    border-color: inherit;
-}
-
-.smts-highlight {
-    background-color: #7CFC00;
-}
-
-.smts-hidden {
-    display: none;
-}
-
-
 /* Responsiveness */
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 768px) { /* Pixels based on Bootstrap col-sm */
 
-    #smts-views,
-    #smts-title, #smts-instance-container, #smts-task-handler,
-    #smts-event-navbar, #smts-event-container,
-    #smts-solver-container, #smts-data-container,
-    .smts-column, .nav-tabs > li > a {
-        height: auto;
+    #smts-views, #smts-title, .smts-column, .smts-container, .smts-navbar > li > a {
+        height: auto !important;
     }
 
-    #smts-title, #smts-instance-container, #smts-task-handler,
-    #smts-event-navbar, #smts-event-container,
-    #smts-solver-container, #smts-data-container {
+    #smts-title, .smts-table-container {
         max-height: 200px;
     }
 
@@ -194,7 +186,8 @@ thead {
     }
 
     #smts-tree-container {
-        height: 400px;
+        max-height: none !important;
+        height: 400px !important;
     }
 
 }
