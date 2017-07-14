@@ -5,7 +5,7 @@ app.controller('TaskHandler', ['$scope', '$window', '$http', 'realTimeDB', 'time
 
         $scope.$on('handleBroadcast3', function () { // This is called we are in a situation of real-time analysis
             interval = setInterval(function () {
-                console.log("Contacting server....");
+                // console.log("Contacting server....");
                 $scope.getServerData();
             }, 3000);
 
@@ -16,7 +16,7 @@ app.controller('TaskHandler', ['$scope', '$window', '$http', 'realTimeDB', 'time
                 method: 'GET',
                 url: '/getServerData'
             }).then(function successCallback(response) {
-                console.log(response.data);
+                // console.log(response.data);
 
                 // Write which instance is being solved
                 //TODO: check why the first call gives empty answer
@@ -66,7 +66,7 @@ app.controller('TaskHandler', ['$scope', '$window', '$http', 'realTimeDB', 'time
             });
         };
 
-        $scope.stopSS = function () {
+        $scope.stop = function () {
             $http({
                 method: 'POST',
                 url: '/stop'
@@ -78,32 +78,5 @@ app.controller('TaskHandler', ['$scope', '$window', '$http', 'realTimeDB', 'time
                 $window.alert('An error occured!');
             });
         };
-
-        // Attempt for submitting a db from angular
-        // $( "#uploadDB" ).submit(function( event ) {
-        //     event.preventDefault();
-        //     var file_data = $("#db").prop("files")[0];
-        //     console.log(file_data);
-        //     // var formData = new FormData();
-        //     // formData.append("file", file_data)
-        //     // console.log(formData)
-        //     var db = {"file": file_data};
-        //     console.log(db)
-        //
-        //     $http({
-        //         method : 'POST',
-        //         url : '/upload',
-        //         encType : "multipart/form-data",
-        //         data: db
-        //     }).then(function successCallback(response) {
-        //         //put each entry of the response array in the table
-        //
-        //
-        //     }, function errorCallback(response) {
-        //         // called asynchronously if an error occurs
-        //         // or server returns response with an error status.
-        //         $window.alert('An error occured!');
-        //     });
-        // });
 
     }]);

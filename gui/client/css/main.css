@@ -68,16 +68,45 @@ html, body {
     text-transform: uppercase;
 }
 
+.smsts-container-subtitle {
+    font-weight: bold;
+}
+
+.smts-container-horizontal {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--padding);
+}
+
+.smts-container-horizontal > * {
+    margin: 0 10px;
+}
+
 
 /* Navbar */
 
 .smts-navbar {
-    padding: 0 0 10px 0;
-    border-bottom: none;
+    margin-bottom: var(--padding) !important;
 }
 
 .smts-navbar > li > a {
     padding: 5px 15px !important;
+}
+
+
+/* Input */
+/* For better styling, <input type="file"> Should be wrapped around a label */
+/*  element, making the actual input element invisible. E.g.:               */
+/* <label class="btn btn-default"><input type="file">Browse</label>         */
+input[type="file"] {
+    display: none !important;
+}
+
+
+/* Bootstrap fixes */
+
+.checkbox {
+    margin-top: 0 !important;
 }
 
 
@@ -121,11 +150,19 @@ html, body {
 }
 
 #smts-instances-container {
-    height: 60%;
+    height: 45%;
 }
 
-#smts-task-handler {
-    height: 30%;
+#smts-utilities-container {
+    height: 45%;
+}
+
+#smts-utilities-tab-content {
+    overflow: auto;
+}
+
+#smts-server-solving-instance {
+    word-wrap: break-word;
 }
 
 
@@ -140,7 +177,6 @@ html, body {
 
 #smts-events-container {
     height: 45%;
-    padding-top: var(--padding);
 }
 
 
@@ -157,7 +193,6 @@ html, body {
 
 #smts-data-container {
     height: 30%;
-    padding-top: var(--padding);
 }
 
 

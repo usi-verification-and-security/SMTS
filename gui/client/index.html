@@ -24,7 +24,7 @@
         <div id="smts-column-1" class="col-sm-3 smts-column">
             <!--Title-->
             <div id="smts-title" class="">SMT Viewer</div>
-            <!--Instance-->
+            <!--Instances-->
             <div id="smts-instances-container" class="smts-container" ng-controller="InstancesController" ng-init='load()'>
                 <div id="smts-instances-title" class="smts-container-title">Instances</div>
 
@@ -44,54 +44,71 @@
                 </div>
             </div>
 
-            <!--Task Handeler-->
-            <div id="smts-task-handler" class="smts-hidden smts-container" ng-controller="TaskHandler" ng-init='load()'>
-                <div id="solInst" class="smts-hidden">
-                    <b>Solving Instance:</b>
-                    <h id="solvingInstance">{{solvingInstance}}{{solvingInstanceRemaining}}</h>
-                </div>
+            <!--Utilities-->
+            <div id="smts-utilities-container" class="smts-container">
 
-                <div id="newDB" class="smts-hidden">
-                    <b>Upload new database file:</b>
-                    <form id="uploadDB"
-                          ref='uploadForm'
-                          id='uploadForm'
-                          action='/upload'
-                          method='post'
-                          encType="multipart/form-data">
-                        <input id="db" type="file" name="db" accept=".db" required>
-                        <input type='submit' value='Upload!'/>
-                    </form>
-                </div>
+                <div id="smts-utilities-title" class="smts-container-title">Utilities</div>
 
-                <div id="newInst" class="smts-hidden">
-                    <b>Upload new instance:</b>
-                    <form ref='uploadInstanceForm'
-                          id='uploadInstanceForm'
-                          action='/uploadInstance'
-                          method='post'
-                          encType="multipart/form-data">
-                        <input type="file" name="instance" accept="" required>
-                        <input type='submit' value='Upload!'/>
-                    </form>
-                </div>
-                <div id="task" class="smts-hidden">
-                    <form>
-                        <b>Timeout:</b><input type="text" name="timeout"><br>
-                        <input type="submit" value="Increase" ng-click="increaseTimeout()">
-                        <input type="submit" value="Decrease" ng-click="decreaseTimeout()">
-                        <input type="submit" name="stopTimeout" value="Stop" ng-click="stopSS()">
-                    </form>
-                </div>
-            </div>
+                <ul id="smts-utilities-navbar" class="nav nav-tabs smts-navbar">
+                    <li class="active"><a data-toggle="tab" href="#smts-taskhandler-container">Task Handler</a></li>
+                    <li><a data-toggle="tab" href="#smts-options-container">Options</a></li>
+                </ul>
 
-            <!-- Tree options -->
-            <div id="smts-options-container">
-                <div id="smts-options-title" class="smts-container-title">Options</div>
-                <div class="checkbox">
-                    <label><input id="smts-option-balanceness" type="checkbox" onclick="updateOptionBalanceness()">
-                        Show balanceness
-                    </label>
+                <!--Task Handeler-->
+                <div id="smts-utilities-tab-content" class="tab-content">
+                    <div id="smts-taskhandler-container" class="smts-container tab-pane active" ng-controller="TaskHandler" ng-init='load()'>
+
+                        <!--Server-->
+                        <div id="smts-server-container" class="smts-container">
+                            <!--<div id="smts-server-title" class="smts-container-title">Server</div>-->
+                            <div>
+                                <p class="smsts-container-subtitle">Solving Instance:</p>
+                                <p id="smts-server-solving-instance">{{solvingInstance}}</p>
+                                <p class="smsts-container-subtitle">Time left:</p>
+                                <p id="smts-server-solving-time-left">{{solvingInstanceRemaining}}</p>
+                            </div>
+                            <div>
+                                <p class="smsts-container-subtitle">Timeout:</p>
+                                <div class="smts-container-horizontal">
+                                    <input class="form-control" type="text" name="timeout">
+                                </div>
+                                <div class="smts-container-horizontal">
+                                    <button class="btn btn-default" value="-" ng-click="decreaseTimeout()">-</button>
+                                    <button class="btn btn-default" value="Stop" ng-click="stop()">Stop</button>
+                                    <button class="btn btn-default" value="+" ng-click="increaseTimeout()">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="smsts-container-subtitle">New instance:</p>
+                                <form class="smts-container-horizontal" action="/uploadInstance" method="post" encType="multipart/form-data">
+                                    <label class="btn btn-default"><input type="file" accept="" required>Browse</label>
+                                    <input class="btn btn-default" type='submit' value='Upload'/>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!--Database-->
+                        <div id="smts-database-container" class="smts-container">
+                            <!--<div id="smts-database-title" class="smts-container-title">Database</div>-->
+                            <div class="smts-container">
+                                <p class="smsts-container-subtitle">New database:</p>
+                                <form class="smts-container-horizontal" action='/upload' method='post' encType="multipart/form-data">
+                                    <label class="btn btn-default"><input type="file" accept=".db" required>Browse</label>
+                                    <input class="btn btn-default" type='submit' value='Upload'/>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!--Options-->
+                    <div id="smts-options-container" class="smts-container tab-pane">
+                        <!--<div id="smts-options-title" class="smts-container-title">Options</div>-->
+                        <div class="checkbox">
+                            <label><input id="smts-option-balanceness" type="checkbox" onclick="updateOptionBalanceness()">
+                                Show balanceness
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

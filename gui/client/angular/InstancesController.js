@@ -24,20 +24,13 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
 
                 if (response.data === true) {
                     realTimeDB.value = true;
-
+                    $('#smts-database-container').addClass('smts-hidden');
                     $("input[name='timeout']").val(timeOut.value);
-
-                    $('#solInst').removeClass('smts-hidden');
-                    $('#task').removeClass('smts-hidden');
-                    $('#newInst').removeClass('smts-hidden');
-
-                    $('#newDB').addClass('smts-hidden');
-
                     sharedService.broadcastItem3(); // Show events, tree and solvers
                 }
                 else {
                     realTimeDB.value = false;
-                    $('#newDB').removeClass('smts-hidden');
+                    $('#smts-server-container').addClass('smts-hidden');
                 }
 
             }, function errorCallback(response) {
@@ -55,7 +48,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
             // If real-time analysis ask every 10 seconds for db content otherwise just once
             if (realTimeDB.value) {
                 this.getTree(instance);
-                setInterval(function () {
+                setInterval(() => {
                     //console.log("DB content asked.");
                     this.getTree(instance);
                 }, 10000);
