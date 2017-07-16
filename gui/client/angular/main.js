@@ -1,5 +1,7 @@
 let app = angular.module('myApp', ['ngFileUpload'])
 
+    // N.B.: All values are wrapped around an object in order not to lose the reference
+
     // {Number}: How many rows of the db needs to be read
     .value('currentRow', {value: 0})
 
@@ -9,25 +11,25 @@ let app = angular.module('myApp', ['ngFileUpload'])
     // TODO: describe
     .value('DBcontent', {value: null})
 
-    // {Number}: Current solving timeout in case of real-time analysis (1000 seconds by default)
+    // {Number}: Current solving timeout (in seconds) in case of real-time analysis
     .value('timeOut', {value: 1000})
 
-    // {Function}: Send broadcast signals received by othe Angular components
+    // {Object}: Contain functions to broadcast signals received by other Angular components
     .factory('sharedService', function ($rootScope) {
 
         let sharedService = {};
 
-        // This is used to show solvers, tree and events when an instance is selected
+        // Send signal when instance is clicked
         sharedService.broadcastSelectInstance = function () {
             $rootScope.$broadcast('select-instance');
         };
 
-        // This is used to show in solver view solver's new status when an event is clicked and a new tree is displayed
+        // Send signal when event is clicked
         sharedService.broadcastSelectEvent = function () {
             $rootScope.$broadcast('select-event');
         };
 
-        // This is used to show in solver view solver's new status when an event is clicked and a new tree is displayed
+        // Send signal if it is real-time analysis
         sharedService.broadcastLiveUpdate = function () {
             $rootScope.$broadcast('live-update');
         };

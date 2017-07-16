@@ -1,33 +1,22 @@
 app.controller('SolverController', ['$scope', '$rootScope', 'currentRow', 'sharedTree', '$window', '$http', 'sharedService',
     function ($scope, $rootScope, currentRow, sharedTree, $window, $http, sharedService) {
-        $scope.$on('select-instance', function () { // This is called when an instance is selected
-            $scope.loadSolvers();
-        });
 
-        $scope.$on('select-event', function () {
-            $scope.loadSolvers();
-        });
-
-        $scope.loadSolvers = function () {
-            sharedTree.tree.assignSolvers(0, currentRow.value);
+        // Trigger when an instance is selected
+        $scope.$on('select-instance', function() {
             $scope.solvers = sharedTree.tree.solvers;
-        };
+            sharedTree.tree.assignSolvers(0, currentRow.value);
+        });
 
-        $scope.updateDataTable = function (solver) {
-            // Make solver object to show in data table
-            let dataTableSolver = {};
-            dataTableSolver.name = solver.name;
-            dataTableSolver.node = JSON.stringify(solver.node); // Transform to string or it will show and array
-            dataTableSolver.data = solver.data;
-            let dataTable = prettyPrint(dataTableSolver);
+        // Trigger when an event is selected
+        $scope.$on('select-event', function() {
+            sharedTree.tree.assignSolvers(0, currentRow.value);
+        });
 
-            // Update data table in DOM
-            document.getElementById('smts-data-title').innerHTML = 'Solver';
-            let dataTableContainer = document.getElementById('smts-data-table-container');
-            dataTableContainer.innerHTML = '';
-            dataTableContainer.appendChild(dataTable);
-
-            // Highlight solver
+        // Update data table to contain solver information
+        // @param {TreeManager.Solver} solver: the solver to be represented in
+        // the data table.
+        $scope.updateDataTable = function(solver) {
+            tables.data.update(solver, 'solver');
             tables.solvers.highlight([solver]);
         };
 
@@ -36,7 +25,7 @@ app.controller('SolverController', ['$scope', '$rootScope', 'currentRow', 'share
             tables.solvers.showAll();
         };
 
-        // Show only solvers related to selected nodes
+        // Show only solvers related to currently selected nodes
         $scope.showSelected = function() {
             tables.solvers.showSelected(sharedTree.tree.selectedNodes);
         };
