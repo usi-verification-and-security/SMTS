@@ -66,12 +66,6 @@ module TreeManager {
         }
 
 
-        // Get `this.root`
-        getRoot() {
-            return this.root;
-        }
-
-
         //
         assignSolvers(begin: number, end: number) {
             // Reset solvers

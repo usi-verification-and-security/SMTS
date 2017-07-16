@@ -1,21 +1,20 @@
 app.controller('SolverController', ['$scope', '$rootScope', 'currentRow', 'sharedTree', '$window', '$http', 'sharedService',
     function ($scope, $rootScope, currentRow, sharedTree, $window, $http, sharedService) {
-        $scope.$on('handleBroadcast', function () { // This is called when an instance is selected
-            $scope.showSolvers();
+        $scope.$on('select-instance', function () { // This is called when an instance is selected
+            $scope.loadSolvers();
         });
 
-        $scope.$on('handleBroadcast2', function () { // This is called when an event is selected and the new tree shows up
-            $scope.showSolvers();
+        $scope.$on('select-event', function () {
+            $scope.loadSolvers();
         });
 
-        $scope.showSolvers = function () {
-            $('#smts-solvers-table tr').removeClass('smts-highlight');
+        $scope.loadSolvers = function () {
             sharedTree.tree.assignSolvers(0, currentRow.value);
             $scope.solvers = sharedTree.tree.solvers;
         };
 
-        $scope.clickEvent = function (event, solver) {
-            // Make solver object to show in table
+        $scope.updateDataTable = function (solver) {
+            // Make solver object to show in data table
             let dataTableSolver = {};
             dataTableSolver.name = solver.name;
             dataTableSolver.node = JSON.stringify(solver.node); // Transform to string or it will show and array

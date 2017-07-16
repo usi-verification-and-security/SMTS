@@ -170,7 +170,7 @@
                             <th>Node</th>
                             </thead>
                             <tbody>
-                            <tr data-node="{{solver.node}}" ng-repeat="solver in solvers" ng-click="clickEvent($event,solver)">
+                            <tr data-node="{{solver.node}}" ng-repeat="solver in solvers" ng-click="updateDataTable(solver)">
                                 <td>{{solver.name}}</td>
                                 <td>{{solver.node}}</td>
                             </tr>
@@ -202,8 +202,8 @@
 <script type="text/javascript" src="treeManager/Node.js"></script>
 <script type="text/javascript" src="treeManager/Solver.js"></script>
 <script type="text/javascript" src="treeManager/Tree.js"></script>
-<!--Utils-->
-<script type="text/javascript" src="scripts/utils.js"></script>
+<!--Utilities-->
+<script type="text/javascript" src="scripts/tools.js"></script>
 <script type="text/javascript" src="scripts/options.js"></script>
 <script type="text/javascript" src="scripts/dndTree.js"></script>
 <!--Angular-->

@@ -26,7 +26,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
                     realTimeDB.value = true;
                     $('#smts-database-container').addClass('smts-hidden');
                     $("input[name='timeout']").val(timeOut.value);
-                    sharedService.broadcastItem3(); // Show events, tree and solvers
+                    sharedService.broadcastLiveUpdate();
                 }
                 else {
                     realTimeDB.value = false;
@@ -76,7 +76,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
                     currentRow.value = response.data.length - 1;
                     sharedTree.tree.initializeSolvers(response.data);
 
-                    sharedService.broadcastItem(); // Show events, tree and solvers
+                    sharedService.broadcastSelectInstance();
                 }
 
             }, function errorCallback(response) {

@@ -3,7 +3,7 @@ app.controller(
     ['$scope', '$rootScope', 'currentRow', 'sharedTree', '$window', '$http', 'sharedService',
         function($scope, $rootScope, currentRow, sharedTree, $window, $http, sharedService) {
 
-            $scope.$on('handleBroadcast', function() { // This is called when an instance is selected
+            $scope.$on('select-instance', function() { // This is called when an instance is selected
                 let eventEntries = sharedTree.tree.getEvents(currentRow.value + 1);
                 $scope.events = eventEntries;
                 $scope.initTimeline(eventEntries); // Initialize timeline
@@ -91,7 +91,7 @@ app.controller(
                     selectEvent(index);
                 }
 
-                sharedService.broadcastItem2();
+                sharedService.broadcastSelectEvent();
             };
 
             // Show all events

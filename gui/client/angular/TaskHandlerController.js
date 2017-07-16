@@ -1,17 +1,16 @@
 app.controller('TaskHandler', ['$scope', '$window', '$http', 'realTimeDB', 'timeOut', 'sharedService',
-    function ($scope, $window, $http, realTimeDB, timeOut, sharedService) {
+    function($scope, $window, $http, realTimeDB, timeOut, sharedService) {
 
         let interval;
 
-        $scope.$on('handleBroadcast3', function () { // This is called we are in a situation of real-time analysis
-            interval = setInterval(function () {
-                // console.log("Contacting server....");
+        $scope.$on('live-update', function() { // This is called we are in a situation of real-time analysis
+            interval = setInterval(function() {
                 $scope.getServerData();
             }, 3000);
 
         });
 
-        $scope.getServerData = function () {
+        $scope.getServerData = function() {
             $http({
                 method: 'GET',
                 url: '/getServerData'
@@ -31,7 +30,7 @@ app.controller('TaskHandler', ['$scope', '$window', '$http', 'realTimeDB', 'time
         };
 
         // TODO: to prevent page redirection after posting move posting here and use "event.preventDefault();"
-        $scope.increaseTimeout = function () {
+        $scope.increaseTimeout = function() {
             $http({
                 method: 'POST',
                 url: '/changeTimeout',
@@ -49,7 +48,7 @@ app.controller('TaskHandler', ['$scope', '$window', '$http', 'realTimeDB', 'time
             });
         };
 
-        $scope.decreaseTimeout = function () {
+        $scope.decreaseTimeout = function() {
             $http({
                 method: 'POST',
                 url: '/changeTimeout',
@@ -66,7 +65,7 @@ app.controller('TaskHandler', ['$scope', '$window', '$http', 'realTimeDB', 'time
             });
         };
 
-        $scope.stop = function () {
+        $scope.stop = function() {
             $http({
                 method: 'POST',
                 url: '/stop'
