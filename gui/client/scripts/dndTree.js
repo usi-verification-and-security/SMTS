@@ -114,8 +114,8 @@ function generateDomTree(tree, positionFrame) {
 
     // TODO: fix this async shit
     setTimeout(function() {
-        tables.events.update(tree.selectedNodes);
-        tables.solvers.update(tree.selectedNodes);
+        smts.tables.events.update(tree.selectedNodes);
+        smts.tables.solvers.update(tree.selectedNodes);
     }, 0);
 
     // Move view in right position
@@ -169,7 +169,7 @@ function makeSvg(width, height) {
 
 // Append a group which holds all nodes and on which the zoom Listener can act upon
 function makeSvgGroup(svgBase) {
-    return svgBase.append('g');
+    return svgBase.append('g').attr('id', 'smts-tree');
 }
 
 
@@ -362,8 +362,8 @@ function updateSelectedNode(node, tree) {
         .classed('smts-selected', true);
 
     // Update events if 'Selected' tab is selected
-    tables.events.update(tree.selectedNodes);
-    tables.solvers.update(tree.selectedNodes);
+    smts.tables.events.update(tree.selectedNodes);
+    smts.tables.solvers.update(tree.selectedNodes);
 }
 
 

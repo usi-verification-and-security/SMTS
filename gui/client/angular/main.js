@@ -6,13 +6,13 @@ let app = angular.module('myApp', ['ngFileUpload'])
     .value('currentRow', {value: 0})
 
     // {Boolean}: true if real-time analysis, false otherwise
-    .value('realTimeDB', {value: false})
+    .value('isRealTimeDB', {value: false})
 
     // TODO: describe
     .value('DBcontent', {value: null})
 
     // {Number}: Current solving timeout (in seconds) in case of real-time analysis
-    .value('timeOut', {value: 1000})
+    .value('timeout', {value: 1000})
 
     // {Object}: Contain functions to broadcast signals received by other Angular components
     .factory('sharedService', function ($rootScope) {

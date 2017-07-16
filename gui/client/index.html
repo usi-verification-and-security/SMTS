@@ -29,14 +29,14 @@
                 <div id="smts-instances-title" class="smts-container-title">Instances</div>
 
                 <div id="smts-instances-table-container" class="smts-table-container">
-                    <table class="smts-table smts-table-interactive">
+                    <table id="smts-instances-table" class="smts-table smts-table-interactive">
                         <thead>
                         <th>Instances</th>
                         </thead>
                         <tbody>
                         <tr data-instance="{{instance.name}}"
                             ng-repeat="instance in instances"
-                            ng-click="clickEvent($event,instance)">
+                            ng-click="selectInstance(instance)">
                             <td>{{instance.name}}</td>
                         </tr>
                         </tbody>
@@ -70,7 +70,7 @@
                             <div>
                                 <p class="smsts-container-subtitle">Timeout:</p>
                                 <div class="smts-container-horizontal">
-                                    <input class="form-control" type="text" name="timeout">
+                                    <input id="smts-server-timeout" class="form-control" type="text">
                                 </div>
                                 <div class="smts-container-horizontal">
                                     <button class="btn btn-default" value="-" ng-click="decreaseTimeout()">-</button>

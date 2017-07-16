@@ -96,11 +96,11 @@ app.controller(
 
             // Show all events
             $scope.showAll = function() {
-                tables.events.showAll();
+                smts.tables.events.showAll();
             };
 
             // Show only events related to selected nodes
             $scope.showSelected = function() {
-                tables.events.showSelected(sharedTree.tree.selectedNodes);
+                smts.tables.events.showSelected(sharedTree.tree.selectedNodes);
             };
         }]);

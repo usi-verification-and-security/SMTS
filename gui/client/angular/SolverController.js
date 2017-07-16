@@ -16,17 +16,17 @@ app.controller('SolverController', ['$scope', '$rootScope', 'currentRow', 'share
         // @param {TreeManager.Solver} solver: the solver to be represented in
         // the data table.
         $scope.updateDataTable = function(solver) {
-            tables.data.update(solver, 'solver');
-            tables.solvers.highlight([solver]);
+            smts.tables.data.update(solver, 'solver');
+            smts.tables.solvers.highlight([solver]);
         };
 
         // Show all solvers
         $scope.showAll = function() {
-            tables.solvers.showAll();
+            smts.tables.solvers.showAll();
         };
 
         // Show only solvers related to currently selected nodes
         $scope.showSelected = function() {
-            tables.solvers.showSelected(sharedTree.tree.selectedNodes);
+            smts.tables.solvers.showSelected(sharedTree.tree.selectedNodes);
         };
     }]);

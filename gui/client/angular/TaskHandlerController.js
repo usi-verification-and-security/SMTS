@@ -1,5 +1,5 @@
-app.controller('TaskHandler', ['$scope', '$window', '$http', 'realTimeDB', 'timeOut', 'sharedService',
-    function($scope, $window, $http, realTimeDB, timeOut, sharedService) {
+app.controller('TaskHandler', ['$scope', '$window', '$http', 'isRealTimeDB', 'timeout', 'sharedService',
+    function($scope, $window, $http, isRealTimeDB, timeout, sharedService) {
 
         let interval;
 
@@ -35,7 +35,7 @@ app.controller('TaskHandler', ['$scope', '$window', '$http', 'realTimeDB', 'time
                 method: 'POST',
                 url: '/changeTimeout',
                 data: {
-                    'timeout': $("input[name='timeout']").val(),
+                    'timeout': $("#smts-server-timeout").val(),
                     'type': "increase"
                 },
             }).then(function successCallback(response) {
@@ -53,7 +53,7 @@ app.controller('TaskHandler', ['$scope', '$window', '$http', 'realTimeDB', 'time
                 method: 'POST',
                 url: '/changeTimeout',
                 data: {
-                    'timeout': $("input[name='timeout']").val(),
+                    'timeout': $("#smts-server-timeout").val(),
                     'type': "decrease"
                 },
             }).then(function successCallback(response) {

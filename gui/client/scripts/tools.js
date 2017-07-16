@@ -1,5 +1,17 @@
-const tables = {
+const smts = {};
 
+smts.tree = {
+
+    // Get the position of the tree
+    // @return {String}: The position in the form 'translate(174,150) scale(1)'
+    // or `null` if the tree is not present.
+    getPosition: function() {
+        let tree = document.getElementById('smts-tree');
+        return tree ? tree.getAttribute('transform') : null;
+    }
+};
+
+smts.tables = {
 
     // Set of functions that manipulate the DOM object 'smts-data-container'
     data: {
@@ -11,7 +23,8 @@ const tables = {
         makeItemSolver: function(solver) {
             let itemSolver = {};
             itemSolver.name = solver.name;
-            itemSolver.node = JSON.stringify(solver.node); // Transform to string or it will show an array
+            // Transform to string or it will show an array
+            itemSolver.node = JSON.stringify(solver.node);
             itemSolver.data = solver.data;
             return itemSolver;
         },
@@ -116,8 +129,8 @@ const tables = {
     events: {
 
         // Highlight all rows with event matching one of events
-        // @param {TreeManager.Solver[]} events: List of solvers to be
-        // compared to.
+        // @param {TreeManager.Solver[]} events: List of events to be
+        // highlighted.
         highlight: function(events) {
             let rows = document.querySelectorAll('#smts-events-table > tbody > tr');
             if (rows) {
@@ -176,8 +189,33 @@ const tables = {
         update: function(selectedNodes) {
             if (this.isTabActive('selected')) {
                 this.showSelected(selectedNodes);
-            } else {
+            }
+            else {
                 this.showAll();
+            }
+        }
+    },
+
+
+    // Set of functions that manipulate the DOM object 'smts-instances-container'
+    instances: {
+
+
+        // Highlight all rows with instance matching one of instances
+        // @param {Instance} instance: Instance to be highlighted.
+        // TODO: make `instance` become `instances`
+        highlight: function(instance) {
+            let rows = document.querySelectorAll('#smts-instances-table > tbody > tr');
+            if (rows) {
+                for (let row of rows) {
+                    let instanceName = row.children[0].innerHTML;
+                    if (instanceName && instanceName === instance.name) {
+                        row.classList.add('smts-highlight');
+                    }
+                    else {
+                        row.classList.remove('smts-highlight');
+                    }
+                }
             }
         }
     },
@@ -188,7 +226,7 @@ const tables = {
 
         // Highlight all rows with solver matching one of solvers
         // @param {TreeManager.Solver[]} solvers: List of solvers to be
-        // compared to.
+        // highlighted.
         highlight: function(solvers) {
             let rows = document.querySelectorAll('#smts-solvers-table > tbody > tr');
             if (rows) {
