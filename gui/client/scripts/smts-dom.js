@@ -1,5 +1,8 @@
+// Collection of function related to DOM manipulation
 const smts = {};
 
+
+// Set of functions that manipulate the DOM object 'smts-tree'
 smts.tree = {
 
     // Get the position of the tree
@@ -11,6 +14,8 @@ smts.tree = {
     }
 };
 
+
+// Set of functions that manipulate the tables DOM objects
 smts.tables = {
 
     // Set of functions that manipulate the DOM object 'smts-data-container'
@@ -182,6 +187,7 @@ smts.tables = {
                 }
             }
         },
+
 
         // Show all or selected nodes of events table, depending on selected tab
         // @param {Node[]} selectedNodes: List of nodes to compare to each
