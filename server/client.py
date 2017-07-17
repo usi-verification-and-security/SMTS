@@ -5,6 +5,7 @@ import version
 import net
 import sys
 import pathlib
+import argparse
 import readline
 
 __author__ = 'Matteo Marescotti'
@@ -51,25 +52,30 @@ def terminal(address):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print('\n=== SMTS client version {} ===\n\nUsages:'.format(version.version), file=sys.stderr)
-        print('  Server CLI: {} [host=127.0.0.1:]<port>'.format(sys.argv[0]), file=sys.stderr)
-        print('  Send files: {} [host=127.0.0.1:]<port> [file [...]]'.format(sys.argv[0]), file=sys.stderr)
-        sys.exit(1)
-    else:
-        if ':' not in sys.argv[1]:
-            sys.argv[1] = '127.0.0.1:' + sys.argv[1]
-        components = sys.argv[1].split(':')
-        address = (components[0], int(components[1]))
+    parser = argparse.ArgumentParser(description='=== SMTS version {} ==='.format(version.version))
 
-    if len(sys.argv) > 2:
-        for path in sys.argv[2:]:
-            try:
-                send_file(address, path)
-            except FileNotFoundError:
-                print('File not found: {}'.format(path), file=sys.stderr)
-            except ConnectionError:
-                print('Connection error.', file=sys.stderr)
-                sys.exit(1)
-    else:
-        terminal(address)
+    parser.add_argument('host_port', metavar='[host:]port', nargs=1, help='default host=127.0.0.1')
+    parser.add_argument('files', metavar='file', nargs='*', help='SMT files to submit. CLI mode if empty')
+
+    args = parser.parse_args()
+
+    components = args.host_port[0].split(':', maxsplit=1)
+    if len(components) == 1:
+        components = ['127.0.0.1'] + components
+    try:
+        address = (components[0], int(components[1]))
+    except:
+        print('invalid host:port', file=sys.stderr)
+        sys.exit(-1)
+
+    try:
+        if args.files:
+            for path in args.files:
+                try:
+                    send_file(address, path)
+                except FileNotFoundError:
+                    print('File not found: {}'.format(path), file=sys.stderr)
+        else:
+            terminal(address)
+    except ConnectionError as ex:
+        print(ex)

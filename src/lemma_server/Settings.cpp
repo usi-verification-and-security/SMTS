@@ -17,10 +17,11 @@ void Settings::load(int argc, char **argv) {
         switch (opt) {
             case 'h':
                 new(this) Settings();
-                std::cout << "Usage: " << argv[0] << "\n"
-                        "[-h] display this message\n"
-                        "[-s server-host:port]\n"
-                        "[-p listening-port] default: " << this->port << "\n"
+                std::cout << "\n=== SMTS version " << SMTS_VERSION << " ===\n\n"
+                        "Usage: " << argv[0] << "\n"
+                                  "[-h] display this message\n"
+                                  "[-s server-host:port]\n"
+                                  "[-p listening-port] default: " << this->port << "\n"
                                   "[-d lemma_database-file] not used if not set\n"
                                   "[-a] send lemmas again to solvers\n"
                                   "\n";

@@ -18,15 +18,16 @@ void Settings::load(int argc, char **argv) {
         switch (opt) {
             case 'h':
                 new(this) Settings();
-                std::cout << "Usage: " << argv[0] << "\n"
-                        "[-h] display this message\n"
-                        "[-s server-host:port] if not set then file mode is enabled\n"
-                        "[-l lemma_server-host:port]\n"
-                        "[-v] verbose\n"
-                        "[-k] (only for file mode) keep lemmas in lemma server after solving\n"
-                        "[-p parameter-json] (only for file mode)\n"
-                        "[-r parameter-key=value] (only for file mode)\n"
-                        "[file1 ...] (only for file mode)\n";
+                std::cout << "\n=== SMTS version " << SMTS_VERSION << " ===\n\n"
+                        "Usage: " << argv[0] << "\n"
+                                  "[-h] display this message\n"
+                                  "[-s server-host:port] if not set then file mode is enabled\n"
+                                  "[-l lemma_server-host:port]\n"
+                                  "[-v] verbose\n"
+                                  "[-k] (only for file mode) keep lemmas in lemma server after solving\n"
+                                  "[-p parameter-json] (only for file mode)\n"
+                                  "[-r parameter-key=value] (only for file mode)\n"
+                                  "[file1 ...] (only for file mode)\n";
                 exit(0);
             case 's':
                 this->server = optarg;

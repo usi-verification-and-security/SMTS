@@ -6,7 +6,7 @@ import framework
 import net
 import client
 import config
-import optparse
+import argparse
 import threading
 import json
 import logging
@@ -460,21 +460,16 @@ class ParallelizationServer(net.Server):
 
 
 if __name__ == '__main__':
-    def callback_config(option, opt, value, parser):
-        config.extend(value)
+    parser = argparse.ArgumentParser(description='=== SMTS version {} ==='.format(version.version))
 
+    parser.add_argument('--version', action='version', version=str(version.version))
+    parser.add_argument('-c', dest='config_path', type=lambda value: config.extend(value), help='config file path')
+    parser.add_argument('-d', dest='db_path', help='sqlite3 database file path')
 
-    parser = optparse.OptionParser(description='=== SMTS version {} ==='.format(version.version), version=str(version.version))
-    parser.add_option('-c', '--config', dest='config_path', type='str',
-                      action="callback", callback=callback_config,
-                      help='config file path')
-    parser.add_option('-d', '--database', dest='db_path', type='str',
-                      default=None, help='sqlite3 database file path')
+    args = parser.parse_args()
 
-    options, args = parser.parse_args()
-
-    if options.db_path:
-        config.db_path = options.db_path
+    if args.db_path:
+        config.db_path = args.db_path
     config.db()
 
     logging.basicConfig(level=config.log_level, format='%(asctime)s\t%(levelname)s\t%(message)s')
