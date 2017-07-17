@@ -25,9 +25,7 @@ app.controller(
 
                 $('.smts-timeline-dash').click(function() {
                     let dashId = $(this).attr('id');
-                    // `dashId` has the form 'smts-events-event-eventId'
-                    let eventId = dashId.split('-')[3];
-                    smts.timeline.selectEvent(eventId);
+                    smts.timeline.selectEvent($(this).attr('data-event'));
 
                     let eventRow = document.getElementById(`smts-events-event-${dashId}`);
                     if (eventRow) {

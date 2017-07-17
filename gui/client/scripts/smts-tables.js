@@ -124,26 +124,45 @@ smts.tables = {
     // Set of functions that manipulate the DOM object 'smts-events-container'
     events: {
 
+        // {String} queryRows: String to shorten queries.
+        queryRows: '#smts-events-table > tbody > tr',
+
+        // Make cells of events table with selected nodes bold
+        // @param {Node[]} selectedNodes: List of nodes for which corresponding
+        // events' cells have to be selected.
+        boldSelected: function(selectedNodes) {
+            // Remove bold to all event cells
+            let rows = document.querySelectorAll(`${this.queryRows} > td.smts-bold`);
+            rows.forEach(row => row.classList.remove('smts-bold'));
+            // Apply bold to event cells with selected nodes
+            for (let selectedNode of selectedNodes) {
+                let selectedNodeNameStr = JSON.stringify(selectedNode.name);
+                // node
+                rows = document.querySelectorAll(`${this.queryRows}[data-node="${selectedNodeNameStr}"]`);
+                if (rows) rows.forEach(row => row.children[2].classList.add('smts-bold'));
+                // data-node
+                rows = document.querySelectorAll(`${this.queryRows}[data-data-node="${selectedNodeNameStr}"]`);
+                if (rows) rows.forEach(row => row.children[4].classList.add('smts-bold'));
+            }
+        },
+
+        // Hide all rows in events table
         hideAll: function() {
-            let rows = document.querySelectorAll('#smts-events-table > tbody > tr');
+            let rows = document.querySelectorAll(this.queryRows);
             rows.forEach(row => row.classList.add('smts-hidden'));
         },
 
         // Highlight all rows with event matching one of events
-        // @param {TreeManager.Solver[]} events: List of events to be
+        // @param {TreeManager.Events[]} events: List of events to be
         // highlighted.
         highlight: function(events) {
-            let rows = document.querySelectorAll('#smts-events-table > tbody > tr');
-            if (rows) {
-                for (let row of rows) {
-                    let eventId = row.getAttribute('data-event');
-                    if (eventId && (new TreeManager.Event({id: Number(eventId)})).equalAny(events)) {
-                        row.classList.add('smts-highlight');
-                    }
-                    else {
-                        row.classList.remove('smts-highlight');
-                    }
-                }
+            // Remove highlight from all events
+            let rows = document.querySelectorAll(this.queryRows);
+            rows.forEach(row => row.classList.remove('smts-highlight'));
+            // Highlight selected nodes
+            for (let event of events) {
+                rows = document.querySelectorAll(`${this.queryRows}[data-event="${event.id}"]`);
+                if (rows) rows.forEach(row => row.classList.add('smts-highlight'));
             }
         },
 
@@ -153,64 +172,46 @@ smts.tables = {
         // @return {Boolean}: `true` if the tab is active, `false` otherwise.
         isTabActive: function(tabName) {
             let tab = document.getElementById(`smts-events-navbar-${tabName}`);
-            if (!tab) {
-                return false;
-            }
-            return tab.classList.contains('active');
+            return tab ? tab.classList.contains('active') : false;
         },
 
         // Show all rows in events table
         showAll: function() {
-            let rows = document.querySelectorAll('#smts-events-table > tbody > tr');
-            for (let row of rows) {
-                row.classList.remove('smts-hidden');
-            }
+            let rows = document.querySelectorAll(this.queryRows);
+            if (rows) rows.forEach(row => row.classList.remove('smts-hidden'));
         },
 
         // Show rows of events table for which the event node matches at least
         // one of the selected nodes
-        // @param {Node[]} selectedNodes: List of nodes to compare to each
-        // row's node.
+        // @param {Node[]} selectedNodes: List of nodes for which corresponding
+        // events have to be selected.
         showSelected: function(selectedNodes) {
+            // Hide all nodes
             this.hideAll();
+            // Show nodes that are in event.node or event.data.node
             for (let selectedNode of selectedNodes) {
+                let selectedNodeNameStr = JSON.stringify(selectedNode.name);
+                // node
+                let rows = document.querySelectorAll(`${this.queryRows}[data-node="${selectedNodeNameStr}"]`);
+                if (rows) rows.forEach(row => row.classList.remove('smts-hidden'));
                 // data-node
-                let rows = document.querySelectorAll(`#smts-events-table > tbody > tr[data-node="${JSON.stringify(selectedNode.name)}"]`);
-                rows.forEach(row => row.classList.remove('smts-hidden'));
-                // data-data-node
-                rows = document.querySelectorAll(`#smts-events-table > tbody > tr[data-data-node="${JSON.stringify(selectedNode.name)}"]`);
-                rows.forEach(row => row.classList.remove('smts-hidden'));
+                rows = document.querySelectorAll(`${this.queryRows}[data-data-node="${selectedNodeNameStr}"]`);
+                if (rows) rows.forEach(row => row.classList.remove('smts-hidden'));
             }
-            // let rows = document.querySelectorAll('#smts-events-table > tbody > tr');
-            // for (let row of rows) {
-            //     let nodeName = row.children[2].innerHTML;
-            //     if (nodeName && (new TreeManager.Node(JSON.parse(nodeName), '')).equalAny(selectedNodes)) {
-            //         row.classList.remove('smts-hidden');
-            //     }
-            //     else {
-            //         row.classList.add('smts-hidden');
-            //     }
-            // }
         },
-
 
         // Show all or selected nodes of events table, depending on selected tab
         // @param {Node[]} selectedNodes: List of nodes to compare to each
         // row's node.
         update: function(selectedNodes) {
-            if (this.isTabActive('selected')) {
-                this.showSelected(selectedNodes);
-            }
-            else {
-                this.showAll();
-            }
+            this.boldSelected(selectedNodes);
+            this.isTabActive('selected') ? this.showSelected(selectedNodes) : this.showAll();
         }
     },
 
 
     // Set of functions that manipulate the DOM object 'smts-instances-container'
     instances: {
-
 
         // Highlight all rows with instance matching one of instances
         // @param {Instance} instance: Instance to be highlighted.

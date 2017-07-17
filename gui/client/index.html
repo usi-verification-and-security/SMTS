@@ -135,6 +135,7 @@
                             <th>Time</th>
                             <th>Node</th>
                             <th>Event</th>
+                            <th>Refers to</th>
                             <th>Solver</th>
                         </tr>
                         </thead>
@@ -149,6 +150,7 @@
                             <td>{{event.ts}}s</td>
                             <td>{{event.node}}</td>
                             <td>{{event.event}}</td>
+                            <td>{{event.data && event.data.node ? event.data.node : ''}}</td>
                             <td>{{event.solver}}</td>
                         </tr>
                         </tbody>

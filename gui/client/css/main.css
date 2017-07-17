@@ -123,6 +123,10 @@ input[type="file"] {
     display: none;
 }
 
+.smts-bold {
+    font-weight: bold;
+}
+
 
 /* Views */
 

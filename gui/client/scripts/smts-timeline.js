@@ -39,6 +39,7 @@ smts.timeline = {
                 // TODO: make prefix for element id
                 dash.id = `smts-timeline-event-${this.events[i].id}`;
                 dash.classList.add('smts-timeline-dash');
+                dash.setAttribute('data-event', this.events[i].id);
                 dash.style.left = `${lineLength * this.events[i].ts * 100}%`;
 
                 // Make popup span
@@ -95,32 +96,3 @@ smts.timeline = {
     }
 
 };
-
-// This function returns the element in smts.timeline.events with the same ts as the selected element
-function findElwithSameTS(time) {
-    for (let i = 0; i < smts.timeline.events.length - 1; i++) {
-        if (smts.timeline.events[i].ts === time) {
-            return smts.timeline.events[i].id;
-        }
-    }
-}
-
-function selectEvent(selector) {
-    $selector = "#" + selector;
-    $spanSelector = $selector.replace("smts-timeline-dash", "smts-timeline-span");
-
-    $(".smts-timeline-active").removeClass("smts-timeline-active");
-    $($selector).addClass("smts-timeline-active");
-
-    // if ($($spanSelector).hasClass("smts-timeline-right")) {
-    //     console.log('RIGHT');
-    //     $(".smts-timeline-center").removeClass("smts-timeline-center").addClass("smts-timeline-left")
-    //     $($spanSelector).addClass("smts-timeline-center");
-    //     $($spanSelector).removeClass("smts-timeline-right")
-    // } else if ($($spanSelector).hasClass("smts-timeline-left")) {
-    //     console.log('LEFT');
-    //     $(".smts-timeline-center").removeClass("center").addClass("smts-timeline-right");
-    //     $($spanSelector).addClass("smts-timeline-center");
-    //     $($spanSelector).removeClass("smts-timeline-left");
-    // }
-}
