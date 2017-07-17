@@ -31,8 +31,8 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
                 function(res) {
                     if (res.data === true) {
                         isRealTimeDB.value = true;
-                        // Hide database container which is not relevant in this case
-                        $('#smts-database-container').addClass('smts-hidden');
+                        // Show server container
+                        $('#smts-server-container').removeClass('smts-hidden');
                         // Update timeout value
                         $('#smts-server-timeout').val = timeout.value;
                         // Notify it is live update
@@ -40,8 +40,8 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
                     }
                     else {
                         isRealTimeDB.value = false;
-                        // Hide server container which is not relevant in this case
-                        $('#smts-server-container').addClass('smts-hidden');
+                        // Show database container
+                        $('#smts-database-container').removeClass('smts-hidden');
                     }
 
                 },

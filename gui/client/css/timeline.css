@@ -2,7 +2,6 @@
 #smts-timeline-line {
     height: 6px;
     width: 70%;
-    /*background: white;*/
     background: gray;
     border-radius: 5px;
     margin: auto;
@@ -17,17 +16,15 @@
     margin: auto;
     margin-top: 25%;
     text-align: center;
-    /*color: white;*/
     color: gray;
 }
 
 .smts-timeline-dash {
-    width: 1px;
+    width: 2px;
     height: 30px;
-    background: gray;
+    background-color: gray;
     position: absolute;
     top: -10px;
-    border: 2px solid gray;
     cursor: pointer;
 }
 
@@ -59,5 +56,6 @@
 }
 
 .smts-timeline-active {
-    border: 2px solid #00cc00;
+    background-color: #00cc00;
+    z-index: 2;
 }

@@ -1,25 +1,16 @@
-// Collection of function related to DOM manipulation
-const smts = {};
-
-
-// Set of functions that manipulate the DOM object 'smts-tree'
-smts.tree = {
-
-    // Get the position of the tree
-    // @return {String}: The position in the form 'translate(174,150) scale(1)'
-    // or `null` if the tree is not present.
-    getPosition: function() {
-        let tree = document.getElementById('smts-tree');
-        return tree ? tree.getAttribute('transform') : null;
-    }
-};
-
-
 // Set of functions that manipulate the tables DOM objects
 smts.tables = {
 
     // Set of functions that manipulate the DOM object 'smts-data-container'
     data: {
+
+        // Make an event object with the wanted attributes for the data table
+        // @param {TreeManager.Event} event: The mold event.
+        // @return {Object}: The object representing the event, to be put in
+        // the data table.
+        makeItemEvent: function(event) {
+            return event.data;
+        },
 
         // Make a solver object with the wanted attributes for the data table
         // @param {TreeManager.Solver} solver: The mold solver.
@@ -97,28 +88,13 @@ smts.tables = {
                     // WIP
                     break;
 
-                case 'event status':
-                    // WIP
-                    break;
-
-                case 'event solved':
-                    // WIP
-                    break;
-
-                case 'event and':
-                    // WIP
-                    break;
-
-                case 'event or':
-                    // WIP
-                    break;
-
+                case 'event STATUS':
+                case 'event SOLVED':
+                case 'event AND':
+                case 'event OR':
                 case 'event +':
-                    // WIP
-                    break;
-
                 case 'event -':
-                    // WIP
+                    dataTableItem = this.makeItemEvent(item);
                     break;
             }
 
@@ -140,8 +116,8 @@ smts.tables = {
             let rows = document.querySelectorAll('#smts-events-table > tbody > tr');
             if (rows) {
                 for (let row of rows) {
-                    let eventName = row.children[0].innerHTML;
-                    if (eventName && (new TreeManager.Event({name: eventName})).equalAny(events)) {
+                    let eventId = row.getAttribute('data-event');
+                    if (eventId && (new TreeManager.Event({id: Number(eventId)})).equalAny(events)) {
                         row.classList.add('smts-highlight');
                     }
                     else {

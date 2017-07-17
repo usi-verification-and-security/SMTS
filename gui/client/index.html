@@ -59,7 +59,7 @@
                     <div id="smts-taskhandler-container" class="smts-container tab-pane active" ng-controller="TaskHandler" ng-init='load()'>
 
                         <!--Server-->
-                        <div id="smts-server-container" class="smts-container">
+                        <div id="smts-server-container" class="smts-container smts-hidden">
                             <!--<div id="smts-server-title" class="smts-container-title">Server</div>-->
                             <div>
                                 <p class="smsts-container-subtitle">Solving Instance:</p>
@@ -88,7 +88,7 @@
                         </div>
 
                         <!--Database-->
-                        <div id="smts-database-container" class="smts-container">
+                        <div id="smts-database-container" class="smts-container smts-hidden">
                             <!--<div id="smts-database-title" class="smts-container-title">Database</div>-->
                             <div class="smts-container">
                                 <p class="smsts-container-subtitle">New database:</p>
@@ -139,7 +139,7 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr id="event{{event.id}}" data-event="{{event.id}}" ng-repeat="event in events" ng-click="showEvent($event,$index,event)">
+                        <tr id="smts-events-event-{{event.id}}" data-event="{{event.id}}" ng-repeat="event in events" ng-click="showEvent(event, $index)">
                             <td>{{$index}}</td>
                             <td>{{event.ts}}s</td>
                             <td>{{event.node}}</td>
@@ -203,7 +203,10 @@
 <script type="text/javascript" src="treeManager/Solver.js"></script>
 <script type="text/javascript" src="treeManager/Tree.js"></script>
 <!--Utilities-->
-<script type="text/javascript" src="scripts/smts-dom.js"></script>
+<script type="text/javascript" src="scripts/smts.js"></script>
+<script type="text/javascript" src="scripts/smts-tables.js"></script>
+<script type="text/javascript" src="scripts/smts-timeline.js"></script>
+<script type="text/javascript" src="scripts/smts-tree.js"></script>
 <script type="text/javascript" src="scripts/options.js"></script>
 <script type="text/javascript" src="scripts/dndTree.js"></script>
 <!--Angular-->
@@ -218,6 +221,5 @@
 <script type="text/javascript" src="scripts/ng-file-upload.min.js"></script>
 <script type="text/javascript" src="scripts/ng-file-upload-shim.min.js"></script>
 <script type="text/javascript" src="scripts/prettyprint.js"></script>
-<script type="text/javascript" src="scripts/timeline.js"></script>
 
 </html>

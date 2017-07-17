@@ -22,9 +22,9 @@ module TreeManager {
             this.ts = value;
         }
 
-        nodeEqualAny(events) {
+        equalAny(events) {
             for (let event of events) {
-                if (this.name === event.name) {
+                if (this.id === event.id) {
                     return true;
                 }
             }
