@@ -50,10 +50,9 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
                 });
         };
 
-
         // Select an instance and load its data from database
         $scope.selectInstance = function(instance) {
-            smts.tables.instances.highlight(instance);
+            smts.tables.instances.highlight([instance]);
 
             // Get tree data
             this.loadData(instance);

@@ -179,7 +179,10 @@
                             <th>Node</th>
                             </thead>
                             <tbody>
-                            <tr data-node="{{solver.node}}" ng-repeat="solver in solvers" ng-click="updateDataTable(solver)">
+                            <tr data-solver="{{solver.name}}"
+                                data-node="{{solver.node}}"
+                                ng-repeat="solver in solvers"
+                                ng-click="updateDataTable(solver)">
                                 <td>{{solver.name}}</td>
                                 <td>{{solver.node}}</td>
                             </tr>
