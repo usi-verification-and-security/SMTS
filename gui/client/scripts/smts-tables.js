@@ -124,6 +124,11 @@ smts.tables = {
     // Set of functions that manipulate the DOM object 'smts-events-container'
     events: {
 
+        hideAll: function() {
+            let rows = document.querySelectorAll('#smts-events-table > tbody > tr');
+            rows.forEach(row => row.classList.add('smts-hidden'));
+        },
+
         // Highlight all rows with event matching one of events
         // @param {TreeManager.Solver[]} events: List of events to be
         // highlighted.
@@ -167,16 +172,25 @@ smts.tables = {
         // @param {Node[]} selectedNodes: List of nodes to compare to each
         // row's node.
         showSelected: function(selectedNodes) {
-            let rows = document.querySelectorAll('#smts-events-table > tbody > tr');
-            for (let row of rows) {
-                let nodeName = row.children[2].innerHTML;
-                if (nodeName && (new TreeManager.Node(JSON.parse(nodeName), '')).equalAny(selectedNodes)) {
-                    row.classList.remove('smts-hidden');
-                }
-                else {
-                    row.classList.add('smts-hidden');
-                }
+            this.hideAll();
+            for (let selectedNode of selectedNodes) {
+                // data-node
+                let rows = document.querySelectorAll(`#smts-events-table > tbody > tr[data-node="${JSON.stringify(selectedNode.name)}"]`);
+                rows.forEach(row => row.classList.remove('smts-hidden'));
+                // data-data-node
+                rows = document.querySelectorAll(`#smts-events-table > tbody > tr[data-data-node="${JSON.stringify(selectedNode.name)}"]`);
+                rows.forEach(row => row.classList.remove('smts-hidden'));
             }
+            // let rows = document.querySelectorAll('#smts-events-table > tbody > tr');
+            // for (let row of rows) {
+            //     let nodeName = row.children[2].innerHTML;
+            //     if (nodeName && (new TreeManager.Node(JSON.parse(nodeName), '')).equalAny(selectedNodes)) {
+            //         row.classList.remove('smts-hidden');
+            //     }
+            //     else {
+            //         row.classList.add('smts-hidden');
+            //     }
+            // }
         },
 
 

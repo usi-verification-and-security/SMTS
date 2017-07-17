@@ -16,6 +16,11 @@ module TreeManager {
             this.event = value.event;
             this.solver = value.solver;
             this.data = value.data;
+
+            // Remove all spaces from string array
+            if (this.data && this.data.node) {
+                this.data.node = this.data.node.replace(/\s/g, '');
+            }
         }
 
         setTs(value: number) {
