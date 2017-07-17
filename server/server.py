@@ -141,7 +141,7 @@ class Solver(net.Socket):
             path = self.node.path(True)
             path.reverse()
             for node in path:
-                if node.status != framework.SolveStatus.unknown:
+                if node.status != framework.SolveStatus.unknown and isinstance(node, framework.AndNode):
                     self._db_log('SOLVED', {'status': node.status.name, 'node': str(node.path())})
                 else:
                     break
