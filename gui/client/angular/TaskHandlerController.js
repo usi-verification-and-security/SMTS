@@ -1,81 +1,64 @@
 app.controller('TaskHandler', ['$scope', '$window', '$http', 'isRealTimeDB', 'timeout', 'sharedService',
     function($scope, $window, $http, isRealTimeDB, timeout, sharedService) {
 
-        let interval;
+        // Used to clear the interval in case of server error
+        let intervalId;
 
-        $scope.$on('live-update', function() { // This is called we are in a situation of real-time analysis
-            interval = setInterval(function() {
-                $scope.getServerData();
-            }, 3000);
-
+        // Get server data each 3 seconds if live update
+        $scope.$on('live-update', function() {
+            intervalId = setInterval(() => $scope.getServerData(), 3000);
         });
+
 
         $scope.getServerData = function() {
             $http({
                 method: 'GET',
                 url: '/getServerData'
-            }).then(function successCallback(response) {
-                // console.log(response.data);
-
-                // Write which instance is being solved
-                //TODO: check why the first call gives empty answer
-                $scope.solvingInstance = response.data[0];
-                $scope.solvingInstanceRemaining = response.data[1];
-
-            }, function errorCallback(response) {
-                // Stop intervall when the connection with the server is lost
-                setInterval.cancel(interval);
-                // $window.alert('An error occured!');
-            });
+            }).then(
+                function(res) {
+                    // Write which instance is being solved
+                    // TODO: check why the first call gives empty answer
+                    $scope.solvingInstance = res.data[0];
+                    $scope.solvingInstanceRemaining = res.data[1];
+                },
+                function(err) {
+                    clearInterval(intervalId);
+                    $window.alert(`An error occured: ${err}`);
+                });
         };
 
-        // TODO: to prevent page redirection after posting move posting here and use "event.preventDefault();"
-        $scope.increaseTimeout = function() {
+        // Change timeout to to end the running evaluation
+        // @param {String} type: Either 'increase' or 'decrease'.
+        $scope.changeTimeout = function(type) {
             $http({
                 method: 'POST',
                 url: '/changeTimeout',
                 data: {
-                    'timeout': $("#smts-server-timeout").val(),
-                    'type': "increase"
+                    'timeout': $('#smts-server-timeout').val(),
+                    'type': type
                 },
-            }).then(function successCallback(response) {
-                event.preventDefault();
-
-            }, function errorCallback(response) {
-                // called asynchronously if an error occurs
-                // or server returns response with an error status.
-                $window.alert('An error occured!');
-            });
+            }).then(
+                function() {
+                    // Prevent page redirect
+                    event.preventDefault();
+                },
+                function(err) {
+                    $window.alert(`An error occured: ${err}`);
+                });
         };
 
-        $scope.decreaseTimeout = function() {
-            $http({
-                method: 'POST',
-                url: '/changeTimeout',
-                data: {
-                    'timeout': $("#smts-server-timeout").val(),
-                    'type': "decrease"
-                },
-            }).then(function successCallback(response) {
-
-            }, function errorCallback(response) {
-                // called asynchronously if an error occurs
-                // or server returns response with an error status.
-                $window.alert('An error occured!');
-            });
-        };
-
+        // Stop current running evaluation
         $scope.stop = function() {
             $http({
                 method: 'POST',
                 url: '/stop'
-            }).then(function successCallback(response) {
-
-            }, function errorCallback(response) {
-                // called asynchronously if an error occurs
-                // or server returns response with an error status.
-                $window.alert('An error occured!');
-            });
+            }).then(
+                function() {
+                    // Do nothing
+                },
+                function(err) {
+                    $window.alert(`An error occured: ${err}`);
+                });
         };
 
     }]);
