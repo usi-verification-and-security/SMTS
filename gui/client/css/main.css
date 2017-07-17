@@ -36,11 +36,14 @@ html, body {
     padding: 5px;
     border: 1px solid var(--color-border-dark);
     border-collapse: collapse;
-    max-width: 100%;
 }
 
 .smts-table th {
     background-color: var(--color-table-header);
+}
+
+.smts-table td {
+    min-width: 40px;
 }
 
 .smts-table-interactive tr:hover {

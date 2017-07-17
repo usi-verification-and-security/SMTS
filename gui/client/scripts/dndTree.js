@@ -110,7 +110,7 @@ function generateDomTree(tree, positionFrame) {
 
     // Update data table with selected node data
     let selectedNode = tree.selectedNodes[0];
-    showNodeData(selectedNode);
+    smts.tables.data.update(selectedNode, 'node');
 
     // TODO: fix this async shit
     setTimeout(function() {
@@ -141,6 +141,9 @@ function generateDomTree(tree, positionFrame) {
         else {
             center(zoomListener, selectedNode.x0, selectedNode.y0, viewerWidth, viewerHeight, zoomListener.scale());
         }
+
+        // Show tree
+        d3.select('#smts-tree').classed('smts-hidden', false);
     }, 0);
 }
 
@@ -169,7 +172,10 @@ function makeSvg(width, height) {
 
 // Append a group which holds all nodes and on which the zoom Listener can act upon
 function makeSvgGroup(svgBase) {
-    return svgBase.append('g').attr('id', 'smts-tree');
+    return svgBase.append('g')
+        .attr('id', 'smts-tree')
+        // Hide tree until it is positioned correctly, to avoid annoying transition
+        .classed('smts-hidden', true);
 }
 
 
@@ -233,7 +239,7 @@ function makeNodes(tree, svgGroup, d3Nodes) {
         .classed('smts-nodeSelected', node => node.equalAny(tree.selectedNodes))
         .attr('transform', `translate(${tree.root.y0}, ${tree.root.x0})`)
         .on('click', function(node) {
-            showNodeData(node);
+            smts.tables.data.update(node, 'node');
             tree.setSelectedNodes([node]);
             updateSelectedNode(this, tree); // `this` is the DOM element
         });
@@ -323,27 +329,6 @@ function makeLinks(tree, svgGroup, d3Links) {
 /**********************************************************************************************************************/
 /* NODE SELECTION                                                                                                     */
 /**********************************************************************************************************************/
-
-
-// This function shows node data in data view
-function showNodeData(node) {
-    let ppNode = {};
-
-    if (node) {
-        ppNode.name = JSON.stringify(node.name); // transform to string or it will show and array
-        ppNode.type = node.type;
-        ppNode.solvers = node.solvers;
-        ppNode.status = node.status;
-        ppNode.balanceness = node.getBalanceness();
-    }
-
-    let ppTable = prettyPrint(ppNode);
-
-    document.getElementById('smts-data-title').innerHTML = 'NODE'.bold();
-    let item = document.getElementById('smts-data-table-container');
-    item.innerText = '';
-    item.appendChild(ppTable);
-}
 
 
 // Update selected node

@@ -12,6 +12,21 @@ smts.tables = {
             return event.data;
         },
 
+        // Make a node object with the wanted attributes for the data table
+        // @param {TreeManager.Node} node: The mold node.
+        // @return {Object}: The object representing the node, to be put in the
+        // data table.
+        makeItemNode: function(node) {
+            let itemNode = {};
+            // Transform to string or it will show and array
+            itemNode.name = JSON.stringify(node.name);
+            itemNode.type = node.type;
+            itemNode.solvers = node.solvers;
+            itemNode.status = node.status;
+            itemNode.balanceness = node.getBalanceness();
+            return itemNode;
+        },
+
         // Make a solver object with the wanted attributes for the data table
         // @param {TreeManager.Solver} solver: The mold solver.
         // @return {Object}: The object representing the solver, to be put in
@@ -85,7 +100,7 @@ smts.tables = {
                     break;
 
                 case 'node':
-                    // WIP
+                    dataTableItem = this.makeItemNode(item);
                     break;
 
                 case 'event STATUS':

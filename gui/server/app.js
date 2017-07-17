@@ -10,7 +10,7 @@ const fs = require('fs');
 
 let database;           // For past execution analysis
 let isRealTime = false; // true if database is running on server
-let port = 3000;        // Default port 3000
+let port = 8080;
 
 app.use(function (req, res, next) { //allow cross origin requests
     res.setHeader("Access-Control-Allow-Methods", "POST, PUT, OPTIONS, DELETE, GET");

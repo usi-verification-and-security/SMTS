@@ -121,10 +121,10 @@ module TreeManager {
 
                 case 'SOLVED':
                     if (event.data && event.data.node) {
-                        node = this.getNode(event.data.node);
+                        node = this.getNode(JSON.parse(event.data.node));
                         if (node.status === 'unknown') {
                             if (!node.isStatusPropagated) {
-                                node.status = event.data.report;
+                                node.status = event.data.status;
                                 node.isStatusPropagated = true;
                             }
                             else {
