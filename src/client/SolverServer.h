@@ -18,8 +18,6 @@ private:
 
     void log(uint8_t, std::string);
 
-    bool check_header(net::Header &);
-
     net::Socket server;
     std::string lemmas_address;
     SolverProcess *solver;

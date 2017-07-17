@@ -40,6 +40,7 @@ private:
 
     net::Pipe pipe;
     std::string instance;
+    net::Header header;
 
     void main() {
         if (!this->header.count("lemmas")) {
@@ -145,6 +146,12 @@ private:
         net::Header header;
         std::string payload;
         this->pipe.reader()->read(header, payload);
+        if (header["name"] != this->header["name"] || header["node"] != this->header["node"]) {
+            this->error("not expected: " + header["name"] + header["node"]);
+            return Task{
+                    .command=Task::resume
+            };
+        }
         if (header["command"] == "incremental") {
             if (header.count("node_") && header.count("query")) {
                 this->instance += payload;
@@ -174,8 +181,6 @@ public:
             throw Exception("missing mandatory key in header");
         this->start();
     }
-
-    net::Header header;
 
     bool is_sharing() {
         return this->lemma.server != nullptr;
