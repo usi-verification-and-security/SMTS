@@ -101,7 +101,7 @@ html, body {
 /* For better styling, <input type="file"> Should be wrapped around a label */
 /*  element, making the actual input element invisible. E.g.:               */
 /* <label class="btn btn-default"><input type="file">Browse</label>         */
-input[type="file"] {
+.btn-browse > input[type="file"] {
     display: none !important;
 }
 

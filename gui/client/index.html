@@ -81,7 +81,7 @@
                             <div>
                                 <p class="smsts-container-subtitle">New instance:</p>
                                 <form class="smts-container-horizontal" action="/uploadInstance" method="post" encType="multipart/form-data">
-                                    <label class="btn btn-default"><input type="file" accept="" required>Browse</label>
+                                    <label class="btn btn-default btn-browse"><input type="file" accept="" required>Browse</label>
                                     <input class="btn btn-default" type='submit' value='Upload'/>
                                 </form>
                             </div>
@@ -93,7 +93,9 @@
                             <div class="smts-container">
                                 <p class="smsts-container-subtitle">New database:</p>
                                 <form class="smts-container-horizontal" action='/upload' method='post' encType="multipart/form-data">
-                                    <label class="btn btn-default"><input type="file" accept=".db" required>Browse</label>
+                                    <label class="btn btn-default btn-browse">Browse
+                                        <input name="smts-upload-db" type="file" accept=".db" required>
+                                    </label>
                                     <input class="btn btn-default" type='submit' value='Upload'/>
                                 </form>
                             </div>

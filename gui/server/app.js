@@ -12,7 +12,7 @@ let database;           // For past execution analysis
 let isRealTime = false; // true if database is running on server
 let port = 8080;
 
-app.use(function (req, res, next) { //allow cross origin requests
+app.use(function(req, res, next) { //allow cross origin requests
     res.setHeader("Access-Control-Allow-Methods", "POST, PUT, OPTIONS, DELETE, GET");
     res.header("Access-Control-Allow-Origin", "http://localhost");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -27,7 +27,7 @@ app.use(express.static('../client'));
 app.use(bodyParser.json());
 app.use(fileUpload());
 
-app.get('/get', function (req, res) { // get the content of the whole tree
+app.get('/get', function(req, res) { // get the content of the whole tree
     if (database === undefined) {
         console.log("No database was provided.");
         res.json([]); // return result to the browser
@@ -35,12 +35,12 @@ app.get('/get', function (req, res) { // get the content of the whole tree
     else {
         let db = new sqlite.Database(database);
         let result = [];
-        db.all("SELECT * FROM SolvingHistory", function (err, rows) { // take everything from table "SolvingHistory"
+        db.all("SELECT * FROM SolvingHistory", function(err, rows) { // take everything from table "SolvingHistory"
             if (err) {
                 res.json({error_code: 1, err_desc: err});
                 return;
             }
-            rows.forEach(function (row) { // save each of the table as an object in array "result"
+            rows.forEach(function(row) { // save each of the table as an object in array "result"
                 result.push({
                     id: row.id,
                     ts: row.ts,
@@ -57,7 +57,7 @@ app.get('/get', function (req, res) { // get the content of the whole tree
     }
 });
 
-app.get('/get/:instance', function (req, res) { // Get content of a specific instance
+app.get('/get/:instance', function(req, res) { // Get content of a specific instance
     if (database === undefined) {
         console.log("No database was provided.");
         res.json([]); // return result to the browser
@@ -67,12 +67,12 @@ app.get('/get/:instance', function (req, res) { // Get content of a specific ins
         let db = new sqlite.Database(database);
         let query = `SELECT * FROM SolvingHistory WHERE name=${instance}`;
         let result = [];
-        db.all(query, function (err, rows) {
+        db.all(query, function(err, rows) {
             if (err) {
                 res.json({error_code: 1, err_desc: err});
                 return;
             }
-            rows.forEach(function (row) { // save each of the table as an object in array "result"
+            rows.forEach(function(row) { // save each of the table as an object in array "result"
                 result.push({
                     id: row.id,
                     ts: row.ts,
@@ -89,7 +89,7 @@ app.get('/get/:instance', function (req, res) { // Get content of a specific ins
 });
 
 
-app.get('/getInstances', function (req, res) {
+app.get('/getInstances', function(req, res) {
     if (database === undefined) {
         console.log("No database was provided.");
         res.json([]); // return result to the browser
@@ -97,12 +97,12 @@ app.get('/getInstances', function (req, res) {
     else {
         let db = new sqlite.Database(database);
         let result = [];
-        db.all("SELECT DISTINCT name FROM SolvingHistory", function (err, rows) {
+        db.all("SELECT DISTINCT name FROM SolvingHistory", function(err, rows) {
             if (err) {
                 res.json({error_code: 1, err_desc: err});
                 return;
             }
-            rows.forEach(function (row) { // save each of the table as an object in array "result"
+            rows.forEach(function(row) { // save each of the table as an object in array "result"
                 result.push(row);
             });
             res.json(result); // return result to the browser
@@ -111,17 +111,17 @@ app.get('/getInstances', function (req, res) {
     }
 });
 
-app.get('/getRealTime', function (req, res) {
+app.get('/getRealTime', function(req, res) {
     res.json(isRealTime);
 });
 
-app.post('/upload', function (req, res) {
+app.post('/upload', function(req, res) {
     console.log('Uploading db file...');
     if (!req.files)
         return res.status(400).send('No files were uploaded.');
 
     // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
-    let sampleFile = req.files.db;
+    let sampleFile = req.files['smts-upload-db'];
     let uploadPath = __dirname + '/temp/' + sampleFile.name;
 
     if (!fs.existsSync(__dirname + '/temp')) {
@@ -129,7 +129,7 @@ app.post('/upload', function (req, res) {
     }
 
     // Use the mv() method to place the file somewhere on your server
-    sampleFile.mv(uploadPath, function (err) {
+    sampleFile.mv(uploadPath, function(err) {
         if (err) {
             return res.status(500).send(err);
         }
@@ -140,12 +140,12 @@ app.post('/upload', function (req, res) {
     });
 });
 
-app.get('/getServerData', function (req, res) {
+app.get('/getServerData', function(req, res) {
     let response = taskHandler.getCurrent();
     res.json(response);
 });
 
-app.post('/changeTimeout', function (req, res) {
+app.post('/changeTimeout', function(req, res) {
     // console.log(req.body.timeout);
     // console.log(req.body.type);
     if (req.body.type === "increase") {
@@ -158,7 +158,7 @@ app.post('/changeTimeout', function (req, res) {
     res.redirect('back');
 });
 
-app.post('/stop', function (req, res) {
+app.post('/stop', function(req, res) {
     console.log("Stopping solving server execution..");
     //TODO: Check if it really stops
     taskHandler.stopSolving();
@@ -167,7 +167,7 @@ app.post('/stop', function (req, res) {
 
 
 function deleteFile(file) {
-    fs.unlink(file, function (err) {
+    fs.unlink(file, function(err) {
         if (err) {
             console.error(err.toString());
         } else {
@@ -181,7 +181,7 @@ process.stdin.resume();//so the program will not close instantly
 // Delete all files in temp directory before killing the process
 function exitHandler(options, err) {
     if (options.cleanup) {
-        fs.readdir('./temp/', function (err, items) {
+        fs.readdir('./temp/', function(err, items) {
             if (items) {
                 for (let item of items) {
                     deleteFile('./temp/' + item);
@@ -257,7 +257,7 @@ function initialize() {
             process.exit();
         }
 
-        app.listen(port, function () {
+        app.listen(port, function() {
             console.log('Server running on ' + port + '...');
         });
 

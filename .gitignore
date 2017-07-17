@@ -8,6 +8,7 @@ gui/client/treeManager/*.js
 gui/client/treeManager/*.map
 gui/server/*.db
 gui/server/node_modules/
+gui/server/temp/*.db
 server/*.db
 server/__pycache__/
 server/config/config.py
