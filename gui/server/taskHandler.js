@@ -1,7 +1,9 @@
-var exec = require('child_process').execSync;
+let exec = require('child_process').execSync;
+let config = require('./config.js');
 
-var path = "../../server/client.py"; // Path to the server python file
-var port; // Server port
+let path = config.path;     // Path to the server python file
+let port = config.port;     // Server port
+let python = config.python; // Python command-line
 
 function run(command) {
     if (!port) {
@@ -11,7 +13,7 @@ function run(command) {
         console.log('Error: no path');
         process.exit();
     }
-    return exec(`${command} | python3.6 ${path} ${port}`, {'encoding': 'utf8'}).trim();
+    return exec(`${command} | ${python} ${path} ${port}`, {'encoding': 'utf8'}).trim();
 }
 
 module.exports = {
