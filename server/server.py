@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import optparse
-import threading
-import json
+import version
 import framework
 import net
 import client
+import config
+import optparse
+import threading
+import json
 import logging
 import traceback
 import random
 import time
-import config
 
 __author__ = 'Matteo Marescotti'
 
@@ -184,7 +185,7 @@ class ParallelizationServer(net.Server):
         self.config = config
         self.trees = []
         self.current = None
-        self.log(logging.INFO, 'server start')
+        self.log(logging.INFO, 'server start. version {}'.format(version.version))
 
     def handle_accept(self, sock):
         self.log(logging.DEBUG, 'new connection from {}'.format(sock.remote_address))
@@ -463,7 +464,7 @@ if __name__ == '__main__':
         config.extend(value)
 
 
-    parser = optparse.OptionParser()
+    parser = optparse.OptionParser(description='=== SMTS version {} ==='.format(version.version), version=str(version.version))
     parser.add_option('-c', '--config', dest='config_path', type='str',
                       action="callback", callback=callback_config,
                       help='config file path')

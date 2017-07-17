@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import version
 import net
 import sys
 import pathlib
@@ -51,7 +52,9 @@ def terminal(address):
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print('Usage: {} [host=127.0.0.1:]<port> [file [...]]'.format(sys.argv[0]), file=sys.stderr)
+        print('\n=== SMTS client version {} ===\n\nUsages:'.format(version.version), file=sys.stderr)
+        print('  Server CLI: {} [host=127.0.0.1:]<port>'.format(sys.argv[0]), file=sys.stderr)
+        print('  Send files: {} [host=127.0.0.1:]<port> [file [...]]'.format(sys.argv[0]), file=sys.stderr)
         sys.exit(1)
     else:
         if ':' not in sys.argv[1]:
