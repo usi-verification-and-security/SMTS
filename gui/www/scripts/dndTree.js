@@ -112,39 +112,39 @@ function generateDomTree(tree, positionFrame) {
     let selectedNode = tree.selectedNodes[0];
     smts.tables.data.update(selectedNode, 'node');
 
-    // TODO: fix this async shit
-    setTimeout(function() {
-        smts.tables.events.update(tree.selectedNodes);
-        smts.tables.solvers.update(tree.selectedNodes);
-    }, 0);
+    // Update events and solvers tables in case of `Selected` option
+    smts.tables.events.update(tree.selectedNodes);
+    smts.tables.solvers.update(tree.selectedNodes);
 
-    // Move view in right position
-    // Center selected node if not in visible frame, otherwise restore the view as it was before.
-    // Function is in callback because it has to wait until the translate positions are updated inside the `g` elements.
-    setTimeout(function() {
-        if (positionFrame) {
-            let positionSelected = document.querySelector('circle.smts-selected').parentNode.getAttribute('transform');
-            let translateSelected = getTranslate(positionSelected);
-            let translateFrame = getTranslate(positionFrame);
-            let scale = getScale(positionFrame) || zoomListener.scale();
-            let x = translateSelected[0] * scale + translateFrame[0];
-            let y = translateSelected[1] * scale + translateFrame[1];
+    // Move view in correct position
+    centerTree(positionFrame, viewerWidth, viewerHeight, selectedNode, zoomListener)
 
-            if (isInBounds(x, y, 0, viewerWidth, 0, viewerHeight)) {
-                move(zoomListener, translateFrame[0], translateFrame[1], scale);
-            }
-            else {
-                let scale = getScale(positionFrame) || zoomListener.scale();
-                center(zoomListener, selectedNode.x0, selectedNode.y0, viewerWidth, viewerHeight, scale);
-            }
+    // Show tree
+    d3.select('#smts-tree').classed('smts-hidden', false);
+}
+
+
+// Center selected node if not in visible frame, otherwise restore the view as it was before
+function centerTree(positionFrame, viewerWidth, viewerHeight, selectedNode, zoomListener) {
+    if (positionFrame) {
+        let positionSelected = document.querySelector('circle.smts-selected').parentNode.getAttribute('transform');
+        let translateSelected = getTranslate(positionSelected);
+        let translateFrame = getTranslate(positionFrame);
+        let scale = getScale(positionFrame) || zoomListener.scale();
+        let x = translateSelected[0] * scale + translateFrame[0];
+        let y = translateSelected[1] * scale + translateFrame[1];
+
+        if (isInBounds(x, y, 0, viewerWidth, 0, viewerHeight)) {
+            move(zoomListener, translateFrame[0], translateFrame[1], scale);
         }
         else {
-            center(zoomListener, selectedNode.x0, selectedNode.y0, viewerWidth, viewerHeight, zoomListener.scale());
+            let scale = getScale(positionFrame) || zoomListener.scale();
+            center(zoomListener, selectedNode.x0, selectedNode.y0, viewerWidth, viewerHeight, scale);
         }
-
-        // Show tree
-        d3.select('#smts-tree').classed('smts-hidden', false);
-    }, 0);
+    }
+    else {
+        center(zoomListener, selectedNode.x0, selectedNode.y0, viewerWidth, viewerHeight, zoomListener.scale());
+    }
 }
 
 
@@ -187,15 +187,14 @@ function makeSvgGroup(svgBase) {
 
 // Make a d3 tree
 function makeD3Tree(width, height) {
-    return d3.layout.tree().size([height, width]); // Width and height have swapped order
+    // Width and height have swapped order
+    return d3.layout.tree().size([height, width]);
 }
 
 
 // Make a d3 diagonal projection for use by the node paths
 function makeD3Diagonal() {
-    return d3.svg.diagonal().projection(function (node) {
-        return [node.y, node.x];
-    });
+    return d3.svg.diagonal().projection(node => [node.y, node.x]);
 }
 
 
