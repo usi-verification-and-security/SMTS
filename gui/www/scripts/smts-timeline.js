@@ -4,13 +4,11 @@ smts.timeline = {
 
     clear: function() {
         let line = document.getElementById('smts-timeline-line');
-        if (line) {
-            line.innerHTML = '';
-        }
+        if (line) line.innerHTML = '';
     },
 
     getEventIdBytTime: function(time) {
-        for (let i = 0; i < this.events.length - 1; i++) { // TODO: remove `- 1`
+        for (let i = 0; i < this.events.length; i++) {
             if (this.events[i].ts === time) {
                 return this.events[i].id;
             }
@@ -22,21 +20,21 @@ smts.timeline = {
         this.trimEvents(events);
 
         let line = document.getElementById('smts-timeline-line');
-        if (!line) {
-            return; // TODO: create line
-        }
+        if (!line) return;
 
         // Hide timeline if there's less than two events
         if (this.events.length < 2) {
             line.classList.add('smts-hidden');
         }
         else {
+            // Show timeline in case it was hidden before
+            line.classList.remove('smts-hidden');
+
             let lineLength = 1 / this.events[this.events.length - 1].ts;
 
             for (let i = 0; i < this.events.length; ++i) {
                 // Make dash
                 let dash = document.createElement('div');
-                // TODO: make prefix for element id
                 dash.id = `smts-timeline-event-${this.events[i].id}`;
                 dash.classList.add('smts-timeline-dash');
                 dash.setAttribute('data-event', this.events[i].id);
