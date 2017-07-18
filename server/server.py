@@ -472,6 +472,8 @@ if __name__ == '__main__':
     parser.add_argument('-l', dest='lemma', action='store_true', help='enable lemma sharing')
     parser.add_argument('-D', dest='lemmaDB', action='store_true', help='store lemmas in database')
     parser.add_argument('-a', dest='lemmaAgain', action='store_true', help='send lemmas again to solver')
+    parser.add_argument('-o', dest='opensmt', type=int, metavar='N', help='run N opensmt2 solvers')
+    parser.add_argument('-z', dest='z3spacer', type=int, metavar='N', help='run N z3spacer solvers')
 
     args = parser.parse_args()
 
@@ -498,6 +500,8 @@ if __name__ == '__main__':
 
     if args.lemma:
         def run_lemma_server(lemma_server, database, send_again):
+            # searching for a better IP because this IP will be sent to the solvers connecting to the server
+            # that perhaps are on another host
             ip = '127.0.0.1'
             try:
                 ip = socket.gethostbyname(socket.gethostname())
@@ -525,6 +529,23 @@ if __name__ == '__main__':
         ))
         lemma_thread.daemon = True
         lemma_thread.start()
+
+    if args.opensmt or args.z3spacer:
+        def run_solvers(*solvers):
+            for path, n in solvers:
+                try:
+                    for _ in range(n):
+                        subprocess.Popen([path, '-s127.0.0.1:' + str(config.port)])
+                except BaseException as ex:
+                    print(ex)
+
+
+        solvers_thread = threading.Thread(target=run_solvers, args=(
+            (config.build_path + '/solver_opensmt', args.opensmt),
+            (config.build_path + '/solver_z3spacer', args.z3spacer)
+        ))
+        solvers_thread.daemon = True
+        solvers_thread.start()
 
     try:
         server.run_forever()
