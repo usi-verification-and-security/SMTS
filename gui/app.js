@@ -23,7 +23,7 @@ app.use(function(req, res, next) { //allow cross origin requests
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
-app.use(express.static('../client'));
+app.use(express.static('./www'));
 app.use(bodyParser.json());
 app.use(fileUpload());
 
@@ -122,10 +122,10 @@ app.post('/upload', function(req, res) {
 
     // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
     let sampleFile = req.files['smts-upload-db'];
-    let uploadPath = __dirname + '/temp/' + sampleFile.name;
+    let uploadPath = __dirname + '/databases/temp/' + sampleFile.name;
 
-    if (!fs.existsSync(__dirname + '/temp')) {
-        fs.mkdirSync(__dirname + '/temp');
+    if (!fs.existsSync(__dirname + '/databases/temp')) {
+        fs.mkdirSync(__dirname + '/databases/temp');
     }
 
     // Use the mv() method to place the file somewhere on your server
@@ -134,7 +134,7 @@ app.post('/upload', function(req, res) {
             return res.status(500).send(err);
         }
         // Set database
-        database = './temp/' + sampleFile.name;
+        database = './databases/temp/' + sampleFile.name;
         console.log('File successfully uploaded.');
         res.redirect('back');
     });
@@ -181,10 +181,10 @@ process.stdin.resume();//so the program will not close instantly
 // Delete all files in temp directory before killing the process
 function exitHandler(options, err) {
     if (options.cleanup) {
-        fs.readdir('./temp/', function(err, items) {
+        fs.readdir('./databases/temp/', function(err, items) {
             if (items) {
                 for (let item of items) {
-                    deleteFile('./temp/' + item);
+                    deleteFile('./databases/temp/' + item);
                 }
             }
             process.exit(0);
