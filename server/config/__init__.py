@@ -6,13 +6,6 @@ import importlib.util
 from config.default import *
 
 
-def z3():
-    if hasattr(z3, 'z3'):
-        return z3.z3
-    z3.z3 = _import(z3_path, 'z3')
-    return z3()
-
-
 def db():
     if hasattr(db, 'db'):
         return db.db
@@ -39,9 +32,6 @@ def db():
                    "data TEXT"
                    ");".format(table_prefix))
     db.db.commit()
-    cursor = db.db.cursor()
-    #cursor.execute("VACUUM;")
-    db.db.commit()
     return db()
 
 
@@ -63,6 +53,7 @@ def _import(path, name=None):
 
 
 def extend(path):
+    path = pathlib.Path(path).resolve()
     module = _import(path)
     for attr_name in dir(module):
         if attr_name[:1] == '_':
@@ -71,7 +62,12 @@ def extend(path):
         if isinstance(attr, dict):
             globals()[attr_name].update(attr)
         else:
-            globals()[attr_name] = getattr(module, attr_name)
+            globals()[attr_name] = attr
+            if attr_name.endswith('_path'):
+                if isinstance(attr, str) and not attr.startswith('/'):
+                    globals()[attr_name] = str(path.parent / attr)
+                elif isinstance(attr, list):
+                    globals()[attr_name] = list(map(lambda i: i if i.startswith('/') else str(path.parent / i), attr))
 
 
 def entrust(node, header: dict, solver_name, solvers: set):

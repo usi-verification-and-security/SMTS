@@ -2,19 +2,19 @@ import random
 import logging
 
 port = 3000  # listen port
-db_path = None  # sqlite3 db path
+db_path = None  # sqlite3 db path absolute or relative to the config file
 table_prefix = ''  # db table prefix
 portfolio_max = 0  # 0 if no limit
 portfolio_min = 0  # 0 if no limit
-partition_timeout = None  # None if no partitioning
-partition_policy = [2, 2]  #
+partition_timeout = 1000  # None if no partitioning
+partition_policy = [1, 2]  #
 solving_timeout = None  # None for no timeout
+build_path = None  # build path absolute or relative to the config file
 lemma_amount = None  # None for auto
 log_level = logging.INFO  # logging.DEBUG
 incremental = 2  # 0: always restart. 1: only push. 2: always incremental
-z3_path = None  # if None then z3.py assumed in python path
 fixedpoint_partition = False  # automatic partition for fixedpoint instances
-files = []  # list of files loaded at server startup
+files_path = []  # list of files path absolute or relative to the config file, to be loaded at server startup
 
 # parameters is a dictionary solver_name.solver_parameter -> value:(int, str, callable)  where:
 # solver_parameter is a valid parameter for the solver solver_name and
