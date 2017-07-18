@@ -5,7 +5,6 @@ const bodyParser = require('body-parser');
 const sqlite = require('sqlite3').verbose();
 const pjson = require('./package.json');
 const taskHandler = require('./taskHandler');
-const sys = require('util');
 const fs = require('fs');
 
 let database;           // For past execution analysis
@@ -27,93 +26,71 @@ app.use(express.static('./www'));
 app.use(bodyParser.json());
 app.use(fileUpload());
 
-app.get('/get', function(req, res) { // get the content of the whole tree
-    if (database === undefined) {
-        console.log("No database was provided.");
-        res.json([]); // return result to the browser
-    }
-    else {
-        let db = new sqlite.Database(database);
-        let result = [];
-        db.all("SELECT * FROM SolvingHistory", function(err, rows) { // take everything from table "SolvingHistory"
-            if (err) {
-                res.json({error_code: 1, err_desc: err});
-                return;
-            }
-            rows.forEach(function(row) { // save each of the table as an object in array "result"
-                result.push({
-                    id: row.id,
-                    ts: row.ts,
-                    name: row.name,
-                    node: row.node,
-                    event: row.event,
-                    solver: row.solver,
-                    data: row.data
-                });
-            });
-            res.json(result); // return result to the browser
-        });
-        db.close();
-    }
-});
 
-app.get('/get/:instance', function(req, res) { // Get content of a specific instance
-    if (database === undefined) {
-        console.log("No database was provided.");
-        res.json([]); // return result to the browser
+// get events associated with a particular instance
+app.get('/events/:instance', function(req, res) {
+    if (!database) {
+        res.json({error_code: 1, err_desc: 'No database on server'});
     }
     else {
         let instance = `'${req.params.instance}'`;
         let db = new sqlite.Database(database);
         let query = `SELECT * FROM SolvingHistory WHERE name=${instance}`;
-        let result = [];
-        db.all(query, function(err, rows) {
+        db.all(query, function(err, events) {
             if (err) {
                 res.json({error_code: 1, err_desc: err});
                 return;
             }
-            rows.forEach(function(row) { // save each of the table as an object in array "result"
-                result.push({
-                    id: row.id,
-                    ts: row.ts,
-                    node: JSON.parse(row.node),
-                    event: row.event,
-                    solver: row.solver,
-                    data: JSON.parse(row.data)
+            let eventsJson = [];
+            events.forEach(function(event) {
+                eventsJson.push({
+                    id: event.id,
+                    ts: event.ts,
+                    node: JSON.parse(event.node),
+                    event: event.event,
+                    solver: event.solver,
+                    data: JSON.parse(event.data)
                 });
             });
-            res.json(result); // return result to the browser
+            res.json(eventsJson);
         });
         db.close();
     }
 });
 
 
-app.get('/getInstances', function(req, res) {
-    if (database === undefined) {
-        console.log("No database was provided.");
-        res.json([]); // return result to the browser
+app.get('/instances', function(req, res) {
+    if (!database) {
+        res.json({error_code: 1, err_desc: 'No database on server'});
     }
     else {
         let db = new sqlite.Database(database);
-        let result = [];
-        db.all("SELECT DISTINCT name FROM SolvingHistory", function(err, rows) {
+        db.all("SELECT DISTINCT name FROM SolvingHistory", function(err, instances) {
             if (err) {
                 res.json({error_code: 1, err_desc: err});
-                return;
             }
-            rows.forEach(function(row) { // save each of the table as an object in array "result"
-                result.push(row);
-            });
-            res.json(result); // return result to the browser
+            else {
+                res.json(instances);
+            }
         });
         db.close();
     }
 });
+
+
+app.get('/info', function(req, res) {
+    res.json({
+       isRealTime: isRealTime,
+       version: taskHandler.getVersion(),
+       // TODO: add database name / server address
+    });
+});
+
 
 app.get('/getRealTime', function(req, res) {
     res.json(isRealTime);
 });
+
 
 app.post('/upload', function(req, res) {
     console.log('Uploading db file...');
@@ -140,10 +117,11 @@ app.post('/upload', function(req, res) {
     });
 });
 
-app.get('/getServerData', function(req, res) {
-    let response = taskHandler.getCurrent();
-    res.json(response);
+
+app.get('/getSolvingInfo', function(req, res) {
+    res.json(taskHandler.getCurrent());
 });
+
 
 app.post('/changeTimeout', function(req, res) {
     // console.log(req.body.timeout);
@@ -243,8 +221,8 @@ function initialize() {
                     taskHandler.setPort(process.argv[i + 1]);
                     database = taskHandler.getDatabase();
                     isRealTime = true;
-                    if (database === "") {
-                        console.log("There is no database on the server provided. Closing SMT Viewer.")
+                    if (database === '') {
+                        console.log('There is no database on the server provided. Closing SMT Viewer.')
                         process.exit();
                     }
                     break;

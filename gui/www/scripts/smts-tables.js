@@ -124,27 +124,30 @@ smts.tables = {
     // Set of functions that manipulate the DOM object 'smts-events-container'
     events: {
 
-        // {String} queryRows: String to shorten queries
-        queryRows: '#smts-events-table > tbody > tr',
-
         // Make cells of events table with selected nodes bold
         // @param {Node[]} selectedNodes: List of nodes for which corresponding
         // events' cells have to be selected.
         boldSelected: function(selectedNodes) {
             // Remove bold from all event cells
-            let rows = document.querySelectorAll(`${this.queryRows} > td.smts-bold`);
+            let rows = this.getRows('>td.smts-bold');
             if (rows) rows.forEach(row => row.classList.remove('smts-bold'));
 
             // Apply bold to event cells with selected nodes
             for (let selectedNode of selectedNodes) {
                 let selectedNodeNameStr = JSON.stringify(selectedNode.name);
                 // node
-                rows = document.querySelectorAll(`${this.queryRows}[data-node="${selectedNodeNameStr}"]`);
+                rows = this.getRows(`[data-node="${selectedNodeNameStr}"]`);
                 if (rows) rows.forEach(row => row.children[2].classList.add('smts-bold'));
                 // data-node
-                rows = document.querySelectorAll(`${this.queryRows}[data-data-node="${selectedNodeNameStr}"]`);
+                rows = this.getRows(`[data-data-node="${selectedNodeNameStr}"]`);
                 if (rows) rows.forEach(row => row.children[4].classList.add('smts-bold'));
             }
+        },
+
+        // TODO: description
+        getRows: function(option = '') {
+            let queryRows = '#smts-events-table > tbody > tr';
+            return document.querySelectorAll(`${queryRows}${option}`)
         },
 
         // Highlight all rows with event matching one of events
@@ -152,12 +155,12 @@ smts.tables = {
         // highlighted.
         highlight: function(events) {
             // Remove highlight from all events
-            let rows = document.querySelectorAll(this.queryRows);
+            let rows = this.getRows();
             if (rows) rows.forEach(row => row.classList.remove('smts-highlight'));
 
             // Highlight selected nodes
             for (let event of events) {
-                rows = document.querySelectorAll(`${this.queryRows}[data-event="${event.id}"]`);
+                rows = this.getRows(`[data-event="${event.id}"]`);
                 if (rows) rows.forEach(row => row.classList.add('smts-highlight'));
             }
         },
@@ -173,7 +176,7 @@ smts.tables = {
 
         // Show all rows in events table
         showAll: function() {
-            let rows = document.querySelectorAll(this.queryRows);
+            let rows = this.getRows();
             if (rows) rows.forEach(row => row.classList.remove('smts-hidden'));
         },
 
@@ -190,10 +193,10 @@ smts.tables = {
             for (let selectedNode of selectedNodes) {
                 let selectedNodeNameStr = JSON.stringify(selectedNode.name);
                 // node
-                rows = document.querySelectorAll(`${this.queryRows}[data-node="${selectedNodeNameStr}"]`);
+                rows = this.getRows(`[data-node="${selectedNodeNameStr}"]`);
                 if (rows) rows.forEach(row => row.classList.remove('smts-hidden'));
                 // data-node
-                rows = document.querySelectorAll(`${this.queryRows}[data-data-node="${selectedNodeNameStr}"]`);
+                rows = this.getRows(`[data-data-node="${selectedNodeNameStr}"]`);
                 if (rows) rows.forEach(row => row.classList.remove('smts-hidden'));
             }
         },
@@ -202,8 +205,8 @@ smts.tables = {
         // @param {Node[]} selectedNodes: List of nodes to compare to each
         // row's node.
         update: function(selectedNodes) {
-            this.boldSelected(selectedNodes);
             this.isTabActive('selected') ? this.showSelected(selectedNodes) : this.showAll();
+            this.boldSelected(selectedNodes);
         }
     },
 
@@ -211,18 +214,21 @@ smts.tables = {
     // Set of functions that manipulate the DOM object 'smts-instances-container'
     instances: {
 
-        // {String} queryRows: String to shorten queries.
-        queryRows: '#smts-instances-table > tbody > tr',
+        // TODO: description
+        getRows: function(option = '') {
+            let queryRows = '#smts-instances-table > tbody > tr';
+            return document.querySelectorAll(`${queryRows}${option}`)
+        },
 
         // Highlight all rows with instance matching one of instances
         // @param {Instance[]} instances: List of instance to be highlighted.
         highlight: function(instances) {
             // Remove highlight from all instances
-            let rows = document.querySelectorAll(this.queryRows);
+            let rows = this.getRows();
             if (rows) rows.forEach(row => row.classList.remove('smts-highlight'));
 
             for (let instance of instances) {
-                rows = document.querySelectorAll(`${this.queryRows}[data-instance="${instance.name}"`);
+                rows = this.getRows(`[data-instance="${instance.name}"`);
                 if (rows) rows.forEach(row => row.classList.add('smts-highlight'));
             }
         }
@@ -232,23 +238,26 @@ smts.tables = {
     // Set of functions that manipulate the DOM object 'smts-solvers-container'
     solvers: {
 
-        // {String} queryRows: String to shorten queries.
-        queryRows: '#smts-solvers-table > tbody > tr',
-
         // Make cells of solvers table with selected nodes bold
         // @param {Node[]} selectedNodes: List of nodes for which corresponding
         // solvers' cells have to be selected.
         boldSelected: function(selectedNodes) {
             // Remove bold from all event cells
-            let rows = document.querySelectorAll(`${this.queryRows} > td.smts-bold`);
+            let rows = this.getRows('>td.smts-bold');
             if (rows) rows.forEach(row => row.classList.remove('smts-bold'));
 
             // Apply bold to solver cells with selected nodes
             for (let selectedNode of selectedNodes) {
                 let selectedNodeNameStr = JSON.stringify(selectedNode.name);
-                rows = document.querySelectorAll(`${this.queryRows}[data-node="${selectedNodeNameStr}"]`);
+                rows = this.getRows(`[data-node="${selectedNodeNameStr}"]`);
                 if (rows) rows.forEach(row => row.children[1].classList.add('smts-bold'));
             }
+        },
+
+        // TODO: description
+        getRows: function(option = '') {
+            let queryRows = '#smts-solvers-table > tbody > tr';
+            return document.querySelectorAll(`${queryRows}${option}`)
         },
 
         // Highlight all rows with solver matching one of solvers
@@ -256,12 +265,12 @@ smts.tables = {
         // highlighted.
         highlight: function(solvers) {
             // Remove highlight from all solvers
-            let rows = document.querySelectorAll(this.queryRows);
+            let rows = this.getRows();
             if (rows) rows.forEach(row => row.classList.remove('smts-highlight'));
 
             // Highlight selected nodes
             for (let solver of solvers) {
-                rows = document.querySelectorAll(`${this.queryRows}[data-solver="${solver.name}"]`);
+                rows = this.getRows(`[data-solver="${solver.name}"]`);
                 if (rows) rows.forEach(row => row.classList.add('smts-highlight'));
             }
         },
@@ -277,7 +286,7 @@ smts.tables = {
 
         // Show all rows in solvers table
         showAll: function() {
-            let rows = document.querySelectorAll(this.queryRows);
+            let rows = this.getRows();
             if (rows) rows.forEach(row => row.classList.remove('smts-hidden'));
         },
 
@@ -287,13 +296,13 @@ smts.tables = {
         // row's node.
         showSelected: function(selectedNodes) {
             // Hide all nodes
-            let rows = document.querySelectorAll(this.queryRows);
+            let rows = this.getRows();
             if (rows) rows.forEach(row => row.classList.add('smts-hidden'));
 
             // Show nodes that are in solver.node
             for (let selectedNode of selectedNodes) {
                 let selectedNodeNameStr = JSON.stringify(selectedNode.name);
-                rows = document.querySelectorAll(`${this.queryRows}[data-node="${selectedNodeNameStr}"]`);
+                rows = this.getRows(`[data-node="${selectedNodeNameStr}"]`);
                 if (rows) rows.forEach(row => row.classList.remove('smts-hidden'));
             }
         },
@@ -302,8 +311,8 @@ smts.tables = {
         // @param {Node[]} selectedNodes: List of nodes to compare to each
         // row's node.
         update: function(selectedNodes) {
-            this.boldSelected(selectedNodes);
             this.isTabActive('selected') ? this.showSelected(selectedNodes) : this.showAll();
+            this.boldSelected(selectedNodes);
         }
     }
 };

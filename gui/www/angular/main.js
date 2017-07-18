@@ -5,9 +5,6 @@ let app = angular.module('myApp', ['ngFileUpload'])
     // {Number}: How many rows of the db needs to be read
     .value('currentRow', {value: 0})
 
-    // {Boolean}: true if real-time analysis, false otherwise
-    .value('isRealTimeDB', {value: false})
-
     // TODO: describe
     .value('DBcontent', {value: null})
 

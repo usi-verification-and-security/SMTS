@@ -40,7 +40,7 @@ module.exports = {
     },
 
     getRemainingTime: function () {
-        return run(`self.current.when_timeout if self.current else "Empty"`);
+        return run(`"{:.2f}".format(self.current.when_timeout) if self.current else "Empty"`);
     },
 
     getCurrent: function () {
