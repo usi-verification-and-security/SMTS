@@ -1,3 +1,4 @@
+from version import version
 import enum
 import config
 import re
@@ -179,45 +180,21 @@ class SMT(Root):
 
 
 class Fixedpoint(Root):
-    def __init__(self, name: str, fixedpoint, queries):
-        s = fixedpoint.to_string([])
-        self.query = str(queries[0].sexpr())
-        super().__init__(name, s[s.index('(declare-rel '):])
+    def __init__(self, name: str, smt: str):
+        self.json = smt2json(smt)
+        self.query = None
+        for i in self.json:
+            if i[0] == 'query':
+                self.query = i[1]
+                self.json = self.json[:self.json.index(i)]
+                break
+        if self.query is None:
+            raise ValueError('query not found')
+        self.json = [i for i in self.json if i[0] != 'query']
+        super().__init__(name, smt.split('(query ')[0])
 
-    def partition(self, fixedpoint, queries):
-        if len(self) > 0:
-            raise ValueError('already partitioned')
-        _f = config.z3().Fixedpoint(ctx=fixedpoint.ctx)
-        query = queries[0]
-        queries = []
-        for rule in fixedpoint.get_rules():
-            if config.z3().is_quantifier(rule):
-                imp = rule.body()
-                body = imp.arg(0)
-                if imp.num_args() == 2:  # if is implies
-                    head = imp.arg(1)
-                    if config.z3().is_and(body):
-                        for i in range(body.num_args()):  # app always before others
-                            ch = body.arg(i)
-                            if config.z3().is_app(ch) and ch.decl().kind() == config.z3().Z3_OP_UNINTERPRETED:
-                                _f.register_relation(ch.decl())
-                            else:
-                                break
-                    else:
-                        _f.register_relation(body.decl())
-                    if head.eq(query):
-                        head = config.z3().Bool(query.sexpr() + str(len(queries)), fixedpoint.ctx)
-                        queries.append(head)
-                    _f.register_relation(head.decl())
-                    _f.add_rule(head, body)
-                    continue
-            else:
-                imp = rule
-            _f.register_relation(imp.decl())
-            _f.add_rule(rule)
-
-        s = _f.to_string([])
-        parent = OrNode(self, s[s.index('(declare-rel '):])
+    def partition(self):
+        parent = OrNode(self, '')
         if config.db():
             config.db().cursor().execute("INSERT INTO {}SolvingHistory (name, node, event, solver, data) "
                                          "VALUES (?,?,?,?,?)".format(config.table_prefix), (
@@ -228,8 +205,25 @@ class Fixedpoint(Root):
                                              json.dumps({'node': str(parent.path())})
                                          ))
 
+        obj = self.json.copy()
+        queries = []
+        for i in obj:
+            try:
+                if i[0] != 'rule':
+                    continue
+                i = i[1]
+                if i[0] == 'let':
+                    i = i[2]
+                if i[0] == '=>' and i[2] == self.query:
+                    queries.append('{}{}'.format(self.query, len(queries)))
+                    i[2] = queries[-1]
+            except:
+                pass
+
+        parent.smt = json2smt(obj)
+
         for query in queries:
-            child = AndNode(parent, '(query ' + query.sexpr() + ')')
+            child = AndNode(parent, '(query ' + query + ')')
             if config.db():
                 config.db().cursor().execute("INSERT INTO {}SolvingHistory (name, node, event, solver, data) "
                                              "VALUES (?,?,?,?,?)".format(config.table_prefix), (
@@ -244,7 +238,8 @@ class Fixedpoint(Root):
             config.db().commit()
 
     def to_string(self, node: AndNode, start: AndNode = None):
-        if node.root != self:
+        self.is_ancestor(node)
+        if start is not None:
             raise ValueError
         if node is self:
             return self.smt, '(query ' + self.query + ')'
@@ -252,8 +247,82 @@ class Fixedpoint(Root):
             return node.parent.smt, node.smt
 
 
+# class Fixedpoint(Root):
+#     def __init__(self, name: str, fixedpoint, queries):
+#         s = fixedpoint.to_string([])
+#         self.query = str(queries[0].sexpr())
+#         super().__init__(name, s[s.index('(declare-rel '):])
+#
+#     def partition(self, fixedpoint, queries):
+#         if len(self) > 0:
+#             raise ValueError('already partitioned')
+#         _f = config.z3().Fixedpoint(ctx=fixedpoint.ctx)
+#         query = queries[0]
+#         queries = []
+#         for rule in fixedpoint.get_rules():
+#             if config.z3().is_quantifier(rule):
+#                 imp = rule.body()
+#                 body = imp.arg(0)
+#                 if imp.num_args() == 2:  # if is implies
+#                     head = imp.arg(1)
+#                     if config.z3().is_and(body):
+#                         for i in range(body.num_args()):  # app always before others
+#                             ch = body.arg(i)
+#                             if config.z3().is_app(ch) and ch.decl().kind() == config.z3().Z3_OP_UNINTERPRETED:
+#                                 _f.register_relation(ch.decl())
+#                             else:
+#                                 break
+#                     else:
+#                         _f.register_relation(body.decl())
+#                     if head.eq(query):
+#                         head = config.z3().Bool(query.sexpr() + str(len(queries)), fixedpoint.ctx)
+#                         queries.append(head)
+#                     _f.register_relation(head.decl())
+#                     _f.add_rule(head, body)
+#                     continue
+#             else:
+#                 imp = rule
+#             _f.register_relation(imp.decl())
+#             _f.add_rule(rule)
+#
+#         s = _f.to_string([])
+#         parent = OrNode(self, s[s.index('(declare-rel '):])
+#         if config.db():
+#             config.db().cursor().execute("INSERT INTO {}SolvingHistory (name, node, event, solver, data) "
+#                                          "VALUES (?,?,?,?,?)".format(config.table_prefix), (
+#                                              self.name,
+#                                              str(self.path()),
+#                                              'OR',
+#                                              '',
+#                                              json.dumps({'node': str(parent.path())})
+#                                          ))
+#
+#         for query in queries:
+#             child = AndNode(parent, '(query ' + query.sexpr() + ')')
+#             if config.db():
+#                 config.db().cursor().execute("INSERT INTO {}SolvingHistory (name, node, event, solver, data) "
+#                                              "VALUES (?,?,?,?,?)".format(config.table_prefix), (
+#                                                  self.name,
+#                                                  str(self.path()),
+#                                                  'AND',
+#                                                  '',
+#                                                  json.dumps({'node': str(child.path())})
+#                                              ))
+#
+#         if config.db():
+#             config.db().commit()
+#
+#     def to_string(self, node: AndNode, start: AndNode = None):
+#         if node.root != self:
+#             raise ValueError
+#         if node is self:
+#             return self.smt, '(query ' + self.query + ')'
+#         elif isinstance(node, AndNode):
+#             return node.parent.smt, node.smt
+
+
 def smt2json(smt):
-    orc = sys.getrecursionlimit()
+    orl = sys.getrecursionlimit()
 
     try:
         sys.setrecursionlimit(100000)
@@ -263,7 +332,7 @@ def smt2json(smt):
         def add_string(s):
             nonlocal strings
             key = '{{{}}}'.format(len(strings))
-            strings[key] = json.dumps(s)[1:-1]
+            strings[key] = '\\"{}\\"'.format(json.dumps(s)[1:-1])
             return key
 
         smt = '({})'.format(smt)
@@ -282,26 +351,47 @@ def smt2json(smt):
         for key in strings:
             s = s.replace(key, strings[key])
 
-        o = json.loads(s)
+        return json.loads(s)
 
     except:
         raise
-    else:
-        return o
     finally:
-        sys.setrecursionlimit(orc)
+        sys.setrecursionlimit(orl)
+
+
+def json2smt(obj):
+    orl = sys.getrecursionlimit()
+
+    try:
+        sys.setrecursionlimit(100000)
+
+        def smt(obj):
+            if isinstance(obj, str):
+                return obj
+            return '({})'.format(' '.join(map(smt, obj)))
+
+        return '\n'.join(map(smt, obj))
+
+    except:
+        raise
+    finally:
+        sys.setrecursionlimit(orl)
 
 
 def parse(name: str, smt: str):
-    # TODO: I hardcode partitioning because keeping the fixedpoint object is too expensive and kills the solver
-    # something else should be done...
-    context = config.z3().Context()
-    fixedpoint = config.z3().Fixedpoint(ctx=context)
-    queries = fixedpoint.parse_string(smt)
-    if not queries:
-        return SMT(name, smt)
+    # Still testing...
+
+    # context = config.z3().Context()
+    # fixedpoint = config.z3().Fixedpoint(ctx=context)
+    # queries = fixedpoint.parse_string(smt)
+    # if not queries:
+    #     return SMT(name, smt)
+    # else:
+    #     root = Fixedpoint(name, fixedpoint, queries)
+    #     if config.fixedpoint_partition:
+    #         root.partition(fixedpoint, queries)
+    #     return root
+    if smt.find('(query ') > 0:
+        return Fixedpoint(name, smt)
     else:
-        root = Fixedpoint(name, fixedpoint, queries)
-        if config.fixedpoint_partition:
-            root.partition(fixedpoint, queries)
-        return root
+        return SMT(name, smt)

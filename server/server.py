@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import version
+from version import version
 import framework
 import net
 import client
@@ -185,7 +185,7 @@ class ParallelizationServer(net.Server):
         self.config = config
         self.trees = []
         self.current = None
-        self.log(logging.INFO, 'server start. version {}'.format(version.version))
+        self.log(logging.INFO, 'server start. version {}'.format(version))
 
     def handle_accept(self, sock):
         self.log(logging.DEBUG, 'new connection from {}'.format(sock.remote_address))
@@ -460,9 +460,9 @@ class ParallelizationServer(net.Server):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='=== SMTS version {} ==='.format(version.version))
+    parser = argparse.ArgumentParser(description='=== SMTS version {} ==='.format(version))
 
-    parser.add_argument('--version', action='version', version=str(version.version))
+    parser.add_argument('--version', action='version', version=str(version))
     parser.add_argument('-c', dest='config_path', type=lambda value: config.extend(value), help='config file path')
     parser.add_argument('-d', dest='db_path', help='sqlite3 database file path')
 
