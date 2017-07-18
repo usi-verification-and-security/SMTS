@@ -3,6 +3,7 @@ build/
 cmake-build-debug/CMakeCache.txt
 cmake-build-debug/CMakeFiles/
 gui/.idea/
+gui/benchmarks/
 gui/databases/
 gui/node_modules/
 gui/www/treeManager/*.d.ts
