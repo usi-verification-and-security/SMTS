@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import version
+from version import version
 import net
 import sys
 import pathlib
@@ -52,8 +52,9 @@ def terminal(address):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='=== SMTS version {} ==='.format(version.version))
+    parser = argparse.ArgumentParser(description='=== SMTS version {} ==='.format(version))
 
+    parser.add_argument('--version', action='version', version=str(version))
     parser.add_argument('host_port', metavar='[host:]port', nargs=1, help='default host=127.0.0.1')
     parser.add_argument('files', metavar='file', nargs='*', help='SMT files to submit. CLI mode if empty')
 
