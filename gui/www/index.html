@@ -149,7 +149,8 @@
                             data-node="{{event.node}}"
                             data-data-node="{{event.data && event.data.node ? event.data.node : null}}"
                             ng-repeat="event in events"
-                            ng-click="showEvent(event, $index)">
+                            ng-click="showEvent(event, $index)"
+                            table-events-populated>
                             <td>{{$index}}</td>
                             <td>{{event.ts}}s</td>
                             <td>{{event.node}}</td>

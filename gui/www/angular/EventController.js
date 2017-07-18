@@ -4,9 +4,23 @@ app.controller(
 
             // Update events on instance selected
             $scope.$on('select-instance', function() {
+                // Make tree
+                sharedTree.tree.arrangeTree(currentRow.value);
+                generateDomTree(sharedTree.tree, null);
+
+                // Make timeline
                 let events = sharedTree.tree.getEvents(currentRow.value + 1);
                 $scope.events = events;
                 $scope.initTimeline(events);
+            });
+
+            // Select last event in table when table is fully populated
+            $scope.$on('table-events-populated', function() {
+                // TODO: Make it work without timeout
+                setTimeout(function() {
+                    smts.tables.events.highlight([$scope.events[$scope.events.length - 1]]);
+                }, 0);
+                // TODO: scroll to end
             });
 
 
