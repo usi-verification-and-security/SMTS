@@ -81,7 +81,9 @@
                             <div>
                                 <p class="smsts-container-subtitle">New instance:</p>
                                 <form class="smts-container-horizontal" action="/uploadInstance" method="post" encType="multipart/form-data">
-                                    <label class="btn btn-default btn-browse"><input type="file" accept="" required>Browse</label>
+                                    <label class="btn btn-default btn-browse">Browse
+                                        <input name="smts-upload-instance" type="file" accept="" required>
+                                    </label>
                                     <input class="btn btn-default" type='submit' value='Upload'/>
                                 </form>
                             </div>
@@ -116,7 +118,7 @@
         </div>
 
         <!--Second column-->
-        <div id="smts-column-2" class="col-sm-6 container-fluid smts-column">
+        <div id="smts-column-2" class="col-sm-6 container-fluid smts-column smts-hidden">
             <!--Tree view-->
             <div id="smts-tree-container" class="smts-container" ng-controller="ViewController"></div>
 
@@ -162,7 +164,7 @@
         </div>
 
         <!--Third column-->
-        <div id="smts-column-3" class="col-sm-3 smts-column">
+        <div id="smts-column-3" class="col-sm-3 smts-column smts-hidden">
                 <!--Solver view-->
                 <div id="smts-solvers-container" class="smts-container" ng-controller="SolverController">
                     <div id="smts-solvers-title" class="smts-container-title">Solvers</div>
@@ -199,7 +201,7 @@
             </div>
     </div>
 
-    <div id="smts-timeline" class="row">
+    <div id="smts-timeline" class="row smts-hidden">
         <div id="smts-timeline-line"></div>
         <div id="smts-timeline-span"></div>
     </div>

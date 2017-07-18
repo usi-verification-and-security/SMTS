@@ -52,7 +52,14 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
 
         // Select an instance and load its data from database
         $scope.selectInstance = function(instance) {
+            // Highlight instance
             smts.tables.instances.highlight([instance]);
+
+            // Unhide other containers
+            // Useful the first time an instance is selected
+            document.getElementById('smts-column-2').classList.remove('smts-hidden');
+            document.getElementById('smts-column-3').classList.remove('smts-hidden');
+            document.getElementById('smts-timeline').classList.remove('smts-hidden');
 
             // Get tree data
             this.loadData(instance);
