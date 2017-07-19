@@ -120,16 +120,7 @@ app.get('/getSolvingInfo', function(req, res) {
 
 
 app.post('/changeTimeout', function(req, res) {
-    // console.log(req.body.timeout);
-    // console.log(req.body.type);
-    if (req.body.type === "increase") {
-        taskHandler.increaseTimeout(req.body.timeout);
-    }
-    else {
-        taskHandler.decreaseTimeout(req.body.timeout);
-    }
-    // TODO: update timeout in index.html (when refreshing, and also try to prevent refresh)
-    res.redirect('back');
+    taskHandler.changeTimeout(req.body.delta);
 });
 
 app.post('/stop', function(req, res) {

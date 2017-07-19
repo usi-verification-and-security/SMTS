@@ -1,6 +1,7 @@
 app.controller('TaskHandler', ['$scope', '$window', '$http', 'sharedService',
     function($scope, $window, $http, sharedService) {
 
+        // Update instance data values in server container
         $scope.$on('update-instance-data', function(e, instanceData) {
             $scope.instanceName = instanceData.name || 'Nothing';
             $scope.instanceTime = instanceData.time;
@@ -10,16 +11,11 @@ app.controller('TaskHandler', ['$scope', '$window', '$http', 'sharedService',
         // Change timeout to to end the running evaluation
         // @param {String} type: Either 'increase' or 'decrease'.
         $scope.changeTimeout = function(type) {
-            $http({
-                method: 'POST',
-                url: '/changeTimeout',
-                data: {
-                    'timeout': $('#smts-server-timeout').val(),
-                    'type': type
-                },
-            }).then(
+            let delta = document.getElementById('smts-server-timeout').value || 0;
+            if (type === 'decrease') delta *= -1;
+            $http({method: 'POST', url: '/changeTimeout', data: {'delta': delta},}).then(
                 function() {
-                    event.preventDefault(); // Prevent page redirect
+                    // Do nothing
                 }, smts.tools.error);
         };
 
