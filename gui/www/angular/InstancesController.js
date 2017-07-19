@@ -2,6 +2,15 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
     function($scope, $rootScope, currentRow, sharedTree, $window, $http, sharedService) {
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // CONSTANTS AND GLOBAL VARIABLES
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        // Time intervals for update functions, expressend in milliseconds
+        const INTERVAL_UPDATE_SOLVING_INFO = 1000;
+        const INTERVAL_UPDATE_INSTANCES    = 5000;
+        const INTERVAL_UPDATE_EVENTS       = 5000;
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // MAIN
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -19,9 +28,9 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
 
                         // Request updates if real time analysis
                         $scope.updateSolvingInfoIntervalId =
-                            window.setInterval($scope.updateSolvingInfo, 3000);
+                            window.setInterval($scope.updateSolvingInfo, INTERVAL_UPDATE_SOLVING_INFO);
                         $scope.updateInstancesIntervalId =
-                            window.setInterval($scope.updateInstances, 5000);
+                            window.setInterval($scope.updateInstances, INTERVAL_UPDATE_INSTANCES);
                     }
                     else {
                         // Show database container
@@ -62,8 +71,9 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
 
             // If real-time analysis, ask every 5 seconds for db content
             if ($scope.isRealTime) {
+                clearInterval($scope.updateEventsIntervalId); // Clear previous instance updates
                 $scope.updateEventsIntervalId =
-                    setInterval($scope.updateEvents.bind(null, instance), 5000);
+                    setInterval($scope.updateEvents.bind(null, instance), INTERVAL_UPDATE_EVENTS);
             }
         };
 
@@ -107,15 +117,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
             $http({method: 'GET', url: '/getSolvingInfo'}).then(
                 function(res) {
                     let instanceData = res.data;
-
                     sharedService.broadcastUpdateInstanceData(instanceData);
-
-                    // Stop requesting events update if the instance is solved
-                    if (!instanceData.name && $scope.updateEventsIntervalId) {
-                        $scope.updateEvents(instanceData); // Make last request
-                        clearInterval($scope.updateEventsIntervalId);
-                        $scope.updateEventsIntervalId = null;
-                    }
                 }, $scope.error);
         };
 

@@ -175,12 +175,9 @@ smts.tables = {
         },
 
         // TODO: add description
-        scroll: function(event) {
-            let row = this.getRows(`[data-event="${event.id}"]`)[0];
+        scroll: function() {
             let container = document.getElementById('smts-events-table-container');
-            if (row && container) {
-                container.scrollTop = row.offsetTop - container.offsetTop;
-            }
+            container.scrollTop = container.scrollHeight;
         },
 
         // Show all rows in events table

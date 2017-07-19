@@ -9,11 +9,11 @@ app.controller(
                 $scope.events = events;
 
                 // Select last event
-                $scope.selectEvent($scope.events[$scope.events.length - 1], $scope.events.length - 1);
+                $scope.selectEvent($scope.events[$scope.events.length - 1], $scope.events.length - 1, true);
             });
 
             // Show tree up to clicked event
-            $scope.selectEvent = function(event, index) {
+            $scope.selectEvent = function(event, index, scrollBottom) {
                 // Build tree
                 currentRow.value = index;
                 sharedTree.tree.arrangeTree(currentRow.value);
@@ -33,6 +33,7 @@ app.controller(
                     smts.tables.events.highlight([event]);
                     smts.tables.events.update(sharedTree.tree.selectedNodes);
                     smts.tables.solvers.update(sharedTree.tree.selectedNodes);
+                    if (scrollBottom) smts.tables.events.scroll();
                 }, 0);
 
                 // Notify selected element
