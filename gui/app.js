@@ -7,10 +7,6 @@ const pjson = require('./package.json');
 const taskHandler = require('./taskHandler');
 const fs = require('fs');
 
-let database;           // For past execution analysis
-let isRealTime = false; // true if database is running on server
-let port = 8080;
-
 app.use(function(req, res, next) { //allow cross origin requests
     res.setHeader("Access-Control-Allow-Methods", "POST, PUT, OPTIONS, DELETE, GET");
     res.header("Access-Control-Allow-Origin", "http://localhost");
@@ -27,129 +23,284 @@ app.use(bodyParser.json());
 app.use(fileUpload());
 
 
-// get events associated with a particular instance
-app.get('/events/:instance', function(req, res) {
-    if (!database) {
-        res.json({error_code: 1, err_desc: 'No database on server'});
-    }
-    else {
-        let instance = `'${req.params.instance}'`;
-        let db = new sqlite.Database(database);
-        let id = req.query.id ? ` AND id >= ${req.query.id}` : '';
-        let query = `SELECT * FROM SolvingHistory WHERE name=${instance}${id}`;
-        db.all(query, function(err, events) {
-            if (err) {
-                res.json({error_code: 1, err_desc: err});
-                return;
-            }
-            let eventsJson = [];
-            events.forEach(function(event) {
-                eventsJson.push({
-                    id: event.id,
-                    ts: event.ts,
-                    node: JSON.parse(event.node),
-                    event: event.event,
-                    solver: event.solver,
-                    data: JSON.parse(event.data)
-                });
-            });
-            res.json(eventsJson);
-        });
-        db.close();
-    }
-});
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// CONSTANTS AND GLOBAL VARIABLES
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const globals = {
+    databasePath: null,  // {String}  Directory path of the database
+    isRealTime:   false, // {Boolean} `true` if it is live mode, `false` otherwise
+    serverPort:   8080   // {Number}  Port of the server
+};
 
 
-app.get('/instances', function(req, res) {
-    if (!database) {
-        res.json({error_code: 1, err_desc: 'No database on server'});
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TOOLS
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const tools = {
+
+    // Set of statuses
+    httpStatus: {
+        200: 'OK',
+        201: 'Created',
+        400: 'Bad request',
+        404: 'Not found',
+        500: 'Internal Server Error'
+    },
+
+    // Send response to client as json
+    // @param {Response} res: The response object.
+    // @param {Number} status: HTTP status code of the response.
+    // @param {Object} json: The json object to be sent to the client.
+    sendJson: function(res, status, json) {
+        res.status(status).json(json);
+    },
+
+    // Send response to client as an error
+    // @param {Response} res: The response object.
+    // @param {Number} status: HTTP status code of the response.
+    // @param {Object} error: The json object representing the error. It is
+    // made by the status code and a string description of the error.
+    sendError: function(res, status, error) {
+        let message = `${this.httpStatus[status]}: ${JSON.stringify(error)}`;
+        res.status(status).json({status: status, error: message});
+        console.error(message);
+        process.exit(-1);
+    },
+
+    // Send response to client as an error and abort execution of appliction
+    // @param {Response} res: The response object.
+    // @param {Number} status: HTTP status code of the response.
+    // @param {Object} error: The json object representing the error. It is
+    // made by the status code and a string description of the error.
+    sendFatalError: function(res, status, error) {
+        this.sendError(res, status, error);
+        process.exit(-1);
     }
-    else {
-        let db = new sqlite.Database(database);
-        db.all("SELECT DISTINCT name FROM SolvingHistory", function(err, instances) {
-            if (err) {
-                res.json({error_code: 1, err_desc: err});
-            }
-            else {
-                res.json(instances);
-            }
-        });
-        db.close();
-    }
-});
+};
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// GET
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Get information about the execution
 app.get('/info', function(req, res) {
-    res.json({
-       isRealTime: isRealTime,
-       version: taskHandler.getVersion(),
-       // TODO: add database name / server address
+    let info = {
+        isRealTime: globals.isRealTime,
+        version: taskHandler.getVersion(),
+        // TODO: add database name / server address
+    };
+    tools.sendJson(res, 200, info);
+});
+
+// Get information about the instance currently being solved
+app.get('/getSolvingInfo', function(req, res) {
+    tools.sendJson(res, 200, taskHandler.getCurrent());
+});
+
+// Get all instances in database
+app.get('/instances', function(req, res) {
+    if (!globals.databasePath) {
+        tools.sendFatalError(res, 500, 'No database on server');
+    }
+    let database = new sqlite.Database(globals.databasePath);
+
+    database.all("SELECT DISTINCT name FROM SolvingHistory", function(err, instances) {
+        if (err) {
+            tools.sendFatalError(res, 500, err);
+        } else if (!instances) {
+            tools.sendFatalError(res, 404, `Instances not found (GET /instances)`);
+        }
+        tools.sendJson(res, 200, instances);
     });
+    database.close();
+});
+
+// Get events associated with a particular instance
+// @params {String} instance: The name of the instance.
+// @query {Number} [optional] id: The id of the first event to be selected. If
+// present only events starting from the given id will be sent, otherwise all.
+app.get('/events/:instance', function(req, res) {
+    if (!globals.databasePath) {
+        tools.sendFatalError(res, 500, 'No database on server');
+    }
+    let database = new sqlite.Database(globals.databasePath);
+
+    let query = `SELECT * FROM SolvingHistory WHERE name='${req.params.instance}'`;
+    if (req.query.id) {
+        query += ` AND id >= ${req.query.id}`;
+    }
+    database.all(query, function(err, events) {
+        if (err) {
+            tools.sendFatalError(res, 500, err);
+        } else if (!events) {
+            tools.sendFatalError(res, 404, `Events not found (GET /events/:instance)`);
+        }
+        let eventsJson = [];
+        events.forEach(function(event) {
+            eventsJson.push({
+                id: event.id,
+                ts: event.ts,
+                node: JSON.parse(event.node),
+                event: event.event,
+                solver: event.solver,
+                data: JSON.parse(event.data)
+            });
+        });
+        tools.sendJson(res, 200, eventsJson);
+    });
+    database.close();
 });
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// UPLOAD
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Upload database to be used from the application
+// @data {File[]} files: List of database file to use.
 app.post('/upload/database', function(req, res) {
-    if (!req.files)
-        return res.status(400).send('No files were uploaded.');
-
-    // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
-    let sampleFile = req.files['smts-upload-db'];
-    let uploadPath = __dirname + '/databases/temp/' + sampleFile.name;
-
-    if (!fs.existsSync(__dirname + '/databases/temp')) {
-        fs.mkdirSync(__dirname + '/databases/temp');
+    if (!req.files) {
+        tools.sendError(res, 400, 'No database file uploaded');
+        return;
     }
 
-    // Use the mv() method to place the file somewhere on your server
-    sampleFile.mv(uploadPath, function(err) {
+    // Create `temp` directory if not already present
+    if (!fs.existsSync(`${__dirname}/databases/temp`)) {
+        fs.mkdirSync(`${__dirname}/databases/temp`);
+    }
+
+    let file = req.files['smts-upload-database'];
+    let path = `${__dirname}/databases/temp/${file.name}`;
+
+    // Save file in `temp` directory
+    file.mv(path, function(err) {
         if (err) {
-            return res.status(500).send(err);
+            tools.sendFatalError(res, 500, 'Failed to save database file');
         }
         // Set database
-        database = './databases/temp/' + sampleFile.name;
+        globals.databasePath = path;
         res.redirect('back');
     });
 });
 
+// Upload instance to be solved by the application
+// @data {File[]} files: List of instances files to use.
 app.post('/upload/instance', function(req, res) {
-    if (!req.files)
-        return res.status(400).send('No files were uploaded.');
-
-    // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
-    let sampleFile = req.files['smts-upload-instance'];
-    let uploadPath = __dirname + '/benchmarks/temp/' + sampleFile.name;
-
-    if (!fs.existsSync(__dirname + '/benchmarks/temp')) {
-        fs.mkdirSync(__dirname + '/benchmarks/temp');
+    if (!req.files) {
+        tools.sendError(res, 400, 'No instance file uploaded');
+        return;
     }
 
-    // Use the mv() method to place the file somewhere on your server
-    sampleFile.mv(uploadPath, function(err) {
+    // Create `temp` directory if not already present
+    if (!fs.existsSync(`${__dirname}/benchmarks/temp`)) {
+        fs.mkdirSync(`${__dirname}/benchmarks/temp`);
+    }
+
+    let file = req.files['smts-upload-instance'];
+    let path = `${__dirname}/benchmarks/temp/${file.name}`;
+
+    // Save file in `temp` directory
+    file.mv(path, function(err) {
         if (err) {
-            res.status(500).send(err);
+            tools.sendFatalError(res, 500, 'Failed to save instance file');
         }
-        else {
-            taskHandler.newInstance(uploadPath);
-            res.redirect('back');
-        }
+        // Start solving new instance
+        taskHandler.newInstance(path);
+        res.redirect('back');
     });
 });
 
 
-app.get('/getSolvingInfo', function(req, res) {
-    res.json(taskHandler.getCurrent());
-});
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TIMEOUT
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
+// Change solving timeout
+// @data {Number} delta: The increase/decrease value with respect to the
+// previous timeout.
 app.post('/changeTimeout', function(req, res) {
     taskHandler.changeTimeout(req.body.delta);
+    tools.sendJson(res, 201, {});
 });
 
+// Stop the currently solving execution
 app.post('/stop', function(req, res) {
     taskHandler.stopSolving();
+    tools.sendJson(res, 201, {});
 });
 
-process.stdin.resume(); // So the program will not close instantly
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// MAIN FUNCTIONS
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Initialize application and parse command line args
+function initialize() {
+    if (process.argv[2] && (process.argv[2] === "--help" || process.argv[2] === "-h")) {
+        showHelp();
+        process.exit();
+    }
+    else if (process.argv[2] === "-v" || process.argv[2] === "--version") {
+        console.log(pjson.version);
+        process.exit();
+    }
+    else {
+        for (let i = 2; i < process.argv.length - 1; i++) {
+            switch (process.argv[i]) {
+                // Port
+                case '-p':
+                case '--port':
+                    let serverPort = parseInt(process.argv[i + 1], 10);
+                    if (0 <= serverPort && serverPort < 65536) {
+                        globals.serverPort = serverPort;
+                    } else {
+                        console.error('Startup Error: No valid port provided');
+                        process.exit(-1);
+                    }
+                    break;
+
+                // Database
+                case '-d':
+                case '--database':
+                    let databasePath = process.argv[i + 1];
+                    if (databasePath) {
+                        globals.databasePath = databasePath;
+                    } else {
+                        console.error('Startup Error: No valid database provided');
+                        process.exit(-1);
+                    }
+                    break;
+
+                // Server
+                case '-s':
+                case'--server':
+                    taskHandler.setPort(process.argv[i + 1]);
+                    globals.databasePath = taskHandler.getDatabase();
+                    globals.isRealTime = true;
+                    if (!globals.databasePath) {
+                        console.log('There is no database on the server provided. Closing SMT Viewer.')
+                        process.exit();
+                    }
+                    break;
+            }
+        }
+
+        // Quit if no database provided
+        if (!globals.databasePath) {
+            console.error('Startup Error: No database provided');
+            process.exit(-1);
+        }
+
+        app.listen(globals.serverPort, function() {
+            console.log(`Server running on ${globals.serverPort}...`);
+        });
+
+
+    }
+}
 
 // Delete all files in temp directory before killing the process
 function exitHandler(options, err) {
@@ -166,82 +317,11 @@ function exitHandler(options, err) {
             files.forEach(file => fs.unlinkSync(`${__dirname}/benchmarks/temp/${file}`));
         }
     }
-    if (err) console.log(err.stack);
+    // if (err) console.log(err.stack);
     if (options.exit) process.exit();
 }
 
-//do something when app is closing
-process.on('exit', exitHandler.bind(null, {cleanup: true}));
-
-//catches ctrl+c event
-process.on('SIGINT', exitHandler.bind(null, {cleanup: true}));
-
-//catches uncaught exceptions
-process.on('uncaughtException', exitHandler.bind(null, {exit: true}));
-
-
-initialize();
-
-
-function initialize() {
-    if (process.argv[2] && (process.argv[2] === "--help" || process.argv[2] === "-h")) {
-        showHelp();
-        process.exit();
-    }
-    else if (process.argv[2] === "-v" || process.argv[2] === "--version") {
-        console.log(pjson.version);
-        process.exit();
-    }
-    else {
-        for (let i = 2; i < process.argv.length - 1; i++) {
-            switch (process.argv[i]) {
-                // Port
-                case '-p':
-                case '--port':
-                    let p = parseInt(process.argv[i + 1], 10);
-                    if (p >= 0 && p < 65536) {
-                        port = p;
-                    }
-                    else {
-                        console.log("Bad or no port provided: 'port' argument must be >= 0 and < 65536");
-                    }
-                    break;
-
-                // Database
-                case '-d':
-                case '--database':
-                    database = process.argv[i + 1];
-                    break;
-
-                // Server
-                case '-s':
-                case'--server':
-                    taskHandler.setPort(process.argv[i + 1]);
-                    database = taskHandler.getDatabase();
-                    console.log(database);
-                    isRealTime = true;
-                    if (database === '') {
-                        console.log('There is no database on the server provided. Closing SMT Viewer.')
-                        process.exit();
-                    }
-                    break;
-            }
-        }
-
-        // Quit if no database provided
-        if (!database) {
-            console.log('Error: no database wa provided');
-            process.exit();
-        }
-
-        app.listen(port, function() {
-            console.log('Server running on ' + port + '...');
-        });
-
-
-    }
-}
-
+// Show help
 function showHelp() {
     console.log("Usage: node app.js [-h] [-v] [-s SERVER] [-p PORT] [-d DATABASE]");
     console.log("");
@@ -252,3 +332,23 @@ function showHelp() {
     console.log("-p PORT, --port PORT                  set port");
     console.log("-d DATABASE, --database DATABASE      set database");
 }
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// MAIN
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Avoid instant program shut down
+process.stdin.resume();
+
+// Do something when app is closing
+process.on('exit', exitHandler.bind(null, {cleanup: true}));
+
+// Catch ctrl+c event
+process.on('SIGINT', exitHandler.bind(null, {cleanup: true}));
+
+// Catch uncaught exceptions
+process.on('uncaughtException', exitHandler.bind(null, {exit: true}));
+
+
+initialize();
