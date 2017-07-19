@@ -35,7 +35,7 @@ app.get('/events/:instance', function(req, res) {
     else {
         let instance = `'${req.params.instance}'`;
         let db = new sqlite.Database(database);
-        let id = req.query.id ? ` && id >= ${req.query.id}` : '';
+        let id = req.query.id ? ` AND id >= ${req.query.id}` : '';
         let query = `SELECT * FROM SolvingHistory WHERE name=${instance}${id}`;
         db.all(query, function(err, events) {
             if (err) {
@@ -88,7 +88,7 @@ app.get('/info', function(req, res) {
 });
 
 
-app.post('/upload', function(req, res) {
+app.post('/upload/database', function(req, res) {
     console.log('Uploading db file...');
     if (!req.files)
         return res.status(400).send('No files were uploaded.');
@@ -113,6 +113,10 @@ app.post('/upload', function(req, res) {
     });
 });
 
+app.post('/upload/instance', function(req, res) {
+    // taskHandler.newInstance(req.body.instance);
+});
+
 
 app.get('/getSolvingInfo', function(req, res) {
     res.json(taskHandler.getCurrent());
@@ -124,10 +128,7 @@ app.post('/changeTimeout', function(req, res) {
 });
 
 app.post('/stop', function(req, res) {
-    console.log("Stopping solving server execution..");
-    //TODO: Check if it really stops
     taskHandler.stopSolving();
-    res.redirect('back');
 });
 
 

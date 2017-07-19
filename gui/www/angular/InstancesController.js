@@ -73,12 +73,16 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
         // @param (Number) id (optional): If present, requests events only from
         // given id, and appends them to already existing events. Otherwise,
         // events are completly overwritten.
-        $scope.getEvents = function(instance, id) {
-            let query = id ? `?id=${id}` : ``;
+        $scope.getEvents = function(instance, eventId) {
+            let query = eventId ? `?id=${eventId}` : ``;
             $http({method: 'GET', url: `/events/${instance.name}${query}`}).then(
                 function(res) {
-                    if (!id) $scope.events = []; // Reset events if new request
+                    if (!eventId) $scope.events = []; // Reset events if new request
                     $scope.events = $scope.events.concat(res.data);
+
+                    // Update last event
+                    let lastEvent = $scope.events[$scope.events.length - 1];
+                    if (lastEvent) $scope.lastEventId = lastEvent.id;
 
                     // Initialize tree
                     sharedTree.tree = new TreeManager.Tree();
@@ -95,8 +99,6 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
                 }, $scope.error);
         };
 
-
-
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // UPDATES
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -110,6 +112,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
 
                     // Stop requesting events update if the instance is solved
                     if (!instanceData.name && $scope.updateEventsIntervalId) {
+                        $scope.updateEvents(instanceData); // Make last request
                         clearInterval($scope.updateEventsIntervalId);
                         $scope.updateEventsIntervalId = null;
                     }
@@ -131,7 +134,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
         };
 
         $scope.updateEvents = function(instance) {
-            $scope.getEvents(instance, instance.id);
+            $scope.getEvents(instance, $scope.lastEventId + 1);
         };
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
