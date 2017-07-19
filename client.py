@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from server import version
+from server.version import version
 from server import net
 import sys
 import pathlib

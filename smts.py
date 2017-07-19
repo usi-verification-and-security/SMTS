@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from server import server, version
+from server.version import version
+from server import server
 import client
 import argparse
 import logging
