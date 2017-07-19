@@ -1,19 +1,9 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-from version import version
-import framework
-import net
-import client
-import config
-import argparse
-import threading
-import socket
+from .version import version
+from . import framework
+from . import net
+from . import config
 import json
-import sys
 import logging
-import pathlib
-import subprocess
 import traceback
 import random
 import time
@@ -461,93 +451,3 @@ class ParallelizationServer(net.Server):
                                          json.dumps(data) if data else None
                                      ))
         config.db().commit()
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='=== SMTS version {} ==='.format(version))
-
-    parser.add_argument('--version', action='version', version=str(version))
-    parser.add_argument('-c', dest='config_path', type=lambda value: config.extend(value), help='config file path')
-    parser.add_argument('-d', dest='db_path', help='sqlite3 database file path')
-    parser.add_argument('-l', dest='lemma', action='store_true', help='enable lemma sharing')
-    parser.add_argument('-D', dest='lemmaDB', action='store_true', help='store lemmas in database')
-    parser.add_argument('-a', dest='lemmaAgain', action='store_true', help='send lemmas again to solver')
-    parser.add_argument('-o', dest='opensmt', type=int, metavar='N', help='run N opensmt2 solvers')
-    parser.add_argument('-z', dest='z3spacer', type=int, metavar='N', help='run N z3spacer solvers')
-
-    args = parser.parse_args()
-
-    if args.db_path:
-        config.db_path = args.db_path
-    config.db()
-
-    logging.basicConfig(level=config.log_level, format='%(asctime)s\t%(levelname)s\t%(message)s')
-
-    server = ParallelizationServer(logging.getLogger('server'))
-
-    if config.files_path:
-        def send_files(address, files):
-            for path in files:
-                try:
-                    client.send_file(address, path)
-                except:
-                    pass
-
-
-        files_thread = threading.Thread(target=send_files, args=(server.address, config.files_path))
-        files_thread.daemon = True
-        files_thread.start()
-
-    if args.lemma:
-        def run_lemma_server(lemma_server, database, send_again):
-            # searching for a better IP because this IP will be sent to the solvers connecting to the server
-            # that perhaps are on another host
-            ip = '127.0.0.1'
-            try:
-                ip = socket.gethostbyname(socket.gethostname())
-            except:
-                pass
-
-            args = [lemma_server, '-s', ip + ':' + str(config.port)]
-            if database:
-                database = pathlib.Path(database)
-                args += ['-d', database.parent / (database.stem + 'lemma.db')]
-            if send_again:
-                args += ['-a']
-            try:
-                lemma_server = subprocess.Popen(args)
-            except BaseException as ex:
-                print(ex)
-            else:
-                lemma_server.wait()
-
-
-        lemma_thread = threading.Thread(target=run_lemma_server, args=(
-            config.build_path + '/lemma_server',
-            config.db_path if args.lemmaDB else None,
-            args.lemmaAgain
-        ))
-        lemma_thread.daemon = True
-        lemma_thread.start()
-
-    if args.opensmt or args.z3spacer:
-        def run_solvers(*solvers):
-            for path, n in solvers:
-                try:
-                    for _ in range(n):
-                        subprocess.Popen([path, '-s127.0.0.1:' + str(config.port)])
-                except BaseException as ex:
-                    print(ex)
-
-
-        solvers_thread = threading.Thread(target=run_solvers, args=(
-            (config.build_path + '/solver_opensmt', args.opensmt),
-            (config.build_path + '/solver_z3spacer', args.z3spacer)
-        ))
-        solvers_thread.daemon = True
-        solvers_thread.start()
-
-    try:
-        server.run_forever()
-    except KeyboardInterrupt:
-        sys.exit(0)

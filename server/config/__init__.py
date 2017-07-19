@@ -3,7 +3,7 @@ import pathlib
 import sqlite3
 import importlib.util
 
-from config.default import *
+from .default import *
 
 
 def db():

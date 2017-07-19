@@ -1,6 +1,6 @@
-from version import version
+from .version import version
+from . import config
 import enum
-import config
 import re
 import json
 import sys

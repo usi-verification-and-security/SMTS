@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from version import version
-import net
+from server import version
+from server import net
 import sys
 import pathlib
 import argparse
