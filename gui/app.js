@@ -89,7 +89,6 @@ app.get('/info', function(req, res) {
 
 
 app.post('/upload/database', function(req, res) {
-    console.log('Uploading db file...');
     if (!req.files)
         return res.status(400).send('No files were uploaded.');
 
@@ -108,13 +107,32 @@ app.post('/upload/database', function(req, res) {
         }
         // Set database
         database = './databases/temp/' + sampleFile.name;
-        console.log('File successfully uploaded.');
         res.redirect('back');
     });
 });
 
 app.post('/upload/instance', function(req, res) {
-    // taskHandler.newInstance(req.body.instance);
+    if (!req.files)
+        return res.status(400).send('No files were uploaded.');
+
+    // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
+    let sampleFile = req.files['smts-upload-instance'];
+    let uploadPath = __dirname + '/benchmarks/temp/' + sampleFile.name;
+
+    if (!fs.existsSync(__dirname + '/benchmarks/temp')) {
+        fs.mkdirSync(__dirname + '/benchmarks/temp');
+    }
+
+    // Use the mv() method to place the file somewhere on your server
+    sampleFile.mv(uploadPath, function(err) {
+        if (err) {
+            res.status(500).send(err);
+        }
+        else {
+            taskHandler.newInstance(uploadPath);
+            res.redirect('back');
+        }
+    });
 });
 
 
@@ -131,30 +149,22 @@ app.post('/stop', function(req, res) {
     taskHandler.stopSolving();
 });
 
-
-function deleteFile(file) {
-    fs.unlink(file, function(err) {
-        if (err) {
-            console.error(err.toString());
-        } else {
-            console.warn(file + ' deleted');
-        }
-    });
-}
-
-process.stdin.resume();//so the program will not close instantly
+process.stdin.resume(); // So the program will not close instantly
 
 // Delete all files in temp directory before killing the process
 function exitHandler(options, err) {
     if (options.cleanup) {
-        fs.readdir('./databases/temp/', function(err, items) {
-            if (items) {
-                for (let item of items) {
-                    deleteFile('./databases/temp/' + item);
-                }
-            }
-            process.exit(0);
-        });
+        // Delete database temp files
+        if (fs.existsSync(`${__dirname}/databases/temp/`)) {
+            let files = fs.readdirSync(`${__dirname}/databases/temp/`);
+            files.forEach(file => fs.unlinkSync(`${__dirname}/databases/temp/${file}`));
+        }
+
+        // Delete benchmarks temp files
+        if (fs.existsSync(`${__dirname}/benchmarks/temp/`)) {
+            let files = fs.readdirSync(`${__dirname}/benchmarks/temp/`);
+            files.forEach(file => fs.unlinkSync(`${__dirname}/benchmarks/temp/${file}`));
+        }
     }
     if (err) console.log(err.stack);
     if (options.exit) process.exit();

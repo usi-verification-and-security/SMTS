@@ -2,7 +2,8 @@ let exec = require('child_process').execSync;
 let config = require('./config.js');
 
 function run(command, args = '') {
-    return JSON.parse(exec(`echo 'json.dumps(${command})' | ${config.python} ${config.client} ${config.port} ${args}`, {'encoding': 'utf8'}));
+    let cmd = `echo 'json.dumps(${command})' | ${config.python} ${config.client} ${config.port} ${args}`;
+    return JSON.parse(exec(cmd, {'encoding': 'utf8'}) || 'null');
 }
 
 module.exports = {
