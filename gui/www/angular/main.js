@@ -19,9 +19,9 @@ let app = angular.module('myApp', ['ngFileUpload'])
             $rootScope.$broadcast('select-event');
         };
 
-        // Send signal if it is real-time analysis
-        sharedService.broadcastLiveUpdate = function () {
-            $rootScope.$broadcast('live-update');
+        // Send signal with updated solving instance data
+        sharedService.broadcastUpdateInstanceData = function (instanceData) {
+            $rootScope.$broadcast('update-instance-data', instanceData);
         };
 
         return sharedService;

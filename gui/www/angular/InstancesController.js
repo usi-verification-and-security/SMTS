@@ -104,12 +104,12 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
         $scope.updateSolvingInfo = function() {
             $http({method: 'GET', url: '/getSolvingInfo'}).then(
                 function(res) {
-                    $scope.instanceName = res.data.name;
-                    $scope.instanceTime = res.data.time;
-                    $scope.instanceLeft = res.data.left;
+                    let instanceData = res.data;
+
+                    sharedService.broadcastUpdateInstanceData(instanceData);
 
                     // Stop requesting events update if the instance is solved
-                    if (!res.data.name && $scope.updateEventsIntervalId) {
+                    if (!instanceData.name && $scope.updateEventsIntervalId) {
                         clearInterval($scope.updateEventsIntervalId);
                         $scope.updateEventsIntervalId = null;
                     }
