@@ -138,9 +138,11 @@ class Solver(net.Socket):
             self.node.status = status
             path = self.node.path(True)
             path.reverse()
+            print(path)
             for node in path:
-                if node.status != framework.SolveStatus.unknown and isinstance(node, framework.AndNode):
-                    self._db_log('SOLVED', {'status': node.status.name, 'node': str(node.path())})
+                if node.status != framework.SolveStatus.unknown:
+                    if isinstance(node, framework.AndNode):
+                        self._db_log('SOLVED', {'status': node.status.name, 'node': str(node.path())})
                 else:
                     break
             if status == framework.SolveStatus.unknown:
