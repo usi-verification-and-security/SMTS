@@ -112,10 +112,6 @@ function generateDomTree(tree, positionFrame) {
     let selectedNode = tree.selectedNodes[0];
     smts.tables.data.update(selectedNode, 'node');
 
-    // Update events and solvers tables in case of `Selected` option
-    smts.tables.events.update(tree.selectedNodes);
-    smts.tables.solvers.update(tree.selectedNodes);
-
     // Move view in correct position
     centerTree(positionFrame, viewerWidth, viewerHeight, selectedNode, zoomListener)
 

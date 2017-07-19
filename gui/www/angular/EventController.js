@@ -4,25 +4,14 @@ app.controller(
 
             // Update events on instance selected
             $scope.$on('select-instance', function() {
-                // Make tree
-                sharedTree.tree.arrangeTree(currentRow.value);
-                generateDomTree(sharedTree.tree, null);
-
                 // Make timeline
                 let events = sharedTree.tree.getEvents(currentRow.value + 1);
                 $scope.events = events;
                 $scope.initTimeline(events);
-            });
 
-            // Select last event in table when table is fully populated
-            $scope.$on('table-events-populated', function() {
-                // TODO: Make it work without timeout
-                setTimeout(function() {
-                    smts.tables.events.highlight([$scope.events[$scope.events.length - 1]]);
-                }, 0);
-                // TODO: scroll to end
+                // Select last event
+                $scope.showEvent($scope.events[$scope.events.length - 1], $scope.events.length - 1);
             });
-
 
             $scope.initTimeline = function(events) {
                 // Generate timeline
@@ -38,10 +27,11 @@ app.controller(
                 });
 
                 $('.smts-timeline-dash').click(function() {
-                    let dashId = $(this).attr('id');
-                    smts.timeline.selectEvent($(this).attr('data-event'));
+                    let eventId = $(this).attr('data-event');
+                    smts.timeline.selectEvent(eventId);
 
-                    let eventRow = document.getElementById(`smts-events-event-${dashId}`);
+
+                    let eventRow = smts.tables.events.getRows(`[data-event="${eventId}"]`)[0];
                     if (eventRow) {
                         // Simulate event click to rebuild the tree
                         eventRow.click();
@@ -57,10 +47,7 @@ app.controller(
 
             // Show tree up to clicked event
             $scope.showEvent = function(event, index) {
-                // Highlight selected event
-                smts.tables.events.highlight([event]);
-
-                // Rebuild tree
+                // Build tree
                 currentRow.value = index;
                 sharedTree.tree.arrangeTree(currentRow.value);
                 generateDomTree(sharedTree.tree, smts.tree.getPosition());
@@ -70,6 +57,16 @@ app.controller(
 
                 // Update timeline
                 smts.timeline.update(event);
+
+                // Update events and instances tables
+                // N.B.: Angular doesn't offer a `ready` functionality, so it
+                // is impossible to detect when the DOM elements are actually
+                // ready, thus the functions are called asyncronously.
+                window.setTimeout(function() {
+                    smts.tables.events.highlight([event]);
+                    smts.tables.events.update(sharedTree.tree.selectedNodes);
+                    smts.tables.solvers.update(sharedTree.tree.selectedNodes);
+                }, 0);
 
                 // Notify selected element
                 sharedService.broadcastSelectEvent();

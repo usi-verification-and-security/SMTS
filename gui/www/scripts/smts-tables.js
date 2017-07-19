@@ -174,6 +174,15 @@ smts.tables = {
             return tab ? tab.classList.contains('active') : false;
         },
 
+        // TODO: add description
+        scroll: function(event) {
+            let row = this.getRows(`[data-event="${event.id}"]`)[0];
+            let container = document.getElementById('smts-events-table-container');
+            if (row && container) {
+                container.scrollTop = row.offsetTop - container.offsetTop;
+            }
+        },
+
         // Show all rows in events table
         showAll: function() {
             let rows = this.getRows();
@@ -186,7 +195,7 @@ smts.tables = {
         // events have to be selected.
         showSelected: function(selectedNodes) {
             // Hide all nodes
-            let rows = document.querySelectorAll(this.queryRows);
+            let rows = this.getRows();
             if (rows) rows.forEach(row => row.classList.add('smts-hidden'));
 
             // Show nodes that are in event.node or event.data.node
@@ -205,8 +214,8 @@ smts.tables = {
         // @param {Node[]} selectedNodes: List of nodes to compare to each
         // row's node.
         update: function(selectedNodes) {
-            this.isTabActive('selected') ? this.showSelected(selectedNodes) : this.showAll();
             this.boldSelected(selectedNodes);
+            this.isTabActive('selected') ? this.showSelected(selectedNodes) : this.showAll();
         }
     },
 
@@ -311,8 +320,8 @@ smts.tables = {
         // @param {Node[]} selectedNodes: List of nodes to compare to each
         // row's node.
         update: function(selectedNodes) {
-            this.isTabActive('selected') ? this.showSelected(selectedNodes) : this.showAll();
             this.boldSelected(selectedNodes);
+            this.isTabActive('selected') ? this.showSelected(selectedNodes) : this.showAll();
         }
     }
 };

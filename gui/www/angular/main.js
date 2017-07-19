@@ -36,13 +36,4 @@ let app = angular.module('myApp', ['ngFileUpload'])
     // {TreeManager.Tree}: Structure representing the tree made from the database
     .factory('sharedTree', function () {
         return new TreeManager.Tree();
-    })
-
-    // Send signal when events tables population is done
-    .directive('tableEventsPopulated', function() {
-        return function(scope) {
-            if (scope.$last){
-                scope.$parent.$broadcast('table-events-populated');
-            }
-        }
     });
