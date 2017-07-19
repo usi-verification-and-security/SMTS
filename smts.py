@@ -14,15 +14,17 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='=== SMTS version {} ==='.format(version))
 
     parser.add_argument('--version', action='version', version=str(version))
-    parser.add_argument('-c', dest='config_path', type=lambda value: server.config.extend(value),
-                        help='config file path')
+    parser.add_argument('-c', dest='config_path', nargs='+', type=lambda value: server.config.extend(value),
+                        help='config files path. following file updates previous one, and so on ...')
     parser.add_argument('-d', dest='db_path', help='sqlite3 database file path')
     parser.add_argument('-g', dest='gui', action='store_true', help='run gui in live mode')
-    parser.add_argument('-l', dest='lemma', action='store_true', help='enable lemma sharing')
-    parser.add_argument('-D', dest='lemmaDB', action='store_true', help='store lemmas in database')
-    parser.add_argument('-a', dest='lemmaAgain', action='store_true', help='send lemmas again to solver')
-    parser.add_argument('-o', dest='opensmt', type=int, metavar='N', help='run N opensmt2 solvers')
-    parser.add_argument('-z', dest='z3spacer', type=int, metavar='N', help='run N z3spacer solvers')
+    lg = parser.add_argument_group('lemma sharing')
+    lg.add_argument('-l', dest='lemma', action='store_true', help='enable lemma sharing')
+    lg.add_argument('-D', dest='lemmaDB', action='store_true', help='store lemmas in database')
+    lg.add_argument('-a', dest='lemmaAgain', action='store_true', help='send lemmas again to solver')
+    sg = parser.add_argument_group('solvers')
+    sg.add_argument('-o', dest='opensmt', type=int, metavar='N', help='run N opensmt2 solvers')
+    sg.add_argument('-z', dest='z3spacer', type=int, metavar='N', help='run N z3spacer solvers')
 
     args = parser.parse_args()
 
