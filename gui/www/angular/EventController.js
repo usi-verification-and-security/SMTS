@@ -7,46 +7,13 @@ app.controller(
                 // Make timeline
                 let events = sharedTree.tree.getEvents(currentRow.value + 1);
                 $scope.events = events;
-                $scope.initTimeline(events);
 
                 // Select last event
-                $scope.showEvent($scope.events[$scope.events.length - 1], $scope.events.length - 1);
+                $scope.selectEvent($scope.events[$scope.events.length - 1], $scope.events.length - 1);
             });
 
-            $scope.initTimeline = function(events) {
-                // Generate timeline
-                smts.timeline.clear();
-                smts.timeline.make(events);
-
-                $('.smts-timeline-dash').mouseenter(function() {
-                    $(this).addClass('hover');
-                });
-
-                $('.smts-timeline-dash').mouseleave(function() {
-                    $(this).removeClass('hover');
-                });
-
-                $('.smts-timeline-dash').click(function() {
-                    let eventId = $(this).attr('data-event');
-                    smts.timeline.selectEvent(eventId);
-
-
-                    let eventRow = smts.tables.events.getRows(`[data-event="${eventId}"]`)[0];
-                    if (eventRow) {
-                        // Simulate event click to rebuild the tree
-                        eventRow.click();
-
-                        // Scroll event table to selected event
-                        let eventsTableContainer = document.getElementById('smts-events-table-container');
-                        if (eventsTableContainer) {
-                            $('#smts-events-table-container').scrollTop(eventRow.offsetTop - eventsTableContainer.offsetTop);
-                        }
-                    }
-                });
-            };
-
             // Show tree up to clicked event
-            $scope.showEvent = function(event, index) {
+            $scope.selectEvent = function(event, index) {
                 // Build tree
                 currentRow.value = index;
                 sharedTree.tree.arrangeTree(currentRow.value);

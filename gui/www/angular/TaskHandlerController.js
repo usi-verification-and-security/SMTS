@@ -1,5 +1,5 @@
-app.controller('TaskHandler', ['$scope', '$window', '$http', 'timeout', 'sharedService',
-    function($scope, $window, $http, timeout, sharedService) {
+app.controller('TaskHandler', ['$scope', '$window', '$http', 'sharedService',
+    function($scope, $window, $http, sharedService) {
 
         // Change timeout to to end the running evaluation
         // @param {String} type: Either 'increase' or 'decrease'.
@@ -13,26 +13,16 @@ app.controller('TaskHandler', ['$scope', '$window', '$http', 'timeout', 'sharedS
                 },
             }).then(
                 function() {
-                    // Prevent page redirect
-                    event.preventDefault();
-                },
-                function(err) {
-                    $window.alert(`An error occured: ${err}`);
-                });
+                    event.preventDefault(); // Prevent page redirect
+                }, smts.tools.error);
         };
 
         // Stop current running evaluation
         $scope.stop = function() {
-            $http({
-                method: 'POST',
-                url: '/stop'
-            }).then(
+            $http({method: 'POST', url: '/stop'}).then(
                 function() {
                     // Do nothing
-                },
-                function(err) {
-                    $window.alert(`An error occured: ${err}`);
-                });
+                }, smts.tools.error);
         };
 
     }]);

@@ -32,22 +32,42 @@ smts.timeline = {
 
             let lineLength = 1 / this.events[this.events.length - 1].ts;
 
-            for (let i = 0; i < this.events.length; ++i) {
+            for (let event of this.events) {
                 // Make dash
                 let dash = document.createElement('div');
-                dash.id = `smts-timeline-event-${this.events[i].id}`;
+                dash.id = `smts-timeline-event-${event.id}`;
                 dash.classList.add('smts-timeline-dash');
-                dash.setAttribute('data-event', this.events[i].id);
-                dash.style.left = `${lineLength * this.events[i].ts * 100}%`;
+                dash.setAttribute('data-event', event.id);
+                dash.style.left = `${lineLength * event.ts * 100}%`;
+
+                // Set events
+                dash.addEventListener('mouseenter', function() {
+                    dash.classList.add('hover');
+                });
+
+                dash.addEventListener('mouseleave', function() {
+                    dash.classList.remove('hover');
+                });
+
+                dash.addEventListener('click', function() {
+                    smts.timeline.selectEvent(event.id);
+
+                    let eventRow = smts.tables.events.getRows(`[data-event="${event.id}"]`)[0];
+                    if (eventRow) {
+                        // Simulate event click to rebuild the tree
+                        eventRow.click();
+                        // TODO: add scroll
+                    }
+                });
 
                 // Make popup span
                 let popupSpan = document.createElement('div');
                 popupSpan.classList.add('smts-timeline-popupSpan');
-                popupSpan.innerText = `${this.events[i].ts} s`;
+                popupSpan.innerText = `${event.ts} s`;
 
                 // Insert elements
-                dash.append(popupSpan);
-                line.append(dash);
+                dash.appendChild(popupSpan);
+                line.appendChild(dash);
             }
         }
 

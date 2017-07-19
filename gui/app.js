@@ -35,7 +35,8 @@ app.get('/events/:instance', function(req, res) {
     else {
         let instance = `'${req.params.instance}'`;
         let db = new sqlite.Database(database);
-        let query = `SELECT * FROM SolvingHistory WHERE name=${instance}`;
+        let id = req.query.id ? ` && id >= ${req.query.id}` : '';
+        let query = `SELECT * FROM SolvingHistory WHERE name=${instance}${id}`;
         db.all(query, function(err, events) {
             if (err) {
                 res.json({error_code: 1, err_desc: err});

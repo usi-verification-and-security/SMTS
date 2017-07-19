@@ -1,5 +1,9 @@
-app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sharedTree', 'timeout', 'DBcontent', '$window', '$http', 'sharedService',
-    function($scope, $rootScope, currentRow, sharedTree, timeout, DBcontent, $window, $http, sharedService) {
+app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sharedTree', '$window', '$http', 'sharedService',
+    function($scope, $rootScope, currentRow, sharedTree, $window, $http, sharedService) {
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // MAIN
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // Start application
         $scope.load = function() {
@@ -9,44 +13,24 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
                     $scope.isRealTime = info.isRealTime;
                     // TODO: set version in title with info.version
 
-                    $scope.getInstances();
-
-                    $scope.showTaskHandler(info.isRealTime);
-
                     if (info.isRealTime) {
+                        // Show server container
+                        $('#smts-server-container').removeClass('smts-hidden');
+
+                        // Request updates if real time analysis
                         $scope.updateSolvingInfoIntervalId =
                             window.setInterval($scope.updateSolvingInfo, 3000);
                         $scope.updateInstancesIntervalId =
                             window.setInterval($scope.updateInstances, 5000);
                     }
-                },
-                function(err) {
-                    smts.tools.error(err);
-                }
-            );
-        };
-
-        $scope.updateSolvingInfo = function() {
-            $http({method: 'GET', url: '/getSolvingInfo'}).then(
-                function(res) {
-                    // Write which instance is being solved
-                    let name = res.data[0] !== 'Empty' ? `${res.data[0]}` : 'Nothing';
-                    let timeLeft = res.data[1] !== 'Empty' ? `${res.data[1]}s` : '0s';
-                    document.getElementById('smts-server-solving-instance').innerHTML = name;
-                    document.getElementById('smts-server-solving-time-left').innerHTML = timeLeft;
-
-                    if (name === 'Nothing') {
-                        // Stop requesting events update
-                        if ($scope.updateEventsIntervalId) {
-                            clearInterval($scope.updateEventsIntervalId);
-                            $scope.updateEventsIntervalId = null;
-                        }
+                    else {
+                        // Show database container
+                        $('#smts-database-container').removeClass('smts-hidden');
                     }
-                },
-                function(err) {
-                    $scope.clearAllIntervals();
-                    smts.tools.error(err);
-                });
+
+                    // Get instances
+                    $scope.getInstances();
+                }, $scope.error);
         };
 
         // Get all instances and load them in instances table
@@ -54,48 +38,15 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
             $http({method: 'GET', url: '/instances'}).then(
                 function(res) {
                     $scope.instances = res.data;
-                },
-                function(err) {
-                    $scope.clearAllIntervals();
-                    smts.tools.error(err);
-                });
+                }, $scope.error);
         };
 
-        // Get instances and add new ones to instances table
-        $scope.updateInstances = function() {
-            $http({method: 'GET', url: '/instances'}).then(
-                function(res) {
-                    let newInstances = res.data;
-                    for (let newInstance of newInstances) {
-                        // Check if newInstance doesn't match any of those already present in table
-                        if ($scope.instances.every(instance => instance.name !== newInstance.name)) {
-                            $scope.instances.push(newInstance);
-                        }
-                    }
-                },
-                function(err) {
-                    $scope.clearAllIntervals();
-                    smts.tools.error(err);
-                });
-        };
-
-        // Show the server/database container
-        // It displays the server container if it is real time analysis, or the
-        // database container otherwise.
-        $scope.showTaskHandler = function() {
-            if ($scope.isRealTime) {
-                // Show server container
-                $('#smts-server-container').removeClass('smts-hidden');
-                // Update timeout value
-                $('#smts-server-timeout').val = timeout.value;
-            }
-            else {
-                // Show database container
-                $('#smts-database-container').removeClass('smts-hidden');
-            }
-        };
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // INSTANCE
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // Select an instance and load its data from database
+        // @param {Instance} instance: Selected instance.
         $scope.selectInstance = function(instance) {
             // Highlight instance
             smts.tables.instances.highlight([instance]);
@@ -116,30 +67,78 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
             }
         };
 
-        $scope.updateEvents = function(instance) {
-            console.log('UPDATE:', instance.name);
-        };
-
         // Load database data relative to a particular instance
         // It gets the database data and generates a tree with it.
         // @param {Instance} instance: Instance to load data from.
-        $scope.getEvents = function(instance) {
-            $http({method: 'GET', url: `/events/${instance.name}`}).then(
+        // @param (Number) id (optional): If present, requests events only from
+        // given id, and appends them to already existing events. Otherwise,
+        // events are completly overwritten.
+        $scope.getEvents = function(instance, id) {
+            let query = id ? `?id=${id}` : ``;
+            $http({method: 'GET', url: `/events/${instance.name}${query}`}).then(
                 function(res) {
-                    if (DBcontent.value !== res.data) {
-                        DBcontent.value = res.data;
+                    if (!id) $scope.events = []; // Reset events if new request
+                    $scope.events = $scope.events.concat(res.data);
 
-                        // Initialize tree
-                        sharedTree.tree = new TreeManager.Tree();
-                        sharedTree.tree.createEvents(res.data);
-                        sharedTree.tree.initializeSolvers(res.data);
-                        currentRow.value = res.data.length - 1;
+                    // Initialize tree
+                    sharedTree.tree = new TreeManager.Tree();
+                    sharedTree.tree.createEvents($scope.events);
+                    sharedTree.tree.initializeSolvers($scope.events);
+                    currentRow.value = $scope.events.length - 1;
 
-                        // Notify an instance has been selected
-                        sharedService.broadcastSelectInstance();
+                    // Initialize timeline
+                    smts.timeline.clear();
+                    smts.timeline.make(sharedTree.tree.getEvents(currentRow.value + 1));
+
+                    // Notify an instance has been selected
+                    sharedService.broadcastSelectInstance();
+                }, $scope.error);
+        };
+
+
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // UPDATES
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        $scope.updateSolvingInfo = function() {
+            $http({method: 'GET', url: '/getSolvingInfo'}).then(
+                function(res) {
+                    // Write which instance is being solved
+                    let name = res.data[0] !== 'Empty' ? `${res.data[0]}` : 'Nothing';
+                    let timeLeft = res.data[1] !== 'Empty' ? `${res.data[1]}s` : '0s';
+                    document.getElementById('smts-server-solving-instance').innerHTML = name;
+                    document.getElementById('smts-server-solving-time-left').innerHTML = timeLeft;
+
+                    // Stop requesting events update if the instance is solved
+                    if (name === 'Nothing' && $scope.updateEventsIntervalId) {
+                        clearInterval($scope.updateEventsIntervalId);
+                        $scope.updateEventsIntervalId = null;
                     }
                 }, $scope.error);
         };
+
+        // Get instances and add new ones to instances table
+        $scope.updateInstances = function() {
+            $http({method: 'GET', url: '/instances'}).then(
+                function(res) {
+                    let newInstances = res.data;
+                    for (let newInstance of newInstances) {
+                        // Check if newInstance doesn't match any of those already present in table
+                        if ($scope.instances.every(instance => instance.name !== newInstance.name)) {
+                            $scope.instances.push(newInstance);
+                        }
+                    }
+                }, $scope.error);
+        };
+
+        $scope.updateEvents = function(instance) {
+            $scope.getEvents(instance, instance.id);
+        };
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // OTHER
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // Handle errors for HTTP requests
         // @param {Error} err: The error received.

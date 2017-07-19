@@ -5,12 +5,6 @@ let app = angular.module('myApp', ['ngFileUpload'])
     // {Number}: How many rows of the db needs to be read
     .value('currentRow', {value: 0})
 
-    // TODO: describe
-    .value('DBcontent', {value: null})
-
-    // {Number}: Current solving timeout (in seconds) in case of real-time analysis
-    .value('timeout', {value: 1000})
-
     // {Object}: Contain functions to broadcast signals received by other Angular components
     .factory('sharedService', function ($rootScope) {
         let sharedService = {};

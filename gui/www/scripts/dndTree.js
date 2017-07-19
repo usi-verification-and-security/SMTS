@@ -113,10 +113,10 @@ function generateDomTree(tree, positionFrame) {
     smts.tables.data.update(selectedNode, 'node');
 
     // Move view in correct position
-    centerTree(positionFrame, viewerWidth, viewerHeight, selectedNode, zoomListener)
-
-    // Show tree
-    d3.select('#smts-tree').classed('smts-hidden', false);
+    window.setTimeout(function() {
+        centerTree(positionFrame, viewerWidth, viewerHeight, selectedNode, zoomListener);
+        d3.select('#smts-tree').classed('smts-hidden', false);
+    }, 0);
 }
 
 
