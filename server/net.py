@@ -112,8 +112,9 @@ class Server(object):
     def __init__(self, port: int = None, timeout: int = None, logger: logging.Logger = None):
         self._rlist = set()
         if port:
+            self.port = port
             self._sock = Socket()
-            self._sock.listen(('0.0.0.0', port))
+            self._sock.listen(('0.0.0.0', self.port))
             self._rlist.add(self._sock)
         self._timeout = None if timeout is None else float(timeout)
         self._logger = logging.getLogger() if logger is None else logger

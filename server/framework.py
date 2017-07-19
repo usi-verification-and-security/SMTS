@@ -321,7 +321,7 @@ class Fixedpoint(Root):
 #             return node.parent.smt, node.smt
 
 
-def smt2json(smt):
+def smt2json(smt, return_string=False):
     orl = sys.getrecursionlimit()
 
     try:
@@ -351,7 +351,7 @@ def smt2json(smt):
         for key in strings:
             s = s.replace(key, strings[key])
 
-        return json.loads(s)
+        return s if return_string else json.loads(s)
 
     except:
         raise
@@ -359,11 +359,14 @@ def smt2json(smt):
         sys.setrecursionlimit(orl)
 
 
-def json2smt(obj):
+def json2smt(obj, obj_string=False):
     orl = sys.getrecursionlimit()
 
     try:
         sys.setrecursionlimit(100000)
+
+        if obj_string:
+            obj = json.loads(obj)
 
         def smt(obj):
             if isinstance(obj, str):

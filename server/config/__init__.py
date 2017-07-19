@@ -5,6 +5,8 @@ import importlib.util
 
 from .default import *
 
+__author__ = 'Matteo Marescotti'
+
 
 def db():
     if hasattr(db, 'db'):
