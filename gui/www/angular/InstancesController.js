@@ -104,14 +104,12 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
         $scope.updateSolvingInfo = function() {
             $http({method: 'GET', url: '/getSolvingInfo'}).then(
                 function(res) {
-                    // Write which instance is being solved
-                    let name = res.data[0] !== 'Empty' ? `${res.data[0]}` : 'Nothing';
-                    let timeLeft = res.data[1] !== 'Empty' ? `${res.data[1]}s` : '0s';
-                    document.getElementById('smts-server-solving-instance').innerHTML = name;
-                    document.getElementById('smts-server-solving-time-left').innerHTML = timeLeft;
+                    $scope.instanceName = res.data.name;
+                    $scope.instanceTime = res.data.time;
+                    $scope.instanceLeft = res.data.left;
 
                     // Stop requesting events update if the instance is solved
-                    if (name === 'Nothing' && $scope.updateEventsIntervalId) {
+                    if (!res.data.name && $scope.updateEventsIntervalId) {
                         clearInterval($scope.updateEventsIntervalId);
                         $scope.updateEventsIntervalId = null;
                     }

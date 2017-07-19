@@ -88,11 +88,6 @@ app.get('/info', function(req, res) {
 });
 
 
-app.get('/getRealTime', function(req, res) {
-    res.json(isRealTime);
-});
-
-
 app.post('/upload', function(req, res) {
     console.log('Uploading db file...');
     if (!req.files)
@@ -221,6 +216,7 @@ function initialize() {
                 case'--server':
                     taskHandler.setPort(process.argv[i + 1]);
                     database = taskHandler.getDatabase();
+                    console.log(database);
                     isRealTime = true;
                     if (database === '') {
                         console.log('There is no database on the server provided. Closing SMT Viewer.')
