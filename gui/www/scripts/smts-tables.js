@@ -237,7 +237,7 @@ smts.tables = {
             if (rows) rows.forEach(row => row.classList.remove('smts-highlight'));
 
             for (let instance of instances) {
-                rows = this.getRows(`[data-instance="${instance.name}"`);
+                rows = this.getRows(`[data-instance="${instance.name}"]`);
                 if (rows) rows.forEach(row => row.classList.add('smts-highlight'));
             }
         }
