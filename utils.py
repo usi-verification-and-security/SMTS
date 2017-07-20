@@ -23,7 +23,7 @@ def run_gui(args):
                               stdout=subprocess.DEVNULL,
                               stderr=subprocess.PIPE,
                               cwd='gui').communicate()
-    logging.log(logging.ERROR, 'GUI terminated: {}'.format(err))
+    logging.log(logging.ERROR, 'GUI terminated: "{}"'.format(err.decode()))
 
 
 def run_lemma_server(lemma_server, database, send_again):
