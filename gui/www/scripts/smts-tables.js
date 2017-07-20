@@ -4,17 +4,37 @@ smts.tables = {
     // Set of functions that manipulate the DOM object 'smts-data-container'
     data: {
 
+        // Make an event object with the wanted attributes for the data table
+        // @param {TreeManager.Node} node: The mold event.
+        // @return {Object}: The object representing the event, to be put in
+        // the data table.
+        makeItemEvent: function(event) {
+            let itemEvent = {};
+            if (event && event.data) {
+                for (let key in event.data) {
+                    if (key !== 'name' && key !== 'node') {
+                        itemEvent[key] = event.data[key];
+                    }
+                }
+            }
+            return itemEvent;
+        },
+
         // Make a node object with the wanted attributes for the data table
         // @param {TreeManager.Node} node: The mold node.
         // @return {Object}: The object representing the node, to be put in the
         // data table.
         makeItemNode: function(node) {
             let itemNode = {};
-            itemNode.status = node.status;
-            itemNode.solvers = node.solvers.length;
-            itemNode.balanceness = node.getBalanceness();
-            for (let key in node.info) {
-                itemNode[key] = node.info[key];
+            if (node) {
+                itemNode.status = node.status;
+                itemNode.solvers = node.solvers.length;
+                itemNode.balanceness = node.getBalanceness();
+                if (node.info) {
+                    for (let key in node.info) {
+                        itemNode[key] = node.info[key];
+                    }
+                }
             }
             return itemNode;
         },
@@ -25,10 +45,9 @@ smts.tables = {
         // the data table.
         makeItemSolver: function(solver) {
             let itemSolver = {};
-            itemSolver.name = solver.name;
-            // Transform to string or it will show an array
-            itemSolver.node = JSON.stringify(solver.node);
-            itemSolver.data = solver.data;
+            if (solver) {
+                // Do nothing
+            }
             return itemSolver;
         },
 
@@ -87,12 +106,16 @@ smts.tables = {
             let dataTableItem = {};
 
             switch (itemType) {
-                case 'solver':
-                    dataTableItem = this.makeItemSolver(item);
+                case 'event':
+                    dataTableItem = this.makeItemEvent(item);
                     break;
 
                 case 'node':
                     dataTableItem = this.makeItemNode(item);
+                    break;
+
+                case 'solver':
+                    dataTableItem = this.makeItemSolver(item);
                     break;
             }
 

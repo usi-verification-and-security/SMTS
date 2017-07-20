@@ -1,10 +1,9 @@
 module TreeManager {
 
     export class Tree {
-        events: Event[]                 = []; // All events
-        solver: Array<[string, string]> = []; // ???
-        solvers: Solver[]               = []; // All existing solvers
         root: Node;                           // Tree seen in the visualization
+        events: Event[]                 = []; // All events
+        solvers: Solver[]               = []; // All existing solvers
         selectedNodes: Node[]           = []; // List of selected nodes
 
 
@@ -63,36 +62,28 @@ module TreeManager {
             }
         }
 
-
         //
         assignSolvers(begin: number, end: number) {
             // Reset solvers
-            for (let i = 0; i < this.solvers.length; ++i) {
-                this.solvers[i].setNode(null);
-                this.solvers[i].setData(null);
-            }
+            this.solvers.forEach(solver => solver.update(null));
 
             for (let i = begin; i <= end; ++i) {
                 let event = this.events[i];
                 switch (event.event) {
                     case '+':
-                        for (let j = 0; j < this.solvers.length; ++j) {
-                            let solver = this.solvers[j];
+                        this.solvers.forEach(function (solver) {
                             if (solver.name === event.solver) {
-                                solver.setNode(event.node);
-                                solver.setData(event.data);
+                                solver.update(event);
                             }
-                        }
+                        });
                         break;
 
                     case '-':
-                        for (let j = 0; j < this.solvers.length; ++j) {
-                            let solver = this.solvers[j];
+                        this.solvers.forEach(function (solver) {
                             if (solver.name === event.solver) {
-                                solver.setNode(null);
-                                solver.setData(null);
+                                solver.update(null);
                             }
-                        }
+                        });
                         break;
                 }
             }

@@ -3,7 +3,7 @@ module TreeManager {
         id: number;
         ts: number;
         name: string;
-        node: string;
+        node: number[];
         event: string;
         solver: string;
         data: any;

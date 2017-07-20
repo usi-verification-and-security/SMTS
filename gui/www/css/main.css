@@ -190,7 +190,7 @@ html, body {
 /* Column 3 */
 
 #smts-solvers-container {
-    height: 70%;
+    height: 55%;
 }
 
 #smts-solvers-table > tr > td {
@@ -199,7 +199,7 @@ html, body {
 }
 
 #smts-data-container {
-    height: 30%;
+    height: 45%;
 }
 
 

@@ -16,7 +16,7 @@ app.controller('SolverController', ['$scope', '$rootScope', 'currentRow', 'share
         // @param {TreeManager.Solver} solver: the solver to be represented in
         // the data table.
         $scope.updateDataTable = function(solver) {
-            smts.tables.data.update(solver, 'solver');
+            smts.tables.data.update(solver.event, 'event');
             smts.tables.solvers.highlight([solver]);
         };
 
