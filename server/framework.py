@@ -194,17 +194,6 @@ class Fixedpoint(Root):
         super().__init__(name, smt.split('(query ')[0])
 
     def partition(self):
-        parent = OrNode(self, '')
-        if config.db():
-            config.db().cursor().execute("INSERT INTO {}SolvingHistory (name, node, event, solver, data) "
-                                         "VALUES (?,?,?,?,?)".format(config.table_prefix), (
-                                             self.name,
-                                             str(self.path()),
-                                             'OR',
-                                             '',
-                                             json.dumps({'node': str(parent.path())})
-                                         ))
-
         obj = self.json.copy()
         queries = []
         for i in obj:
@@ -220,7 +209,22 @@ class Fixedpoint(Root):
             except:
                 pass
 
-        parent.smt = json2smt(obj)
+        for i in range(len(obj)):
+            if obj[i][0] == 'declare-rel':
+                for query in queries:
+                    obj.insert(i, ['declare-rel', query, []])
+                break
+
+        parent = OrNode(self, json2smt(obj))
+        if config.db():
+            config.db().cursor().execute("INSERT INTO {}SolvingHistory (name, node, event, solver, data) "
+                                         "VALUES (?,?,?,?,?)".format(config.table_prefix), (
+                                             self.name,
+                                             str(self.path()),
+                                             'OR',
+                                             '',
+                                             json.dumps({'node': str(parent.path())})
+                                         ))
 
         for query in queries:
             child = AndNode(parent, '(query ' + query + ')')
