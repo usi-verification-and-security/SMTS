@@ -3,14 +3,6 @@ smts.tables = {
 
     // Set of functions that manipulate the DOM object 'smts-data-container'
     data: {
-        
-        // Make an event object with the wanted attributes for the data table
-        // @param {TreeManager.Event} event: The mold event.
-        // @return {Object}: The object representing the event, to be put in
-        // the data table.
-        makeItemEvent: function(event) {
-            return event.data;
-        },
 
         // Make a node object with the wanted attributes for the data table
         // @param {TreeManager.Node} node: The mold node.
@@ -18,12 +10,12 @@ smts.tables = {
         // data table.
         makeItemNode: function(node) {
             let itemNode = {};
-            // Transform to string or it will show and array
-            itemNode.name = JSON.stringify(node.name);
-            itemNode.type = node.type;
-            itemNode.solvers = node.solvers;
             itemNode.status = node.status;
+            itemNode.solvers = node.solvers.length;
             itemNode.balanceness = node.getBalanceness();
+            for (let key in node.info) {
+                itemNode[key] = node.info[key];
+            }
             return itemNode;
         },
 
@@ -101,15 +93,6 @@ smts.tables = {
 
                 case 'node':
                     dataTableItem = this.makeItemNode(item);
-                    break;
-
-                case 'event STATUS':
-                case 'event SOLVED':
-                case 'event AND':
-                case 'event OR':
-                case 'event +':
-                case 'event -':
-                    dataTableItem = this.makeItemEvent(item);
                     break;
             }
 

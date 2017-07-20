@@ -1,15 +1,16 @@
 module TreeManager {
     export class Node {
-        name: number[];                      // Path that identifies the node, e.g. [0,3,4,0,1]
-        type: string;                        // 'AND' or 'OR'
-        children: Node[] = [];               // Children nodes
-        solvers: string[] = [];              // Solvers working on node
-        status: string = "unknown";          // 'sat', 'unsat' or 'unknown'
-        isStatusPropagated: boolean = false; // Tell if the status 'sat' or 'unsat' has been propagated from children
+        name: number[];                          // Path that identifies the node, e.g. [0,3,4,0,1]
+        type: string;                            // 'AND' or 'OR'
+        children: Node[]            = [];        // Children nodes
+        solvers: string[]           = [];        // Solvers working on node
+        status: string              = "unknown"; // 'sat', 'unsat' or 'unknown'
+        info: object                = {};        // Any kind of information concerning the node
+        isStatusPropagated: boolean = false;     // true if status has been propagated from children
 
 
         //
-        constructor(name, type: string) {
+        constructor(name: number[], type: string) {
             this.name = name;
             this.type = type;
         }
@@ -91,24 +92,28 @@ module TreeManager {
         }
 
 
-        // Update the tree, given an event
+        // Update the node with the event data
         update(event) {
-            let node: Node = this.getNode(event.node);
+            let node: Node;
 
             switch (event.event) {
                 case 'OR':
                 case 'AND':
-                    // Insert node in correct position
-                    let child = new Node(JSON.parse(event.data.node), event.event);
-                    node = this.getNode(child.name.slice(0, child.name.length - 1));
-                    node.children[child.name[child.name.length - 1]] = child;
+                    if (event.data && event.data.node) {
+                        // Insert node in correct position
+                        node = new Node(JSON.parse(event.data.node), event.event);
+                        let parent = this.getNode(node.name.slice(0, node.name.length - 1));
+                        parent.children[node.name[node.name.length - 1]] = node;
+                    }
                     break;
 
                 case '+':
+                    node = this.getNode(event.node);
                     node.solvers.push(event.solver);
                     break;
 
                 case '-':
+                    node = this.getNode(event.node);
                     let index = node.solvers.indexOf(event.solver);
                     if (index > -1) {
                         node.solvers.splice(index, 1);
@@ -116,6 +121,7 @@ module TreeManager {
                     break;
 
                 case 'STATUS':
+                    node = this.getNode(event.node);
                     node.status = event.data.report;
                     break;
 
@@ -133,6 +139,19 @@ module TreeManager {
                         }
                     }
                     break;
+            }
+
+            // Update node info
+            if (node) node.setInfo(event);
+        }
+
+        setInfo(event: Event) {
+            if (event.data) {
+                for (let key in event.data) {
+                    if (key !== 'node' && key !== 'name' && key !== 'report' && key !== 'solver') {
+                        this.info[key] = event.data[key];
+                    }
+                }
             }
         }
     }

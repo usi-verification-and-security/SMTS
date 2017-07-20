@@ -23,6 +23,13 @@ module TreeManager {
             }
         }
 
+        getMainNode() {
+            if (this.data && this.data.node) {
+                return JSON.parse(this.data.node);
+            }
+            return this.node;
+        }
+
         setTs(value: number) {
             this.ts = value;
         }

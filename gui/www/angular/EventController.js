@@ -30,7 +30,8 @@ app.controller('EventController', ['$scope', '$rootScope', 'currentRow', 'shared
             generateDomTree(sharedTree.tree, smts.tree.getPosition());
 
             // Update data table
-            smts.tables.data.update(event, `event ${event.event}`);
+            let nodeName = event.getMainNode();
+            smts.tables.data.update(sharedTree.tree.root.getNode(nodeName), 'node');
 
             // Update timeline
             smts.timeline.update(event);

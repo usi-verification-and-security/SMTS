@@ -18,12 +18,12 @@ module TreeManager {
             this.root = new Node([], 'AND'); // The root is an 'AND'
 
             for (let i = 0; i <= n; ++i) {
-                this.root.update(this.events[i]);
+                let event = this.events[i];
+                this.root.update(event);
             }
 
             this.updateSelectedNodes(n);
         }
-
 
         //
         createEvents(array) {
@@ -37,7 +37,6 @@ module TreeManager {
             }
         }
 
-
         // Returns the first `n` events
         getEvents(n: number) {
             if (n == this.events.length) {
@@ -45,7 +44,6 @@ module TreeManager {
             }
             return this.events.slice(0, n + 1);
         }
-
 
         // Set selected node
         setSelectedNodes(nodes) {
