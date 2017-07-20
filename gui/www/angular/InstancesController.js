@@ -1,6 +1,7 @@
 app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sharedTree', '$window', '$http', 'sharedService',
     function($scope, $rootScope, currentRow, sharedTree, $window, $http, sharedService) {
 
+
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // CONSTANTS AND GLOBAL VARIABLES
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9,6 +10,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
         const INTERVAL_UPDATE_SOLVING_INFO = 1000;
         const INTERVAL_UPDATE_INSTANCES    = 5000;
         const INTERVAL_UPDATE_EVENTS       = 5000;
+
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // MAIN
@@ -49,6 +51,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
                     $scope.instances = res.data;
                 }, $scope.error);
         };
+
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // INSTANCE
@@ -109,6 +112,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
                 }, $scope.error);
         };
 
+
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // UPDATES
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,6 +149,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
         $scope.updateEvents = function(instance) {
             $scope.getEvents(instance, $scope.lastEventId + 1);
         };
+
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // OTHER

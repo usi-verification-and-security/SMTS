@@ -170,6 +170,12 @@ smts.tables = {
             }
         },
 
+        // Check if container scroll is at bottom
+        isScrollBottom: function() {
+            let container = document.getElementById('smts-events-table-container');
+            return container.scrollTop === container.scrollHeight - container.offsetHeight;
+        },
+
         // Check if a tab of the events container is selected
         // @param {String} tabName: the name of the tab. Has to be lowercase
         // for HTML id compatibility.
@@ -180,9 +186,9 @@ smts.tables = {
         },
 
         // Scroll events table container to bottom
-        scroll: function() {
+        scrollBottom: function() {
             let container = document.getElementById('smts-events-table-container');
-            container.scrollTop = container.scrollHeight;
+            container.scrollTop = container.scrollHeight - container.offsetHeight;
         },
 
         // Show all rows in events table
