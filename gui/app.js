@@ -28,8 +28,8 @@ app.use(fileUpload());
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const globals = {
-    database:     null,  // {Object} ...
-    isRealTime:   false, // {Boolean} `true` if it is live mode, `false` otherwise
+    database:     null,  // {Database} The SQLite database
+    isRealTime:   false, // {Boolean}  `true` if it is live mode, `false` otherwise
 };
 
 
@@ -240,7 +240,6 @@ function initialize() {
         process.exit();
     }
     else if (process.argv[2] === "-v" || process.argv[2] === "--version") {
-        console.log(pjson.version);
         process.exit();
     }
     else {
@@ -289,38 +288,50 @@ function initialize() {
         }
 
         // Open connection with database
+        if (!fs.existsSync(databasePath)) {
+            tools.fatalError(0, 'Database file not found');
+        }
         globals.database = new sqlite.Database(databasePath);
 
         // Start application
         app.listen(serverPort, function() {
-            console.log(`Server running on ${serverPort}...`);
+            console.log(`GUI running on ${serverPort}...`);
         });
     }
 }
 
+// Catch unhandled exceptions
+// @param {Exception} e: The unhandled exception.
+function exceptionHandler(e) {
+    // Uncaught error
+    if (e instanceof taskHandler.ServerConnectionError) {
+        // console.error(`Server Connection Error: ${err.stderr}`);
+    } else if (e && e.stack) {
+        console.error(e.stack);
+    } else if (e) {
+        console.error(e);
+    }
+    process.exit(0);
+}
+
 // Delete all files in temp directory before killing the process
-function exitHandler(options, err) {
+function exitHandler() {
     // Close database connection
-    if (globals.database) {
+    if (globals.database && globals.database.open) {
         globals.database.close();
     }
 
-    // Remove temporary files
-    if (options.cleanup) {
-        // Delete database temp files
-        if (fs.existsSync(`${__dirname}/databases/temp/`)) {
-            let files = fs.readdirSync(`${__dirname}/databases/temp/`);
-            files.forEach(file => fs.unlinkSync(`${__dirname}/databases/temp/${file}`));
-        }
-
-        // Delete benchmarks temp files
-        if (fs.existsSync(`${__dirname}/benchmarks/temp/`)) {
-            let files = fs.readdirSync(`${__dirname}/benchmarks/temp/`);
-            files.forEach(file => fs.unlinkSync(`${__dirname}/benchmarks/temp/${file}`));
-        }
+    // Delete database temp files
+    if (fs.existsSync(`${__dirname}/databases/temp/`)) {
+        let files = fs.readdirSync(`${__dirname}/databases/temp/`);
+        files.forEach(file => fs.unlinkSync(`${__dirname}/databases/temp/${file}`));
     }
-    // if (err) console.log(err.stack);
-    if (options.exit) process.exit();
+
+    // Delete benchmarks temp files
+    if (fs.existsSync(`${__dirname}/benchmarks/temp/`)) {
+        let files = fs.readdirSync(`${__dirname}/benchmarks/temp/`);
+        files.forEach(file => fs.unlinkSync(`${__dirname}/benchmarks/temp/${file}`));
+    }
 }
 
 // Show help
@@ -341,16 +352,16 @@ function showHelp() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Avoid instant program shut down
-process.stdin.resume();
+// process.stdin.resume();
 
-// Do something when app is closing
-process.on('exit', exitHandler.bind(null, {cleanup: true}));
+// Catch `exit` event
+process.on('exit', exitHandler);
 
-// Catch ctrl+c event
-process.on('SIGINT', exitHandler.bind(null, {cleanup: true}));
+// Catch `ctrl-c` event
+process.on('SIGINT', exitHandler);
 
 // Catch uncaught exceptions
-process.on('uncaughtException', exitHandler.bind(null, {exit: true}));
+process.on('uncaughtException', exceptionHandler);
 
 
 initialize();

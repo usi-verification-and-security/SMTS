@@ -1,12 +1,28 @@
+'use strict';
+
 let exec = require('child_process').execSync;
 let config = require('./config.js');
 
+class ServerConnectionError {
+
+    constructor(e) {
+        this.stderr = e.stderr;
+        this.status = e.status;
+    }
+}
+
 function run(command, args = '') {
-    let cmd = `echo 'json.dumps(${command})' | ${config.python} ${config.client} ${config.port} ${args}`;
-    return JSON.parse(exec(cmd, {'encoding': 'utf8'}) || 'null');
+    try {
+        let shellCmd = `echo 'json.dumps(${command})' | ${config.python} ${config.client} ${config.port} ${args}`;
+        return JSON.parse(exec(shellCmd, {'encoding': 'utf8'}) || 'null');
+    } catch (e) {
+        throw new ServerConnectionError(e);
+    }
 }
 
 module.exports = {
+
+    ServerConnectionError: ServerConnectionError,
 
     newInstance: function(filename) {
         return run(``, filename);
