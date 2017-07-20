@@ -28,9 +28,8 @@ app.use(fileUpload());
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const globals = {
-    databasePath: null,  // {String}  Directory path of the database
+    database:     null,  // {Object} ...
     isRealTime:   false, // {Boolean} `true` if it is live mode, `false` otherwise
-    serverPort:   8080   // {Number}  Port of the server
 };
 
 
@@ -111,12 +110,7 @@ app.get('/getSolvingInfo', function(req, res) {
 
 // Get all instances in database
 app.get('/instances', function(req, res) {
-    if (!globals.databasePath) {
-        tools.sendFatalError(res, 500, 'No database on server');
-    }
-    let database = new sqlite.Database(globals.databasePath);
-
-    database.all("SELECT DISTINCT name FROM SolvingHistory", function(err, instances) {
+    globals.database.all("SELECT DISTINCT name FROM SolvingHistory", function(err, instances) {
         if (err) {
             tools.sendFatalError(res, 500, err);
         } else if (!instances) {
@@ -124,7 +118,6 @@ app.get('/instances', function(req, res) {
         }
         tools.sendJson(res, 200, instances);
     });
-    database.close();
 });
 
 // Get events associated with a particular instance
@@ -132,16 +125,11 @@ app.get('/instances', function(req, res) {
 // @query {Number} [optional] id: The id of the first event to be selected. If
 // present only events starting from the given id will be sent, otherwise all.
 app.get('/events/:instance', function(req, res) {
-    if (!globals.databasePath) {
-        tools.sendFatalError(res, 500, 'No database on server');
-    }
-    let database = new sqlite.Database(globals.databasePath);
-
     let query = `SELECT * FROM SolvingHistory WHERE name='${req.params.instance}'`;
     if (req.query.id) {
         query += ` AND id >= ${req.query.id}`;
     }
-    database.all(query, function(err, events) {
+    globals.database.all(query, function(err, events) {
         if (err) {
             tools.sendFatalError(res, 500, err);
         } else if (!events) {
@@ -160,7 +148,6 @@ app.get('/events/:instance', function(req, res) {
         });
         tools.sendJson(res, 200, eventsJson);
     });
-    database.close();
 });
 
 
@@ -257,15 +244,16 @@ function initialize() {
         process.exit();
     }
     else {
+        let databasePath;
+        let serverPort = 8080;
+
         for (let i = 2; i < process.argv.length - 1; i++) {
             switch (process.argv[i]) {
                 // Port
                 case '-p':
                 case '--port':
-                    let serverPort = parseInt(process.argv[i + 1], 10);
-                    if (0 <= serverPort && serverPort < 65536) {
-                        globals.serverPort = serverPort;
-                    } else {
+                    serverPort = parseInt(process.argv[i + 1], 10);
+                    if (serverPort < 0 || 65536 <= serverPort) {
                         tools.fatalError(0, 'No valid port provided');
                         process.exit(0);
                     }
@@ -274,7 +262,7 @@ function initialize() {
                 // Database
                 case '-d':
                 case '--database':
-                    let databasePath = process.argv[i + 1];
+                    databasePath = process.argv[i + 1];
                     if (databasePath) {
                         globals.databasePath = databasePath;
                     } else {
@@ -286,9 +274,9 @@ function initialize() {
                 case '-s':
                 case'--server':
                     taskHandler.setPort(process.argv[i + 1]);
-                    globals.databasePath = taskHandler.getDatabase();
+                    databasePath = taskHandler.getDatabase();
                     globals.isRealTime = true;
-                    if (!globals.databasePath) {
+                    if (!databasePath) {
                         tools.fatalError(0, 'No valid database on the server');
                     }
                     break;
@@ -296,20 +284,28 @@ function initialize() {
         }
 
         // Quit if no database provided
-        if (!globals.databasePath) {
+        if (!databasePath) {
             tools.fatalError(0, 'No database provided');
         }
 
-        app.listen(globals.serverPort, function() {
-            console.log(`Server running on ${globals.serverPort}...`);
+        // Open connection with database
+        globals.database = new sqlite.Database(databasePath);
+
+        // Start application
+        app.listen(serverPort, function() {
+            console.log(`Server running on ${serverPort}...`);
         });
-
-
     }
 }
 
 // Delete all files in temp directory before killing the process
 function exitHandler(options, err) {
+    // Close database connection
+    if (globals.database) {
+        globals.database.close();
+    }
+
+    // Remove temporary files
     if (options.cleanup) {
         // Delete database temp files
         if (fs.existsSync(`${__dirname}/databases/temp/`)) {
