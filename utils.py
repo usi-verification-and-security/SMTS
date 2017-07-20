@@ -8,22 +8,47 @@ import socket
 import sys
 import pathlib
 import argparse
+import os
+import threading
 
 __author__ = 'Matteo Marescotti'
 
-
-def install_gui():
-    for cmd in (['npm', 'install'], ['npm', 'run', 'build']):
-        if subprocess.Popen(cmd, cwd='gui', stdout=subprocess.DEVNULL).wait() != 0:
-            logging.log(logging.ERROR, 'GUI: `{}` error'.format(' '.join(cmd)))
+logging.basicConfig(level=server.config.log_level, format='%(asctime)s\t%(levelname)s\t%(message)s')
 
 
-def run_gui(args):
-    _, err = subprocess.Popen(['npm', 'start', '--'] + args,
-                              stdout=subprocess.DEVNULL,
-                              stderr=subprocess.PIPE,
-                              cwd='gui').communicate()
-    logging.log(logging.ERROR, 'GUI terminated: "{}"'.format(err.decode()))
+def run_log(args, **kwargs):
+    def log(fd, level):
+        for line in os.fdopen(fd):
+            logging.log(level, line.strip())
+
+    stdout_out, stdout_in = os.pipe()
+    stderr_out, stderr_in = os.pipe()
+
+    if 'stdout' not in kwargs:
+        kwargs['stdout'] = stdout_in
+    if 'stderr' not in kwargs:
+        kwargs['stderr'] = stderr_in
+
+    threads = []
+    for log_args in ((stdout_out, logging.INFO), (stderr_out, logging.ERROR)):
+        thread = threading.Thread(target=log, args=log_args)
+        thread.daemon = True
+        thread.start()
+        threads.append(thread)
+
+    subprocess.run(args, **kwargs)
+    os.close(stdout_in)
+    os.close(stderr_in)
+    for thread in threads:
+        thread.join()
+
+
+def gui_install():
+    run_log(['npm', 'install'], cwd='gui', stdout=subprocess.DEVNULL)
+
+
+def gui_start(args):
+    run_log(['npm', 'start', '--silent', '--'] + args, cwd='gui')
 
 
 def run_lemma_server(lemma_server, database, send_again):
@@ -43,21 +68,21 @@ def run_lemma_server(lemma_server, database, send_again):
     if send_again:
         args += ['-a']
     try:
-        lemma_server = subprocess.Popen(args)
+        return subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except BaseException as ex:
         print(ex)
-    else:
-        lemma_server.wait()
 
 
 def run_solvers(*solvers):
+    ps = []
     for path, n in solvers:
         if n:
-            try:
-                for _ in range(n):
-                    subprocess.Popen([path, '-s127.0.0.1:' + str(server.config.port)])
-            except BaseException as ex:
-                logging.log(logging.ERROR, 'error `{}` while running `{}`'.format(ex, path))
+            for _ in range(n):
+                try:
+                    ps.append(subprocess.Popen([path, '-s127.0.0.1:' + str(server.config.port)]))
+                except BaseException as ex:
+                    logging.log(logging.ERROR, 'error `{}` while running `{}`'.format(ex, path))
+    return ps
 
 
 def send_files(port, files):
@@ -100,8 +125,8 @@ if __name__ == '__main__':
 
     if args.gui:
         try:
-            install_gui()
-            run_gui(['-d', str(pathlib.Path(args.gui).absolute())])
+            gui_install()
+            gui_start(['-d', str(pathlib.Path(args.gui).absolute())])
         except KeyboardInterrupt:
             sys.exit(0)
 

@@ -32,13 +32,11 @@ if __name__ == '__main__':
         server.config.db_path = args.db_path
     server.config.db()
 
-    logging.basicConfig(level=server.config.log_level, format='%(asctime)s\t%(levelname)s\t%(message)s')
-
     ps = server.ParallelizationServer(logging.getLogger('server'))
 
     if args.gui:
-        utils.install_gui()
-        gui_thread = threading.Thread(target=utils.run_gui, args=(['-s', str(server.config.port)],))
+        utils.gui_install()
+        gui_thread = threading.Thread(target=utils.gui_start, args=(['-s', str(server.config.port)],))
         gui_thread.daemon = True
         gui_thread.start()
 
