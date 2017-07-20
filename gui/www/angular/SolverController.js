@@ -12,6 +12,18 @@ app.controller('SolverController', ['$scope', '$rootScope', '$window', '$http', 
             sharedTree.tree.assignSolvers(0, currentRow.value);
         });
 
+        // Get execution time of solver
+        // The execution time is mesured starting from the last `+ event`
+        // associated to the solver and the currently selected event.
+        // @param {TreeManager.Solver} solver: The solver to get the
+        // execution time.
+        // @return {String}: The execution time converted to stirng, or `` if
+        // the solver is currently not associated with any event.
+        $scope.formatExecutionTime = function(solver) {
+            let event = sharedTree.tree.getEvent(currentRow.value);
+            return solver.event ? `${event.ts - solver.event.ts}s` : ``;
+        };
+
         // Update data table to contain solver information
         // @param {TreeManager.Solver} solver: the solver to be represented in
         // the data table.

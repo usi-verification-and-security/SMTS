@@ -44,6 +44,10 @@ module TreeManager {
             return this.events.slice(0, n + 1);
         }
 
+        getEvent(n: number) {
+            return this.events[n];
+        }
+
         // Set selected node
         setSelectedNodes(nodes) {
             this.selectedNodes.length = 0;

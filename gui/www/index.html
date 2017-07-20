@@ -178,6 +178,7 @@
                             <thead>
                             <th>Solver</th>
                             <th>Node</th>
+                            <th>Time</th>
                             </thead>
                             <tbody>
                             <tr data-solver="{{solver.name}}"
@@ -186,6 +187,7 @@
                                 ng-click="updateDataTable(solver)">
                                 <td>{{solver.name}}</td>
                                 <td>{{solver.node}}</td>
+                                <td>{{formatExecutionTime(solver)}}</td>
                             </tr>
                             </tbody>
                         </table>
