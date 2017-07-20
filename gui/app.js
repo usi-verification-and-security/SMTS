@@ -42,6 +42,7 @@ const tools = {
 
     // Set of statuses
     httpStatus: {
+        0:   'Startup Error',
         200: 'OK',
         201: 'Created',
         400: 'Bad request',
@@ -59,24 +60,32 @@ const tools = {
 
     // Send response to client as an error
     // @param {Response} res: The response object.
-    // @param {Number} status: HTTP status code of the response.
+    // @param {Number} status: HTTP status code of the error.
     // @param {Object} error: The json object representing the error. It is
     // made by the status code and a string description of the error.
     sendError: function(res, status, error) {
         let message = `${this.httpStatus[status]}: ${JSON.stringify(error)}`;
         res.status(status).json({status: status, error: message});
         console.error(message);
-        process.exit(-1);
     },
 
     // Send response to client as an error and abort execution of appliction
     // @param {Response} res: The response object.
-    // @param {Number} status: HTTP status code of the response.
+    // @param {Number} status: HTTP status code of the error.
     // @param {Object} error: The json object representing the error. It is
     // made by the status code and a string description of the error.
     sendFatalError: function(res, status, error) {
         this.sendError(res, status, error);
-        process.exit(-1);
+        process.exit(0);
+    },
+
+    // Abort execution of appliction
+    // @param {Number} status: HTTP status code of the error.
+    // @param {String} error: The error message printed on stderr.
+    fatalError: function(status, error) {
+        let message = `${this.httpStatus[status]}: ${error}`;
+        console.error(message);
+        process.exit(0);
     }
 };
 
@@ -257,8 +266,8 @@ function initialize() {
                     if (0 <= serverPort && serverPort < 65536) {
                         globals.serverPort = serverPort;
                     } else {
-                        console.error('Startup Error: No valid port provided');
-                        process.exit(-1);
+                        tools.fatalError(0, 'No valid port provided');
+                        process.exit(0);
                     }
                     break;
 
@@ -269,8 +278,7 @@ function initialize() {
                     if (databasePath) {
                         globals.databasePath = databasePath;
                     } else {
-                        console.error('Startup Error: No valid database provided');
-                        process.exit(-1);
+                        tools.fatalError(0, 'No valid database provided');
                     }
                     break;
 
@@ -281,8 +289,7 @@ function initialize() {
                     globals.databasePath = taskHandler.getDatabase();
                     globals.isRealTime = true;
                     if (!globals.databasePath) {
-                        console.log('There is no database on the server provided. Closing SMT Viewer.')
-                        process.exit();
+                        tools.fatalError(0, 'No valid database on the server');
                     }
                     break;
             }
@@ -290,8 +297,7 @@ function initialize() {
 
         // Quit if no database provided
         if (!globals.databasePath) {
-            console.error('Startup Error: No database provided');
-            process.exit(-1);
+            tools.fatalError(0, 'No database provided');
         }
 
         app.listen(globals.serverPort, function() {
