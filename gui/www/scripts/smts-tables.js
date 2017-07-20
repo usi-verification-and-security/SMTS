@@ -3,7 +3,7 @@ smts.tables = {
 
     // Set of functions that manipulate the DOM object 'smts-data-container'
     data: {
-
+        
         // Make an event object with the wanted attributes for the data table
         // @param {TreeManager.Event} event: The mold event.
         // @return {Object}: The object representing the event, to be put in
@@ -245,6 +245,14 @@ smts.tables = {
                 rows = this.getRows(`[data-instance="${instance.name}"]`);
                 if (rows) rows.forEach(row => row.children[0].classList.add('smts-bold'));
             }
+        },
+
+        getSelected: function() {
+            let rows = this.getRows('.smts-highlight');
+            if (rows && rows[0]) {
+                return rows[0].getAttribute('data-instance');
+            }
+            return null;
         },
 
         // Get rows of instances table
