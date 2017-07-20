@@ -46,6 +46,7 @@ if __name__ == '__main__':
         files_thread.start()
 
     if args.lemma:
+        # done in separate thread because gethostbyname could take time
         lemma_thread = threading.Thread(target=utils.run_lemma_server, args=(
             server.config.build_path + '/lemma_server',
             server.config.db_path if args.lemmaDB else None,
@@ -55,12 +56,10 @@ if __name__ == '__main__':
         lemma_thread.start()
 
     if args.opensmt or args.z3spacer:
-        solvers_thread = threading.Thread(target=utils.run_solvers, args=(
+        utils.run_solvers(
             (server.config.build_path + '/solver_opensmt', args.opensmt),
             (server.config.build_path + '/solver_z3spacer', args.z3spacer)
-        ))
-        solvers_thread.daemon = True
-        solvers_thread.start()
+        )
 
     try:
         ps.run_forever()

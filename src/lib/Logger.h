@@ -51,7 +51,7 @@ public:
                 stream << "UNKNOWN\t";
         }
         stream << message;
-        std::cout << stream.str() << "\n";
+        std::cout << stream.str() << std::endl;
         if (getenv("TERM")) {
             r = system("tput sgr0");
         }

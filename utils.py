@@ -79,9 +79,11 @@ def run_solvers(*solvers):
         if n:
             for _ in range(n):
                 try:
-                    ps.append(subprocess.Popen([path, '-s127.0.0.1:' + str(server.config.port)]))
+                    ps.append(subprocess.Popen([path, '-s127.0.0.1:' + str(server.config.port)],
+                                               stdout=subprocess.DEVNULL,
+                                               stderr=subprocess.DEVNULL))
                 except BaseException as ex:
-                    logging.log(logging.ERROR, 'error `{}` while running `{}`'.format(ex, path))
+                    logging.log(logging.ERROR, 'error "{}" while running "{}"'.format(ex, path))
     return ps
 
 
