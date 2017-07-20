@@ -1,5 +1,5 @@
-app.controller('ViewController', ['$scope', '$rootScope', 'currentRow', 'sharedTree', '$window', '$http', 'sharedService',
-    function($scope, $rootScope, currentRow, sharedTree, $window, $http, sharedService) {
+app.controller('ViewController', ['$scope', '$rootScope', '$window', '$http', 'sharedService', 'sharedTree', 'currentRow',
+    function($scope, $rootScope, $window, $http, sharedService, sharedTree, currentRow) {
 
         // Regenerate tree on window resize
         $(window).resize(function() {

@@ -1,5 +1,5 @@
-app.controller('EventController', ['$scope', '$rootScope', 'currentRow', 'sharedTree', '$window', '$http', 'sharedService',
-    function($scope, $rootScope, currentRow, sharedTree, $window, $http, sharedService) {
+app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', 'sharedService', 'sharedTree', 'currentRow',
+    function($scope, $rootScope, $window, $http, sharedService, sharedTree, currentRow) {
 
         // Update events on instance selected
         $scope.$on('select-instance', function() {

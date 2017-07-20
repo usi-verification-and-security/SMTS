@@ -1,5 +1,5 @@
-app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sharedTree', '$window', '$http', 'sharedService',
-    function($scope, $rootScope, currentRow, sharedTree, $window, $http, sharedService) {
+app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http', 'sharedService', 'sharedTree', 'currentRow',
+    function($scope, $rootScope, $window, $http, sharedService, sharedTree, currentRow) {
 
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////

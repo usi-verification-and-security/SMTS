@@ -1,5 +1,5 @@
-app.controller('SolverController', ['$scope', '$rootScope', 'currentRow', 'sharedTree', '$window', '$http', 'sharedService',
-    function ($scope, $rootScope, currentRow, sharedTree, $window, $http, sharedService) {
+app.controller('SolverController', ['$scope', '$rootScope', '$window', '$http', 'sharedService', 'sharedTree', 'currentRow',
+    function($scope, $rootScope, $window, $http, sharedService, sharedTree, currentRow) {
 
         // Trigger when an instance is selected
         $scope.$on('select-instance', function() {
