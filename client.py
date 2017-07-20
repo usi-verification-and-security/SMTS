@@ -55,5 +55,5 @@ if __name__ == '__main__':
                 header, message = socket.read()
                 print(message.decode())
     except ConnectionError as ex:
-        print(ex)
+        print(ex, file=sys.stderr)
         sys.exit(1)
