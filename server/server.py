@@ -66,6 +66,7 @@ class Solver(net.Socket):
                   }
         self.write(header, smt)
         self._db_log('-')
+        self.or_waiting = []
         self.started = time.time()
         self.node = node
         self._db_log('+')
@@ -100,7 +101,7 @@ class Solver(net.Socket):
         if not node:
             node = framework.OrNode(self.node)
         self.or_waiting.append(node)
-        self._db_log('OR', {'node': str(node.path())})
+        self._db_log('OR', {'node': str(node.path()), 'solver': str(self.remote_address)})
 
     def read(self):
         header, payload = super().read()
@@ -138,7 +139,6 @@ class Solver(net.Socket):
             self.node.status = status
             path = self.node.path(True)
             path.reverse()
-            print(path)
             for node in path:
                 if node.status != framework.SolveStatus.unknown:
                     if isinstance(node, framework.AndNode):
