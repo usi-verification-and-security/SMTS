@@ -30,9 +30,13 @@ class Solver(net.Socket):
     def __init__(self, sock: net.Socket, name: str):
         super().__init__(sock._sock)
         self.name = name
+        self._reset()
+
+    def _reset(self):
         self.node = None
         self.started = None
         self.or_waiting = []
+        self.parameters = {}
 
     def __repr__(self):
         return '<{} at{} {}>'.format(
@@ -41,20 +45,21 @@ class Solver(net.Socket):
             'idle' if self.node is None else '{}{}'.format(self.node.root, self.node.path())
         )
 
-    def solve(self, node: framework.AndNode, header: dict):
+    def solve(self, node: framework.AndNode, parameters: dict):
         if self.node is not None:
             self.stop()
         self.node = node
         smt, query = self.node.root.to_string(self.node)
-        header.update({
+        self.parameters = parameters
+        self.parameters.update({
             'command': 'solve',
             'name': self.node.root.name,
             'node': self.node.path(),
             'query': query,
         })
-        self.write(header, smt)
+        self.write(self.parameters, smt)
         self.started = time.time()
-        self._db_log('+')
+        self._db_log('+', self.parameters)
 
     def incremental(self, node: framework.AndNode):
         smt, query = self.node.root.to_string(node, self.node)
@@ -69,7 +74,7 @@ class Solver(net.Socket):
         self.or_waiting = []
         self.started = time.time()
         self.node = node
-        self._db_log('+')
+        self._db_log('+', self.parameters)
 
     def stop(self):
         if self.node is None:
@@ -80,8 +85,7 @@ class Solver(net.Socket):
             'node': self.node.path()
         }, '')
         self._db_log('-')
-        self.node = None
-        self.or_waiting = []
+        self._reset()
 
     def set_lemma_server(self, lemma_server: LemmaServer = None):
         self.write({
@@ -153,6 +157,13 @@ class Solver(net.Socket):
     def _db_log(self, event: str, data: dict = None):
         if not config.db():
             return
+        if data:
+            data = data.copy()
+            for key in ['name', 'node', 'command']:
+                try:
+                    del data[key]
+                except:
+                    pass
         config.db().cursor().execute("INSERT INTO {}SolvingHistory (name, node, event, solver, data) "
                                      "VALUES (?,?,?,?,?)".format(config.table_prefix), (
                                          self.node.root.name,
@@ -402,11 +413,11 @@ class ParallelizationServer(net.Server):
                     assert isinstance(solver, Solver)
                     if solver.node is node:
                         continue
-                    header = {}
+                    parameters = {}
                     if self.config.lemma_amount:
-                        header["lemmas"] = self.config.lemma_amount
-                    self.config.entrust(node, header, solver.name, self.solvers(node))
-                    solver.solve(node, header)
+                        parameters["lemmas"] = self.config.lemma_amount
+                    self.config.entrust(node, parameters, solver.name, self.solvers(node))
+                    solver.solve(node, parameters)
                     if self.current.started is None:
                         self.current.started = time.time()
 
