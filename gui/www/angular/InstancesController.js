@@ -90,8 +90,16 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
             let query = eventId ? `?id=${eventId}` : ``;
             $http({method: 'GET', url: `/events/${instance.name}${query}`}).then(
                 function(res) {
+                    let events = res.data || [];
+
                     if (!eventId) $scope.events = []; // Reset events if new request
-                    $scope.events = $scope.events.concat(res.data);
+
+                    // Return if we receive an empty update from the current instance
+                    let instanceName = smts.tables.instances.getSelected();
+                    if (instance.name === instanceName && !events.length) {
+                        return;
+                    }
+                    $scope.events = $scope.events.concat(events);
 
                     // Update last event
                     let lastEvent = $scope.events[$scope.events.length - 1];
