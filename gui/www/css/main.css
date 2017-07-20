@@ -149,11 +149,23 @@ html, body {
 /* Column 1 */
 
 #smts-title {
-    text-shadow: 1px 1px var(--color-highlight);
-    font-size: 4vh;
-    font-weight: bold;
-    vertical-align: middle;
     height: 10%;
+
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: baseline;
+
+    text-shadow: 1px 1px var(--color-highlight);
+    font-weight: bold;
+}
+
+#smts-title-title {
+    font-size: 4vh;
+}
+
+#smts-title-version {
+    font-size: 2vh;
 }
 
 #smts-instances-container {

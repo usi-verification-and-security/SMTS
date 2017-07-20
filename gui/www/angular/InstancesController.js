@@ -22,7 +22,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
                 function(res) {
                     let info = res.data;
                     $scope.isRealTime = info.isRealTime;
-                    // TODO: set version in title with info.version
+                    document.getElementById('smts-title-version').innerHTML = `v${info.version}`;
 
                     if (info.isRealTime) {
                         // Show server container
