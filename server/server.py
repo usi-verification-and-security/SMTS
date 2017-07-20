@@ -49,15 +49,15 @@ class Solver(net.Socket):
         if self.node is not None:
             self.stop()
         self.node = node
+        self.parameters = parameters.copy()
         smt, query = self.node.root.to_string(self.node)
-        self.parameters = parameters
-        self.parameters.update({
+        parameters.update({
             'command': 'solve',
             'name': self.node.root.name,
             'node': self.node.path(),
             'query': query,
         })
-        self.write(self.parameters, smt)
+        self.write(parameters, smt)
         self.started = time.time()
         self._db_log('+', self.parameters)
 
@@ -111,31 +111,33 @@ class Solver(net.Socket):
         header, payload = super().read()
         if 'report' not in header:
             return {}, b''
-        if header['report'] == 'partitions' and self.or_waiting:
-            for node in self.or_waiting:
-                if self.node.root.child(json.loads(header['node'])) is node.parent:
-                    self.or_waiting.remove(node)
-                    try:
-                        for partition in payload.decode().split('\0'):
-                            if len(partition) == 0:
-                                continue
-                            child = framework.AndNode(node, '(assert {})'.format(partition))
-                            self._db_log('AND', {'node': str(child.path()), 'smt': child.smt})
-                    except BaseException as ex:
-                        header['report'] = 'error:(server) error reading partitions: {}'.format(traceback.format_exc())
-                        node.clear()
-                        # ask them again?
-                    else:
-                        header['report'] = 'info:(server) received {} partitions'.format(len(node))
-                        if len(node) == 1:
-                            node.clear()
-                    return header, payload
 
         if self.node is None:
             return header, payload
 
         if self.node.root.name != header['name'] or str(self.node.path()) != header['node']:
             return {}, b''
+
+        del header['name']
+        del header['node']
+
+        if header['report'] == 'partitions' and self.or_waiting:
+            node = self.or_waiting.pop()
+            try:
+                for partition in payload.decode().split('\0'):
+                    if len(partition) == 0:
+                        continue
+                    child = framework.AndNode(node, '(assert {})'.format(partition))
+                    self._db_log('AND', {'node': str(child.path()), 'smt': child.smt})
+            except BaseException as ex:
+                header['report'] = 'error:(server) error reading partitions: {}'.format(traceback.format_exc())
+                node.clear()
+                # ask them again?
+            else:
+                header['report'] = 'info:(server) received {} partitions'.format(len(node))
+                if len(node) == 1:
+                    node.clear()
+            return header, payload
 
         if header['report'] in framework.SolveStatus.__members__:
             status = framework.SolveStatus.__members__[header['report']]
@@ -157,13 +159,6 @@ class Solver(net.Socket):
     def _db_log(self, event: str, data: dict = None):
         if not config.db():
             return
-        if data:
-            data = data.copy()
-            for key in ['name', 'node', 'command']:
-                try:
-                    del data[key]
-                except:
-                    pass
         config.db().cursor().execute("INSERT INTO {}SolvingHistory (name, node, event, solver, data) "
                                      "VALUES (?,?,?,?,?)".format(config.table_prefix), (
                                          self.node.root.name,
