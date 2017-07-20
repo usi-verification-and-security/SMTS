@@ -26,7 +26,7 @@ if __name__ == '__main__':
         address = (components[0], int(components[1]))
     except:
         print('invalid host:port', file=sys.stderr)
-        sys.exit(-1)
+        sys.exit(1)
 
     try:
         if args.files:
@@ -56,3 +56,4 @@ if __name__ == '__main__':
                 print(message.decode())
     except ConnectionError as ex:
         print(ex)
+        sys.exit(1)
