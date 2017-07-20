@@ -80,7 +80,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
         // Load database data relative to a particular instance
         // It gets the database data and generates a tree with it.
         // @param {Instance} instance: Instance to load data from.
-        // @param (Number) id (optional): If present, requests events only from
+        // @param (Number) [optional] id: If present, requests events only from
         // given id, and appends them to already existing events. Otherwise,
         // events are completly overwritten.
         $scope.getEvents = function(instance, eventId) {
@@ -113,10 +113,14 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
         // UPDATES
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+        // Get current solving instance info to show in server container
         $scope.updateSolvingInfo = function() {
             $http({method: 'GET', url: '/getSolvingInfo'}).then(
                 function(res) {
                     let instanceData = res.data;
+                    // Bold running instance
+                    smts.tables.instances.bold([instanceData]);
+                    // Broadcast running instance data
                     sharedService.broadcastUpdateInstanceData(instanceData);
                 }, $scope.error);
         };
@@ -135,6 +139,9 @@ app.controller('InstancesController', ['$scope', '$rootScope', 'currentRow', 'sh
                 }, $scope.error);
         };
 
+        // Get events starting from the first id not present in events table
+        // @param {Instance} instance: Instance to which the events are
+        // associated.
         $scope.updateEvents = function(instance) {
             $scope.getEvents(instance, $scope.lastEventId + 1);
         };

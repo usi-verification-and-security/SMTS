@@ -144,7 +144,12 @@ smts.tables = {
             }
         },
 
-        // TODO: description
+        // Get rows of events table
+        // @params {String} [optional] option: An extension to the original
+        // query. If no option is provided, all rows are selected. If an option
+        // is given, only rows matching the option are selected.
+        // E.g.: option = '[data-node="[0,0]"]' selects only rows with
+        // attribute `data-node` matching "[0.,0]".
         getRows: function(option = '') {
             let queryRows = '#smts-events-table > tbody > tr';
             return document.querySelectorAll(`${queryRows}${option}`)
@@ -174,7 +179,7 @@ smts.tables = {
             return tab ? tab.classList.contains('active') : false;
         },
 
-        // TODO: add description
+        // Scroll events table container to bottom
         scroll: function() {
             let container = document.getElementById('smts-events-table-container');
             container.scrollTop = container.scrollHeight;
@@ -220,7 +225,28 @@ smts.tables = {
     // Set of functions that manipulate the DOM object 'smts-instances-container'
     instances: {
 
-        // TODO: description
+        // Make cells of instances table matching one of given instances bold
+        // @param {Node[]} [optional] instances: List of instances for which
+        // corresponding instances' cells have to be selected. The default
+        // value is an empty array, if no instances have to be selected.
+        bold: function(instances = []) {
+            // Remove bold from all event cells
+            let rows = this.getRows('>td.smts-bold');
+            if (rows) rows.forEach(row => row.classList.remove('smts-bold'));
+
+            // Apply bold to instances cells with executing instance
+            for (let instance of instances) {
+                rows = this.getRows(`[data-instance="${instance.name}"]`);
+                if (rows) rows.forEach(row => row.children[0].classList.add('smts-bold'));
+            }
+        },
+
+        // Get rows of instances table
+        // @params {String} [optional] option: An extension to the original
+        // query. If no option is provided, all rows are selected. If an option
+        // is given, only rows matching the option are selected.
+        // E.g.: option = '[data-instance="ABCD"]' selects only rows with
+        // attribute `data-instance` matching "ABCD".
         getRows: function(option = '') {
             let queryRows = '#smts-instances-table > tbody > tr';
             return document.querySelectorAll(`${queryRows}${option}`)
@@ -260,7 +286,12 @@ smts.tables = {
             }
         },
 
-        // TODO: description
+        // Get rows of solvers table
+        // @params {String} [optional] option: An extension to the original
+        // query. If no option is provided, all rows are selected. If an option
+        // is given, only rows matching the option are selected.
+        // E.g.: option = '[data-node="[0,0]"]' selects only rows with
+        // attribute `data-node` matching "[0.,0]".
         getRows: function(option = '') {
             let queryRows = '#smts-solvers-table > tbody > tr';
             return document.querySelectorAll(`${queryRows}${option}`)
