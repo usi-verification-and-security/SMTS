@@ -212,7 +212,7 @@ class Fixedpoint(Root):
                 if i[0] != 'rule':
                     continue
                 i = i[1]
-                if i[0] == 'let':
+                while i[0] == 'let':
                     i = i[2]
                 if i[0] == '=>' and i[2] == self.query:
                     queries.append('{}{}'.format(self.query, len(queries)))
