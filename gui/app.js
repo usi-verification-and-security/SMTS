@@ -3,7 +3,6 @@ const app = express();
 const fileUpload = require('express-fileupload');
 const bodyParser = require('body-parser');
 const sqlite = require('sqlite3').verbose();
-const pjson = require('./package.json');
 const taskHandler = require('./taskHandler');
 const fs = require('fs');
 
@@ -62,8 +61,8 @@ const tools = {
     // @param {Number} status: HTTP status code of the error.
     // @param {Object} error: The json object representing the error. It is
     // made by the status code and a string description of the error.
-    sendError: function(res, status, error) {
-        let message = `${this.httpStatus[status]}: ${JSON.stringify(error)}`;
+    sendError: function(res, status, error, position) {
+        let message = `${this.httpStatus[status]} ${position}: ${JSON.stringify(error)}`;
         res.status(status).json({status: status, error: message});
         console.error(message);
     },
@@ -73,8 +72,8 @@ const tools = {
     // @param {Number} status: HTTP status code of the error.
     // @param {Object} error: The json object representing the error. It is
     // made by the status code and a string description of the error.
-    sendFatalError: function(res, status, error) {
-        this.sendError(res, status, error);
+    sendFatalError: function(res, status, error, position) {
+        this.sendError(res, status, error, position);
         process.exit(0);
     },
 
@@ -82,7 +81,7 @@ const tools = {
     // @param {Number} status: HTTP status code of the error.
     // @param {String} error: The error message printed on stderr.
     fatalError: function(status, error) {
-        let message = `${this.httpStatus[status]}: ${error}`;
+        let message = `${this.httpStatus[status]} ${position}: ${error}`;
         console.error(message);
         process.exit(0);
     }
@@ -112,9 +111,9 @@ app.get('/getSolvingInfo', function(req, res) {
 app.get('/instances', function(req, res) {
     globals.database.all("SELECT DISTINCT name FROM SolvingHistory", function(err, instances) {
         if (err) {
-            tools.sendFatalError(res, 500, err);
+            tools.sendFatalError(res, 500, err, 'GET /instances');
         } else if (!instances) {
-            tools.sendFatalError(res, 404, `Instances not found (GET /instances)`);
+            tools.sendFatalError(res, 404, `Instances not found`, 'GET /instances');
         }
         tools.sendJson(res, 200, instances);
     });
@@ -131,9 +130,9 @@ app.get('/events/:instance', function(req, res) {
     }
     globals.database.all(query, function(err, events) {
         if (err) {
-            tools.sendFatalError(res, 500, err);
+            tools.sendFatalError(res, 500, err, `GET /events/:instance`);
         } else if (!events) {
-            tools.sendFatalError(res, 404, `Events not found (GET /events/:instance)`);
+            tools.sendFatalError(res, 404, `Events not found`, `GET /events/:instance`);
         }
         let eventsJson = [];
         events.forEach(function(event) {
@@ -159,7 +158,7 @@ app.get('/events/:instance', function(req, res) {
 // @data {File[]} files: List of database file to use.
 app.post('/upload/database', function(req, res) {
     if (!req.files) {
-        tools.sendError(res, 400, 'No database file uploaded');
+        tools.sendError(res, 400, 'No database file uploaded', 'POST /upload/database');
         return;
     }
 
@@ -174,7 +173,7 @@ app.post('/upload/database', function(req, res) {
     // Save file in `temp` directory
     file.mv(path, function(err) {
         if (err) {
-            tools.sendFatalError(res, 500, 'Failed to save database file');
+            tools.sendFatalError(res, 500, 'Failed to save database file', 'POST /upload/database');
         }
         // Set database
         globals.databasePath = path;
@@ -186,7 +185,7 @@ app.post('/upload/database', function(req, res) {
 // @data {File[]} files: List of instances files to use.
 app.post('/upload/instance', function(req, res) {
     if (!req.files) {
-        tools.sendError(res, 400, 'No instance file uploaded');
+        tools.sendError(res, 400, 'No instance file uploaded', 'POST /upload/instance');
         return;
     }
 
@@ -201,7 +200,7 @@ app.post('/upload/instance', function(req, res) {
     // Save file in `temp` directory
     file.mv(path, function(err) {
         if (err) {
-            tools.sendFatalError(res, 500, 'Failed to save instance file');
+            tools.sendFatalError(res, 500, 'Failed to save instance file', 'POST /upload/instance');
         }
         // Start solving new instance
         taskHandler.newInstance(path);
@@ -253,7 +252,7 @@ function initialize() {
                 case '--port':
                     serverPort = parseInt(process.argv[i + 1], 10);
                     if (serverPort < 0 || 65536 <= serverPort) {
-                        tools.fatalError(0, 'No valid port provided');
+                        tools.fatalError(0, 'No valid port provided', 'initialize');
                         process.exit(0);
                     }
                     break;
@@ -265,7 +264,7 @@ function initialize() {
                     if (databasePath) {
                         globals.databasePath = databasePath;
                     } else {
-                        tools.fatalError(0, 'No valid database provided');
+                        tools.fatalError(0, 'No valid database provided', 'initialize');
                     }
                     break;
 
@@ -276,7 +275,7 @@ function initialize() {
                     databasePath = taskHandler.getDatabase();
                     globals.isRealTime = true;
                     if (!databasePath) {
-                        tools.fatalError(0, 'No valid database on the server');
+                        tools.fatalError(0, 'No valid database on the server', 'initialize');
                     }
                     break;
             }
@@ -284,12 +283,12 @@ function initialize() {
 
         // Quit if no database provided
         if (!databasePath) {
-            tools.fatalError(0, 'No database provided');
+            tools.fatalError(0, 'No database provided', 'initialize');
         }
 
         // Open connection with database
         if (!fs.existsSync(databasePath)) {
-            tools.fatalError(0, 'Database file not found');
+            tools.fatalError(0, 'Database file not found', 'initialize');
         }
         globals.database = new sqlite.Database(databasePath);
 
@@ -351,17 +350,14 @@ function showHelp() {
 // MAIN
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Avoid instant program shut down
-// process.stdin.resume();
+// Catch uncaught exceptions
+process.on('uncaughtException', exceptionHandler);
+
+// Overload SIGINT event to make it go through exitHandler
+process.on('SIGINT', () => process.exit(0));
 
 // Catch `exit` event
 process.on('exit', exitHandler);
 
-// Catch `ctrl-c` event
-process.on('SIGINT', exitHandler);
-
-// Catch uncaught exceptions
-process.on('uncaughtException', exceptionHandler);
-
-
+// Initialize
 initialize();
