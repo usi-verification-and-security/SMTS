@@ -107,6 +107,12 @@ app.get('/getSolvingInfo', function(req, res) {
     tools.sendJson(res, 200, taskHandler.getCurrent());
 });
 
+// Get instance CNF
+// @params {String} instance: The name of the instance.
+app.get('/cnf/:instance', function(req, res) {
+    tools.sendJson(res, 200, taskHandler.getCNF(req.params.instance));
+});
+
 // Get all instances in database
 app.get('/instances', function(req, res) {
     globals.database.all("SELECT DISTINCT name FROM SolvingHistory", function(err, instances) {

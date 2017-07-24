@@ -78,6 +78,16 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
                 $scope.updateEventsIntervalId =
                     setInterval($scope.updateEvents.bind(null, instance), INTERVAL_UPDATE_EVENTS);
             }
+
+            // Get instance CNF if available
+            this.getCNF(instance);
+        };
+
+        $scope.getCNF = function(instance) {
+            $http({method: 'GET', url: `/cnf/${instance.name}`}).then(
+              function(res) {
+                  // console.log(res.data);
+              }, $scope.error);
         };
 
         // Load database data relative to a particular instance

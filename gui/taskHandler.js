@@ -1,5 +1,6 @@
 'use strict';
 
+const fs = require('fs');
 let exec = require('child_process').execSync;
 let config = require('./config.js');
 
@@ -28,11 +29,11 @@ module.exports = {
         return run(``, filename);
     },
 
-    setPath: function (_path) {
+    setPath: function(_path) {
         config.client = _path;
     },
 
-    setPort: function (_port) {
+    setPort: function(_port) {
         config.port = _port;
     },
 
@@ -40,12 +41,22 @@ module.exports = {
         return parseInt(run(``, `--version`));
     },
 
-    getDatabase: function () {
+    getDatabase: function() {
         return run(`self.config.db().execute("PRAGMA database_list").fetchall()[0][2] if self.config.db() else None`);
     },
 
-    getInstance: function () {
+    getInstance: function() {
         return run(`self.current.root.name if self.current else None`);
+    },
+
+    getCNF: function(instanceName) {
+        for (let benchmarkPath of config.benchmarks_path) {
+            let filePath = `${__dirname}/${benchmarkPath}/${instanceName}.smt2`;
+            if (fs.existsSync(filePath)) {
+                return exec(`../utils.py -s ${filePath}`, {'encoding': 'utf8'});
+            }
+        }
+        return null;
     },
 
     getTimeout: function() {
@@ -56,11 +67,11 @@ module.exports = {
         return run(`round(time.time() - self.current.started, 2) if self.current else 0`);
     },
 
-    getRemainingTime: function () {
+    getRemainingTime: function() {
         return run(`round(self.current.when_timeout, 2) if self.current else 0`);
     },
 
-    getCurrent: function () {
+    getCurrent: function() {
         return {
             name: this.getInstance(),
             time: this.getElapsedTime(),
@@ -68,11 +79,11 @@ module.exports = {
         };
     },
 
-    changeTimeout: function (delta) {
+    changeTimeout: function(delta) {
         return run(`exec("if self.current: self.current.timeout+=${delta}")`);
     },
 
-    stopSolving: function () {
+    stopSolving: function() {
         return run(`exec("if self.current: self.current.timeout=1")`);
     }
 
