@@ -2,6 +2,7 @@
 <head>
     <title>SMT Viewer</title>
     <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/tables.css">
     <link rel="stylesheet" href="css/timeline.css">
     <link rel="stylesheet" href="css/tree.css">
     <style type="text/css"></style>
@@ -122,7 +123,19 @@
         <!--Second column-->
         <div id="smts-column-2" class="col-sm-6 container-fluid smts-column smts-hidden">
             <!--Tree view-->
-            <div id="smts-tree-container" class="smts-container" ng-controller="ViewController"></div>
+            <div id="smts-svg-container">
+                <div id="smts-svg-title" class="smts-container-title">SVG</div>
+
+                <ul id="smts-svg-navbar" class="nav nav-tabs smts-navbar">
+                    <li><a data-toggle="tab" href="#smts-tree-container">Tree</a></li>
+                    <li class="active"><a data-toggle="tab" href="#smts-cnf-container">CNF</a></li>
+                </ul>
+
+                <div id="smts-svg-tab-content" class="tab-content">
+                    <div id="smts-tree-container" class="smts-container tab-pane" ng-controller="ViewController"></div>
+                    <div id="smts-cnf-container" class="smts-container tab-pane active">BLAH</div>
+                </div>
+            </div>
 
             <!--Event view-->
             <div id="smts-events-container" class="smts-container" ng-controller="EventController">
@@ -226,7 +239,6 @@
 <script type="text/javascript" src="scripts/smts-timeline.js"></script>
 <script type="text/javascript" src="scripts/smts-tree.js"></script>
 <script type="text/javascript" src="scripts/options.js"></script>
-<script type="text/javascript" src="scripts/dndTree.js"></script>
 <!--Angular-->
 <script type="text/javascript" src="angular/main.js"></script>
 <script type="text/javascript" src="angular/EventController.js"></script>
