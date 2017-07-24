@@ -120,8 +120,8 @@ if __name__ == '__main__':
     parser.add_argument('--version', action='version', version=str(version))
     mxg = parser.add_mutually_exclusive_group()
     mxg.add_argument('-g', dest='gui', metavar='DB_PATH', help='analyse database with GUI')
-    mxg.add_argument('-s', dest='smt2', action='store_true', help='stdin smt2, stdout json')
-    mxg.add_argument('-j', dest='json', action='store_true', help='stdin json, stdout smt2')
+    mxg.add_argument('-s', dest='smt2', metavar='FILE', nargs='?', const=True, help='smt to json. stdin if empty')
+    mxg.add_argument('-j', dest='json', metavar='FILE', nargs='?', const=True, help='json to smt. stdin if empty')
 
     args = parser.parse_args()
 
@@ -133,7 +133,15 @@ if __name__ == '__main__':
             sys.exit(0)
 
     if args.smt2:
-        print(framework.smt2json(sys.stdin.read(), True))
+        if args.smt2 is True:
+            file = sys.stdin
+        else:
+            file = open(args.smt2, 'r')
+        print(framework.smt2json(file.read(), True))
 
     if args.json:
-        print(framework.json2smt(sys.stdin.read(), True))
+        if args.smt2 is True:
+            file = sys.stdin
+        else:
+            file = open(args.smt2, 'r')
+        print(framework.json2smt(file.read(), True))
