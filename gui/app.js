@@ -80,7 +80,7 @@ const tools = {
     // Abort execution of appliction
     // @param {Number} status: HTTP status code of the error.
     // @param {String} error: The error message printed on stderr.
-    fatalError: function(status, error) {
+    fatalError: function(status, error, position) {
         let message = `${this.httpStatus[status]} ${position}: ${error}`;
         console.error(message);
         process.exit(0);
