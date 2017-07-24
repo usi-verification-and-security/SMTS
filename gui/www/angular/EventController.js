@@ -27,7 +27,7 @@ app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', '
             // Build tree
             currentRow.value = index;
             sharedTree.tree.arrangeTree(currentRow.value);
-            generateDomTree(sharedTree.tree, smts.tree.getPosition());
+            smts.tree.make(sharedTree.tree, smts.tree.getPosition());
 
             // Update data table
             let nodeName = event.getMainNode();
