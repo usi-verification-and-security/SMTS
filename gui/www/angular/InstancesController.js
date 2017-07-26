@@ -63,11 +63,8 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
             // Highlight instance
             smts.tables.instances.highlight([instance]);
 
-            // Unhide other containers
-            // Useful the first time an instance is selected
-            document.getElementById('smts-column-2').classList.remove('smts-hidden');
-            document.getElementById('smts-column-3').classList.remove('smts-hidden');
-            document.getElementById('smts-timeline').classList.remove('smts-hidden');
+            // First time an instance is selected
+            document.getElementById('smts-content').classList.remove('smts-hidden');
 
             // Get tree data
             this.getEvents(instance);
@@ -86,8 +83,8 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
         $scope.getSMT = function(instance) {
             $http({method: 'GET', url: `/cnf/${instance.name}`}).then(
               function(res) {
-                  if (res.data) SMT.DAG.init(JSON.parse(res.data));
-                  console.log(SMT.DAG.nodes);
+                  if (res.data) $scope.smt = new SMT.DAG(JSON.parse(res.data));
+                  console.log($scope.smt.nodes);
               }, $scope.error);
         };
 
