@@ -1,7 +1,8 @@
 module SMT {
-    export class SMT {
 
-        // The SMT class takes a json smt2 file and converts it into a data
+    export class DAG {
+
+        // The DAG class takes a json smt2 file and converts it into a data
         // structure to then generate the DAG.
         // E.g: The following smt2 code
         //   (assert (< a 10))
@@ -47,96 +48,70 @@ module SMT {
         //       ]},
         //     ]
 
-        root: Node; // The root node is 'and'
-        nodes: { [name: string]: Node[] };
+        // Variables
+        static root:  Node                       = new Node('and', 0, []);
+        static nodes: { [name: string]: Node[] } = {};
 
-        fns: { [name: string]: Fn };
-        types: { [name: string]: Type };
+        static fns:   { [name: string]: Fn }     = {};
+        static types: { [name: string]: Type }   = {};
 
 
-        constructor(smt: any) {
-            this.root = new Node('and', 0, []);
-            this.nodes = {'and': [this.root]};
+        // Initialize the DAG
+        // @param {any[]} smt: Json object representing the smt.
+        static init(smt: any[][]) : void {
+            DAG.root  = new Node('and', 0, []);
+            DAG.nodes = {'and': [DAG.root]};
 
-            this.fns = {};
-            this.types = {};
+            DAG.fns   = {};
+            DAG.types = {};
 
             // Default types and functions
-            let typeBool = new Type('Bool');
-            this.types['Bool'] = typeBool;
-            this.fns['and'] = new Fn('and', [typeBool, typeBool], typeBool);
-            this.fns['or'] = new Fn('or', [typeBool, typeBool], typeBool);
-            this.fns['xor'] = new Fn('xor', [typeBool, typeBool], typeBool);
-            this.fns['not'] = new Fn('not', [typeBool], typeBool);
-            this.fns['=>'] = new Fn('=>', [typeBool, typeBool], typeBool);
+            let typeBool      = new Type('Bool');
+            DAG.types['Bool'] = typeBool;
+            DAG.fns['and']    = new Fn('and', typeBool);
+            DAG.fns['or']     = new Fn('or', typeBool);
+            DAG.fns['xor']    = new Fn('xor', typeBool);
+            DAG.fns['not']    = new Fn('not', typeBool);
+            DAG.fns['=>']     = new Fn('=>', typeBool);
+            DAG.fns['>']      = new Fn('>', typeBool);
+            DAG.fns['<']      = new Fn('<', typeBool);
+            DAG.fns['>=']     = new Fn('>=', typeBool);
+            DAG.fns['<=']     = new Fn('<=', typeBool);
+            DAG.fns['=']      = new Fn('=', typeBool);
 
             if (smt) {
-                this.make(smt);
+                DAG.parse(smt);
             }
         }
 
-        static argsEqual(args1: Node[], args2: Node[]) {
-            if (args1.length !== args2.length) {
-                return false;
-            }
-            for (let i = 0; i < args1.length; ++i) {
-                if (args1[i].pos !== args2[i].pos || args1[i].name !== args2[i].name) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        static indexOf(aliases: object[], obj: string) {
-            for (let i = 0; i < aliases.length; ++i) {
-                if (aliases[i][0] === obj) {
-                    return i;
-                }
-            }
-            return -1;
-        }
-
-        make(smt: any) {
+        // Parse smt json object to create a DAG data structure
+        // @params {any[][]} smt: Json object representing the smt.
+        static parse(smt: any[][]) : void {
             for (let obj of smt) {
                 switch (obj[0]) {
                     case 'declare-sort':
-                        // obj = typeName
-                        this.types[obj] = new Type(obj);
+                        // `obj` has the following structure
+                        //   - obj[0] = 'define-sort'
+                        //   - obj[1] = objName
+                        DAG.types[obj[1]] = new Type(obj[1]);
                         break;
 
                     case 'declare-fun':
                         // `obj` has the following structure
-                        // - obj[0] = 'define-fun'
-                        // - obj[1] = fnName
-                        // - obj[2] = fnArgName[]
-                        let types = [];
-                        for (let type of obj[2]) {
-                            types.push(this.types[type]);
-                        }
-                        this.fns[obj[1]] = new Fn(obj[1], types, this.types[obj[3]]);
+                        //   - obj[0] = 'define-fun'
+                        //   - obj[1] = fnName
+                        //   - obj[2] = fnArgName[]
+                        DAG.fns[obj[1]] = new Fn(obj[1], DAG.types[obj[3]]);
                         break;
 
                     case 'assert':
                         // `obj` has the following structure
-                        // - obj[0] = 'assert'
-                        // - obj[1] = nodeObj
-                        this.root.args.push(this.makeNode(obj[1]));
+                        //   - obj[0] = 'assert'
+                        //   - obj[1] = nodeObj
+                        DAG.root.args.push(DAG.makeNode(obj[1]));
                         break;
                 }
             }
-        }
-
-        makeNodeLeaf(leaf: string, aliases: object[]) {
-            let index = SMT.indexOf(aliases, leaf);
-            if (index !== -1) {
-                return this.makeNode(aliases[index][1], aliases);
-            }
-
-            if (!this.nodes[leaf]) {
-                let node = new Node(leaf, 0, []);
-                this.nodes[leaf] = [node];
-            }
-            return this.nodes[leaf][0];
         }
 
         // Make a node
@@ -150,42 +125,94 @@ module SMT {
         //   - A function object
         //     - obj[0] = fnName
         //     - obj[1]..obj[n] = fnArg
-        // @param {object[]} aliases: Aliases for leaf nodes defined by `let`.
-        makeNode(obj: any, aliases: object[] = []) {
+        // @param {any[]} aliases: Aliases for leaf nodes defined by `let`.
+        // @return {Node}: Node added to DAG.nodes.
+        static makeNode(obj: any, aliases: any[] = []) : Node {
             // Leaf node
             if (typeof obj === 'string') {
-                return this.makeNodeLeaf(obj, aliases);
+                return DAG.makeLeaf(obj, aliases);
             }
 
             // Obj is a let statement
             if (obj[0] === 'let') {
                 aliases = aliases.concat(obj[1]); // Update aliases
-                return this.makeNode(obj[2], aliases);
+                return DAG.makeNode(obj[2], aliases);
             }
 
             // Obj in not a let statement
             let args: Node[] = [];
-            for (let i = 1; i < obj.length; ++i) {
-                args.push(this.makeNode(obj[i], aliases));
+            for (let i: number = 1; i < obj.length; ++i) {
+                args.push(DAG.makeNode(obj[i], aliases));
             }
 
-            // Add obj to this.nodes if not already there
-            if (!this.nodes[obj[0]]) {
-                this.nodes[obj[0]] = [];
+            // Add obj to DAG.nodes if not already there
+            if (!DAG.nodes[obj[0]]) {
+                DAG.nodes[obj[0]] = [];
             }
 
-            let nodes = this.nodes[obj[0]];
+            let nodes: Node[] = DAG.nodes[obj[0]];
 
             // Check if object with same name and arguments is already present
-            for (let i = 0; i < nodes.length; ++i) {
-                if (SMT.argsEqual(args, nodes[i].args)) {
+            for (let i: number = 0; i < nodes.length; ++i) {
+                if (DAG.argsEqual(args, nodes[i].args)) {
                     return nodes[i];
                 }
             }
 
-            let node = new Node(obj[0], nodes.length, args);
+            let node: Node = new Node(obj[0], nodes.length, args);
             nodes.push(node);
             return node;
+        }
+
+        // Make leaf node, or make normal node if leaf is aliased
+        // @param {string} leafName: Name of the leaf node.
+        // @param {any[]} aliases: Let definitions that might match the
+        // `leafName`.
+        // @return {Node}: Node added to DAG.nodes.
+        static makeLeaf(leafName: string, aliases: any[]) : Node {
+            let index = DAG.indexOf(aliases, leafName);
+            if (index !== -1) {
+                return DAG.makeNode(aliases[index][1], aliases);
+            }
+
+            if (!DAG.nodes[leafName]) {
+                let node = new Node(leafName, 0, []);
+                DAG.nodes[leafName] = [node];
+            }
+            return DAG.nodes[leafName][0];
+        }
+
+        // Check if all args of two lists are equal
+        // Two arguments are considered equal if both `name` and `pos`
+        // attributes match.
+        // @param {Node[]} args1: List of args to be compared.
+        // @param {Node[]} args2: List of args to be compared.
+        static argsEqual(args1: Node[], args2: Node[]) : boolean {
+            if (args1.length !== args2.length) {
+                return false;
+            }
+            for (let i = 0; i < args1.length; ++i) {
+                if (args1[i].pos !== args2[i].pos || args1[i].name !== args2[i].name) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // Get index of `objName` in the `aliases` array
+        // @param {object[]} aliases: List of objects, each object has the
+        // following structure
+        //   - aliases[i][0] = ithObjName
+        //   - aliases[i][1] = ithObj
+        // @param {string} objName: The object name to be found in the list.
+        // @return {number}: Index of objName in aliases, or -1 if not found.
+        static indexOf(aliases: object[], objName: string) : number {
+            for (let i: number = 0; i < aliases.length; ++i) {
+                if (aliases[i][0] === objName) {
+                    return i;
+                }
+            }
+            return -1;
         }
     }
 }
