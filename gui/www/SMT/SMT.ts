@@ -101,9 +101,10 @@ module SMT {
             }
 
             if (!this.nodes[leaf]) {
-                this.nodes[leaf] = [];
+                let node = new Node(leaf, 0, []);
+                this.nodes[leaf] = [node];
             }
-            return new Node(leaf, -1, []);
+            return this.nodes[leaf][0];
         }
 
         // Make a node
@@ -129,7 +130,7 @@ module SMT {
             }
 
             // Obj in not a let statement
-            let args = [];
+            let args: Node[] = [];
             for (let i = 1; i < obj.length; ++i) {
                 args.push(this.makeNode(obj[i], aliases));
             }
