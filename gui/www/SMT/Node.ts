@@ -9,18 +9,5 @@ module SMT {
             this.pos = pos;
             this.args = args;
         }
-
-        argsEqual(other: Node) {
-            if (this.args.length !== other.args.length) {
-                return false;
-            }
-            for (let i = 0; i < this.args.length; ++i) {
-                if (this.args[i].pos !== other.args[i].pos
-                    || this.args[i].name !== other.args[i].name) {
-                    return false;
-                }
-            }
-            return true;
-        }
     }
 }

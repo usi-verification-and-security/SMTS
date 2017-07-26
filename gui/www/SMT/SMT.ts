@@ -75,6 +75,18 @@ module SMT {
             }
         }
 
+        static argsEqual(args1: Node[], args2: Node[]) {
+            if (args1.length !== args2.length) {
+                return false;
+            }
+            for (let i = 0; i < args1.length; ++i) {
+                if (args1[i].pos !== args2[i].pos || args1[i].name !== args2[i].name) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         static indexOf(aliases: object[], obj: string) {
             for (let i = 0; i < aliases.length; ++i) {
                 if (aliases[i][0] === obj) {
@@ -144,8 +156,7 @@ module SMT {
 
             // Check if object with same name and arguments is already present
             for (let i = 0; i < nodes.length; ++i) {
-                let node = new Node(obj[0], i, args);
-                if (node.argsEqual(nodes[i])) {
+                if (SMT.argsEqual(args, nodes[i].args)) {
                     return nodes[i];
                 }
             }
