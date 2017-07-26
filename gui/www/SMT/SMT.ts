@@ -70,7 +70,9 @@ module SMT {
             this.fns['not'] = new Fn('not', [typeBool], typeBool);
             this.fns['=>'] = new Fn('=>', [typeBool, typeBool], typeBool);
 
-            this.make(smt);
+            if (smt) {
+                this.make(smt);
+            }
         }
 
         static indexOf(aliases: object[], obj: string) {

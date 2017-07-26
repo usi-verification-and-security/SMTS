@@ -86,8 +86,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
         $scope.getSMT = function(instance) {
             $http({method: 'GET', url: `/cnf/${instance.name}`}).then(
               function(res) {
-                  $scope.smt = new SMT.SMT();
-                  if (res.data) $scope.smt.make(JSON.parse(res.data));
+                  if (res.data) $scope.smt = new SMT.SMT(JSON.parse(res.data));
                   console.log($scope.smt.nodes);
               }, $scope.error);
         };
