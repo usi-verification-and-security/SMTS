@@ -69,8 +69,9 @@ smts.tree = {
         }
 
         // Size of the diagram
-        let viewerWidth = document.getElementById("smts-svg-tab-content").offsetWidth;
-        let viewerHeight = document.getElementById("smts-svg-tab-content").offsetHeight;
+        let treeContainer = document.getElementById("smts-tree-container");
+        let viewerWidth = treeContainer.offsetWidth;
+        let viewerHeight = treeContainer.offsetHeight;
 
         // SVG element setup
         this.clearSvg();

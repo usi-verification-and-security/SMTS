@@ -19,167 +19,171 @@
 
 <body ng-app="myApp">
 
-<div id="smts-main">
-    <div id="smts-views" class="row container-fluid">
-        <!--First column-->
-        <div id="smts-column-1" class="col-sm-3 smts-column">
-            <!--Title-->
-            <div id="smts-title">
-                <span id="smts-title-title">SMT Viewer</span>
-                <span id="smts-title-version"></span>
+<div id="smts-main" class="row container-fluid">
+    <!--First column-->
+    <div id="smts-menu" class="col-sm-3">
+        <!--Title-->
+        <div id="smts-title">
+            <span id="smts-title-title">SMT Viewer</span>
+            <span id="smts-title-version"></span>
+        </div>
+        <!--Instances-->
+        <div id="smts-instances-container" class="smts-container" ng-controller="InstancesController" ng-init='load()'>
+            <div id="smts-instances-title" class="smts-container-title">Instances</div>
+
+            <div id="smts-instances-table-container" class="smts-table-container">
+                <table id="smts-instances-table" class="smts-table smts-table-interactive">
+                    <thead>
+                    <th>Instances</th>
+                    </thead>
+                    <tbody>
+                    <tr data-instance="{{instance.name}}"
+                        ng-repeat="instance in instances"
+                        ng-click="selectInstance(instance)">
+                        <td>{{instance.name}}</td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
-            <!--Instances-->
-            <div id="smts-instances-container" class="smts-container" ng-controller="InstancesController" ng-init='load()'>
-                <div id="smts-instances-title" class="smts-container-title">Instances</div>
+        </div>
 
-                <div id="smts-instances-table-container" class="smts-table-container">
-                    <table id="smts-instances-table" class="smts-table smts-table-interactive">
-                        <thead>
-                        <th>Instances</th>
-                        </thead>
-                        <tbody>
-                        <tr data-instance="{{instance.name}}"
-                            ng-repeat="instance in instances"
-                            ng-click="selectInstance(instance)">
-                            <td>{{instance.name}}</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <!--Utilities-->
+        <div id="smts-utilities-container" class="smts-container">
 
-            <!--Utilities-->
-            <div id="smts-utilities-container" class="smts-container">
+            <div id="smts-utilities-title" class="smts-container-title">Utilities</div>
 
-                <div id="smts-utilities-title" class="smts-container-title">Utilities</div>
+            <ul id="smts-utilities-navbar" class="nav nav-tabs smts-navbar">
+                <li class="active"><a data-toggle="tab" href="#smts-taskhandler-container">Task Handler</a></li>
+                <li><a data-toggle="tab" href="#smts-options-container">Options</a></li>
+            </ul>
 
-                <ul id="smts-utilities-navbar" class="nav nav-tabs smts-navbar">
-                    <li class="active"><a data-toggle="tab" href="#smts-taskhandler-container">Task Handler</a></li>
-                    <li><a data-toggle="tab" href="#smts-options-container">Options</a></li>
-                </ul>
+            <!--Task Handeler-->
+            <div id="smts-utilities-tab-content" class="tab-content">
+                <div id="smts-taskhandler-container" class="smts-container tab-pane active" ng-controller="TaskHandler" ng-init='load()'>
 
-                <!--Task Handeler-->
-                <div id="smts-utilities-tab-content" class="tab-content">
-                    <div id="smts-taskhandler-container" class="smts-container tab-pane active" ng-controller="TaskHandler" ng-init='load()'>
-
-                        <!--Server-->
-                        <div id="smts-server-container" class="smts-container smts-hidden">
-                            <!--<div id="smts-server-title" class="smts-container-title">Server</div>-->
-                            <div>
-                                <p class="smsts-container-subtitle">Solving Instance:</p>
-                                <p id="smts-server-solving-instance">{{instanceName}}</p>
-                                <p id="smts-server-solving-time">{{instanceTime}}s ({{instanceLeft}}s left)</p>
+                    <!--Server-->
+                    <div id="smts-server-container" class="smts-container smts-hidden">
+                        <!--<div id="smts-server-title" class="smts-container-title">Server</div>-->
+                        <div>
+                            <p class="smsts-container-subtitle">Solving Instance:</p>
+                            <p id="smts-server-solving-instance">{{instanceName}}</p>
+                            <p id="smts-server-solving-time">{{instanceTime}}s ({{instanceLeft}}s left)</p>
+                        </div>
+                        <div>
+                            <p class="smsts-container-subtitle">Timeout:</p>
+                            <div class="smts-container-horizontal">
+                                <button class="btn btn-default" value="-" ng-click="changeTimeout('decrease')">-</button>
+                                <input id="smts-server-timeout" class="form-control" type="number" value="100">
+                                <button class="btn btn-default" value="+" ng-click="changeTimeout('increase')">+</button>
                             </div>
-                            <div>
-                                <p class="smsts-container-subtitle">Timeout:</p>
-                                <div class="smts-container-horizontal">
-                                    <button class="btn btn-default" value="-" ng-click="changeTimeout('decrease')">-</button>
-                                    <input id="smts-server-timeout" class="form-control" type="number" value="100">
-                                    <button class="btn btn-default" value="+" ng-click="changeTimeout('increase')">+</button>
-                                </div>
-                                <div class="smts-container-horizontal">
-                                    <button class="btn btn-default" value="Stop" ng-click="stop()">Stop</button>
-                                </div>
-                            </div>
-                            <div>
-                                <p class="smsts-container-subtitle">New instance:</p>
-                                <form class="smts-container-horizontal" action="/upload/instance" method="post" encType="multipart/form-data">
-                                    <label class="btn btn-default btn-browse">Browse
-                                        <input name="smts-upload-instance" type="file" accept="" required>
-                                    </label>
-                                    <input class="btn btn-default" type='submit' value='Upload'/>
-                                </form>
+                            <div class="smts-container-horizontal">
+                                <button class="btn btn-default" value="Stop" ng-click="stop()">Stop</button>
                             </div>
                         </div>
-
-                        <!--Database-->
-                        <div id="smts-database-container" class="smts-container smts-hidden">
-                            <!--<div id="smts-database-title" class="smts-container-title">Database</div>-->
-                            <div class="smts-container">
-                                <p class="smsts-container-subtitle">New database:</p>
-                                <form class="smts-container-horizontal" action='/upload/database' method='post' encType="multipart/form-data">
-                                    <label class="btn btn-default btn-browse">Browse
-                                        <input name="smts-upload-database" type="file" accept=".db" required>
-                                    </label>
-                                    <input class="btn btn-default" type='submit' value='Upload'/>
-                                </form>
-                            </div>
+                        <div>
+                            <p class="smsts-container-subtitle">New instance:</p>
+                            <form class="smts-container-horizontal" action="/upload/instance" method="post" encType="multipart/form-data">
+                                <label class="btn btn-default btn-browse">Browse
+                                    <input name="smts-upload-instance" type="file" accept="" required>
+                                </label>
+                                <input class="btn btn-default" type='submit' value='Upload'/>
+                            </form>
                         </div>
                     </div>
 
-                    <!--Options-->
-                    <div id="smts-options-container" class="smts-container tab-pane">
-                        <!--<div id="smts-options-title" class="smts-container-title">Options</div>-->
-                        <div class="checkbox">
-                            <label><input id="smts-option-balanceness" type="checkbox" onclick="updateOptionBalanceness()">
-                                Show balanceness
-                            </label>
+                    <!--Database-->
+                    <div id="smts-database-container" class="smts-container smts-hidden">
+                        <!--<div id="smts-database-title" class="smts-container-title">Database</div>-->
+                        <div class="smts-container">
+                            <p class="smsts-container-subtitle">New database:</p>
+                            <form class="smts-container-horizontal" action='/upload/database' method='post' encType="multipart/form-data">
+                                <label class="btn btn-default btn-browse">Browse
+                                    <input name="smts-upload-database" type="file" accept=".db" required>
+                                </label>
+                                <input class="btn btn-default" type='submit' value='Upload'/>
+                            </form>
                         </div>
+                    </div>
+                </div>
+
+                <!--Options-->
+                <div id="smts-options-container" class="smts-container tab-pane">
+                    <!--<div id="smts-options-title" class="smts-container-title">Options</div>-->
+                    <div class="checkbox">
+                        <label><input id="smts-option-balanceness" type="checkbox" onclick="updateOptionBalanceness()">
+                            Show balanceness
+                        </label>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!--Second column-->
-        <div id="smts-column-2" class="col-sm-6 container-fluid smts-column smts-hidden">
-            <!--Tree view-->
-            <div id="smts-svg-container">
-                <div id="smts-svg-title" class="smts-container-title">SVG</div>
+    <!--Second column-->
+    <div id="smts-content" class="col-sm-9 smts-hidden">
 
-                <ul id="smts-svg-navbar" class="nav nav-tabs smts-navbar">
-                    <li><a data-toggle="tab" href="#smts-tree-container">Tree</a></li>
-                    <li class="active"><a data-toggle="tab" href="#smts-cnf-container">CNF</a></li>
-                </ul>
+        <!--<div id="smts-content-title" class="smts-container-title">Content</div>-->
 
-                <div id="smts-svg-tab-content" class="tab-content">
-                    <div id="smts-tree-container" class="smts-container tab-pane" ng-controller="ViewController"></div>
-                    <div id="smts-cnf-container" class="smts-container tab-pane active">BLAH</div>
+        <ul id="smts-content-navbar" class="nav nav-tabs smts-navbar">
+            <li class="active"><a data-toggle="tab" href="#smts-content-instance">Data</a></li>
+            <li><a data-toggle="tab" href="#smts-content-smt">SMT</a></li>
+        </ul>
+
+        <div id="smts-content-tab-content" class="tab-content">
+            <!--Instance data-->
+            <div id="smts-content-instance" class="tab-pane active" >
+                <div id="smts-content-instance-data" class="row">
+                <!--Left column-->
+                <div id="smts-content-instance-data-left" class="col-sm-8 container-fluid">
+                    <!--Tree view-->
+                    <div id="smts-svg-container">
+                        <!--<div id="smts-svg-title" class="smts-container-title">SVG</div>-->
+                        <div id="smts-tree-container" class="smts-container tab-pane active" ng-controller="ViewController"></div>
+                    </div>
+
+                    <!--Event view-->
+                    <div id="smts-events-container" class="smts-container" ng-controller="EventController">
+                        <div id="smts-events-title" class="smts-container-title">Events</div>
+
+                        <ul id="smts-events-navbar" class="nav nav-tabs smts-navbar">
+                            <li id="smts-events-navbar-all" class="active"><a data-toggle="tab" href="" ng-click="showAll()">All</a></li>
+                            <li id="smts-events-navbar-selected" ><a data-toggle="tab" href="" ng-click="showSelected()">Selected</a></li>
+                        </ul>
+
+                        <div id="smts-events-table-container" class="smts-table-container">
+                            <table id="smts-events-table" class="smts-table smts-table-interactive">
+                                <thead>
+                                <tr>
+                                    <th>Nr</th>
+                                    <th>Time</th>
+                                    <th>Node</th>
+                                    <th>Event</th>
+                                    <th>Refers to</th>
+                                    <th>Solver</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr id="smts-events-event-{{event.id}}"
+                                    data-event="{{event.id}}"
+                                    data-node="{{event.node}}"
+                                    data-data-node="{{event.data && event.data.node ? event.data.node : null}}"
+                                    ng-repeat="event in events"
+                                    ng-click="selectEvent(event, $index)">
+                                    <td>{{$index}}</td>
+                                    <td>{{event.ts}}s</td>
+                                    <td>{{event.node}}</td>
+                                    <td>{{event.event}}</td>
+                                    <td>{{event.data && event.data.node ? event.data.node : ''}}</td>
+                                    <td>{{event.solver}}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <!--Event view-->
-            <div id="smts-events-container" class="smts-container" ng-controller="EventController">
-                <div id="smts-events-title" class="smts-container-title">Events</div>
-
-                <ul id="smts-events-navbar" class="nav nav-tabs smts-navbar">
-                    <li id="smts-events-navbar-all" class="active"><a data-toggle="tab" href="" ng-click="showAll()">All</a></li>
-                    <li id="smts-events-navbar-selected" ><a data-toggle="tab" href="" ng-click="showSelected()">Selected</a></li>
-                </ul>
-
-                <div id="smts-events-table-container" class="smts-table-container">
-                    <table id="smts-events-table" class="smts-table smts-table-interactive">
-                        <thead>
-                        <tr>
-                            <th>Nr</th>
-                            <th>Time</th>
-                            <th>Node</th>
-                            <th>Event</th>
-                            <th>Refers to</th>
-                            <th>Solver</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr id="smts-events-event-{{event.id}}"
-                            data-event="{{event.id}}"
-                            data-node="{{event.node}}"
-                            data-data-node="{{event.data && event.data.node ? event.data.node : null}}"
-                            ng-repeat="event in events"
-                            ng-click="selectEvent(event, $index)">
-                            <td>{{$index}}</td>
-                            <td>{{event.ts}}s</td>
-                            <td>{{event.node}}</td>
-                            <td>{{event.event}}</td>
-                            <td>{{event.data && event.data.node ? event.data.node : ''}}</td>
-                            <td>{{event.solver}}</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!--Third column-->
-        <div id="smts-column-3" class="col-sm-3 smts-column smts-hidden">
+                <!--Right column-->
+                <div id="smts-content-instance-data-right" class="col-sm-4">
                 <!--Solver view-->
                 <div id="smts-solvers-container" class="smts-container" ng-controller="SolverController">
                     <div id="smts-solvers-title" class="smts-container-title">Solvers</div>
@@ -216,11 +220,18 @@
                     <div id="smts-data-table-container" class="smts-table-container"></div>
                 </div>
             </div>
-    </div>
+                </div>
+                <div id="smts-content-instance-timeline" class="row">
+                <div id="smts-timeline-line"></div>
+                <div id="smts-timeline-span"></div>
+            </div>
+            </div>
 
-    <div id="smts-timeline" class="row smts-hidden">
-        <div id="smts-timeline-line"></div>
-        <div id="smts-timeline-span"></div>
+            <!--SMT-->
+            <div id="smts-content-smt" class="tab-pane">
+
+            </div>
+        </div>
     </div>
 </div>
 
