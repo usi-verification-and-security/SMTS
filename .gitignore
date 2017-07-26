@@ -7,6 +7,9 @@ gui/.idea/
 gui/benchmarks/
 gui/databases/
 gui/node_modules/
+gui/www/SMT/*.d.ts
+gui/www/SMT/*.js
+gui/www/SMT/*.map
 gui/www/treeManager/*.d.ts
 gui/www/treeManager/*.js
 gui/www/treeManager/*.map

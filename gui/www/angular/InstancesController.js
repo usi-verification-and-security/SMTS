@@ -80,13 +80,15 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
             }
 
             // Get instance CNF if available
-            this.getCNF(instance);
+            this.getSMT(instance);
         };
 
-        $scope.getCNF = function(instance) {
+        $scope.getSMT = function(instance) {
             $http({method: 'GET', url: `/cnf/${instance.name}`}).then(
               function(res) {
-                  // console.log(res.data);
+                  $scope.smt = new SMT.SMT();
+                  if (res.data) $scope.smt.make(JSON.parse(res.data));
+                  console.log($scope.smt.nodes);
               }, $scope.error);
         };
 

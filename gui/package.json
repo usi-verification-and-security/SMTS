@@ -4,8 +4,9 @@
   "main": "app.js",
   "description": "Jelena's bachelor project",
   "scripts": {
-    "install": "node ./node_modules/.bin/tsc ./www/treeManager/*.ts",
-    "start": "node ./app.js"
+    "install": "node ./node_modules/.bin/tsc ./www/treeManager/*.ts ./www/SMT/*.ts",
+    "start": "node ./app.js",
+    "dev": "npm install && node ./app.js"
   },
   "repository": {},
   "author": "",
