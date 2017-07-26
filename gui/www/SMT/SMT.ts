@@ -99,9 +99,29 @@ module SMT {
         make(smt: any) {
             for (let obj of smt) {
                 switch (obj[0]) {
-                    case 'declare-sort': this.makeType(obj);   break;
-                    case 'declare-fun':  this.makeFn(obj);     break;
-                    case 'assert':       this.makeAssert(obj); break;
+                    case 'declare-sort':
+                        // obj = typeName
+                        this.types[obj] = new Type(obj);
+                        break;
+
+                    case 'declare-fun':
+                        // `obj` has the following structure
+                        // - obj[0] = 'define-fun'
+                        // - obj[1] = fnName
+                        // - obj[2] = fnArgName[]
+                        let types = [];
+                        for (let type of obj[2]) {
+                            types.push(this.types[type]);
+                        }
+                        this.fns[obj[1]] = new Fn(obj[1], types, this.types[obj[3]]);
+                        break;
+
+                    case 'assert':
+                        // `obj` has the following structure
+                        // - obj[0] = 'assert'
+                        // - obj[1] = nodeObj
+                        this.root.args.push(this.makeNode(obj[1]));
+                        break;
                 }
             }
         }
@@ -120,14 +140,16 @@ module SMT {
         }
 
         // Make a node
-        // @param {any} node: a node can be a string if it is a leaf, or a let
-        // statement with the following structure
-        // - obj[0] = 'let'
-        // - obj[1] = letAlias[] // An array of alias objects
-        // - obj[2] = childObj
-        // or a function, with the following structure
-        // - obj[0] = fnName
-        // - obj[1]..obj[n] = fnArg
+        // @param {any} node: The node can be:
+        //   - An object name string
+        //     - obj = objName
+        //   - A let statement object
+        //     - obj[0] = 'let'
+        //     - obj[1] = letAlias[] // An array of alias objects
+        //     - obj[2] = childObj
+        //   - A function object
+        //     - obj[0] = fnName
+        //     - obj[1]..obj[n] = fnArg
         // @param {object[]} aliases: Aliases for leaf nodes defined by `let`.
         makeNode(obj: any, aliases: object[] = []) {
             // Leaf node
@@ -165,33 +187,5 @@ module SMT {
             nodes.push(node);
             return node;
         }
-
-        // Process an assert object
-        // @param {object} assert: The assert. It has the following structure
-        // - assert[0] = 'assert'
-        // - assert[1] = node
-        makeAssert(assert: object) {
-            this.root.args.push(this.makeNode(assert[1]));
-        }
-
-        // Make Type object and put it in this.types
-        // @param {string} type: The name of the type.
-        makeType(type: string) {
-            this.types[type] = new Type(type);
-        }
-
-        // Make Fn object and put it in this.fns
-        // @param [object] fn: The function. It has de following structure
-        // - fn[0] = 'define-fun'
-        // - fn[1] = fnName
-        // - fn[2] = fnArgName[]
-        makeFn(fn: object) {
-            let types = [];
-            for (let type of fn[2]) {
-                types.push(this.types[type]);
-            }
-            this.fns[fn[1]] = new Fn(fn[1], types, this.types[fn[3]]);
-        }
-
     }
 }
