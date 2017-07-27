@@ -1,16 +1,23 @@
 /* Basics */
 
 * {
-    --padding: 15px;
+    --size-padding: 15px;
+    --size-border: 1px;
 
     --color-background: #BDC3C7;
-    --color-border-light: lightgray;
-    --color-border-dark: gray;
-    --color-highlight: #7CFC00;
-    --color-table-header: #00cc00;
-    --color-tree-view: #EEEEEE;
 
-    --size-border: 1px;
+    /* Grey */
+    --color-primary-light:  #D3D3D3; /* Container borders */
+    --color-primary-medium: #EEEEEE; /* Canvas background */
+    --color-primary-dark:   #808080; /* Tables borders */
+
+    /* Green */
+    /*--color-secondary-light: #7CFC00; !* Highlights *!*/
+    /*--color-secondary-dark:  #00cc00; !* Tables headers *!*/
+
+    /* Blue */
+    --color-secondary-light: #B1EED9; /* Highlights */
+    --color-secondary-dark:  #52BCCC; /* Tables headers */
 }
 
 html, body {
@@ -36,12 +43,12 @@ html, body {
 
 .smts-table, .smts-table th, .smts-table tr, .smts-table td  {
     padding: 5px;
-    border: 1px solid var(--color-border-dark);
+    border: 1px solid var(--color-primary-dark);
     border-collapse: collapse;
 }
 
 .smts-table th {
-    background-color: var(--color-table-header);
+    background-color: var(--color-secondary-dark);
 }
 
 .smts-table td {
@@ -68,7 +75,7 @@ html, body {
 }
 
 .smts-container-title {
-    padding: var(--padding) 0;
+    padding: var(--size-padding) 0;
     font-weight: bold;
     text-transform: uppercase;
 }
@@ -80,7 +87,7 @@ html, body {
 .smts-container-horizontal {
     display: flex;
     justify-content: center;
-    margin-bottom: var(--padding);
+    margin-bottom: var(--size-padding);
 }
 
 .smts-container-horizontal > * {
@@ -91,7 +98,7 @@ html, body {
 /* Navbar */
 
 .smts-navbar {
-    margin-bottom: var(--padding) !important;
+    margin-bottom: var(--size-padding) !important;
 }
 
 .smts-navbar > li > a {
@@ -118,7 +125,7 @@ html, body {
 /* Other */
 
 .smts-highlight {
-    background-color: var(--color-highlight);
+    background-color: var(--color-secondary-light);
 }
 
 .smts-hidden {
@@ -139,7 +146,7 @@ html, body {
 }
 
 #smts-menu {
-    border-right: var(--size-border) solid var(--color-border-light);
+    border-right: var(--size-border) solid var(--color-primary-light);
 }
 
 #smts-content {
@@ -149,33 +156,34 @@ html, body {
 }
 
 #smts-content-navbar {
-    margin-top: var(--padding);
+    margin-top: var(--size-padding);
     margin-bottom: 0 !important;
 }
 
 #smts-content-tab-content {
     flex: 1;
-    display: flex;
-    flex-direction: column;
+    position: relative;
 }
 
-#smts-content-instance {
+/* The absolute positioning is a fix to make these elements height 100% of the
+ * parent `#smts-content-tab-content`, since Chrome and Safari don't recognize
+ * the height of a parent with the `flex: 1` property. For more, see
+ * https://stackoverflow.com/questions/33636796/chrome-safari-not-filling-100-height-of-flex-parent#33644245
+ */
+#smts-content-instance, #smts-content-smt {
+    position: absolute;
     height: 100%;
-}
-
-#smts-content-instance.active {
-    display: flex;
-    flex-direction: column;
+    width: 100%;
 }
 
 #smts-content-instance-data {
     height: 90%;
-    padding: var(--padding) 0;
+    padding: var(--size-padding) 0;
 }
 
 #smts-content-instance-data-left {
     height: 100%;
-    border-right: var(--size-border) solid var(--color-border-light);
+    border-right: var(--size-border) solid var(--color-primary-light);
 }
 
 #smts-content-instance-data-right {
@@ -185,7 +193,17 @@ html, body {
 #smts-content-instance-timeline {
     height: 10%;
     margin: 0;
-    border-top: var(--size-border) solid var(--color-border-light);
+    border-top: var(--size-border) solid var(--color-primary-light);
+}
+
+#smts-content-smt {
+    padding: var(--size-padding) 0;
+}
+
+#smts-content-smt-container {
+    height: 100%;
+    border: var(--size-border) solid var(--color-secondary-dark);
+    background-color: var(--color-primary-medium);
 }
 
 

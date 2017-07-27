@@ -8,7 +8,7 @@
     justify-content: space-between;
     align-items: baseline;
 
-    text-shadow: 1px 1px var(--color-highlight);
+    text-shadow: 1px 1px var(--color-secondary-light);
     font-weight: bold;
 }
 
@@ -52,7 +52,8 @@
 
 #smts-tree-container {
     flex: 1;
-    background-color: var(--color-tree-view);
+    background-color: var(--color-primary-medium);
+    border: var(--size-border) solid var(--color-secondary-dark);
     cursor: move;
 }
 

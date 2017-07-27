@@ -1,14 +1,18 @@
 <html>
 <head>
     <title>SMT Viewer</title>
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/tables.css">
-    <link rel="stylesheet" href="css/timeline.css">
-    <link rel="stylesheet" href="css/tree.css">
+
+    <!--Styles-->
+    <link rel="stylesheet" href="css/smts-main.css">
+    <link rel="stylesheet" href="css/smts-tables.css">
+    <link rel="stylesheet" href="css/smts-timeline.css">
+    <link rel="stylesheet" href="css/smts-tree.css">
+    <link rel="stylesheet" href="css/vis.min.css">
     <style type="text/css"></style>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+    <!--Bootstrap-->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
@@ -229,16 +233,21 @@
 
             <!--SMT-->
             <div id="smts-content-smt" class="tab-pane">
-
+                <div id="smts-content-smt-container"></div>
             </div>
         </div>
     </div>
 </div>
 
 </body>
-<script type="text/javascript" src="https://code.angularjs.org/1.5.3/angular.min.js"></script>
 
-<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+<!--External libraries-->
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+<script type="text/javascript" src="https://code.angularjs.org/1.5.3/angular.min.js"></script>
+<script type="text/javascript" src="scripts/ng-file-upload.min.js"></script>
+<script type="text/javascript" src="scripts/ng-file-upload-shim.min.js"></script>
+<script type="text/javascript" src="scripts/vis.min.js"></script>
 <!--TreeManager-->
 <script type="text/javascript" src="treeManager/Event.js"></script>
 <script type="text/javascript" src="treeManager/Node.js"></script>
@@ -251,6 +260,7 @@
 <script type="text/javascript" src="SMT/SMT.js"></script>
 <!--Utilities-->
 <script type="text/javascript" src="scripts/smts.js"></script>
+<script type="text/javascript" src="scripts/smts-SMT.js"></script>
 <script type="text/javascript" src="scripts/smts-tables.js"></script>
 <script type="text/javascript" src="scripts/smts-timeline.js"></script>
 <script type="text/javascript" src="scripts/smts-tree.js"></script>
@@ -262,9 +272,5 @@
 <script type="text/javascript" src="angular/SolverController.js"></script>
 <script type="text/javascript" src="angular/TaskHandlerController.js"></script>
 <script type="text/javascript" src="angular/ViewController.js"></script>
-<!--Other-->
-<script src="http://d3js.org/d3.v3.min.js"></script>
-<script type="text/javascript" src="scripts/ng-file-upload.min.js"></script>
-<script type="text/javascript" src="scripts/ng-file-upload-shim.min.js"></script>
 
 </html>
