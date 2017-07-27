@@ -66,35 +66,54 @@ module SMT {
         //     };
 
         // Variables
-        root: Node = new Node('and', 0, []);
-        nodes: { [name: string]: Node[] } = {};
+        root:  Node                        = new Node('and', 0, []);
+        nodes: { [name: string]: Node[] }  = {};
 
-        fns: { [name: string]: Fn } = {};
-        types: { [name: string]: Type } = {};
+        types: { [name: string]: boolean } = {};
+        fns:   { [name: string]: Fn }      = {};
+
+        static colorNodeBool: object = {
+            border: '#682b2b',
+            background: '#913b3b',
+            highlight: {
+                border: '#913b3b',
+                background: '#e05e5e',
+            }
+        };
+
+        static colorNodeOther: object = {
+            border: '#2b5624',
+            background: '#3c7732',
+            highlight: {
+                border: '#3c7732',
+                background: '#58b249',
+            }
+        };
 
 
         // DAG constructor
         // @param {any[]} smt: Json object representing the smt.
         constructor(smt: any[][]) {
-            this.root = new Node('and', 0, []);
+            this.root  = new Node('and', 0, []);
             this.nodes = {'and': [this.root]};
 
-            this.fns = {};
+            this.fns   = {};
             this.types = {};
 
             // Default types and functions
-            let typeBool = new Type('Bool');
-            this.types['Bool'] = typeBool;
-            this.fns['and'] = new Fn('and', typeBool);
-            this.fns['or'] = new Fn('or', typeBool);
-            this.fns['xor'] = new Fn('xor', typeBool);
-            this.fns['not'] = new Fn('not', typeBool);
-            this.fns['=>'] = new Fn('=>', typeBool);
-            this.fns['>'] = new Fn('>', typeBool);
-            this.fns['<'] = new Fn('<', typeBool);
-            this.fns['>='] = new Fn('>=', typeBool);
-            this.fns['<='] = new Fn('<=', typeBool);
-            this.fns['='] = new Fn('=', typeBool);
+            this.types['Bool'] = true;
+            this.types['Real'] = true;
+
+            this.fns['and'] = new Fn('and', 'Bool');
+            this.fns['or']  = new Fn('or', 'Bool');
+            this.fns['xor'] = new Fn('xor', 'Bool');
+            this.fns['not'] = new Fn('not', 'Bool');
+            this.fns['=>']  = new Fn('=>', 'Bool');
+            this.fns['>']   = new Fn('>', 'Bool');
+            this.fns['<']   = new Fn('<', 'Bool');
+            this.fns['>=']  = new Fn('>=', 'Bool');
+            this.fns['<=']  = new Fn('<=', 'Bool');
+            this.fns['=']   = new Fn('=', 'Bool');
 
             if (smt) {
                 this.parse(smt);
@@ -110,7 +129,7 @@ module SMT {
                         // `obj` has the following structure
                         //   - obj[0] = 'define-sort'
                         //   - obj[1] = objName
-                        this.types[obj[1]] = new Type(obj[1]);
+                        this.types[obj[1]] = true;
                         break;
 
                     case 'declare-fun':
@@ -118,7 +137,11 @@ module SMT {
                         //   - obj[0] = 'define-fun'
                         //   - obj[1] = fnName
                         //   - obj[2] = fnArgName[]
-                        this.fns[obj[1]] = new Fn(obj[1], this.types[obj[3]]);
+                        if (!this.types[obj[3]]) {
+                            console.log(`SMT parse error: Function with non-existing type '${obj[3]}'`);
+                            return;
+                        }
+                        this.fns[obj[1]] = new Fn(obj[1], obj[3]);
                         break;
 
                     case 'assert':
@@ -199,6 +222,32 @@ module SMT {
             return this.nodes[leafName][0];
         }
 
+        // Get type of a function
+        // @param {string} fn: Name of the function for which we want the
+        // return value type.
+        // @return {string}: Return value of `fn`. Numbers are not present in
+        // `this.fns`, so it first checks if `fn` is a number, in which case it
+        // returns 'Real', else it returns the value in `this.fns`.
+        getType(fnName: string) : string {
+            let n = Number(fnName);
+            if (n || n === 0) {
+                return 'Real';
+            }
+            let fn = this.fns[fnName]
+            if (!fn) console.log(`DAG parse error: Function '${fnName}' not found`);
+            return fn.ret;
+        }
+
+        // Get number of nodes
+        // @return {number}: The number of nodes.
+        getSize() : number {
+            let size: number = 0;
+            for (let key in this.nodes) {
+                size += this.nodes[key].length;
+            }
+            return size;
+        }
+
         // Get a data set for the nodes representation with vis.js
         // @return {object[]}: An array containing the node objects.
         getDataSetNodes() : object[] {
@@ -206,9 +255,12 @@ module SMT {
             for (let key in this.nodes) {
                 let nodes = this.nodes[key];
                 for (let node of nodes) {
+                    let ret = this.getType(node.name);
                     dataNodes.push({
-                       id:    `${key}-${node.pos}`,
-                       label: node.name
+                        id:    `${key}-${node.pos}`,
+                        label: node.name,
+                        font: {color: '#ffffff'},
+                        color: ret === 'Bool' ? DAG.colorNodeBool : DAG.colorNodeOther
                     });
                 }
             }

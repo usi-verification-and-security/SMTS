@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="css/smts-tables.css">
     <link rel="stylesheet" href="css/smts-timeline.css">
     <link rel="stylesheet" href="css/smts-tree.css">
-    <link rel="stylesheet" href="css/vis.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.20.1/vis.min.css">
     <style type="text/css"></style>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -129,13 +129,13 @@
         <!--<div id="smts-content-title" class="smts-container-title">Content</div>-->
 
         <ul id="smts-content-navbar" class="nav nav-tabs smts-navbar">
-            <li class="active"><a data-toggle="tab" href="#smts-content-instance">Data</a></li>
-            <li><a data-toggle="tab" href="#smts-content-smt">SMT</a></li>
+            <li id="smts-content-navbar-data"><a data-toggle="tab" href="#smts-content-instance">Data</a></li>
+            <li id="smts-content-navbar-smt" class="active"><a data-toggle="tab" href="#smts-content-smt">SMT</a></li>
         </ul>
 
         <div id="smts-content-tab-content" class="tab-content">
             <!--Instance data-->
-            <div id="smts-content-instance" class="tab-pane active" >
+            <div id="smts-content-instance" class="tab-pane" >
                 <div id="smts-content-instance-data" class="row">
                 <!--Left column-->
                 <div id="smts-content-instance-data-left" class="col-sm-8 container-fluid">
@@ -232,7 +232,7 @@
             </div>
 
             <!--SMT-->
-            <div id="smts-content-smt" class="tab-pane">
+            <div id="smts-content-smt" class="tab-pane active">
                 <div id="smts-content-smt-container"></div>
             </div>
         </div>
@@ -247,7 +247,7 @@
 <script type="text/javascript" src="https://code.angularjs.org/1.5.3/angular.min.js"></script>
 <script type="text/javascript" src="scripts/ng-file-upload.min.js"></script>
 <script type="text/javascript" src="scripts/ng-file-upload-shim.min.js"></script>
-<script type="text/javascript" src="scripts/vis.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.20.1/vis.min.js"></script>
 <!--TreeManager-->
 <script type="text/javascript" src="treeManager/Event.js"></script>
 <script type="text/javascript" src="treeManager/Node.js"></script>
@@ -257,7 +257,7 @@
 <script type="text/javascript" src="SMT/Type.js"></script>
 <script type="text/javascript" src="SMT/Fn.js"></script>
 <script type="text/javascript" src="SMT/Node.js"></script>
-<script type="text/javascript" src="SMT/SMT.js"></script>
+<script type="text/javascript" src="SMT/DAG.js"></script>
 <!--Utilities-->
 <script type="text/javascript" src="scripts/smts.js"></script>
 <script type="text/javascript" src="scripts/smts-SMT.js"></script>

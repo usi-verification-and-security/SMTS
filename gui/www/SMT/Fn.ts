@@ -1,9 +1,9 @@
 module SMT {
     export class Fn {
         name: string;
-        ret: Type;
+        ret: string;
 
-        constructor(name: string, ret: Type) {
+        constructor(name: string, ret: string) {
             this.name = name;
             this.ret = ret;
         }

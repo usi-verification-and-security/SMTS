@@ -85,7 +85,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
               function(res) {
                   if (res.data) {
                       let smt = new SMT.DAG(JSON.parse(res.data));
-                      smts.SMT.make(smt);
+                      smts.SMT.update(smt);
                   }
               }, $scope.error);
         };
