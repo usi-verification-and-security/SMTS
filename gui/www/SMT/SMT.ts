@@ -199,6 +199,41 @@ module SMT {
             return this.nodes[leafName][0];
         }
 
+        // Get a data set for the nodes representation with vis.js
+        // @return {object[]}: An array containing the node objects.
+        getDataSetNodes() : object[] {
+            let dataNodes: object[] = [];
+            for (let key in this.nodes) {
+                let nodes = this.nodes[key];
+                for (let node of nodes) {
+                    dataNodes.push({
+                       id:    `${key}-${node.pos}`,
+                       label: node.name
+                    });
+                }
+            }
+            return dataNodes;
+        }
+
+        // Get a data set for the edges representation with vis.js
+        // @return {object[]}: An array containing the edge objects.
+        getDataSetEdges() : object[] {
+            let dataEdges: object[] = [];
+            for (let key in this.nodes) {
+                let nodes = this.nodes[key];
+                for (let node of nodes) {
+                    let nodeId = `${key}-${node.pos}`;
+                    for (let arg of node.args) {
+                        dataEdges.push({
+                            from: nodeId,
+                            to:   `${arg.name}-${arg.pos}`
+                        });
+                    }
+                }
+            }
+            return dataEdges;
+        }
+
         // Check if all args of two lists are equal
         // Two arguments are considered equal if both `name` and `pos`
         // attributes match.
