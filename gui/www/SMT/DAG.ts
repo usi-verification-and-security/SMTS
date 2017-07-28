@@ -72,24 +72,6 @@ module SMT {
         types: { [name: string]: boolean } = {};
         fns:   { [name: string]: Fn }      = {};
 
-        static colorNodeBool: object = {
-            border: '#682b2b',
-            background: '#913b3b',
-            highlight: {
-                border: '#913b3b',
-                background: '#e05e5e',
-            }
-        };
-
-        static colorNodeOther: object = {
-            border: '#2b5624',
-            background: '#3c7732',
-            highlight: {
-                border: '#3c7732',
-                background: '#58b249',
-            }
-        };
-
 
         // DAG constructor
         // @param {any[]} smt: Json object representing the smt.
@@ -246,44 +228,6 @@ module SMT {
                 size += this.nodes[key].length;
             }
             return size;
-        }
-
-        // Get a data set for the nodes representation with vis.js
-        // @return {object[]}: An array containing the node objects.
-        getDataSetNodes() : object[] {
-            let dataNodes: object[] = [];
-            for (let key in this.nodes) {
-                let nodes = this.nodes[key];
-                for (let node of nodes) {
-                    let ret = this.getType(node.name);
-                    dataNodes.push({
-                        id:    `${key}-${node.pos}`,
-                        label: node.name,
-                        font: {color: '#ffffff'},
-                        color: ret === 'Bool' ? DAG.colorNodeBool : DAG.colorNodeOther
-                    });
-                }
-            }
-            return dataNodes;
-        }
-
-        // Get a data set for the edges representation with vis.js
-        // @return {object[]}: An array containing the edge objects.
-        getDataSetEdges() : object[] {
-            let dataEdges: object[] = [];
-            for (let key in this.nodes) {
-                let nodes = this.nodes[key];
-                for (let node of nodes) {
-                    let nodeId = `${key}-${node.pos}`;
-                    for (let arg of node.args) {
-                        dataEdges.push({
-                            from: nodeId,
-                            to:   `${arg.name}-${arg.pos}`
-                        });
-                    }
-                }
-            }
-            return dataEdges;
         }
 
         // Check if all args of two lists are equal
