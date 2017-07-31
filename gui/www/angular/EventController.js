@@ -50,8 +50,23 @@ app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', '
                 }
             }, 0);
 
+            // Focus the events table for fast arrow selection
+            document.querySelector('#smts-events-table > tbody').focus();
+
             // Notify selected element
             sharedService.broadcastSelectEvent();
+        };
+
+        // Shift selected element above or below current one
+        // @param {event} e: The event triggered by a keyboard input.
+        $scope.shiftSelected = function(e) {
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                smts.tables.events.shift('up');
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                smts.tables.events.shift('down');
+            }
         };
 
         // Show all events in events table

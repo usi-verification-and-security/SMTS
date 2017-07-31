@@ -69,12 +69,12 @@
                     <div id="smts-server-container" class="smts-container smts-hidden">
                         <!--<div id="smts-server-title" class="smts-container-title">Server</div>-->
                         <div>
-                            <p class="smsts-container-subtitle">Solving Instance:</p>
+                            <p class="smts-container-subtitle">Solving Instance:</p>
                             <p id="smts-server-solving-instance">{{instanceName}}</p>
                             <p id="smts-server-solving-time">{{instanceTime}}s ({{instanceLeft}}s left)</p>
                         </div>
                         <div>
-                            <p class="smsts-container-subtitle">Timeout:</p>
+                            <p class="smts-container-subtitle">Timeout:</p>
                             <div class="smts-container-horizontal">
                                 <button class="btn btn-default" value="-" ng-click="changeTimeout('decrease')">-</button>
                                 <input id="smts-server-timeout" class="form-control" type="number" value="100">
@@ -85,7 +85,7 @@
                             </div>
                         </div>
                         <div>
-                            <p class="smsts-container-subtitle">New instance:</p>
+                            <p class="smts-container-subtitle">New instance:</p>
                             <form class="smts-container-horizontal" action="/upload/instance" method="post" encType="multipart/form-data">
                                 <label class="btn btn-default btn-browse">Browse
                                     <input name="smts-upload-instance" type="file" accept="" required>
@@ -99,7 +99,7 @@
                     <div id="smts-database-container" class="smts-container smts-hidden">
                         <!--<div id="smts-database-title" class="smts-container-title">Database</div>-->
                         <div class="smts-container">
-                            <p class="smsts-container-subtitle">New database:</p>
+                            <p class="smts-container-subtitle">New database:</p>
                             <form class="smts-container-horizontal" action='/upload/database' method='post' encType="multipart/form-data">
                                 <label class="btn btn-default btn-browse">Browse
                                     <input name="smts-upload-database" type="file" accept=".db" required>
@@ -129,13 +129,13 @@
         <!--<div id="smts-content-title" class="smts-container-title">Content</div>-->
 
         <ul id="smts-content-navbar" class="nav nav-tabs smts-navbar">
-            <li id="smts-content-navbar-data"><a data-toggle="tab" href="#smts-content-instance">Data</a></li>
-            <li id="smts-content-navbar-smt" class="active"><a data-toggle="tab" href="#smts-content-smt">SMT</a></li>
+            <li id="smts-content-navbar-data" class="active"><a data-toggle="tab" href="#smts-content-instance">Data</a></li>
+            <li id="smts-content-navbar-smt" class=""><a data-toggle="tab" href="#smts-content-smt">SMT</a></li>
         </ul>
 
         <div id="smts-content-tab-content" class="tab-content">
             <!--Instance data-->
-            <div id="smts-content-instance" class="tab-pane" >
+            <div id="smts-content-instance" class="tab-pane active" >
                 <div id="smts-content-instance-data" class="row">
                 <!--Left column-->
                 <div id="smts-content-instance-data-left" class="col-sm-8 container-fluid">
@@ -166,7 +166,7 @@
                                     <th>Solver</th>
                                 </tr>
                                 </thead>
-                                <tbody>
+                                <tbody ng-keydown="shiftSelected($event)" tabindex="0">
                                 <tr id="smts-events-event-{{event.id}}"
                                     data-event="{{event.id}}"
                                     data-node="{{event.node}}"
@@ -227,12 +227,11 @@
                 </div>
                 <div id="smts-content-instance-timeline" class="row">
                 <div id="smts-timeline-line"></div>
-                <div id="smts-timeline-span"></div>
             </div>
             </div>
 
             <!--SMT-->
-            <div id="smts-content-smt" class="tab-pane active">
+            <div id="smts-content-smt" class="tab-pane">
                 <div id="smts-content-smt-container"></div>
             </div>
         </div>

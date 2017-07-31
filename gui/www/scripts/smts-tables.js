@@ -205,6 +205,42 @@ smts.tables = {
             container.scrollTop = container.scrollHeight - container.offsetHeight;
         },
 
+        // Highlight next element in events table
+        // Allows events navigation through up and down arrow keys while focus
+        // is on events table.
+        // @param {string} direction: Can be 'up' or 'down'.
+        shift: function(direction) {
+            let selectedEvents = this.getRows(`.smts-highlight`);
+
+            if (selectedEvents && selectedEvents[0]) {
+                let selected = selectedEvents[0];
+                let sibling = direction === 'up' ?
+                    selected.previousElementSibling : selected.nextElementSibling;
+
+                if (sibling) {
+                    selected.classList.remove('smts-highlight');
+                    sibling.classList.add('smts-highlight');
+
+                    // Update tree only if some time has passed, to avoid
+                    // generating the tree many times while holding arrows
+                    // to move faster in the list.
+                    if (this.shiftTimeout) window.clearTimeout(this.shiftTimeout);
+                    this.shiftTimeout = window.setTimeout(() => sibling.click(), 1500);
+
+                    // Scroll events table to right position if next selected
+                    // is out of visible frame.
+                    let container = document.getElementById('smts-events-table-container');
+                    if (sibling.offsetTop < container.scrollTop) {
+                        container.scrollTop = sibling.offsetTop;
+                    } else if (container.scrollTop + container.offsetHeight <
+                        sibling.offsetTop + sibling.offsetHeight) {
+                        container.scrollTop =
+                            sibling.offsetTop + sibling.offsetHeight - container.offsetHeight;
+                    }
+                }
+            }
+        },
+
         // Show all rows in events table
         showAll: function() {
             let rows = this.getRows();
