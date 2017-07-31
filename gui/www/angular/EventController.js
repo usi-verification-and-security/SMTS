@@ -3,7 +3,8 @@ app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', '
 
         // Update events on instance selected
         $scope.$on('select-instance', function() {
-            // Check if events table is scrolled to bottom
+            // Check if events table is scrolled to bottom. The check has to be
+            // performed here, because later the scroll will change.
             let isScrollBottom = smts.tables.events.isScrollBottom();
 
             // Make timeline

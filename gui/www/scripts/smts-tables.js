@@ -191,6 +191,14 @@ smts.tables = {
             return tab ? tab.classList.contains('active') : false;
         },
 
+        scroll: function(event) {
+            let rows = this.getRows(`[data-event="${event.id}"]`);
+            if (rows && rows[0]) {
+                let container = document.getElementById('smts-events-table-container');
+                container.scrollTop = rows[0].offsetTop;
+            }
+        },
+
         // Scroll events table container to bottom
         scrollBottom: function() {
             let container = document.getElementById('smts-events-table-container');

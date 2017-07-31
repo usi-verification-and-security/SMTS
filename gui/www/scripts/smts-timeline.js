@@ -62,7 +62,7 @@ smts.timeline = {
                     if (eventRow) {
                         // Simulate event click to rebuild the tree
                         eventRow.click();
-                        // TODO: add scroll
+                        smts.tables.events.scroll(event);
                     }
                 });
 
