@@ -137,7 +137,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
 
         // Get current solving instance info to show in server container
         $scope.updateSolvingInfo = function() {
-            $http({method: 'GET', url: '/getSolvingInfo'}).then(
+            $http({method: 'GET', url: '/solvingInfo'}).then(
                 function(res) {
                     let instanceData = res.data;
                     // Bold running instance

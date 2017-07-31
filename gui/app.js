@@ -103,8 +103,9 @@ app.get('/info', function(req, res) {
 });
 
 // Get information about the instance currently being solved
-app.get('/getSolvingInfo', function(req, res) {
-    tools.sendJson(res, 200, taskHandler.getCurrent());
+app.get('/solvingInfo', function(req, res) {
+    let solving = taskHandler.getCurrent();
+    tools.sendJson(res, 200, solving);
 });
 
 // Get instance CNF
@@ -245,11 +246,12 @@ function initialize() {
         process.exit();
     }
     else if (process.argv[2] === "-v" || process.argv[2] === "--version") {
+        console.log(`SMT Viewer v${taskHandler.getVersion()}`);
         process.exit();
     }
     else {
         let databasePath;
-        let serverPort = 8080;
+        let serverPort = 8080; // TODO: remove hardcoded
 
         for (let i = 2; i < process.argv.length - 1; i++) {
             switch (process.argv[i]) {
