@@ -48,6 +48,7 @@ circle.smts-unknown {
 
 circle.smts-selected {
     fill: rgba(0, 0, 255, 0.1); /* Blue */
+    pointer-events: none;
     stroke: none;
 }
 
