@@ -86,11 +86,14 @@
                         </div>
                         <div>
                             <p class="smts-container-subtitle">New instance:</p>
-                            <form class="smts-container-horizontal" action="/upload/instance" method="post" encType="multipart/form-data">
+                            <form class="smts-container-form" action="/upload/instance" method="post"
+                                  encType="multipart/form-data" onsubmit="smts.tools.formSubmit(event)">
                                 <label class="btn btn-default btn-browse">Browse
-                                    <input name="smts-upload-instance" type="file" accept="" required>
+                                    <input name="smts-upload-instance" type="file" accept=""
+                                           onchange="smts.tools.formBrowse(event)" required>
                                 </label>
-                                <input class="btn btn-default" type='submit' value='Upload'/>
+                                <input class="btn btn-default" type="submit" value="Upload"/>
+                                <div class="smts-message">No file selected</div>
                             </form>
                         </div>
                     </div>
@@ -100,11 +103,14 @@
                         <!--<div id="smts-database-title" class="smts-container-title">Database</div>-->
                         <div class="smts-container">
                             <p class="smts-container-subtitle">New database:</p>
-                            <form class="smts-container-horizontal" action='/upload/database' method='post' encType="multipart/form-data">
+                            <form class="smts-container-form" action='/upload/database' method='post'
+                                  encType="multipart/form-data" onsubmit="smts.tools.formSubmit(event)">
                                 <label class="btn btn-default btn-browse">Browse
-                                    <input name="smts-upload-database" type="file" accept=".db" required>
+                                    <input name="smts-upload-database" type="file" accept=".db"
+                                           onchange="smts.tools.formBrowse(event)" required>
                                 </label>
                                 <input class="btn btn-default" type='submit' value='Upload'/>
+                                <div class="smts-message">No file selected</div>
                             </form>
                         </div>
                     </div>

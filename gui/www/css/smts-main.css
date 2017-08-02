@@ -94,6 +94,27 @@ html, body {
     margin: 0 10px;
 }
 
+.smts-container-form {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.smts-container-form > .btn {
+    width: 35%;
+}
+
+.smts-container-form > .smts-message {
+    padding: 6px 12px;
+    border: 1px solid #adadad;
+    flex-basis: 100%;
+    text-align: center;
+    word-break: break-all;
+}
+
+.smts-container-form > * {
+    margin: 0 var(--size-padding) var(--size-padding) var(--size-padding) !important;
+}
 
 /* Navbar */
 

@@ -61,6 +61,10 @@
     height: 45%;
 }
 
+#smts-events-table > tbody:focus {
+    outline: none;
+}
+
 
 /* Column 3 */
 
