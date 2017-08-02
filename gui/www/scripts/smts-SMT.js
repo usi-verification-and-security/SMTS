@@ -107,11 +107,11 @@ smts.SMT = {
             }
         };
 
-        this.network = new vis.Network(container, data, options);
-
-        this.network.on('stabilized', () => {
-            if (this.network) this.network.stopSimulation();
-        });
+        // this.network = new vis.Network(container, data, options);
+        //
+        // this.network.on('stabilized', () => {
+        //     if (this.network) this.network.stopSimulation();
+        // });
     },
 
     update: function(smt = null) {
