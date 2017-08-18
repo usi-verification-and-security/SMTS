@@ -76,7 +76,7 @@ smts.SMT = {
         let edges = new vis.DataSet(this.getDataSetEdges());
         let size = this.smt.getSize();
 
-        let container = document.getElementById('smts-content-smt-container');
+        let container = document.getElementById('smts-content-cnf-container');
         let data = {nodes: nodes, edges: edges};
         let options = {
             interaction: {

@@ -4,6 +4,7 @@ from . import net
 from . import config
 import json
 import logging
+import os
 import traceback
 import random
 import time
@@ -88,6 +89,12 @@ class Solver(net.Socket):
         self.write({
             'command': 'lemmas',
             'lemmas': lemma_server.listening if lemma_server else ''
+        }, '')
+
+    def ask_cnf(self, cnfType, pipename):
+        self.write({
+            'command': 'cnf-' + cnfType,
+            'pipename': pipename
         }, '')
 
     def ask_partitions(self, n, node: framework.AndNode = None):
@@ -206,6 +213,14 @@ class ParallelizationServer(net.Server):
                     level = logging.INFO
                     message = header['report']
                 self.log(level, '{}: {}'.format(sock, message), {'header': header, 'payload': payload.decode()})
+                # Handle CNF request
+                if header['report'] == 'cnf':
+                    pipename = header["pipename"]
+                    pipe = open(pipename, 'w')
+                    if pipe:
+                        pipe.write(payload.decode()) # CNF
+                        pipe.write('}')              # Closing character
+                        pipe.close()
             self.entrust()
             return
         if 'command' in header:
@@ -441,6 +456,24 @@ class ParallelizationServer(net.Server):
                     (node is True and solver.node is not None) or
                     solver.node == node
                 )}
+
+    def get_cnf(self, instanceName):
+        ss = [solver for solver in self.solvers(False) if True]
+        if len(ss) > 0:
+            pipename = 'server/temp/' + instanceName
+            # Remove pipe if already open
+            try:
+                os.unlink(pipename)
+            except:
+                pass
+            # Make pipe and ask CNF to solver
+            try:
+                os.mkfifo(pipename)
+                ss[0].ask_cnf('clauses', pipename)
+                return pipename
+            except:
+                return ''
+        return ''
 
     @property
     def lemma_server(self) -> LemmaServer:

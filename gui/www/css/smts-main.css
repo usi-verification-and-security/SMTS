@@ -157,6 +157,10 @@ html, body {
     font-weight: bold;
 }
 
+.smts-monospace {
+    font-family: monospace;
+}
+
 
 /* Views */
 
@@ -191,7 +195,7 @@ html, body {
  * the height of a parent with the `flex: 1` property. For more, see
  * https://stackoverflow.com/questions/33636796/chrome-safari-not-filling-100-height-of-flex-parent#33644245
  */
-#smts-content-instance, #smts-content-smt {
+#smts-content-instance, #smts-content-cnf {
     position: absolute;
     height: 100%;
     width: 100%;
@@ -217,11 +221,11 @@ html, body {
     border-top: var(--size-border) solid var(--color-primary-light);
 }
 
-#smts-content-smt {
+#smts-content-cnf {
     padding: var(--size-padding) 0;
 }
 
-#smts-content-smt-container {
+#smts-content-cnf-container {
     height: 100%;
     border: var(--size-border) solid var(--color-secondary-dark);
     background-color: var(--color-primary-medium);

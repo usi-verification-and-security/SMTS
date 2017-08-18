@@ -111,7 +111,7 @@ app.get('/solvingInfo', function(req, res) {
 // Get instance CNF
 // @params {String} instance: The name of the instance.
 app.get('/cnf/:instance', function(req, res) {
-    tools.sendJson(res, 200, taskHandler.getCNF(req.params.instance));
+    tools.sendJson(res, 200, taskHandler.getCnf(req.params.instance));
 });
 
 // Get all instances in database

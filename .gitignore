@@ -17,4 +17,5 @@ server/*.db
 server/__pycache__/
 server/config/config.py
 server/config/__pycache__/
+src/cmake-build-debug/
 tests/

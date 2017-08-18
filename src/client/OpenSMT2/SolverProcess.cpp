@@ -158,3 +158,11 @@ void SolverProcess::partition(uint8_t n) {
     }
     exit(0);
 }
+
+char *SolverProcess::getCnfClauses() {
+	return ((OpenSMTSolver *) interpret->solver)->printCnfClauses();
+}
+
+char *SolverProcess::getCnfLearnts() {
+	return ((OpenSMTSolver *) interpret->solver)->printCnfLearnts();
+}

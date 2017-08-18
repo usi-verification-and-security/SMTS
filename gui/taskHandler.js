@@ -15,8 +15,10 @@ class ServerConnectionError {
 function run(command, args = '') {
     try {
         let shellCmd = `echo 'json.dumps(${command})' | ${config.python} ${config.client} ${config.port} ${args}`;
-        return JSON.parse(exec(shellCmd, {'encoding': 'utf8'}) || 'null');
+        let r = exec(shellCmd, {'encoding': 'utf8'});
+        return JSON.parse(r || 'null');
     } catch (e) {
+        console.log(e);
         throw new ServerConnectionError(e);
     }
 }
@@ -49,14 +51,27 @@ module.exports = {
         return run(`self.current.root.name if self.current else None`);
     },
 
-    getCNF: function(instanceName) {
-        for (let benchmarkPath of config.benchmarks_path) {
-            let filePath = `${__dirname}/${benchmarkPath}/${instanceName}.smt2`;
-            if (fs.existsSync(filePath)) {
-                return exec(`../utils.py -s ${filePath}`, {'encoding': 'utf8'});
-            }
-        }
-        return null;
+    // getCNF: function(instanceName) {
+    //     for (let benchmarkPath of config.benchmarks_path) {
+    //         let filePath = `${__dirname}/${benchmarkPath}/${instanceName}.smt2`;
+    //         if (fs.existsSync(filePath)) {
+    //             return exec(`../utils.py -s ${filePath}`, {'encoding': 'utf8'});
+    //         }
+    //     }
+    //     return null;
+    // },
+
+    getCnf: function(instanceName) {
+        let path = run(`self.get_cnf("${instanceName}")`);
+        return path ? this.pipeRead(`../${path}`, '}') : '';
+    },
+
+    stopSolving: function() {
+        return run(`exec("if self.current: self.current.timeout=1")`);
+    },
+
+    changeTimeout: function(delta) {
+        return run(`exec("if self.current: self.current.timeout+=${delta}")`);
     },
 
     getTimeout: function() {
@@ -79,12 +94,25 @@ module.exports = {
         };
     },
 
-    changeTimeout: function(delta) {
-        return run(`exec("if self.current: self.current.timeout+=${delta}")`);
-    },
+    pipeRead: function(pipename, endChar) {
+        // Mode 'r' (read-only) causes problems, 'r+' is required even without
+        // having to write in the pipe
+        let fd = fs.openSync(pipename, 'r+');
 
-    stopSolving: function() {
-        return run(`exec("if self.current: self.current.timeout=1")`);
+        let buffer = new Buffer(1024);
+        let data = '', lastChar = '', size = 0;
+
+        while (lastChar !== endChar) {
+            size = fs.readSync(fd, buffer, 0, buffer.length, null);
+            let readData = buffer.slice(0, size).toString();
+            lastChar = size > 0 ? readData[size - 1] : '';
+            data += readData;
+        }
+
+        // Close and remove pipe
+        fs.closeSync(fd);
+        fs.unlinkSync(pipename);
+
+        return data;
     }
-
 };
