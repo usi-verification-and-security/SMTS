@@ -80,15 +80,11 @@ private:
                     continue;
                 }
 				if (header["command"] == "cnf-clauses") {
-					net::Header cnfHeader;
-					cnfHeader["pipename"] = header["pipename"];
-					this->report(cnfHeader, "cnf", this->getCnfClauses());
+					this->report(header, "cnf", this->getCnfClauses());
 					continue;
 				}
 				if (header["command"] == "cnf-learnts") {
-					net::Header cnfHeader;
-					cnfHeader["pipename"] = header["pipename"];
-					this->report(cnfHeader, "cnf", this->getCnfClauses());
+					this->report(header, "cnf", this->getCnfLearnts());
 					continue;
 				}
                 this->interrupt();
