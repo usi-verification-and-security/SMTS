@@ -6,7 +6,11 @@ smts.tools = {
     // Print formatted error message
     // @param {object} err: Error to be printed.
     error: function(err) {
-        console.log(`Error: ${JSON.stringify(err)}`);
+        if (err.data) {
+            console.log(`${err.data.status}: ${err.data.error}`);
+        } else {
+            console.log(err);
+        }
     },
 
     // Display filename/error message for bootstrap file upload  forms
