@@ -79,6 +79,7 @@ private:
                     }
                     continue;
                 }
+
                 this->interrupt();
                 this->pipe.writer()->write(header, payload);
             }
