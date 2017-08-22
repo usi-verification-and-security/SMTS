@@ -128,4 +128,12 @@ void SolverProcess::interrupt() {
     context.interrupt();
 }
 
+char *SolverProcess::getCnfClauses() {
+	return "";
+}
+
+char *SolverProcess::getCnfLearnts() {
+	return "";
+}
+
 void SolverProcess::partition(uint8_t) {}

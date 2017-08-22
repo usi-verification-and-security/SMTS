@@ -33,8 +33,8 @@ smts.tree = {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Node spacing
-    LINE_HEIGHT: 25, // Space between to nodes (in pixels)
-    LINK_LENGTH: 10, // Distance between two nodes (in pixels)
+    LINE_HEIGHT: 35, // Vertical space between to nodes (in pixels)
+    LINK_LENGTH: 10, // Horizontal space between two nodes (in pixels)
 
     // Nodes
     NODE_AND_RADIUS: 4.5,        // Radius of circle (in pixels)
@@ -49,7 +49,7 @@ smts.tree = {
     // Scale
     SCALE_MIN: 0.1, // Minimum scale factor
     SCALE_MAX: 3.0, // Maximum scale factor
-    g_scale: 1,
+    g_scale: 1,     // Current scaling factor
 
     // Frame movement
     TRANSITION_DURATION: 0, // Duration of frame transition to another node (in milliseconds)
@@ -60,9 +60,10 @@ smts.tree = {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Generate DOM tree
-    make: function(tree, positionFrame) {
+    make: function(tree, position) {
 
         let root = tree.root;
+        this.tree = tree;
 
         if (!root) {
             return;
@@ -70,17 +71,17 @@ smts.tree = {
 
         // Size of the diagram
         let treeContainer = document.getElementById("smts-tree-container");
-        let viewerWidth = treeContainer.offsetWidth;
-        let viewerHeight = treeContainer.offsetHeight;
+        let width = treeContainer.offsetWidth;
+        let height = treeContainer.offsetHeight;
 
         // SVG element setup
         this.clearSvg();
-        let svg = this.makeSvg(viewerWidth, viewerHeight);
+        let svg = this.makeSvg(width, height);
         let svgGroup = this.makeSvgGroup(svg);
         let zoomListener = this.makeZoomListener(svg, svgGroup);
 
         // Define the root
-        root.x0 = viewerHeight / 2;
+        root.x0 = height / 2;
         root.y0 = 0;
 
         // Calculate max label length
@@ -90,7 +91,7 @@ smts.tree = {
         // Compute the new tree layout
         // Using `getMaxLevelWidth` prevents the layout looking squashed when new nodes are made visible or looking sparse
         // when nodes are removed, making the layout more consistent.
-        let d3Tree = this.makeD3Tree(viewerWidth, this.getMaxLevelWidth(root) * this.LINE_HEIGHT);
+        let d3Tree = this.makeD3Tree(width, this.getMaxLevelWidth(root) * this.LINE_HEIGHT);
         let d3Nodes = d3Tree.nodes(root).reverse();
         let d3Links = d3Tree.links(d3Nodes);
 
@@ -113,7 +114,7 @@ smts.tree = {
 
         // Move view in correct position
         window.setTimeout(function() {
-            smts.tree.centerTree(positionFrame, viewerWidth, viewerHeight, selectedNode, zoomListener);
+            smts.tree.centerTree(position, width, height, selectedNode, zoomListener);
             d3.select('#smts-tree').classed('smts-hidden', false);
         }, 0);
     },
@@ -131,6 +132,12 @@ smts.tree = {
         return tree ? tree.getAttribute('transform') : null;
     },
 
+    // Get list of selected nodes
+    // @return {Node[]}: The list of selected nodes.
+    getSelectedNodes: function() {
+        return this.tree.selectedNodes;
+    },
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// ZOOM LISTENER
@@ -138,11 +145,13 @@ smts.tree = {
 
     // Make the zoomListener which calls the zoom function on the "zoom" event constrained within the scaleExtents
     makeZoomListener: function(listener, target) {
+        // Update scale on zoom
         let zoomListener = d3.behavior.zoom().scaleExtent([this.SCALE_MIN, this.SCALE_MAX]).on('zoom', function() {
             target.attr('transform', `translate(${d3.event.translate}) scale(${d3.event.scale})`);
             smts.tree.setScale(d3.event.scale);
         });
-        listener.call(zoomListener);
+        // Call listener and remove zoom on double click
+        listener.call(zoomListener).on("dblclick.zoom", null);
         return zoomListener;
     },
 
@@ -245,7 +254,8 @@ smts.tree = {
             .classed('smts-sat', node => node.status === 'sat')
             .classed('smts-unsat', node => node.status === 'unsat')
             .classed('smts-unknown', node => node.status === 'unknown')
-            .classed('smts-propagated', node => node.isStatusPropagated);
+            .classed('smts-propagated', node => node.isStatusPropagated)
+            .on('dblclick', node => smts.tree.requestPartitioning(node));
 
         // Make halo circle for selected node
         svgGroup.selectAll('.smts-nodeSelected')
@@ -284,6 +294,21 @@ smts.tree = {
         // Update events if 'Selected' tab is selected
         smts.tables.events.update(tree.selectedNodes);
         smts.tables.solvers.update(tree.selectedNodes);
+    },
+
+    // Request partitioning on given AND node
+    // This works only if the instance is currently being solved and the node
+    // is not partitioned yet.
+    requestPartitioning: function(node) {
+        let name = node.solvers[0] ? node.solvers[0] : 'NOTHING';
+        $.ajax({
+            url: '/partition',
+            type: 'POST',
+            data: {solver: name},
+            success: function(res) {
+                console.log(JSON.stringify(res));
+            }
+        })
     },
 
 

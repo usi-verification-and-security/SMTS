@@ -13,10 +13,17 @@ class ServerConnectionError {
 }
 
 function run(command, args = '') {
+    let value;
     try {
         let shellCmd = `echo 'json.dumps(${command})' | ${config.python} ${config.client} ${config.port} ${args}`;
-        return JSON.parse(exec(shellCmd, {'encoding': 'utf8'}) || 'null');
+        value = exec(shellCmd, {'encoding': 'utf8'});
+        return eval(value || 'null');
     } catch (e) {
+        console.error('----------ERROR----------');
+        console.error(value);
+        console.error('--------EXCEPTION--------');
+        console.error(e);
+        console.error('-----------END-----------');
         throw new ServerConnectionError(e);
     }
 }
@@ -49,14 +56,22 @@ module.exports = {
         return run(`self.current.root.name if self.current else None`);
     },
 
-    getCNF: function(instanceName) {
-        for (let benchmarkPath of config.benchmarks_path) {
-            let filePath = `${__dirname}/${benchmarkPath}/${instanceName}.smt2`;
-            if (fs.existsSync(filePath)) {
-                return exec(`../utils.py -s ${filePath}`, {'encoding': 'utf8'});
-            }
-        }
-        return null;
+    getCnfClauses: function(instanceName, nodePath) {
+        let path = run(`self.get_cnf_clauses("${instanceName}", json.loads("${nodePath.replace(/"/g, '\\"')}"))`);
+        return path ? this.pipeRead(`../${path}`) : '';
+    },
+
+    getCnfLearnts: function(instanceName, solverAddress) {
+        let path = run(`self.get_cnf_learnts("${instanceName}", json.loads("${solverAddress}"))`);
+        return path ? this.pipeRead(`../${path}`) : '';
+    },
+
+    stopSolving: function() {
+        return run(`exec("if self.current: self.current.timeout=1")`);
+    },
+
+    changeTimeout: function(delta) {
+        return run(`exec("if self.current: self.current.timeout+=${delta}")`);
     },
 
     getTimeout: function() {
@@ -79,12 +94,9 @@ module.exports = {
         };
     },
 
-    changeTimeout: function(delta) {
-        return run(`exec("if self.current: self.current.timeout+=${delta}")`);
-    },
-
-    stopSolving: function() {
-        return run(`exec("if self.current: self.current.timeout=1")`);
+    pipeRead: function(pipename) {
+        let data = fs.readFileSync(pipename);
+        fs.unlinkSync(pipename);
+        return data.toString();
     }
-
 };

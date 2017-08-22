@@ -79,7 +79,14 @@ private:
                     }
                     continue;
                 }
-
+				if (header["command"] == "cnf-clauses") {
+					this->report(header, "cnf", this->getCnfClauses());
+					continue;
+				}
+				if (header["command"] == "cnf-learnts") {
+					this->report(header, "cnf", this->getCnfLearnts());
+					continue;
+				}
                 this->interrupt();
                 this->pipe.writer()->write(header, payload);
             }
@@ -98,6 +105,10 @@ private:
 
     // async interrupt the solver
     void interrupt();
+
+	// Get CNF corresponding to a particular solver
+	char *getCnfClauses();
+	char *getCnfLearnts();
 
     void report(net::Header &header, const std::string &report, const std::string &payload) {
         if (&header != &(this->header)) {

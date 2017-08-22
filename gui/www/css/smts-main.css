@@ -94,6 +94,27 @@ html, body {
     margin: 0 10px;
 }
 
+.smts-container-form {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.smts-container-form > .btn {
+    width: 35%;
+}
+
+.smts-container-form > .smts-message {
+    padding: 6px 12px;
+    border: 1px solid #adadad;
+    flex-basis: 100%;
+    text-align: center;
+    word-break: break-all;
+}
+
+.smts-container-form > * {
+    margin: 0 var(--size-padding) var(--size-padding) var(--size-padding) !important;
+}
 
 /* Navbar */
 
@@ -136,6 +157,10 @@ html, body {
     font-weight: bold;
 }
 
+.smts-monospace {
+    font-family: monospace;
+}
+
 
 /* Views */
 
@@ -170,7 +195,7 @@ html, body {
  * the height of a parent with the `flex: 1` property. For more, see
  * https://stackoverflow.com/questions/33636796/chrome-safari-not-filling-100-height-of-flex-parent#33644245
  */
-#smts-content-instance, #smts-content-smt {
+#smts-content-instance, #smts-content-cnf {
     position: absolute;
     height: 100%;
     width: 100%;
@@ -196,11 +221,11 @@ html, body {
     border-top: var(--size-border) solid var(--color-primary-light);
 }
 
-#smts-content-smt {
+#smts-content-cnf {
     padding: var(--size-padding) 0;
 }
 
-#smts-content-smt-container {
+#smts-content-cnf-container {
     height: 100%;
     border: var(--size-border) solid var(--color-secondary-dark);
     background-color: var(--color-primary-medium);

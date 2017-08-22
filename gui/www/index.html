@@ -4,18 +4,16 @@
 
     <!--Styles-->
     <link rel="stylesheet" href="css/smts-main.css">
+    <link rel="stylesheet" href="css/smts-cnf.css">
     <link rel="stylesheet" href="css/smts-tables.css">
     <link rel="stylesheet" href="css/smts-timeline.css">
     <link rel="stylesheet" href="css/smts-tree.css">
+    <link rel="stylesheet" href="css/bootstrap-switch.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.20.1/vis.min.css">
     <style type="text/css"></style>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <!--Bootstrap-->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
     <link rel="shortcut icon" type="image/x-icon" href="images/Logo_Budakovic.png"/>
     <base href="">
@@ -69,28 +67,31 @@
                     <div id="smts-server-container" class="smts-container smts-hidden">
                         <!--<div id="smts-server-title" class="smts-container-title">Server</div>-->
                         <div>
-                            <p class="smsts-container-subtitle">Solving Instance:</p>
+                            <p class="smts-container-subtitle">Solving Instance:</p>
                             <p id="smts-server-solving-instance">{{instanceName}}</p>
                             <p id="smts-server-solving-time">{{instanceTime}}s ({{instanceLeft}}s left)</p>
                         </div>
                         <div>
-                            <p class="smsts-container-subtitle">Timeout:</p>
+                            <p class="smts-container-subtitle">Timeout:</p>
                             <div class="smts-container-horizontal">
-                                <button class="btn btn-default" value="-" ng-click="changeTimeout('decrease')">-</button>
+                                <button class="btn btn-default smts-monospace" value="-" ng-click="changeTimeout('decrease')">-</button>
                                 <input id="smts-server-timeout" class="form-control" type="number" value="100">
-                                <button class="btn btn-default" value="+" ng-click="changeTimeout('increase')">+</button>
+                                <button class="btn btn-default smts-monospace" value="+" ng-click="changeTimeout('increase')">+</button>
                             </div>
                             <div class="smts-container-horizontal">
-                                <button class="btn btn-default" value="Stop" ng-click="stop()">Stop</button>
+                                <button class="btn btn-default" value="Stop" ng-click="stop()" style="width: 100%">Stop</button>
                             </div>
                         </div>
                         <div>
-                            <p class="smsts-container-subtitle">New instance:</p>
-                            <form class="smts-container-horizontal" action="/upload/instance" method="post" encType="multipart/form-data">
+                            <p class="smts-container-subtitle">New instance:</p>
+                            <form class="smts-container-form" action="/upload/instance" method="post"
+                                  encType="multipart/form-data" onsubmit="smts.tools.formSubmit(event)">
                                 <label class="btn btn-default btn-browse">Browse
-                                    <input name="smts-upload-instance" type="file" accept="" required>
+                                    <input name="smts-upload-instance" type="file" accept=""
+                                           onchange="smts.tools.formBrowse(event)" required>
                                 </label>
-                                <input class="btn btn-default" type='submit' value='Upload'/>
+                                <input class="btn btn-default" type="submit" value="Upload"/>
+                                <div class="smts-message">No file selected</div>
                             </form>
                         </div>
                     </div>
@@ -99,12 +100,15 @@
                     <div id="smts-database-container" class="smts-container smts-hidden">
                         <!--<div id="smts-database-title" class="smts-container-title">Database</div>-->
                         <div class="smts-container">
-                            <p class="smsts-container-subtitle">New database:</p>
-                            <form class="smts-container-horizontal" action='/upload/database' method='post' encType="multipart/form-data">
+                            <p class="smts-container-subtitle">New database:</p>
+                            <form class="smts-container-form" action='/upload/database' method='post'
+                                  encType="multipart/form-data" onsubmit="smts.tools.formSubmit(event)">
                                 <label class="btn btn-default btn-browse">Browse
-                                    <input name="smts-upload-database" type="file" accept=".db" required>
+                                    <input name="smts-upload-database" type="file" accept=".db"
+                                           onchange="smts.tools.formBrowse(event)" required>
                                 </label>
                                 <input class="btn btn-default" type='submit' value='Upload'/>
+                                <div class="smts-message">No file selected</div>
                             </form>
                         </div>
                     </div>
@@ -129,13 +133,13 @@
         <!--<div id="smts-content-title" class="smts-container-title">Content</div>-->
 
         <ul id="smts-content-navbar" class="nav nav-tabs smts-navbar">
-            <li id="smts-content-navbar-data"><a data-toggle="tab" href="#smts-content-instance">Data</a></li>
-            <li id="smts-content-navbar-smt" class="active"><a data-toggle="tab" href="#smts-content-smt">SMT</a></li>
+            <li id="smts-content-navbar-data" class="active"><a data-toggle="tab" href="#smts-content-instance">Data</a></li>
+            <li id="smts-content-navbar-smt" class=""><a data-toggle="tab" href="#smts-content-cnf">CNF</a></li>
         </ul>
 
         <div id="smts-content-tab-content" class="tab-content">
             <!--Instance data-->
-            <div id="smts-content-instance" class="tab-pane" >
+            <div id="smts-content-instance" class="tab-pane active" >
                 <div id="smts-content-instance-data" class="row">
                 <!--Left column-->
                 <div id="smts-content-instance-data-left" class="col-sm-8 container-fluid">
@@ -166,7 +170,7 @@
                                     <th>Solver</th>
                                 </tr>
                                 </thead>
-                                <tbody>
+                                <tbody ng-keydown="shiftSelected($event)" tabindex="0">
                                 <tr id="smts-events-event-{{event.id}}"
                                     data-event="{{event.id}}"
                                     data-node="{{event.node}}"
@@ -203,6 +207,7 @@
                             <th>Solver</th>
                             <th>Node</th>
                             <th>Time</th>
+                            <th>Learnts</th>
                             </thead>
                             <tbody>
                             <tr data-solver="{{solver.name}}"
@@ -212,6 +217,7 @@
                                 <td>{{solver.name}}</td>
                                 <td>{{solver.node}}</td>
                                 <td>{{formatExecutionTime(solver)}}</td>
+                                <td><div class="btn btn-default btn-xs" ng-click="getLearnts(solver)">Learnts</div></td>
                             </tr>
                             </tbody>
                         </table>
@@ -227,13 +233,29 @@
                 </div>
                 <div id="smts-content-instance-timeline" class="row">
                 <div id="smts-timeline-line"></div>
-                <div id="smts-timeline-span"></div>
             </div>
             </div>
 
             <!--SMT-->
-            <div id="smts-content-smt" class="tab-pane active">
-                <div id="smts-content-smt-container"></div>
+            <div id="smts-content-cnf" class="tab-pane">
+                <div id="smts-content-cnf-container"></div>
+                <div id="smts-content-cnf-literal-info" class="smts-hidden">
+                    <h4 class="smts-title">Literal</h4>
+                    <div class="smts-subtitle">
+                        <h5 class="smts-subtitle">Variables</h5>
+                        <input id="smts-content-cnf-literal-info-variables-switch" type="checkbox" checked/>
+                    </div>
+                    <div id="smts-content-cnf-literal-info-variables"></div>
+                    <div class="smts-subtitle">
+                        <h5 class="smts-subtitle">Clauses</h5>
+                        <input id="smts-content-cnf-literal-info-clauses-switch" type="checkbox" checked/>
+                    </div>
+                    <div id="smts-content-cnf-literal-info-clauses"></div>
+                    <div class="smts-subtitle">
+                        <h5 class="smts-subtitle">Formula</h5>
+                    </div>
+                    <div id="smts-content-cnf-literal-info-formula"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -241,25 +263,27 @@
 
 </body>
 
-<!--External libraries-->
+<!--jQuery-->
 <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
-<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+<!--<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>-->
+<!--Bootstrap-->
+<script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="scripts/bootstrap-switch.min.js"></script>
+<!--Angular-->
 <script type="text/javascript" src="https://code.angularjs.org/1.5.3/angular.min.js"></script>
 <script type="text/javascript" src="scripts/ng-file-upload.min.js"></script>
 <script type="text/javascript" src="scripts/ng-file-upload-shim.min.js"></script>
+<!--Other external libraries-->
+<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.20.1/vis.min.js"></script>
 <!--TreeManager-->
 <script type="text/javascript" src="treeManager/Event.js"></script>
 <script type="text/javascript" src="treeManager/Node.js"></script>
 <script type="text/javascript" src="treeManager/Solver.js"></script>
 <script type="text/javascript" src="treeManager/Tree.js"></script>
-<!--SMT-->
-<script type="text/javascript" src="SMT/Type.js"></script>
-<script type="text/javascript" src="SMT/Fn.js"></script>
-<script type="text/javascript" src="SMT/Node.js"></script>
-<script type="text/javascript" src="SMT/DAG.js"></script>
 <!--Utilities-->
 <script type="text/javascript" src="scripts/smts.js"></script>
+<script type="text/javascript" src="scripts/smts-cnf.js"></script>
 <script type="text/javascript" src="scripts/smts-SMT.js"></script>
 <script type="text/javascript" src="scripts/smts-tables.js"></script>
 <script type="text/javascript" src="scripts/smts-timeline.js"></script>

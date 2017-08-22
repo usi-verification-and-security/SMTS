@@ -92,14 +92,14 @@ class Socket(object):
     @property
     def local_address(self):
         try:
-            return self._sock.getsockname()
+            return list(self._sock.getsockname())
         except:
             pass
 
     @property
     def remote_address(self):
         try:
-            return self._sock.getpeername()
+            return list(self._sock.getpeername())
         except:
             pass
 

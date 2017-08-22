@@ -4,6 +4,19 @@ smts.tables = {
     // Set of functions that manipulate the DOM object 'smts-data-container'
     data: {
 
+        // Make a button for requesting CNF of currently selected node
+        // @return {HtmlNode}: The HTML button.
+        makeGetClausesBtn: function() {
+            let getClausesBtn = document.createElement('div');
+            getClausesBtn.id = 'smts-data-get-clauses';
+            getClausesBtn.className = 'btn btn-default btn-xs';
+            getClausesBtn.innerHTML = 'Get Clauses';
+            let instanceName = smts.tables.instances.getSelected();
+            let nodePath = JSON.stringify(smts.tree.getSelectedNodes()[0].name);
+            getClausesBtn.addEventListener('click', () => smts.cnf.create('clauses', instanceName, nodePath));
+            return getClausesBtn;
+        },
+
         // Make an event object with the wanted attributes for the data table
         // @param {TreeManager.Node} node: The mold event.
         // @return {Object}: The object representing the event, to be put in
@@ -112,6 +125,7 @@ smts.tables = {
 
                 case 'node':
                     dataTableItem = this.makeItemNode(item);
+                    dataTableContainer.appendChild(this.makeGetClausesBtn());
                     break;
 
                 case 'solver':
@@ -191,10 +205,54 @@ smts.tables = {
             return tab ? tab.classList.contains('active') : false;
         },
 
+        scroll: function(event) {
+            let rows = this.getRows(`[data-event="${event.id}"]`);
+            if (rows && rows[0]) {
+                let container = document.getElementById('smts-events-table-container');
+                container.scrollTop = rows[0].offsetTop;
+            }
+        },
+
         // Scroll events table container to bottom
         scrollBottom: function() {
             let container = document.getElementById('smts-events-table-container');
             container.scrollTop = container.scrollHeight - container.offsetHeight;
+        },
+
+        // Highlight next element in events table
+        // Allows events navigation through up and down arrow keys while focus
+        // is on events table.
+        // @param {string} direction: Can be 'up' or 'down'.
+        shift: function(direction) {
+            let selectedEvents = this.getRows(`.smts-highlight`);
+
+            if (selectedEvents && selectedEvents[0]) {
+                let selected = selectedEvents[0];
+                let sibling = direction === 'up' ?
+                    selected.previousElementSibling : selected.nextElementSibling;
+
+                if (sibling) {
+                    selected.classList.remove('smts-highlight');
+                    sibling.classList.add('smts-highlight');
+
+                    // Update tree only if some time has passed, to avoid
+                    // generating the tree many times while holding arrows
+                    // to move faster in the list.
+                    if (this.shiftTimeout) window.clearTimeout(this.shiftTimeout);
+                    this.shiftTimeout = window.setTimeout(() => sibling.click(), 1500);
+
+                    // Scroll events table to right position if next selected
+                    // is out of visible frame.
+                    let container = document.getElementById('smts-events-table-container');
+                    if (sibling.offsetTop < container.scrollTop) {
+                        container.scrollTop = sibling.offsetTop;
+                    } else if (container.scrollTop + container.offsetHeight <
+                        sibling.offsetTop + sibling.offsetHeight) {
+                        container.scrollTop =
+                            sibling.offsetTop + sibling.offsetHeight - container.offsetHeight;
+                    }
+                }
+            }
         },
 
         // Show all rows in events table
@@ -253,12 +311,15 @@ smts.tables = {
             }
         },
 
+        // Get selected instance name
+        // @return {string}: The name of the current instance, the empty string
+        // if no instance is selected.
         getSelected: function() {
             let rows = this.getRows('.smts-highlight');
             if (rows && rows[0]) {
                 return rows[0].getAttribute('data-instance');
             }
-            return null;
+            return '';
         },
 
         // Get rows of instances table
@@ -317,6 +378,19 @@ smts.tables = {
             return document.querySelectorAll(`${queryRows}${option}`)
         },
 
+        // Get name of selected solver
+        // @return {string}: Name of the selected solver, the empty string if
+        // no solver is selected.
+        getSelected: function() {
+            let rows = this.getRows('.smts-highlight'); // Get selected
+            if (rows && rows[0]) {
+                console.log(rows[0].getAttribute('data-solver'));
+                return rows[0].getAttribute('data-solver');
+            }
+            console.log('NOTHING');
+            return '';
+        },
+
         // Highlight all rows with solver matching one of solvers
         // @param {TreeManager.Solver[]} solvers: List of solvers to be
         // highlighted.
@@ -327,7 +401,7 @@ smts.tables = {
 
             // Highlight selected nodes
             for (let solver of solvers) {
-                rows = this.getRows(`[data-solver="${solver.name}"]`);
+                rows = this.getRows(`[data-solver='${solver.name}']`);
                 if (rows) rows.forEach(row => row.classList.add('smts-highlight'));
             }
         },

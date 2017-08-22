@@ -69,25 +69,12 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
             // Get tree data
             this.getEvents(instance);
 
-            // If real-time analysis, ask every 5 seconds for db content
             if ($scope.isRealTime) {
+                // Ask repeatedly for db content
                 clearInterval($scope.updateEventsIntervalId); // Clear previous instance updates
                 $scope.updateEventsIntervalId =
                     setInterval($scope.updateEvents.bind(null, instance), INTERVAL_UPDATE_EVENTS);
             }
-
-            // Get instance CNF if available
-            this.getSMT(instance);
-        };
-
-        $scope.getSMT = function(instance) {
-            $http({method: 'GET', url: `/cnf/${instance.name}`}).then(
-              function(res) {
-                  if (res.data) {
-                      let smt = new SMT.DAG(JSON.parse(res.data));
-                      smts.SMT.update(smt);
-                  }
-              }, $scope.error);
         };
 
         // Load database data relative to a particular instance
@@ -137,7 +124,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
 
         // Get current solving instance info to show in server container
         $scope.updateSolvingInfo = function() {
-            $http({method: 'GET', url: '/getSolvingInfo'}).then(
+            $http({method: 'GET', url: '/solvingInfo'}).then(
                 function(res) {
                     let instanceData = res.data;
                     // Bold running instance

@@ -4,6 +4,7 @@ from . import net
 from . import config
 import json
 import logging
+import os
 import traceback
 import random
 import time
@@ -90,6 +91,44 @@ class Solver(net.Socket):
             'lemmas': lemma_server.listening if lemma_server else ''
         }, '')
 
+    def make_pipe(self, instanceName):
+        pipe_name = 'server/temp/' + instanceName
+        # Remove pipe if already open
+        if os.path.exists(pipe_name): os.unlink(pipe_name)
+        # Make pipe
+        try:
+            os.mkfifo(pipe_name)
+            return pipe_name
+        except:
+            return ''
+
+        
+    def ask_cnf_learnts(self, instanceName):
+        pipe_name = self.make_pipe(instanceName)
+        if pipe_name:
+            self.write({
+                'command': 'cnf-learnts',
+                'pipename': pipe_name
+            }, '')
+        return pipe_name
+
+    def ask_cnf_clauses(self, instanceName, node):
+        pipe_name = self.make_pipe(instanceName)
+        if pipe_name:
+            if (node == self.node):
+                self.write({
+                    'command': 'cnf-clauses',
+                    'pipename': pipe_name
+                }, '')
+            else:
+                smt, query = node.root.to_string(node)
+                self.write({
+                    'command': 'cnf-clauses',
+                    'pipename': pipe_name,
+                    'query': query,
+                }, smt)
+        return pipe_name
+            
     def ask_partitions(self, n, node: framework.AndNode = None):
         if self.node is None:
             raise ValueError('not solving anything')
@@ -115,6 +154,15 @@ class Solver(net.Socket):
         if self.node.root.name != header['name'] or str(self.node.path()) != header['node']:
             return {}, b''
 
+        # Handle CNF request
+        if header['report'] == 'cnf':
+            pipename = header["pipename"]
+            pipe = open(pipename, 'w')
+            if pipe:
+                pipe.write(payload.decode())
+                pipe.flush()
+                pipe.close()
+        
         del header['name']
         del header['node']
 
@@ -161,7 +209,7 @@ class Solver(net.Socket):
                                          self.node.root.name,
                                          str(self.node.path()),
                                          event,
-                                         str(self.remote_address),
+                                         json.dumps(self.remote_address),
                                          json.dumps(data) if data else None
                                      ))
         config.db().commit()
@@ -442,6 +490,33 @@ class ParallelizationServer(net.Server):
                     solver.node == node
                 )}
 
+    def get_cnf_clauses(self, instanceName, nodePath):
+        node = self.current.root.child(nodePath)
+
+        # Node already has a solver
+        solvers = self.solvers(node)
+        if solvers:
+            return solvers.pop().ask_cnf_clauses(instanceName, node)
+        
+        # Node doesn't have a solver
+        #solvers = self.solvers(False)
+        #if solvers:
+        #    return solvers.pop().ask_cnf_clauses(instanceName, node)
+
+        # No solver available
+        return ''
+
+    def get_cnf_learnts(self, instanceName, solverAddress): 
+        # Get solver with matching address
+        solvers = [solver for solver in self.solvers(True) if solver.node.root.name == instanceName]
+        if solverAddress:
+            for solver in solvers:
+                if solver.remote_address[1] == solverAddress:
+                    return solver.ask_cnf_learnts(instanceName)
+
+        # No non-idle solver with matching address
+        return ''
+       
     @property
     def lemma_server(self) -> LemmaServer:
         lemmas = [sock for sock in self._rlist if isinstance(sock, LemmaServer)]

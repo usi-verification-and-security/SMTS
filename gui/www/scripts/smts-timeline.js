@@ -40,13 +40,19 @@ smts.timeline = {
                 dash.setAttribute('data-event', event.id);
                 dash.style.left = `${lineLength * event.ts * 100}%`;
 
+                // Make popup span
+                let dashSeconds = document.createElement('div');
+                dashSeconds.classList.add('smts-timeline-dash-seconds');
+                dashSeconds.classList.add('smts-hidden');
+                dashSeconds.innerText = `${event.ts}s`;
+
                 // Set events
                 dash.addEventListener('mouseenter', function() {
-                    dash.classList.add('hover');
+                    dashSeconds.classList.remove('smts-hidden');
                 });
 
                 dash.addEventListener('mouseleave', function() {
-                    dash.classList.remove('hover');
+                    dashSeconds.classList.add('smts-hidden');
                 });
 
                 dash.addEventListener('click', function() {
@@ -56,17 +62,12 @@ smts.timeline = {
                     if (eventRow) {
                         // Simulate event click to rebuild the tree
                         eventRow.click();
-                        // TODO: add scroll
+                        smts.tables.events.scroll(event);
                     }
                 });
 
-                // Make popup span
-                let popupSpan = document.createElement('div');
-                popupSpan.classList.add('smts-timeline-popupSpan');
-                popupSpan.innerText = `${event.ts} s`;
-
                 // Insert elements
-                dash.appendChild(popupSpan);
+                dash.appendChild(dashSeconds);
                 line.appendChild(dash);
             }
         }
@@ -74,24 +75,26 @@ smts.timeline = {
         // Select first dash
         let firstDash = line.children[0];
         if (firstDash) {
-            firstDash.classList.add('smts-timeline-active');
+            firstDash.classList.add('smts-active');
         }
     },
 
     selectEvent: function(eventId) {
         // Unselect previously selected element
-        let activeEvents = document.querySelectorAll('.smts-timeline-active');
+        let activeEvents = document.querySelectorAll('.smts-timeline-dash.smts-active');
         for (let activeEvent of activeEvents) {
-            activeEvent.classList.remove('smts-timeline-active');
+            activeEvent.classList.remove('smts-active');
         }
 
         // Get element and select it
         let event = document.getElementById(`smts-timeline-event-${eventId}`);
         if (event) {
-            event.classList.add('smts-timeline-active');
+            event.classList.add('smts-active');
         }
     },
 
+    // Trim events to avoid having overlapping elements on timeline
+    // This only needed to have lighter timeline.
     trimEvents: function(events) {
         this.events = [];
         this.events.push(events[0]);

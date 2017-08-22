@@ -61,6 +61,10 @@
     height: 45%;
 }
 
+#smts-events-table > tbody:focus {
+    outline: none;
+}
+
 
 /* Column 3 */
 
@@ -68,11 +72,28 @@
     height: 55%;
 }
 
+#smts-solvers-table-container {
+    position: relative;
+}
+
 #smts-solvers-table > tr > td {
     white-space: nowrap;
     word-break: keep-all;
 }
 
+#smts-solvers-get-learnts {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+}
+
 #smts-data-container {
+    position: relative; /* To position #smts-data-get-clauses */
     height: 45%;
+}
+
+#smts-data-get-clauses {
+    position: absolute;
+    top: var(--size-padding);
+    right: 0;
 }

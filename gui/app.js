@@ -103,14 +103,34 @@ app.get('/info', function(req, res) {
 });
 
 // Get information about the instance currently being solved
-app.get('/getSolvingInfo', function(req, res) {
-    tools.sendJson(res, 200, taskHandler.getCurrent());
+app.get('/solvingInfo', function(req, res) {
+    let solving = taskHandler.getCurrent();
+    tools.sendJson(res, 200, solving);
 });
 
 // Get instance CNF
-// @params {String} instance: The name of the instance.
-app.get('/cnf/:instance', function(req, res) {
-    tools.sendJson(res, 200, taskHandler.getCNF(req.params.instance));
+// @params {String} type: Type of the CNF. Either `clauses` or `learnts`.
+// @query {String} instanceName: The name of the instance.
+// @query {String} value: If type is 'clauses', value is a node path. If type
+// is 'learnts', value is a solver address.
+app.get('/cnf/:type', function(req, res) {
+    if (!req.query.instanceName) {
+        tools.sendError(res, 400, 'No instance given', 'GET /cnf');
+    } else if (req.params.type === 'clauses') {
+        if (!req.query.value) {
+            tools.sendError(res, 400, 'No node path given', 'GET /cnf/clauses');
+        } else {
+            tools.sendJson(res, 200, taskHandler.getCnfClauses(req.query.instanceName, req.query.value));
+        }
+    } else if (req.params.type === 'learnts') {
+        if (!req.query.value) {
+            tools.sendError(res, 400, 'No solver address given', 'GET /cnf/learnts');
+        } else {
+            tools.sendJson(res, 200, taskHandler.getCnfLearnts(req.query.instanceName, req.query.value));
+        }
+    } else {
+        tools.sendError(res, 400, 'No valid CNF type given (`clauses` or `learnts`)', 'GET /cnf');
+    }
 });
 
 // Get all instances in database
@@ -235,6 +255,16 @@ app.post('/stop', function(req, res) {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SOLVERS INTERACTION
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Partition a given solver
+app.post('/partition', function(req, res) {
+    tools.sendJson(res, 200, req.body.solver);
+});
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MAIN FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -245,11 +275,12 @@ function initialize() {
         process.exit();
     }
     else if (process.argv[2] === "-v" || process.argv[2] === "--version") {
+        console.log(`SMT Viewer v${taskHandler.getVersion()}`);
         process.exit();
     }
     else {
         let databasePath;
-        let serverPort = 8080;
+        let serverPort = 8080; // TODO: remove hardcoded
 
         for (let i = 2; i < process.argv.length - 1; i++) {
             switch (process.argv[i]) {

@@ -3,7 +3,8 @@ app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', '
 
         // Update events on instance selected
         $scope.$on('select-instance', function() {
-            // Check if events table is scrolled to bottom
+            // Check if events table is scrolled to bottom. The check has to be
+            // performed here, because later the scroll will change.
             let isScrollBottom = smts.tables.events.isScrollBottom();
 
             // Make timeline
@@ -49,8 +50,23 @@ app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', '
                 }
             }, 0);
 
+            // Focus the events table for fast arrow selection
+            document.querySelector('#smts-events-table > tbody').focus();
+
             // Notify selected element
             sharedService.broadcastSelectEvent();
+        };
+
+        // Shift selected element above or below current one
+        // @param {event} e: The event triggered by a keyboard input.
+        $scope.shiftSelected = function(e) {
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                smts.tables.events.shift('up');
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                smts.tables.events.shift('down');
+            }
         };
 
         // Show all events in events table
