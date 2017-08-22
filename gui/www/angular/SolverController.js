@@ -14,14 +14,9 @@ app.controller('SolverController', ['$scope', '$rootScope', '$window', '$http', 
 
         // Get learnts clauses of currently selected solver
         $scope.getLearnts = function(solver) {
-            let queryInstance = `instanceName=${smts.tables.instances.getSelected()}`;
-            let querySolver = `solverName=${JSON.parse(solver.name)[1]}`;
-            $http({method: 'GET', url: `/cnf/learnts?${queryInstance}&${querySolver}`}).then(
-                function(res) {
-                    if (res.data) {
-                        console.log(res.data);
-                    }
-                }, smts.tools.error);
+            let instanceName = smts.tables.instances.getSelected();
+            let solverName = JSON.parse(solver.name)[1];
+            smts.cnf.create('learnts', instanceName, solverName);
         };
 
         // Get execution time of solver

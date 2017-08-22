@@ -111,16 +111,25 @@ app.get('/solvingInfo', function(req, res) {
 // Get instance CNF
 // @params {String} type: Type of the CNF. Either `clauses` or `learnts`.
 // @query {String} instanceName: The name of the instance.
-// @query {String} solverName: The name of the solver. Can be empty.
+// @query {String} value: If type is 'clauses', value is a node path. If type
+// is 'learnts', value is a solver address.
 app.get('/cnf/:type', function(req, res) {
-    if (req.params.type !== 'clauses' && req.params.type !== 'learnts') {
-        tools.sendError(res, 400, 'Wrong CNF type requested', 'GET /cnf');
-    } else if (!req.query.instanceName) {
+    if (!req.query.instanceName) {
         tools.sendError(res, 400, 'No instance given', 'GET /cnf');
+    } else if (req.params.type === 'clauses') {
+        if (!req.query.value) {
+            tools.sendError(res, 400, 'No node path given', 'GET /cnf/clauses');
+        } else {
+            tools.sendJson(res, 200, taskHandler.getCnfClauses(req.query.instanceName, req.query.value));
+        }
+    } else if (req.params.type === 'learnts') {
+        if (!req.query.value) {
+            tools.sendError(res, 400, 'No solver address given', 'GET /cnf/learnts');
+        } else {
+            tools.sendJson(res, 200, taskHandler.getCnfLearnts(req.query.instanceName, req.query.value));
+        }
     } else {
-        let solverName = req.query.solverName || '';
-        let type = req.query.type || 'clauses';
-        tools.sendJson(res, 200, taskHandler.getCnf(req.query.instanceName, solverName, type));
+        tools.sendError(res, 400, 'No valid CNF type given (`clauses` or `learnts`)', 'GET /cnf');
     }
 });
 

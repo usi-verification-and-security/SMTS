@@ -91,12 +91,44 @@ class Solver(net.Socket):
             'lemmas': lemma_server.listening if lemma_server else ''
         }, '')
 
-    def ask_cnf(self, cnfType, pipename):
-        self.write({
-            'command': 'cnf-' + cnfType,
-            'pipename': pipename
-        }, '')
+    def make_pipe(self, instanceName):
+        pipe_name = 'server/temp/' + instanceName
+        # Remove pipe if already open
+        if os.path.exists(pipe_name): os.unlink(pipe_name)
+        # Make pipe
+        try:
+            os.mkfifo(pipe_name)
+            return pipe_name
+        except:
+            return ''
 
+        
+    def ask_cnf_learnts(self, instanceName):
+        pipe_name = self.make_pipe(instanceName)
+        if pipe_name:
+            self.write({
+                'command': 'cnf-learnts',
+                'pipename': pipe_name
+            }, '')
+        return pipe_name
+
+    def ask_cnf_clauses(self, instanceName, node):
+        pipe_name = self.make_pipe(instanceName)
+        if pipe_name:
+            if (node == self.node):
+                self.write({
+                    'command': 'cnf-clauses',
+                    'pipename': pipe_name
+                }, '')
+            else:
+                smt, query = node.root.to_string(node)
+                self.write({
+                    'command': 'cnf-clauses',
+                    'pipename': pipe_name,
+                    'query': query,
+                }, smt)
+        return pipe_name
+            
     def ask_partitions(self, n, node: framework.AndNode = None):
         if self.node is None:
             raise ValueError('not solving anything')
@@ -458,39 +490,33 @@ class ParallelizationServer(net.Server):
                     solver.node == node
                 )}
 
-    def get_cnf(self, instanceName, solverName, cnfType):
-        # Select solver to take CNF from
-        solver = None
-        activeSolvers = [solver for solver in self.solvers(True) if solver.node.root.name == instanceName]
-        print('---------------> ' + solverName)
-        if solverName:
-            solverId = int(solverName)
-            for activeSolver in activeSolvers:
-                print('===============> ' + str(activeSolver.remote_address[1]))
-                if activeSolver.remote_address[1] == solverId:
-                    print('MATCH!')
-                    solver = activeSolver
-                    break
-        elif activeSolvers:
-            print("BACKUP MATCH!")
-            solver = activeSolvers[0]
+    def get_cnf_clauses(self, instanceName, nodePath):
+        node = self.current.root.child(nodePath)
 
-        # Get solver's CNF
-        if solver:
-            pipename = 'server/temp/' + instanceName + '-' + solverName
-            # Remove pipe if already open
-            if os.path.exists(pipename): os.unlink(pipename)
-            # Make pipe and ask CNF to solver
-            try:
-                os.mkfifo(pipename)
-                solver.ask_cnf('clauses', pipename)
-                return pipename
-            except:
-                return ''
+        # Node already has a solver
+        solvers = self.solvers(node)
+        if solvers:
+            return solvers.pop().ask_cnf_clauses(instanceName, node)
+        
+        # Node doesn't have a solver
+        #solvers = self.solvers(False)
+        #if solvers:
+        #    return solvers.pop().ask_cnf_clauses(instanceName, node)
 
         # No solver available
         return ''
 
+    def get_cnf_learnts(self, instanceName, solverAddress): 
+        # Get solver with matching address
+        solvers = [solver for solver in self.solvers(True) if solver.node.root.name == instanceName]
+        if solverAddress:
+            for solver in solvers:
+                if solver.remote_address[1] == solverAddress:
+                    return solver.ask_cnf_learnts(instanceName)
+
+        # No non-idle solver with matching address
+        return ''
+       
     @property
     def lemma_server(self) -> LemmaServer:
         lemmas = [sock for sock in self._rlist if isinstance(sock, LemmaServer)]

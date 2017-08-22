@@ -335,19 +335,17 @@ smts.cnf = {
     },
 
     // Make GET request to retrieve CNF data and create it
-    // @param {string} instanceName: Selected instance.
-    // @param {string} solverName: Name of the solver from which the CNF
-    // must be taken.
     // @param {string} type: Either 'clauses' or 'learnts'.
-    create: function(instanceName, solverName, type) {
-        let queryInstance = `instanceName=${instanceName}`;
-        let querySolver = '';//`solverName=${solverName}`;
+    // @param {string} instanceName: Selected instance.
+    // @param {string} value: If type is 'clauses', then value is the node
+    // path, else if type is 'learnts', value is the solver address.
+    create: function(type, instanceName, value) {
         $.ajax({
-            url: `/cnf/${type}?${queryInstance}&${querySolver}`,
+            url: `/cnf/${type}?instanceName=${instanceName}&value=${value}`,
             type: 'GET',
-            success: function(data)  {
-                if (data) {
-                    smts.cnf.init(data);
+            success: function(cnfData)  {
+                if (cnfData) {
+                    smts.cnf.init(cnfData);
                 } else {
                     console.log('NO CNF DATA');
                 }

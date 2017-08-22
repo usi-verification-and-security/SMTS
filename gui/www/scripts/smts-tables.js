@@ -12,8 +12,8 @@ smts.tables = {
             getClausesBtn.className = 'btn btn-default btn-xs';
             getClausesBtn.innerHTML = 'Get Clauses';
             let instanceName = smts.tables.instances.getSelected();
-            // TODO: solverName
-            getClausesBtn.addEventListener('click', () => smts.cnf.create(instanceName, '', 'clauses'));
+            let nodePath = JSON.stringify(smts.tree.getSelectedNodes()[0].name);
+            getClausesBtn.addEventListener('click', () => smts.cnf.create('clauses', instanceName, nodePath));
             return getClausesBtn;
         },
 

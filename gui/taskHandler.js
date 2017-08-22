@@ -17,13 +17,13 @@ function run(command, args = '') {
     try {
         let shellCmd = `echo 'json.dumps(${command})' | ${config.python} ${config.client} ${config.port} ${args}`;
         value = exec(shellCmd, {'encoding': 'utf8'});
-        return JSON.parse(value || 'null');
+        return eval(value || 'null');
     } catch (e) {
-        console.log('----------ERROR----------');
-        console.log(value);
-        console.log('--------EXCEPTION--------');
-        console.log(e);
-        console.log('-----------END-----------');
+        console.error('----------ERROR----------');
+        console.error(value);
+        console.error('--------EXCEPTION--------');
+        console.error(e);
+        console.error('-----------END-----------');
         throw new ServerConnectionError(e);
     }
 }
@@ -56,18 +56,13 @@ module.exports = {
         return run(`self.current.root.name if self.current else None`);
     },
 
-    // getCNF: function(instanceName) {
-    //     for (let benchmarkPath of config.benchmarks_path) {
-    //         let filePath = `${__dirname}/${benchmarkPath}/${instanceName}.smt2`;
-    //         if (fs.existsSync(filePath)) {
-    //             return exec(`../utils.py -s ${filePath}`, {'encoding': 'utf8'});
-    //         }
-    //     }
-    //     return null;
-    // },
+    getCnfClauses: function(instanceName, nodePath) {
+        let path = run(`self.get_cnf_clauses("${instanceName}", json.loads("${nodePath.replace(/"/g, '\\"')}"))`);
+        return path ? this.pipeRead(`../${path}`) : '';
+    },
 
-    getCnf: function(instanceName, solverName, type) {
-        let path = run(`self.get_cnf("${instanceName}", "${solverName}", "${type}")`);
+    getCnfLearnts: function(instanceName, solverAddress) {
+        let path = run(`self.get_cnf_learnts("${instanceName}", json.loads("${solverAddress}"))`);
         return path ? this.pipeRead(`../${path}`) : '';
     },
 

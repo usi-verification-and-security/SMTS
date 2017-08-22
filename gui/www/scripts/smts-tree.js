@@ -63,6 +63,7 @@ smts.tree = {
     make: function(tree, position) {
 
         let root = tree.root;
+        this.tree = tree;
 
         if (!root) {
             return;
@@ -129,6 +130,12 @@ smts.tree = {
     getPosition: function() {
         let tree = document.getElementById('smts-tree');
         return tree ? tree.getAttribute('transform') : null;
+    },
+
+    // Get list of selected nodes
+    // @return {Node[]}: The list of selected nodes.
+    getSelectedNodes: function() {
+        return this.tree.selectedNodes;
     },
 
 
