@@ -207,6 +207,7 @@
                             <th>Solver</th>
                             <th>Node</th>
                             <th>Time</th>
+                            <th>Learnts</th>
                             </thead>
                             <tbody>
                             <tr data-solver="{{solver.name}}"
@@ -216,6 +217,7 @@
                                 <td>{{solver.name}}</td>
                                 <td>{{solver.node}}</td>
                                 <td>{{formatExecutionTime(solver)}}</td>
+                                <td><div class="btn btn-default btn-xs" ng-click="getLearnts(solver)">Learnts</div></td>
                             </tr>
                             </tbody>
                         </table>

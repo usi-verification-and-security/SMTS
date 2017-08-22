@@ -109,9 +109,19 @@ app.get('/solvingInfo', function(req, res) {
 });
 
 // Get instance CNF
-// @params {String} instance: The name of the instance.
-app.get('/cnf/:instance', function(req, res) {
-    tools.sendJson(res, 200, taskHandler.getCnf(req.params.instance));
+// @params {String} type: Type of the CNF. Either `clauses` or `learnts`.
+// @query {String} instanceName: The name of the instance.
+// @query {String} solverName: The name of the solver. Can be empty.
+app.get('/cnf/:type', function(req, res) {
+    if (req.params.type !== 'clauses' && req.params.type !== 'learnts') {
+        tools.sendError(res, 400, 'Wrong CNF type requested', 'GET /cnf');
+    } else if (!req.query.instanceName) {
+        tools.sendError(res, 400, 'No instance given', 'GET /cnf');
+    } else {
+        let solverName = req.query.solverName || '';
+        let type = req.query.type || 'clauses';
+        tools.sendJson(res, 200, taskHandler.getCnf(req.query.instanceName, solverName, type));
+    }
 });
 
 // Get all instances in database
@@ -232,6 +242,16 @@ app.post('/changeTimeout', function(req, res) {
 app.post('/stop', function(req, res) {
     taskHandler.stopSolving();
     tools.sendJson(res, 201, {});
+});
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SOLVERS INTERACTION
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Partition a given solver
+app.post('/partition', function(req, res) {
+    tools.sendJson(res, 200, req.body.solver);
 });
 
 

@@ -145,7 +145,7 @@ smts.cnf = {
     // The selection is done based on the literal info panel selections (see
     // `getSelectedLiteralIds` for more details).
     // N.B.: Since this function is called from a click event listener, `this`
-    // is bound to the DOM element, not the `smts.cnf` object.
+    // is bound to the DOM element, not to the `smts.cnf` object.
     updateSelectedNodes: function() {
         // Toggle clicked button active state
         this.classList.toggle('active');
@@ -153,7 +153,7 @@ smts.cnf = {
         // Get list of active variable buttons
         let variables = [];
         let variableBtns = document.getElementById('smts-content-cnf-literal-info-variables');
-        for (let variableBtn of variableBtns.children) {
+        for (let variableBtn of variableBtns.childNodes) {
             if (variableBtn.classList.contains('active')) {
                 variables.push(variableBtn.getAttribute('data-variable'));
             }
@@ -162,32 +162,31 @@ smts.cnf = {
         // Get list of active clause buttons
         let clauses = [];
         let clausesBtns = document.getElementById('smts-content-cnf-literal-info-clauses');
-        for (let clauseBtn of clausesBtns.children) {
+        for (let clauseBtn of clausesBtns.childNodes) {
             if (clauseBtn.classList.contains('active')) {
                 clauses.push(parseInt(clauseBtn.getAttribute('data-clause')));
             }
         }
 
-        // Get literals that have at least one of the selected variables
-        // let selectedLiteralsIds = smts.cnf.getSelectedLiteralIds(variables);
-        let selectedLiteralsIds = smts.cnf.getSelectedLiteralIds(variables, clauses);
+        // Get literals that match the active variables and clauses
+        let selectedLiteralIds = smts.cnf.getSelectedLiteralIds(variables, clauses);
 
-        // Add current literal to always be selected
+        // Add current literal to selected list (current should always be selected)
         let literalInfo = document.getElementById('smts-content-cnf-literal-info');
         let literalId = literalInfo.getAttribute('data-literal-id');
-        if (!selectedLiteralsIds.includes(literalId)) {
-            selectedLiteralsIds.push(literalId);
+        if (!selectedLiteralIds.includes(literalId)) {
+            selectedLiteralIds.push(literalId);
         }
 
         // Select nodes
         if (smts.cnf.network) {
-            smts.cnf.network.selectNodes(selectedLiteralsIds, false);
+            smts.cnf.network.selectNodes(selectedLiteralIds, false);
         }
     },
 
     // Populate the literal info panel with literal information
-    // @param {number} literalId: ID of the literal to load in the info panel.
-    // If no ID is provided, then the panel gets hidden.
+    // @param {number} literalId: id of the literal to load in the info panel.
+    // If no id is provided, then the panel gets hidden.
     generateLiteralInfo: function(literalId) {
         let literalInfo = document.getElementById('smts-content-cnf-literal-info');
 
@@ -293,7 +292,6 @@ smts.cnf = {
     init: function(cnfData) {
         // Make data json compatible
         let cnfDataJson = cnfData
-            .replace(/[{}]/g, '')       // Remove '{' and '}'
             .replace(/ \.\w+/g, '')     // Remove words starting with '.' (and remove space too)
             .replace(/\(/g, '[')        // Replace '(' with '['
             .replace(/\)/g, ']')        // Replace ')' with ']'
@@ -334,5 +332,26 @@ smts.cnf = {
                 this.generateLiteralInfo(null);
             }
         });
+    },
+
+    // Make GET request to retrieve CNF data and create it
+    // @param {string} instanceName: Selected instance.
+    // @param {string} solverName: Name of the solver from which the CNF
+    // must be taken.
+    // @param {string} type: Either 'clauses' or 'learnts'.
+    create: function(instanceName, solverName, type) {
+        let queryInstance = `instanceName=${instanceName}`;
+        let querySolver = '';//`solverName=${solverName}`;
+        $.ajax({
+            url: `/cnf/${type}?${queryInstance}&${querySolver}`,
+            type: 'GET',
+            success: function(data)  {
+                if (data) {
+                    smts.cnf.init(data);
+                } else {
+                    console.log('NO CNF DATA');
+                }
+            }
+        })
     }
 };

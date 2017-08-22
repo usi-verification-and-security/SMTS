@@ -69,31 +69,12 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
             // Get tree data
             this.getEvents(instance);
 
-            // If real-time analysis, ask every 5 seconds for db content
             if ($scope.isRealTime) {
-                // Get instance CNF if available
-                // TODO: fix non-live loading bug
-                // this.getCnf(instance, '', 'clauses');
-
                 // Ask repeatedly for db content
                 clearInterval($scope.updateEventsIntervalId); // Clear previous instance updates
                 $scope.updateEventsIntervalId =
                     setInterval($scope.updateEvents.bind(null, instance), INTERVAL_UPDATE_EVENTS);
             }
-        };
-
-        // Get CNF corresponding to a particular instance solver
-        // @param {Instance} instance: Selected instance.
-        // @param {string} solverName: Name of the solver from which the CNF
-        // must be taken.
-        // @param {string} type: Either 'clauses' or 'learnts'.
-        $scope.getCnf = function(instance, solverName, type) {
-            $http({method: 'GET', url: `/cnf/${instance.name}?solver=${solverName}&type=${type}`}).then(
-              function(res) {
-                  if (res.data) {
-                      smts.cnf.init(res.data);
-                  }
-              }, $scope.error);
         };
 
         // Load database data relative to a particular instance

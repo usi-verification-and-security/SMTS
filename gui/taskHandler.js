@@ -13,12 +13,17 @@ class ServerConnectionError {
 }
 
 function run(command, args = '') {
+    let value;
     try {
         let shellCmd = `echo 'json.dumps(${command})' | ${config.python} ${config.client} ${config.port} ${args}`;
-        let r = exec(shellCmd, {'encoding': 'utf8'});
-        return JSON.parse(r || 'null');
+        value = exec(shellCmd, {'encoding': 'utf8'});
+        return JSON.parse(value || 'null');
     } catch (e) {
+        console.log('----------ERROR----------');
+        console.log(value);
+        console.log('--------EXCEPTION--------');
         console.log(e);
+        console.log('-----------END-----------');
         throw new ServerConnectionError(e);
     }
 }
@@ -61,9 +66,9 @@ module.exports = {
     //     return null;
     // },
 
-    getCnf: function(instanceName) {
-        let path = run(`self.get_cnf("${instanceName}")`);
-        return path ? this.pipeRead(`../${path}`, '}') : '';
+    getCnf: function(instanceName, solverName, type) {
+        let path = run(`self.get_cnf("${instanceName}", "${solverName}", "${type}")`);
+        return path ? this.pipeRead(`../${path}`) : '';
     },
 
     stopSolving: function() {
@@ -94,25 +99,9 @@ module.exports = {
         };
     },
 
-    pipeRead: function(pipename, endChar) {
-        // Mode 'r' (read-only) causes problems, 'r+' is required even without
-        // having to write in the pipe
-        let fd = fs.openSync(pipename, 'r+');
-
-        let buffer = new Buffer(1024);
-        let data = '', lastChar = '', size = 0;
-
-        while (lastChar !== endChar) {
-            size = fs.readSync(fd, buffer, 0, buffer.length, null);
-            let readData = buffer.slice(0, size).toString();
-            lastChar = size > 0 ? readData[size - 1] : '';
-            data += readData;
-        }
-
-        // Close and remove pipe
-        fs.closeSync(fd);
+    pipeRead: function(pipename) {
+        let data = fs.readFileSync(pipename);
         fs.unlinkSync(pipename);
-
-        return data;
+        return data.toString();
     }
 };

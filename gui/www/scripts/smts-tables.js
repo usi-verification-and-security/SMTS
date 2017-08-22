@@ -4,6 +4,19 @@ smts.tables = {
     // Set of functions that manipulate the DOM object 'smts-data-container'
     data: {
 
+        // Make a button for requesting CNF of currently selected node
+        // @return {HtmlNode}: The HTML button.
+        makeGetClausesBtn: function() {
+            let getClausesBtn = document.createElement('div');
+            getClausesBtn.id = 'smts-data-get-clauses';
+            getClausesBtn.className = 'btn btn-default btn-xs';
+            getClausesBtn.innerHTML = 'Get Clauses';
+            let instanceName = smts.tables.instances.getSelected();
+            // TODO: solverName
+            getClausesBtn.addEventListener('click', () => smts.cnf.create(instanceName, '', 'clauses'));
+            return getClausesBtn;
+        },
+
         // Make an event object with the wanted attributes for the data table
         // @param {TreeManager.Node} node: The mold event.
         // @return {Object}: The object representing the event, to be put in
@@ -112,6 +125,7 @@ smts.tables = {
 
                 case 'node':
                     dataTableItem = this.makeItemNode(item);
+                    dataTableContainer.appendChild(this.makeGetClausesBtn());
                     break;
 
                 case 'solver':
@@ -297,12 +311,15 @@ smts.tables = {
             }
         },
 
+        // Get selected instance name
+        // @return {string}: The name of the current instance, the empty string
+        // if no instance is selected.
         getSelected: function() {
             let rows = this.getRows('.smts-highlight');
             if (rows && rows[0]) {
                 return rows[0].getAttribute('data-instance');
             }
-            return null;
+            return '';
         },
 
         // Get rows of instances table
@@ -361,6 +378,19 @@ smts.tables = {
             return document.querySelectorAll(`${queryRows}${option}`)
         },
 
+        // Get name of selected solver
+        // @return {string}: Name of the selected solver, the empty string if
+        // no solver is selected.
+        getSelected: function() {
+            let rows = this.getRows('.smts-highlight'); // Get selected
+            if (rows && rows[0]) {
+                console.log(rows[0].getAttribute('data-solver'));
+                return rows[0].getAttribute('data-solver');
+            }
+            console.log('NOTHING');
+            return '';
+        },
+
         // Highlight all rows with solver matching one of solvers
         // @param {TreeManager.Solver[]} solvers: List of solvers to be
         // highlighted.
@@ -371,7 +401,7 @@ smts.tables = {
 
             // Highlight selected nodes
             for (let solver of solvers) {
-                rows = this.getRows(`[data-solver="${solver.name}"]`);
+                rows = this.getRows(`[data-solver='${solver.name}']`);
                 if (rows) rows.forEach(row => row.classList.add('smts-highlight'));
             }
         },

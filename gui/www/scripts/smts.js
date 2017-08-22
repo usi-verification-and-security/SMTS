@@ -3,14 +3,18 @@ const smts = {};
 
 smts.tools = {
 
+    // Print formatted error message
+    // @param {object} err: Error to be printed.
     error: function(err) {
         console.log(`Error: ${JSON.stringify(err)}`);
     },
 
+    // Display filename/error message for bootstrap file upload  forms
+    // @param {Event} e: JS event.
     formBrowse: function(e) {
         let file = e.target;
         let form = file.parentNode.parentNode;
-        let message = form.children[2];//form.getElementsByClassName('smts-message')[0];
+        let message = form.children[2];
         if (message) {
             let filename = file.value;
             if (!filename) {
@@ -24,6 +28,8 @@ smts.tools = {
         }
     },
 
+    // Display error message from HTTP request in form
+    // @param {Event} e: JS event.
     formSubmit: function(e) {
         // TODO: show error message
     }

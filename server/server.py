@@ -122,6 +122,15 @@ class Solver(net.Socket):
         if self.node.root.name != header['name'] or str(self.node.path()) != header['node']:
             return {}, b''
 
+        # Handle CNF request
+        if header['report'] == 'cnf':
+            pipename = header["pipename"]
+            pipe = open(pipename, 'w')
+            if pipe:
+                pipe.write(payload.decode())
+                pipe.flush()
+                pipe.close()
+        
         del header['name']
         del header['node']
 
@@ -168,7 +177,7 @@ class Solver(net.Socket):
                                          self.node.root.name,
                                          str(self.node.path()),
                                          event,
-                                         str(self.remote_address),
+                                         json.dumps(self.remote_address),
                                          json.dumps(data) if data else None
                                      ))
         config.db().commit()
@@ -213,14 +222,6 @@ class ParallelizationServer(net.Server):
                     level = logging.INFO
                     message = header['report']
                 self.log(level, '{}: {}'.format(sock, message), {'header': header, 'payload': payload.decode()})
-                # Handle CNF request
-                if header['report'] == 'cnf':
-                    pipename = header["pipename"]
-                    pipe = open(pipename, 'w')
-                    if pipe:
-                        pipe.write(payload.decode()) # CNF
-                        pipe.write('}')              # Closing character
-                        pipe.close()
             self.entrust()
             return
         if 'command' in header:
@@ -457,22 +458,37 @@ class ParallelizationServer(net.Server):
                     solver.node == node
                 )}
 
-    def get_cnf(self, instanceName):
-        ss = [solver for solver in self.solvers(False) if True]
-        if len(ss) > 0:
-            pipename = 'server/temp/' + instanceName
+    def get_cnf(self, instanceName, solverName, cnfType):
+        # Select solver to take CNF from
+        solver = None
+        activeSolvers = [solver for solver in self.solvers(True) if solver.node.root.name == instanceName]
+        print('---------------> ' + solverName)
+        if solverName:
+            solverId = int(solverName)
+            for activeSolver in activeSolvers:
+                print('===============> ' + str(activeSolver.remote_address[1]))
+                if activeSolver.remote_address[1] == solverId:
+                    print('MATCH!')
+                    solver = activeSolver
+                    break
+        elif activeSolvers:
+            print("BACKUP MATCH!")
+            solver = activeSolvers[0]
+
+        # Get solver's CNF
+        if solver:
+            pipename = 'server/temp/' + instanceName + '-' + solverName
             # Remove pipe if already open
-            try:
-                os.unlink(pipename)
-            except:
-                pass
+            if os.path.exists(pipename): os.unlink(pipename)
             # Make pipe and ask CNF to solver
             try:
                 os.mkfifo(pipename)
-                ss[0].ask_cnf('clauses', pipename)
+                solver.ask_cnf('clauses', pipename)
                 return pipename
             except:
                 return ''
+
+        # No solver available
         return ''
 
     @property
