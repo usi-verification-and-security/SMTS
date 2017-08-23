@@ -129,12 +129,12 @@ void SolverProcess::interrupt() {
     context.interrupt();
 }
 
-char *SolverProcess::getCnfClauses() {
-	return "";
+void SolverProcess::getCnfClauses(net::Header &header, const std::string &payload) {
+	this->report(header, header["command"], "");
 }
 
-char *SolverProcess::getCnfLearnts() {
-	return "";
+void SolverProcess::getCnfLearnts(net::Header &header) {
+	this->report(header, header["command"], "");
 }
 
 void SolverProcess::partition(uint8_t) {}

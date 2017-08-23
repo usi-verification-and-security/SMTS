@@ -80,11 +80,11 @@ private:
                     continue;
                 }
 				if (header["command"] == "cnf-clauses") {
-					this->report(header, "cnf", this->getCnfClauses());
+					this->getCnfClauses(header, payload);
 					continue;
 				}
 				if (header["command"] == "cnf-learnts") {
-					this->report(header, "cnf", this->getCnfLearnts());
+					this->getCnfLearnts(header);
 					continue;
 				}
                 this->interrupt();
@@ -107,8 +107,8 @@ private:
     void interrupt();
 
 	// Get CNF corresponding to a particular solver
-	char *getCnfClauses();
-	char *getCnfLearnts();
+	void getCnfClauses(net::Header &header, const std::string &payload);
+	void getCnfLearnts(net::Header &header);
 	
     void report(net::Header &header, const std::string &report, const std::string &payload) {
         if (&header != &(this->header)) {

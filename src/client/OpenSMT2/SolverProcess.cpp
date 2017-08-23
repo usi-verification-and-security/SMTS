@@ -22,10 +22,10 @@ std::mutex mtx_solve;
 
 void SolverProcess::init() {
     mtx_solve.lock();
-    FILE *file = fopen("/dev/null", "w");
-    dup2(fileno(file), fileno(stdout));
-    dup2(fileno(file), fileno(stderr));
-    fclose(file);
+    //FILE *file = fopen("/dev/null", "w");
+    //dup2(fileno(file), fileno(stdout));
+    //dup2(fileno(file), fileno(stderr));
+    //fclose(file);
 
     static const char *default_split = "lookahead";
     static const char *default_seed = "0";
@@ -159,10 +159,42 @@ void SolverProcess::partition(uint8_t n) {
     exit(0);
 }
 
-char *SolverProcess::getCnfClauses() {
-	return ((OpenSMTSolver *) interpret->solver)->printCnfClauses();
+void SolverProcess::getCnfClauses(net::Header &header, const std::string &payload) {
+	if (header.count("query")) {
+		// Fork process
+		pid_t pid = getpid();
+		if (fork() != 0) { // Parent
+			return;
+		}
+
+		// Exit if child becomes a zombie process
+		std::thread _t([&] {
+				while(getppid() == pid) {
+					sleep(1);
+				}
+				exit(0);
+			});
+
+		// Start interpret
+		SMTConfig config;
+		config.set_dryrun(true);
+		interpret = new OpenSMTInterpret(header, nullptr, nullptr, config);
+        interpret->interpFile((char *) (payload + header["query"]).c_str());
+
+		// Send CNF
+		char *cnf = ((OpenSMTSolver *) interpret->solver)->printCnfClauses();
+		this->report(header, header["command"], cnf);
+		free(cnf);
+		exit(0);
+	} else {
+		char *cnf = ((OpenSMTSolver *) interpret->solver)->printCnfClauses();
+		this->report(header, header["command"], cnf);
+		free(cnf);
+	}
 }
 
-char *SolverProcess::getCnfLearnts() {
-	return ((OpenSMTSolver *) interpret->solver)->printCnfLearnts();
+void SolverProcess::getCnfLearnts(net::Header &header) {
+	 char *cnf = ((OpenSMTSolver *) interpret->solver)->printCnfLearnts();
+	 this->report(header, header["command"], cnf);
+	 free(cnf);
 }

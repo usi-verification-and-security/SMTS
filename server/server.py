@@ -91,43 +91,48 @@ class Solver(net.Socket):
             'lemmas': lemma_server.listening if lemma_server else ''
         }, '')
 
-    def make_pipe(self, instanceName):
-        pipe_name = 'server/temp/' + instanceName
+    def make_pipe(self, name):
+        pipename = 'server/temp/' + name
         # Remove pipe if already open
-        if os.path.exists(pipe_name): os.unlink(pipe_name)
+        if os.path.exists(pipename): os.unlink(pipename)
         # Make pipe
         try:
-            os.mkfifo(pipe_name)
-            return pipe_name
+            os.mkfifo(pipename)
+            return pipename
         except:
             return ''
 
-        
-    def ask_cnf_learnts(self, instanceName):
-        pipe_name = self.make_pipe(instanceName)
-        if pipe_name:
-            self.write({
-                'command': 'cnf-learnts',
-                'pipename': pipe_name
-            }, '')
-        return pipe_name
-
-    def ask_cnf_clauses(self, instanceName, node):
-        pipe_name = self.make_pipe(instanceName)
-        if pipe_name:
+    def ask_cnf_clauses(self, node):
+        pipename = self.make_pipe(node.root.name + str(hash(node)))
+        if pipename:
             if (node == self.node):
                 self.write({
                     'command': 'cnf-clauses',
-                    'pipename': pipe_name
+                    'pipename': pipename
                 }, '')
             else:
                 smt, query = node.root.to_string(node)
+                stop = 'false;'
+                if self.node is None:
+                    self.solve(node, {});
+                    stop = 'true'
                 self.write({
                     'command': 'cnf-clauses',
-                    'pipename': pipe_name,
+                    'pipename': pipename,
                     'query': query,
+                    'stop': stop
                 }, smt)
-        return pipe_name
+        return pipename
+
+    def ask_cnf_learnts(self):
+        pipename = self.make_pipe(self.node.root.name + str(hash(self.node)))
+        if pipename:
+            self.write({
+                'command': 'cnf-learnts',
+                'pipename': pipename
+            }, '')
+            print(pipename)
+        return pipename
             
     def ask_partitions(self, n, node: framework.AndNode = None):
         if self.node is None:
@@ -155,14 +160,16 @@ class Solver(net.Socket):
             return {}, b''
 
         # Handle CNF request
-        if header['report'] == 'cnf':
+        if header['report'].startswith('cnf'):
             pipename = header["pipename"]
             pipe = open(pipename, 'w')
             if pipe:
                 pipe.write(payload.decode())
                 pipe.flush()
                 pipe.close()
-        
+                if "stop" in header and header['stop'] == 'true':
+                    self.stop()
+                    
         del header['name']
         del header['node']
 
@@ -491,17 +498,21 @@ class ParallelizationServer(net.Server):
                 )}
 
     def get_cnf_clauses(self, instanceName, nodePath):
-        node = self.current.root.child(nodePath)
+        # Select node
+        instances = [instance for instance in self.trees if instance.root.name == instanceName]
+        if not instances:
+            return
+        node = instances[0].root.child(nodePath)
 
         # Node already has a solver
         solvers = self.solvers(node)
         if solvers:
-            return solvers.pop().ask_cnf_clauses(instanceName, node)
+            return solvers.pop().ask_cnf_clauses(node)
         
-        # Node doesn't have a solver
-        #solvers = self.solvers(False)
-        #if solvers:
-        #    return solvers.pop().ask_cnf_clauses(instanceName, node)
+        # Node doesn't have a solver, take random solver
+        solvers = self.solvers(False)
+        if solvers:
+            return solvers.pop().ask_cnf_clauses(node)
 
         # No solver available
         return ''
@@ -512,7 +523,7 @@ class ParallelizationServer(net.Server):
         if solverAddress:
             for solver in solvers:
                 if solver.remote_address[1] == solverAddress:
-                    return solver.ask_cnf_learnts(instanceName)
+                    return solver.ask_cnf_learnts()
 
         # No non-idle solver with matching address
         return ''
