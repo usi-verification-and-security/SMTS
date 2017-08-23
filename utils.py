@@ -64,7 +64,7 @@ def run_lemma_server(lemma_server, database, send_again):
     args = [lemma_server, '-s', ip + ':' + str(server.config.port)]
     if database:
         database = pathlib.Path(database)
-        args += ['-d', database.parent / (database.stem + 'lemma.db')]
+        args += ['-d', str(database.parent / (database.stem + '.lemma.db'))]
     if send_again:
         args += ['-a']
     try:

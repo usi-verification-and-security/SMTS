@@ -10,7 +10,6 @@
 #include "lib/Logger.h"
 #include "client/SolverProcess.h"
 #include "z3++.h"
-#include "fixedpoint.h"
 
 
 const char *SolverProcess::solver = "Spacer";
