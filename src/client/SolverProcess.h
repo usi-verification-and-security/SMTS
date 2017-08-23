@@ -79,14 +79,6 @@ private:
                     }
                     continue;
                 }
-				if (header["command"] == "cnf-clauses") {
-					this->getCnfClauses(header, payload);
-					continue;
-				}
-				if (header["command"] == "cnf-learnts") {
-					this->getCnfLearnts(header);
-					continue;
-				}
                 this->interrupt();
                 this->pipe.writer()->write(header, payload);
             }
@@ -106,10 +98,11 @@ private:
     // async interrupt the solver
     void interrupt();
 
-	// Get CNF corresponding to a particular solver
-	void getCnfClauses(net::Header &header, const std::string &payload);
-	void getCnfLearnts(net::Header &header);
-	
+    // Get CNF corresponding to a particular solver
+    void getCnfClauses(net::Header &header, const std::string &payload);
+
+    void getCnfLearnts(net::Header &header);
+
     void report(net::Header &header, const std::string &report, const std::string &payload) {
         if (&header != &(this->header)) {
             if (report.size())
@@ -178,6 +171,12 @@ private:
         }
         if (header["command"] == "partition" && header.count("partitions") == 1) {
             this->partition((uint8_t) atoi(header["partitions"].c_str()));
+        }
+        if (header["command"] == "cnf-clauses") {
+            this->getCnfClauses(header, payload);
+        }
+        if (header["command"] == "cnf-learnts") {
+            this->getCnfLearnts(header);
         }
         return Task{
                 .command=Task::resume
