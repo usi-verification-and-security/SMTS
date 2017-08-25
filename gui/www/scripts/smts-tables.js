@@ -13,7 +13,7 @@ smts.tables = {
             getClausesBtn.innerHTML = 'Get Clauses';
             let instanceName = smts.tables.instances.getSelected();
             let nodePath = JSON.stringify(smts.tree.getSelectedNodes()[0].name);
-            getClausesBtn.addEventListener('click', () => smts.cnf.create('clauses', instanceName, nodePath));
+            getClausesBtn.addEventListener('click', () => smts.cnf.load(instanceName, nodePath, null));
             return getClausesBtn;
         },
 
