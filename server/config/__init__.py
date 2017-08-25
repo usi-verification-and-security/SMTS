@@ -96,6 +96,7 @@ def entrust(node, header: dict, solver_name, solvers: set):
             header["-p"] = "gpdr"
 
 
+extend(pathlib.Path(pathlib.Path(__file__).parent / 'default.py'))
 try:
     extend(pathlib.Path(pathlib.Path(__file__).parent / 'config.py'))
 except:
