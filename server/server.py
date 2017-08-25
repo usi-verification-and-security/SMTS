@@ -164,7 +164,9 @@ class Solver(net.Socket):
             pipename = header["pipename"]
             pipe = open(pipename, 'w')
             if pipe:
-                pipe.write(payload.decode())
+                cnf = framework.smt2json(payload.decode(), True)
+                #cnf = payload.decode()
+                pipe.write(cnf)
                 pipe.flush()
                 pipe.close()
                 if "stop" in header and header['stop'] == 'true':

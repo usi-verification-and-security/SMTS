@@ -13,10 +13,14 @@ app.controller('SolverController', ['$scope', '$rootScope', '$window', '$http', 
         });
 
         // Get learnts clauses of currently selected solver
-        $scope.getLearnts = function(solver) {
+        // @params {TreeManager.Solver} solver: Solver from which to retrieve
+        // the CNF.
+        $scope.getLearnts = function(evt, solver) {
+            evt.stopPropagation();
             let instanceName = smts.tables.instances.getSelected();
+            let nodePath = JSON.stringify(smts.tree.getSelectedNodes()[0].name);
             let solverName = JSON.parse(solver.name)[1];
-            smts.cnf.create('learnts', instanceName, solverName);
+            smts.cnf.load(instanceName, nodePath, solverName);
         };
 
         // Get execution time of solver
