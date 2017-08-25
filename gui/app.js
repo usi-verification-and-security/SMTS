@@ -372,6 +372,8 @@ function exitHandler() {
         let files = fs.readdirSync(`${__dirname}/benchmarks/temp/`);
         files.forEach(file => fs.unlinkSync(`${__dirname}/benchmarks/temp/${file}`));
     }
+
+    process.kill(process.pid, 'SIGKILL');
 }
 
 // Show help
