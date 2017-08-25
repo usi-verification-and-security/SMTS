@@ -87,6 +87,10 @@ smts.cnf = {
         }
     },
 
+    // Interval id to keep track of the loading animation.
+    // Type: number
+    loadAnimationInterval: null,
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // LITERAL INFO
@@ -433,11 +437,13 @@ smts.cnf = {
         let visContainer = document.getElementById('smts-content-cnf-container');
         let visData  = {nodes: this.nodes, edges: this.edges};
         let visOptions = this.options;
+        this.loadAnimationOn();
         this.network = new vis.Network(visContainer, visData, visOptions);
 
         // Stop physics once the network is rendered
         this.network.on('stabilizationIterationsDone', () => {
             this.network.setOptions({physics: false});
+            this.loadAnimationOff();
         });
 
         // Show literal info on node click
@@ -578,11 +584,41 @@ smts.cnf = {
         }
     },
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // OTHER
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     // Toggle learnts visualization on network
     toggleLearnts: function() {
         let isShowLearnts = document.getElementById('smts-option-learnts').checked;
         isShowLearnts ? this.showLearnts() : this.hideLearnts();
     },
+
+    // Turn on loading animation
+    // The animation should turned on while the network is being rendered.
+    loadAnimationOn: function() {
+        let tab = document.getElementById('smts-content-navbar-smt').firstChild;
+        let animations = [ 'CNF.', 'CNF..', 'CNF...' ];
+        let animationCurrent = 0;
+        this.loadAnimationInterval = setInterval(() => {
+            animationCurrent = (animationCurrent + 1) % animations.length;
+            tab.innerHTML = animations[animationCurrent];
+        }, 300);
+    },
+
+    // Turn off loading animation
+    // The animation should be turned off once the network has been rendered.
+    loadAnimationOff: function() {
+        clearInterval(this.loadAnimationInterval);
+        let tab = document.getElementById('smts-content-navbar-smt').firstChild;
+        tab.innerHTML = 'CNF';
+    },
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // MAIN
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Load clauses and learnts for a particular node and solver
     // @param {string} instanceName: The name of the current instance.
