@@ -107,6 +107,8 @@ class Solver(net.Socket):
         if pipename:
             if (node == self.node):
                 self.write({
+                    'name': node.root.name,
+                    'node': node.path(),
                     'command': 'cnf-clauses',
                     'pipename': pipename
                 }, '')
@@ -117,6 +119,8 @@ class Solver(net.Socket):
                     self.solve(node, {});
                     stop = 'true'
                 self.write({
+                    'name': node.root.name,
+                    'node': node.path(),
                     'command': 'cnf-clauses',
                     'pipename': pipename,
                     'query': query,
@@ -128,6 +132,8 @@ class Solver(net.Socket):
         pipename = self.make_pipe(self.node.root.name + str(hash(self.node)))
         if pipename:
             self.write({
+                'name': self.node.root.name,
+                'node': self.node.path(),
                 'command': 'cnf-learnts',
                 'pipename': pipename
             }, '')
@@ -165,7 +171,6 @@ class Solver(net.Socket):
             pipe = open(pipename, 'w')
             if pipe:
                 cnf = framework.smt2json(payload.decode(), True)
-                #cnf = payload.decode()
                 pipe.write(cnf)
                 pipe.flush()
                 pipe.close()
@@ -524,7 +529,7 @@ class ParallelizationServer(net.Server):
         solvers = [solver for solver in self.solvers(True) if solver.node.root.name == instanceName]
         if solverAddress:
             for solver in solvers:
-                if solver.remote_address[1] == solverAddress:
+                if solver.remote_address == solverAddress:
                     return solver.ask_cnf_learnts()
 
         # No non-idle solver with matching address

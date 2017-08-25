@@ -300,15 +300,16 @@ smts.tree = {
     // This works only if the instance is currently being solved and the node
     // is not partitioned yet.
     requestPartitioning: function(node) {
-        let name = node.solvers[0] ? node.solvers[0] : 'NOTHING';
+        let nodeName = node.name;
+        let solverAddress = node.solvers[0] || '';
         $.ajax({
-            url: '/partition',
+            url: `/partition?nodeName=${nodeName}&solverAddress=${solverAddress}`,
             type: 'POST',
-            data: {solver: name},
+            data: {solverAddress: solverAddress},
             success: function(res) {
-                console.log(JSON.stringify(res));
+                console.log(res);
             }
-        })
+        }, smts.tools.error)
     },
 
 

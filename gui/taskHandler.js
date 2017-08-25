@@ -36,6 +36,10 @@ module.exports = {
         return run(``, filename);
     },
 
+    partition: function(nodePath, solverAddress) {
+        return run(`self.partition("${nodePath.replace(/"/g, '\\\\"')}")`);
+    },
+
     setPath: function(_path) {
         config.client = _path;
     },
@@ -62,7 +66,7 @@ module.exports = {
     },
 
     getCnfLearnts: function(instanceName, solverAddress) {
-        let path = run(`self.get_cnf_learnts("${instanceName}", json.loads("${solverAddress}"))`);
+        let path = run(`self.get_cnf_learnts("${instanceName}", json.loads("${solverAddress.replace(/"/g, '\\"')}"))`);
         return path ? this.pipeRead(`../${path}`) : '';
     },
 

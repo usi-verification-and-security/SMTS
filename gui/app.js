@@ -260,7 +260,11 @@ app.post('/stop', function(req, res) {
 
 // Partition a given solver
 app.post('/partition', function(req, res) {
-    tools.sendJson(res, 200, req.body.solver);
+    let hasPartitioned = taskHandler.partition(req.query.nodeName, req.query.solverAddress);
+    if (hasPartitioned) {
+        tools.sendJson(res, 201, `Partitioning SUCCESS for node ${req.query.nodeName}`);
+    }
+    tools.sendError(res, 500, `Partitioning FAIL for node ${req.query.nodeName}`);
 });
 
 

@@ -19,7 +19,7 @@ app.controller('SolverController', ['$scope', '$rootScope', '$window', '$http', 
             evt.stopPropagation();
             let instanceName = smts.tables.instances.getSelected();
             let nodePath = JSON.stringify(smts.tree.getSelectedNodes()[0].name);
-            let solverName = JSON.parse(solver.name)[1];
+            let solverName = solver.name;
             smts.cnf.load(instanceName, nodePath, solverName);
         };
 
