@@ -59,18 +59,50 @@ smts.cnf = {
     nodes: null,
     edges: null,
 
+    // Color styles for nodes and edges used by vis.js
+    color: {
+        node: {
+            normal: {
+                border: '#2b7ce9',
+                background: '#d2e5ff',
+                highlight: {
+                    border:     '#831717',
+                    background: '#ff4c4c'
+                }
+            },
+            unary: {
+                border: '#ff00e4',
+                background: '#cbafcd',
+                highlight: {
+                    border:     '#831717',
+                    background: '#ff4c4c'
+                }
+            },
+        },
+        edge: {
+            normal: {
+                // Default settings
+            },
+            learnt: {
+                color: '#00640a'
+            },
+        }
+    },
+
     // Options used by the vis.js network.
     // Type: object
     options: {
         interaction: {
-            dragNodes: true,
+            dragNodes:       true,
             hideEdgesOnDrag: true
         },
         nodes: {
             shape: 'circle',
             color: {
+                border: '#2b7ce9',
+                background: '#d2e5ff',
                 highlight: {
-                    border:     '#a30101',
+                    border:     '#831717',
                     background: '#ff4c4c'
                 }
             }
@@ -82,7 +114,7 @@ smts.cnf = {
             improvedLayout: false
         },
         physics: {
-            enabled: true,
+            enabled:       true,
             stabilization: {enabled: true, iterations: 1000}
         }
     },
@@ -300,7 +332,7 @@ smts.cnf = {
     // @return {object}: Object of the form {nodes: object[], edges: object[]},
     // where nodes and edges are list containing nodes and edges to be rendered
     // in the vis.js network.
-    getData: function(cnfStr, addLiterals) {
+    getData: function(cnfStr, addLiterals, addUnary) {
         // Remove variables starting with `.` (e.g.: `.frame1`), since they are
         // not relevant for the representation.
         let cnf = JSON.parse(cnfStr.replace(/,?\s*"\.\w+"/g, ''))[0];
@@ -308,16 +340,23 @@ smts.cnf = {
         let nodes = [];
         let edges = [];
 
-        for (let i = 1; i < cnf.length; ++i) {         // cnf[0] == 'and'
+        for (let i = 1; i < cnf.length; ++i) { // cnf[0] == 'and'
             let clause = cnf[i];
 
-            for (let j = 1; j < clause.length; ++j) {  // cnf[i][0] == 'or'
+            // Unary clauses are not preceeded by 'or'
+            if (clause[0] !== 'or') {
+                clause = [ 'or', clause ];
+            }
+
+            // Literals
+            for (let j = 1; j < clause.length; ++j) {  // clause[0] == 'or'
                 let literalName = clause[j];
 
                 // Make node
                 let nodeId = this.makeNodeId(literalName);
                 nodes.push({
-                   id: nodeId
+                    id: nodeId,
+                    isUnary: addUnary && clause.length === 2
                 });
 
                 // Make edges from all previous nodes in same clause to current
@@ -349,7 +388,6 @@ smts.cnf = {
                 }
             }
         }
-
         return {nodes: nodes, edges: edges};
     },
 
@@ -357,8 +395,10 @@ smts.cnf = {
     // In particular, this function just replaces the previous network with a
     // new empty one.
     hideClauses: function() {
-        // Clear literals
+        // Clear literals and hide literal information box
         this.literals = {};
+        let literalInfo = document.getElementById('smts-content-cnf-literal-info');
+        literalInfo.classList.add('smts-hidden');
         // Create an empty network
         this.nodes = new vis.DataSet([]);
         this.edges = new vis.DataSet([]);
@@ -370,9 +410,21 @@ smts.cnf = {
 
     // Hide `this.learnts.data` nodes and edges from the network
     hideLearnts: function() {
-        // Store the edge ids in an array and remove them from the dataset at
-        // once for performance reasons.
         if (this.learnts) {
+            // Update literals of unary learnts nodes color
+            let nodes = [];
+            for (let node of this.learnts.data.nodes) {
+                if (node.isUnary) {
+                    nodes.push({
+                        id: node.is,
+                        color: this.color.node.normal
+                    });
+                }
+            }
+            this.nodes.update(nodes);
+
+            // Store the edge ids in an array and remove them from the dataset at
+            // once for performance reasons.
             let edgeIds = [];
             for (let edge of this.learnts.data.edges) {
                 --this.edgesCounts[edge.id];
@@ -463,10 +515,22 @@ smts.cnf = {
     // to place the elements in the network, so it should not move elements
     // around.
     showLearnts: function() {
-        // Store the edge ids in an array and insert them in the dataset at
-        // once for performance reasons.
-        let edges = [];
         if (this.learnts) {
+            // Update literals of unary learnts nodes color
+            let nodes = [];
+            for (let node of this.learnts.data.nodes) {
+                if (node.isUnary) {
+                    nodes.push({
+                        id: node.id,
+                        color: this.color.node.unary
+                    });
+                }
+            }
+            this.nodes.update(nodes);
+
+            // Store the edge ids in an array and insert them in the dataset at
+            // once for performance reasons.
+            let edges = [];
             for (let edge of this.learnts.data.edges) {
                 let count = this.edgesCounts[edge.id];
                 if (!count || count <= 0) {
@@ -474,7 +538,7 @@ smts.cnf = {
                         id:      edge.id,
                         from:    edge.from,
                         to:      edge.to,
-                        color:   {color: 'red'},
+                        color:   this.color.edge.learnt,
                         physics: false
                     });
                     this.edgesCounts[edge.id] = 1;
@@ -482,8 +546,8 @@ smts.cnf = {
                     ++this.edgesCounts[edge.id];
                 }
             }
+            this.edges.add(edges);
         }
-        this.edges.add(edges);
     },
 
     // Check if current clauses CNF matches given instance name and node path
@@ -534,13 +598,13 @@ smts.cnf = {
                         this.clauses = {
                             instanceName: instanceName,
                             nodePath:     nodePath,
-                            data:         this.getData(cnfClauses, true)
+                            data:         this.getData(cnfClauses, true, false)
                         };
                         this.showClauses();
                         // Update learnts
                         this.updateLearnts(instanceName, solverAddress);
                     } else {
-                        smts.tools.error('No CNF clauses');
+                        console.log('No CNF clauses');
                     }
                 }
             });
@@ -572,12 +636,12 @@ smts.cnf = {
                         this.learnts = {
                             instanceName:  instanceName,
                             solverAddress: solverAddress,
-                            data:          this.getData(cnfLearnts, false)
+                            data:          this.getData(cnfLearnts, false, true)
                         };
                         let isShowLearnts = document.getElementById('smts-option-learnts').checked;
                         if (isShowLearnts) this.showLearnts();
                     } else {
-                        smts.tools.error('No CNF learnts');
+                        console.log('No CNF learnts');
                     }
                 }
             });

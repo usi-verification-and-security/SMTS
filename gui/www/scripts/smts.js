@@ -7,9 +7,9 @@ smts.tools = {
     // @param {object} err: Error to be printed.
     error: function(err) {
         if (err.data && err.data.error) {
-            console.log(`${err.data.status}: ${err.data.error}`);
+            console.error(`${err.data.status}: ${err.data.error}`);
         } else {
-            console.log(err);
+            console.error(err);
         }
     },
 
