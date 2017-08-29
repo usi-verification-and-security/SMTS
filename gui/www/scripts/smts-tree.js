@@ -448,6 +448,19 @@ smts.tree = {
             return parseFloat(position.match(/scale\(([^)]+)\)/)[1]);
         }
         return null;
-    }
+    },
 
+    toggleBalanceness: function() {
+        let balancenessOption = document.getElementById('smts-option-balanceness');
+        let balancenessHalos = document.querySelectorAll('.smts-balanceness');
+        if (balancenessOption.checked) {
+            for (let balancenessHalo of balancenessHalos) {
+                balancenessHalo.classList.remove('smts-hidden');
+            }
+        } else {
+            for (let balancenessHalo of balancenessHalos) {
+                balancenessHalo.classList.add('smts-hidden');
+            }
+        }
+    }
 };

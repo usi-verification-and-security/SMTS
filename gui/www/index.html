@@ -120,7 +120,7 @@
                 <div id="smts-options-container" class="smts-container tab-pane">
                     <div class="smts-container-subtitle">Tree</div>
                     <div class="checkbox">
-                        <label><input id="smts-option-balanceness" type="checkbox" onclick="updateOptionBalanceness()">
+                        <label><input id="smts-option-balanceness" type="checkbox" onclick="smts.tree.toggleBalanceness()">
                             Show balanceness
                         </label>
                     </div>
@@ -290,7 +290,6 @@
 <!--Angular-->
 <script type="text/javascript" src="https://code.angularjs.org/1.5.3/angular.min.js"></script>
 <script type="text/javascript" src="scripts/ng-file-upload.min.js"></script>
-<script type="text/javascript" src="scripts/ng-file-upload-shim.min.js"></script>
 <!--Other external libraries-->
 <script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.20.1/vis.min.js"></script>
@@ -306,7 +305,6 @@
 <script type="text/javascript" src="scripts/smts-tables.js"></script>
 <script type="text/javascript" src="scripts/smts-timeline.js"></script>
 <script type="text/javascript" src="scripts/smts-tree.js"></script>
-<script type="text/javascript" src="scripts/options.js"></script>
 <!--Angular-->
 <script type="text/javascript" src="angular/main.js"></script>
 <script type="text/javascript" src="angular/EventController.js"></script>
