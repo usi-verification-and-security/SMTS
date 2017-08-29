@@ -356,6 +356,9 @@ class ParallelizationServer(net.Server):
     def handle_timeout(self):
         self.entrust()
 
+    def level_children(self, level):
+        return self.config.partition_policy[level % len(self.config.partition_policy)]
+
     def entrust(self):
         solving = self.current
         # if the current tree is already solved or timed out: stop it
@@ -390,9 +393,6 @@ class ParallelizationServer(net.Server):
         idle_solvers = self.solvers(None)
         nodes = self.current.root.all()
         nodes.sort()
-
-        def level_children(level):
-            return self.config.partition_policy[level % len(self.config.partition_policy)]
 
         def leaves():
             return (node for node in nodes if len(node) == 0 and isinstance(node, framework.AndNode))
@@ -430,7 +430,7 @@ class ParallelizationServer(net.Server):
                     # try to search for a solver...
                     if not idle_solvers:
                         for _node in (node for node in internals() if
-                                      len(node) == level_children(len(node.path()))):
+                                      len(node) == self.level_children(len(node.path()))):
                             # here I check that every or-node child has some partitions, that is
                             # every child is completed. if not then I'll not use any solver working on that node.
                             try:
@@ -499,15 +499,18 @@ class ParallelizationServer(net.Server):
         if self.config.partition_timeout or idle_solvers:
             # for all the leafs with at least one solver
             for leaf in (leaf for leaf in leaves() if self.solvers(leaf)):
-                max_children = level_children(leaf.level)
-                for i in range(max_children - len(leaf)):
-                    solvers = list(self.solvers(leaf))
-                    random.shuffle(solvers)
-                    for solver in solvers:
-                        # ask the solver to partition if timeout or if needed because idle solvers
-                        if idle_solvers or solver.started + self.config.partition_timeout <= time.time():
-                            solver.ask_partitions(level_children(leaf.level + 1))
-                            break
+                self.partition(leaf, bool(idle_solvers))
+                            
+    def partition(self, node: framework.AndNode, force=False):
+        max_children = self.level_children(node.level)
+        for i in range(max_children - len(node)):
+            solvers = list(self.solvers(node))
+            random.shuffle(solvers)
+            for solver in solvers:
+                # ask the solver to partition if timeout or if needed because idle solvers
+                if force or solver.started + self.config.partition_timeout <= time.time():
+                    solver.ask_partitions(self.level_children(node.level + 1))
+                    break
 
     # node = False : return all solvers
     # node = True  : return all non idle solvers

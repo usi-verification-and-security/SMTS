@@ -31,10 +31,8 @@ app.use(fileUpload());
 // CONSTANTS AND GLOBAL VARIABLES
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const globals = {
-    database:     null,  // {Database} The SQLite database
-    isRealTime:   false, // {boolean}  `true` if it is live mode, `false` otherwise
-};
+// {Database} The SQLite database
+let database = null;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -100,7 +98,7 @@ const tools = {
 // Get information about the execution
 app.get('/info', function(req, res) {
     let info = {
-        isRealTime: globals.isRealTime,
+        isLive: taskHandler.isLive(),
         version: taskHandler.getVersion(),
         // TODO: add database name / server address
     };
@@ -149,7 +147,7 @@ app.get('/cnf/:type', function(req, res) {
 
 // Get all instances in database
 app.get('/instances', function(req, res) {
-    globals.database.all("SELECT DISTINCT name FROM SolvingHistory", function(err, instances) {
+    database.all("SELECT DISTINCT name FROM SolvingHistory", function(err, instances) {
         if (err) {
             tools.sendFatal(res, 500, err, 'GET /instances');
         } else if (!instances) {
@@ -168,7 +166,7 @@ app.get('/events/:instance', function(req, res) {
     if (req.query.id) {
         query += ` AND id >= ${req.query.id}`;
     }
-    globals.database.all(query, function(err, events) {
+    database.all(query, function(err, events) {
         if (err) {
             tools.sendFatal(res, 500, err, `GET /events/:instance`);
         } else if (!events) {
@@ -216,7 +214,7 @@ app.post('/upload/database', function(req, res) {
             tools.sendFatal(res, 500, 'Failed to save database file', 'POST /upload/database');
         }
         // Set database
-        globals.databasePath = path;
+        database = new sqlite.Database(path);
         res.redirect('back');
     });
 });
@@ -273,12 +271,11 @@ app.post('/stop', function(req, res) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Partition a given solver
+// @body {string} instanceName: Name of the instance.
+// @body {string} nodePath: Path of the node to be partitioned.
 app.post('/partition', function(req, res) {
-    let hasPartitioned = taskHandler.partition(req.query.nodeName, req.query.solverAddress);
-    if (hasPartitioned) {
-        tools.sendJson(res, 201, `Partitioning SUCCESS for node ${req.query.nodeName}`);
-    }
-    tools.sendError(res, 500, `Partitioning FAIL for node ${req.query.nodeName}`);
+    taskHandler.partition(req.body.instanceName, req.body.nodePath);
+    tools.sendJson(res, 201, `Partition asked`);
 });
 
 
@@ -317,7 +314,7 @@ function initialize() {
                 case '--database':
                     databasePath = process.argv[i + 1];
                     if (databasePath) {
-                        globals.databasePath = databasePath;
+                        databasePath = databasePath;
                     } else {
                         tools.fatal(0, 'No valid database provided', 'initialize');
                     }
@@ -326,9 +323,9 @@ function initialize() {
                 // Server
                 case '-s':
                 case'--server':
+                    taskHandler.setLive(true);
                     taskHandler.setPort(process.argv[i + 1]);
                     databasePath = taskHandler.getDatabase();
-                    globals.isRealTime = true;
                     if (!databasePath) {
                         tools.fatal(0, 'No valid database on the server', 'initialize');
                     }
@@ -345,7 +342,7 @@ function initialize() {
         if (!fs.existsSync(databasePath)) {
             tools.fatal(0, 'Database file not found', 'initialize');
         }
-        globals.database = new sqlite.Database(databasePath);
+        database = new sqlite.Database(databasePath);
 
         // Start application
         let server = app.listen(serverPort, function() {
@@ -378,8 +375,8 @@ function exceptionHandler(e) {
 // Delete all files in temp directory before killing the process
 function exitHandler() {
     // Close database connection
-    if (globals.database && globals.database.open) {
-        globals.database.close();
+    if (database && database.open) {
+        database.close();
     }
 
     // Delete database temp files

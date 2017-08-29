@@ -21,9 +21,9 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
             $http({method: 'GET', url: '/info'}).then(
                 function(res) {
                     let info = res.data;
-                    $scope.isRealTime = info.isRealTime;
+                    $scope.isLive = info.isLive;
                     document.getElementById('smts-title-version').innerHTML = `v${info.version}`;
-                    if (info.isRealTime) {
+                    if (info.isLive) {
                         // Show server (live) mode elements
                         $scope.hide('live');
 
@@ -64,7 +64,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
             let html = $('html').get(0);
             let style = document.createElement('style');
             style.type = 'text/css';
-            style.innerHTML = `.smts-hide-on-mode-${mode} { display: none }`;
+            style.innerHTML = `.smts-hide-on-mode-${mode} { display: none !important; }`;
             html.appendChild(style);
 
             // To use once the `revert` keyword will be available in CSS
@@ -88,7 +88,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
             // Get tree data
             this.getEvents(instance);
 
-            if ($scope.isRealTime) {
+            if ($scope.isLive) {
                 // Ask repeatedly for db content
                 clearInterval($scope.updateEventsIntervalId); // Clear previous instance updates
                 $scope.updateEventsIntervalId =

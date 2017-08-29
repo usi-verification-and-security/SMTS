@@ -5,7 +5,6 @@ let exec = require('child_process').execSync;
 let config = require('./config.js');
 
 class ServerConnectionError {
-
     constructor(e) {
         this.stderr = e.stderr;
         this.status = e.status;
@@ -13,19 +12,22 @@ class ServerConnectionError {
 }
 
 function run(command, args = '') {
-    let value;
-    try {
-        let shellCmd = `echo 'json.dumps(${command})' | ${config.python} ${config.client} ${config.port} ${args}`;
-        value = exec(shellCmd, {'encoding': 'utf8'});
-        return eval(value || 'null');
-    } catch (e) {
-        console.error('----------ERROR----------');
-        console.error(value);
-        console.error('--------EXCEPTION--------');
-        console.error(e);
-        console.error('-----------END-----------');
-        throw new ServerConnectionError(e);
+    if (config.isLive) {
+        let value;
+        try {
+            let shellCmd = `echo 'json.dumps(${command})' | ${config.python} ${config.client} ${config.port} ${args}`;
+            value = exec(shellCmd, {'encoding': 'utf8'});
+            return eval(value || 'null');
+        } catch (e) {
+            console.error('----------ERROR----------');
+            console.error(value);
+            console.error('--------EXCEPTION--------');
+            console.error(e);
+            console.error('-----------END-----------');
+            throw new ServerConnectionError(e);
+        }
     }
+    return null;
 }
 
 module.exports = {
@@ -36,20 +38,32 @@ module.exports = {
         return run(``, filename);
     },
 
-    partition: function(nodePath, solverAddress) {
-        return run(`self.partition("${nodePath.replace(/"/g, '\\\\"')}")`);
+    partition: function(instanceName, nodePath) {
+        return run(`self.partition(self.current.root.child(${nodePath}), True) if self.current and self.current.root.name == "${instanceName}" else None`);
     },
 
-    setPath: function(_path) {
-        config.client = _path;
+    setPath: function(path) {
+        config.client = path;
     },
 
-    setPort: function(_port) {
-        config.port = _port;
+    setPort: function(port) {
+        config.port = port;
+    },
+
+    setLive: function(isLive) {
+        config.isLive = isLive;
+    },
+
+    isLive: function() {
+        return config.isLive;
     },
 
     getVersion: function() {
-        return parseInt(run(``, `--version`));
+        try {
+            return parseInt(exec(`${config.python} ${config.client} --version`));
+        } catch (e) {
+            return '!'
+        }
     },
 
     getDatabase: function() {
@@ -61,11 +75,11 @@ module.exports = {
     },
 
     getCnfClauses: function(instanceName, nodePath) {
-        return run(`self.get_cnf_clauses("${instanceName}", json.loads("${nodePath.replace(/"/g, '\\"')}"))`);
+        return run(`self.get_cnf_clauses("${instanceName}", ${nodePath})`);
     },
 
     getCnfLearnts: function(instanceName, solverAddress) {
-        return run(`self.get_cnf_learnts("${instanceName}", json.loads("${solverAddress.replace(/"/g, '\\"')}"))`);
+        return run(`self.get_cnf_learnts("${instanceName}", ${solverAddress})`);
     },
 
     stopSolving: function() {
