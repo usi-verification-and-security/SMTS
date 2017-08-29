@@ -9,7 +9,7 @@ smts.tables = {
         makeGetClausesBtn: function() {
             let getClausesBtn = document.createElement('div');
             getClausesBtn.id = 'smts-data-get-clauses';
-            getClausesBtn.className = 'btn btn-default btn-xs';
+            getClausesBtn.className = 'btn btn-default btn-xs smts-hide-on-mode-database';
             getClausesBtn.innerHTML = 'Get Clauses';
             let instanceName = smts.tables.instances.getSelected();
             let nodePath = JSON.stringify(smts.tree.getSelectedNodes()[0].name);

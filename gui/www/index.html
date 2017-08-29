@@ -22,15 +22,17 @@
 <body ng-app="myApp">
 
 <div id="smts-main" class="row container-fluid">
-    <!--First column-->
+    <!--LEFT COLUMN-->
+    <!--Title, Instances, Utilities-->
     <div id="smts-menu" class="col-sm-3">
         <!--Title-->
         <div id="smts-title">
             <span id="smts-title-title">SMT Viewer</span>
             <span id="smts-title-version"></span>
         </div>
+
         <!--Instances-->
-        <div id="smts-instances-container" class="smts-container" ng-controller="InstancesController" ng-init='load()'>
+        <div id="smts-instances-container" class="smts-container smts-invisible" ng-controller="InstancesController" ng-init='load()'>
             <div id="smts-instances-title" class="smts-container-title">Instances</div>
 
             <div id="smts-instances-table-container" class="smts-table-container">
@@ -50,7 +52,7 @@
         </div>
 
         <!--Utilities-->
-        <div id="smts-utilities-container" class="smts-container">
+        <div id="smts-utilities-container" class="smts-container smts-invisible">
 
             <div id="smts-utilities-title" class="smts-container-title">Utilities</div>
 
@@ -64,7 +66,7 @@
                 <div id="smts-taskhandler-container" class="smts-container tab-pane active" ng-controller="TaskHandler" ng-init='load()'>
 
                     <!--Server-->
-                    <div id="smts-server-container" class="smts-container smts-hidden">
+                    <div id="smts-server-container" class="smts-container smts-hide-on-mode-database">
                         <!--<div id="smts-server-title" class="smts-container-title">Server</div>-->
                         <div>
                             <p class="smts-container-subtitle">Solving Instance:</p>
@@ -97,7 +99,7 @@
                     </div>
 
                     <!--Database-->
-                    <div id="smts-database-container" class="smts-container smts-hidden">
+                    <div id="smts-database-container" class="smts-container smts-hide-on-mode-live">
                         <!--<div id="smts-database-title" class="smts-container-title">Database</div>-->
                         <div class="smts-container">
                             <p class="smts-container-subtitle">New database:</p>
@@ -133,116 +135,126 @@
         </div>
     </div>
 
-    <!--Second column-->
+    <!--RIGHT COLUMN-->
+    <!--Instance data (tree view), CNF-->
     <div id="smts-content" class="col-sm-9 smts-hidden">
 
         <!--<div id="smts-content-title" class="smts-container-title">Content</div>-->
 
         <ul id="smts-content-navbar" class="nav nav-tabs smts-navbar">
             <li id="smts-content-navbar-tree" class="active"><a data-toggle="tab" href="#smts-content-instance">Tree</a></li>
-            <li id="smts-content-navbar-smt" class=""><a data-toggle="tab" href="#smts-content-cnf">CNF</a></li>
+            <li id="smts-content-navbar-cnf" class="smts-hide-on-mode-database"><a data-toggle="tab" href="#smts-content-cnf">CNF</a></li>
         </ul>
 
         <div id="smts-content-tab-content" class="tab-content">
             <!--Instance data-->
-            <div id="smts-content-instance" class="tab-pane active" >
+            <div id="smts-content-instance" class="tab-pane active">
+                <!--Row above-->
                 <div id="smts-content-instance-data" class="row">
-                <!--Left column-->
-                <div id="smts-content-instance-data-left" class="col-sm-8 container-fluid">
-                    <!--Tree view-->
-                    <div id="smts-svg-container">
-                        <!--<div id="smts-svg-title" class="smts-container-title">SVG</div>-->
-                        <div id="smts-tree-container" class="smts-container tab-pane active" ng-controller="ViewController"></div>
+                    <!--Left column-->
+                    <div id="smts-content-instance-data-left" class="col-sm-8 container-fluid">
+                        <!--Tree view-->
+                        <div id="smts-svg-container">
+                            <!--<div id="smts-svg-title" class="smts-container-title">Tree</div>-->
+                            <div id="smts-tree-container" class="smts-container tab-pane active"></div>
+                        </div>
+
+                        <!--Event view-->
+                        <div id="smts-events-container" class="smts-container" ng-controller="EventController">
+                            <div id="smts-events-title" class="smts-container-title">Events</div>
+
+                            <ul id="smts-events-navbar" class="nav nav-tabs smts-navbar">
+                                <li id="smts-events-navbar-all" class="active"><a data-toggle="tab" href="" ng-click="showAll()">All</a></li>
+                                <li id="smts-events-navbar-selected" ><a data-toggle="tab" href="" ng-click="showSelected()">Selected</a></li>
+                            </ul>
+
+                            <div id="smts-events-table-container" class="smts-table-container">
+                                <table id="smts-events-table" class="smts-table smts-table-interactive">
+                                    <thead>
+                                    <tr>
+                                        <th>Nr</th>
+                                        <th>Time</th>
+                                        <th>Node</th>
+                                        <th>Event</th>
+                                        <th>Refers to</th>
+                                        <th>Solver</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody ng-keydown="shiftSelected($event)" tabindex="0">
+                                    <tr id="smts-events-event-{{event.id}}"
+                                        data-event="{{event.id}}"
+                                        data-node="{{event.node}}"
+                                        data-data-node="{{event.data && event.data.node ? event.data.node : null}}"
+                                        ng-repeat="event in events"
+                                        ng-click="selectEvent(event, $index)">
+                                        <td>{{$index}}</td>
+                                        <td>{{event.ts}}s</td>
+                                        <td>{{event.node}}</td>
+                                        <td>{{event.event}}</td>
+                                        <td>{{event.data && event.data.node ? event.data.node : ''}}</td>
+                                        <td>{{event.solver}}</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
 
-                    <!--Event view-->
-                    <div id="smts-events-container" class="smts-container" ng-controller="EventController">
-                        <div id="smts-events-title" class="smts-container-title">Events</div>
+                    <!--Right column-->
+                    <div id="smts-content-instance-data-right" class="col-sm-4">
 
-                        <ul id="smts-events-navbar" class="nav nav-tabs smts-navbar">
-                            <li id="smts-events-navbar-all" class="active"><a data-toggle="tab" href="" ng-click="showAll()">All</a></li>
-                            <li id="smts-events-navbar-selected" ><a data-toggle="tab" href="" ng-click="showSelected()">Selected</a></li>
-                        </ul>
+                        <!--Solver view-->
+                        <div id="smts-solvers-container" class="smts-container" ng-controller="SolverController">
+                            <div id="smts-solvers-title" class="smts-container-title">Solvers</div>
 
-                        <div id="smts-events-table-container" class="smts-table-container">
-                            <table id="smts-events-table" class="smts-table smts-table-interactive">
-                                <thead>
-                                <tr>
-                                    <th>Nr</th>
-                                    <th>Time</th>
-                                    <th>Node</th>
-                                    <th>Event</th>
-                                    <th>Refers to</th>
-                                    <th>Solver</th>
-                                </tr>
-                                </thead>
-                                <tbody ng-keydown="shiftSelected($event)" tabindex="0">
-                                <tr id="smts-events-event-{{event.id}}"
-                                    data-event="{{event.id}}"
-                                    data-node="{{event.node}}"
-                                    data-data-node="{{event.data && event.data.node ? event.data.node : null}}"
-                                    ng-repeat="event in events"
-                                    ng-click="selectEvent(event, $index)">
-                                    <td>{{$index}}</td>
-                                    <td>{{event.ts}}s</td>
-                                    <td>{{event.node}}</td>
-                                    <td>{{event.event}}</td>
-                                    <td>{{event.data && event.data.node ? event.data.node : ''}}</td>
-                                    <td>{{event.solver}}</td>
-                                </tr>
-                                </tbody>
-                            </table>
+                            <ul id="smts-solvers-navbar" class="nav nav-tabs smts-navbar">
+                                <li id="smts-solvers-navbar-all" class="active"><a data-toggle="tab" href="" ng-click="showAll()">All</a></li>
+                                <li id="smts-solvers-navbar-selected" ><a data-toggle="tab" href="" ng-click="showSelected()">Selected</a></li>
+                            </ul>
+
+                            <div id="smts-solvers-table-container" class="smts-table-container">
+                                <table id="smts-solvers-table" class="smts-table smts-table-interactive">
+                                    <thead>
+                                    <tr>
+                                        <th>Solver</th>
+                                        <th>Node</th>
+                                        <th>Time</th>
+                                        <th class="smts-hide-on-mode-database">Learnts</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr data-solver="{{solver.name}}"
+                                        data-node="{{solver.node}}"
+                                        ng-repeat="solver in solvers"
+                                        ng-click="updateDataTable(solver)">
+                                        <td>{{solver.name}}</td>
+                                        <td>{{solver.node}}</td>
+                                        <td>{{formatExecutionTime(solver)}}</td>
+                                        <td class="smts-hide-on-mode-database">
+                                            <div class="btn btn-default btn-xs"
+                                                 ng-click="getLearnts($event, solver)">Learnts</div>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!--Data view-->
+                        <div id="smts-data-container" class="smts-container">
+                            <div id="smts-data-title" class="smts-container-title"></div>
+                            <div id="smts-data-table-container" class="smts-table-container"></div>
                         </div>
                     </div>
                 </div>
 
-                <!--Right column-->
-                <div id="smts-content-instance-data-right" class="col-sm-4">
-                <!--Solver view-->
-                <div id="smts-solvers-container" class="smts-container" ng-controller="SolverController">
-                    <div id="smts-solvers-title" class="smts-container-title">Solvers</div>
-
-                    <ul id="smts-solvers-navbar" class="nav nav-tabs smts-navbar">
-                        <li id="smts-solvers-navbar-all" class="active"><a data-toggle="tab" href="" ng-click="showAll()">All</a></li>
-                        <li id="smts-solvers-navbar-selected" ><a data-toggle="tab" href="" ng-click="showSelected()">Selected</a></li>
-                    </ul>
-
-                    <div id="smts-solvers-table-container" class="smts-table-container">
-                        <table id="smts-solvers-table" class="smts-table smts-table-interactive">
-                            <thead>
-                            <th>Solver</th>
-                            <th>Node</th>
-                            <th>Time</th>
-                            <th>Learnts</th>
-                            </thead>
-                            <tbody>
-                            <tr data-solver="{{solver.name}}"
-                                data-node="{{solver.node}}"
-                                ng-repeat="solver in solvers"
-                                ng-click="updateDataTable(solver)">
-                                <td>{{solver.name}}</td>
-                                <td>{{solver.node}}</td>
-                                <td>{{formatExecutionTime(solver)}}</td>
-                                <td><div class="btn btn-default btn-xs" ng-click="getLearnts($event, solver)">Learnts</div></td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!--Data view-->
-                <div id="smts-data-container" class="smts-container">
-                    <div id="smts-data-title" class="smts-container-title"></div>
-                    <div id="smts-data-table-container" class="smts-table-container"></div>
-                </div>
-            </div>
-                </div>
+                <!--Row below-->
                 <div id="smts-content-instance-timeline" class="row">
-                <div id="smts-timeline-line"></div>
-            </div>
+                    <div id="smts-timeline-line"></div>
+                </div>
             </div>
 
-            <!--SMT-->
+            <!--CNF-->
             <div id="smts-content-cnf" class="tab-pane">
                 <div id="smts-content-cnf-container"></div>
                 <div id="smts-content-cnf-literal-info" class="smts-hidden">

@@ -3,6 +3,8 @@ app.controller('ViewController', ['$scope', '$rootScope', '$window', '$http', 's
 
         // Page initial setup
         $(window).load(function() {
+            // Convert checkboxes to switches
+            // See: http://bootstrapswitch.com/
             let switchOptions = {
                 size:     'mini',
                 onText:   'or',

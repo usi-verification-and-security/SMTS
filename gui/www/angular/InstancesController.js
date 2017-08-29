@@ -23,10 +23,9 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
                     let info = res.data;
                     $scope.isRealTime = info.isRealTime;
                     document.getElementById('smts-title-version').innerHTML = `v${info.version}`;
-
                     if (info.isRealTime) {
-                        // Show server container
-                        $('#smts-server-container').removeClass('smts-hidden');
+                        // Show server (live) mode elements
+                        $scope.hide('live');
 
                         // Request updates if real time analysis
                         $scope.updateSolvingInfoIntervalId =
@@ -35,9 +34,13 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
                             window.setInterval($scope.updateInstances, INTERVAL_UPDATE_INSTANCES);
                     }
                     else {
-                        // Show database container
-                        $('#smts-database-container').removeClass('smts-hidden');
+                        // Show database mode elements
+                        $scope.hide('database');
                     }
+
+                    // Show instances table and utilities
+                    document.getElementById('smts-instances-container').classList.remove('smts-invisible');
+                    document.getElementById('smts-utilities-container').classList.remove('smts-invisible');
 
                     // Get instances
                     $scope.getInstances();
@@ -50,6 +53,22 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
                 function(res) {
                     $scope.instances = res.data;
                 }, $scope.error);
+        };
+
+        // Hide all elements associated to a particular mode
+        // HTML elements with class name `smts-hidden-on-mode-${mode}` are made
+        // hidden. This function is used to change the visibility of elements
+        // once it is known if it's live mode or not.
+        // @param {string} mode: Either `live` or `database`.
+        $scope.hide = function(mode) {
+            let html = $('html').get(0);
+            let style = document.createElement('style');
+            style.type = 'text/css';
+            style.innerHTML = `.smts-hide-on-mode-${mode} { display: none }`;
+            html.appendChild(style);
+
+            // To use once the `revert` keyword will be available in CSS
+            // html.style.setProperty(`--visibility-mode-${mode}`, 'revert');
         };
 
 

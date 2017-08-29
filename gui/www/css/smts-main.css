@@ -1,6 +1,6 @@
 /* Basics */
 
-* {
+html {
     --size-padding: 15px;
     --size-border: 1px;
 
@@ -18,6 +18,10 @@
     /* Blue */
     --color-secondary-light: #B1EED9; /* Highlights */
     --color-secondary-dark:  #52BCCC; /* Tables headers */
+
+    /* Mode visibility */
+    --visibility-mode-database: none;
+    --visibility-mode-server:   none;
 }
 
 html, body {
@@ -26,6 +30,24 @@ html, body {
     margin: 0;
     padding: 0;
 }
+
+
+/* Modes */
+
+/* Classes to be used to hide/show the correct elements depending on which mode
+ * (database or live) is selected. However, since the `revert` keyword is not
+ * yet implemented in CSS, this cannot be done, since it is impossible to
+ * restore an element property to its previous cascading value. For more info:
+ * https://developer.mozilla.org/en-US/docs/Web/CSS/revert
+ */
+
+/*.smts-show-on-mode-database {
+    display: var( --visibility-mode-database) !important;
+}*/
+
+/*.smts-show-on-mode-live {
+    display: var( --visibility-mode-server) !important;
+}*/
 
 
 /* Tables */
@@ -151,6 +173,10 @@ html, body {
 
 .smts-hidden {
     display: none !important;
+}
+
+.smts-invisible {
+    visibility: hidden;
 }
 
 .smts-bold {
