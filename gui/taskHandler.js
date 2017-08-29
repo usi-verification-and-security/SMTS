@@ -61,13 +61,11 @@ module.exports = {
     },
 
     getCnfClauses: function(instanceName, nodePath) {
-        let path = run(`self.get_cnf_clauses("${instanceName}", json.loads("${nodePath.replace(/"/g, '\\"')}"))`);
-        return path ? this.pipeRead(`../${path}`) : '';
+        return run(`self.get_cnf_clauses("${instanceName}", json.loads("${nodePath.replace(/"/g, '\\"')}"))`);
     },
 
     getCnfLearnts: function(instanceName, solverAddress) {
-        let path = run(`self.get_cnf_learnts("${instanceName}", json.loads("${solverAddress.replace(/"/g, '\\"')}"))`);
-        return path ? this.pipeRead(`../${path}`) : '';
+        return run(`self.get_cnf_learnts("${instanceName}", json.loads("${solverAddress.replace(/"/g, '\\"')}"))`);
     },
 
     stopSolving: function() {
@@ -98,9 +96,10 @@ module.exports = {
         };
     },
 
-    pipeRead: function(pipename) {
-        let data = fs.readFileSync(pipename);
-        fs.unlinkSync(pipename);
-        return data.toString();
+    readPipeAndSend: function(pipename, client, message) {
+        fs.readFile(pipename, function(err, data) {
+            client.emit(message, data.toString());
+            fs.unlinkSync(pipename);
+        });
     }
 };

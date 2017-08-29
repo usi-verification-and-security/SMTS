@@ -4,7 +4,9 @@ from . import net
 from . import config
 import json
 import logging
+import pathlib
 import os
+import threading
 import traceback
 import random
 import time
@@ -92,13 +94,17 @@ class Solver(net.Socket):
         }, '')
 
     def make_pipe(self, name):
-        pipename = 'server/temp/' + name
-        # Remove pipe if already open
-        if os.path.exists(pipename): os.unlink(pipename)
+        pipename, i = 'server/temp/' + name, 0
+
+        # Make unique pipename
+        while pathlib.Path(pipename + str(i)).exists(): ++i
+        pipename += str(i)
+        
         # Make pipe
         try:
             os.mkfifo(pipename)
-            return pipename
+            # Return absolute path
+            return str(pathlib.Path(pipename).resolve())
         except:
             return ''
 
@@ -167,15 +173,25 @@ class Solver(net.Socket):
 
         # Handle CNF request
         if header['report'].startswith('cnf'):
-            pipename = header["pipename"]
-            pipe = open(pipename, 'w')
-            if pipe:
-                cnf = framework.smt2json(payload.decode(), True)
-                pipe.write(cnf)
-                pipe.flush()
-                pipe.close()
-                if "stop" in header and header['stop'] == 'true':
-                    self.stop()
+
+            # Thread to avoid blocking main process while waiting for pipe read
+            # (the pipe can't be open until someone opens it for reading)
+            def write_pipe(header, payload):
+                pipename = header["pipename"]
+                pipe = open(pipename, 'w')
+                if pipe:
+                    # Make CNF JSON compatible
+                    cnf = framework.smt2json(payload.decode(), True)
+                    # Write CNF in pipe
+                    pipe.write(cnf)
+                    pipe.flush()
+                    pipe.close()
+            # Start thread
+            threading.Thread(target=write_pipe, args=(header, payload)).start()
+
+            # Stop solver if it has only being started to retrieve CNF
+            if "stop" in header and header['stop'] == 'true':
+                self.stop()
                     
         del header['name']
         del header['node']

@@ -572,6 +572,19 @@ smts.cnf = {
                 this.learnts.solverAddress === solverAddress);
     },
 
+    // Get CNF through websocket and give it to `processCnf` function
+    // This function serves as a wrapper around websocket connection. It
+    // connects to the server, and asks for a CNF stored in a file named
+    // `pipename`. Once the CNF is received, the `processCnf` function uses it,
+    // then the socket is automatically disconnected.
+    // @param {string} pipename: Name of the pipe where the CNF is stored.
+    // @param {function} processCnf: Function that takes a CNF a processes it.
+    getCnf: function(pipename, processCnf) {
+        let socket = io();
+        socket.on('get-cnf', cnf => { processCnf(cnf); socket.disconnect() });
+        socket.on('connect', () => socket.emit('get-cnf', pipename));
+    },
+
     // Update clauses CNF to be the one corresponding to given parameters
     // Updating the clauses implies updating learnts too.
     // The function requests data and updates the network only if the newly
@@ -592,19 +605,25 @@ smts.cnf = {
             $.ajax({
                 url: `/cnf/clauses?instanceName=${instanceName}&value=${nodePath}`,
                 type: 'GET',
-                success: cnfClauses => {
-                    if (cnfClauses) {
-                        this.hideClauses();
-                        this.clauses = {
-                            instanceName: instanceName,
-                            nodePath:     nodePath,
-                            data:         this.getData(cnfClauses, true, false)
-                        };
-                        this.showClauses();
-                        // Update learnts
-                        this.updateLearnts(instanceName, solverAddress);
+                success: pipename => {
+                    if (pipename) {
+                        this.getCnf(pipename, cnfClauses => {
+                            if (cnfClauses) {
+                                this.hideClauses();
+                                this.clauses = {
+                                    instanceName: instanceName,
+                                    nodePath:     nodePath,
+                                    data:         this.getData(cnfClauses, true, false)
+                                };
+                                this.showClauses();
+                                // Update learnts
+                                this.updateLearnts(instanceName, solverAddress);
+                            } else {
+                                console.log('No CNF clauses');
+                            }
+                        });
                     } else {
-                        console.log('No CNF clauses');
+                        smts.tools.error('Missing CNF clauses pipename');
                     }
                 }
             });
@@ -630,18 +649,24 @@ smts.cnf = {
             $.ajax({
                 url: `/cnf/learnts?instanceName=${instanceName}&value=${solverAddress}`,
                 type: 'GET',
-                success: cnfLearnts => {
-                    if (cnfLearnts) {
-                        this.hideLearnts();
-                        this.learnts = {
-                            instanceName:  instanceName,
-                            solverAddress: solverAddress,
-                            data:          this.getData(cnfLearnts, false, true)
-                        };
-                        let isShowLearnts = document.getElementById('smts-option-learnts').checked;
-                        if (isShowLearnts) this.showLearnts();
+                success: pipename => {
+                    if (pipename) {
+                        this.getCnf(pipename, cnfLearnts => {
+                            if (cnfLearnts) {
+                                this.hideLearnts();
+                                this.learnts = {
+                                    instanceName: instanceName,
+                                    solverAddress: solverAddress,
+                                    data: this.getData(cnfLearnts, false, true)
+                                };
+                                let isShowLearnts = document.getElementById('smts-option-learnts').checked;
+                                if (isShowLearnts) this.showLearnts();
+                            } else {
+                                console.log('No CNF learnts');
+                            }
+                        });
                     } else {
-                        console.log('No CNF learnts');
+                        smts.tools.error('Missing CNF learnts pipename');
                     }
                 }
             });

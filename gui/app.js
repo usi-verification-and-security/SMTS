@@ -1,10 +1,15 @@
+// Express
 const express = require('express');
 const app = express();
+// Libraries
 const fileUpload = require('express-fileupload');
 const bodyParser = require('body-parser');
 const sqlite = require('sqlite3').verbose();
-const taskHandler = require('./taskHandler');
 const fs = require('fs');
+// Taskhandler
+const taskHandler = require('./taskHandler');
+// Websocket server
+const io = require('socket.io');
 
 app.use(function(req, res, next) { //allow cross origin requests
     res.setHeader("Access-Control-Allow-Methods", "POST, PUT, OPTIONS, DELETE, GET");
@@ -28,7 +33,7 @@ app.use(fileUpload());
 
 const globals = {
     database:     null,  // {Database} The SQLite database
-    isRealTime:   false, // {Boolean}  `true` if it is live mode, `false` otherwise
+    isRealTime:   false, // {boolean}  `true` if it is live mode, `false` otherwise
 };
 
 
@@ -72,7 +77,7 @@ const tools = {
     // @param {Number} status: HTTP status code of the error.
     // @param {Object} error: The json object representing the error. It is
     // made by the status code and a string description of the error.
-    sendFatalError: function(res, status, error, position) {
+    sendFatal: function(res, status, error, position) {
         this.sendError(res, status, error, position);
         process.exit(0);
     },
@@ -80,7 +85,7 @@ const tools = {
     // Abort execution of appliction
     // @param {Number} status: HTTP status code of the error.
     // @param {String} error: The error message printed on stderr.
-    fatalError: function(status, error, position) {
+    fatal: function(status, error, position) {
         let message = `${this.httpStatus[status]} ${position}: ${error}`;
         console.error(message);
         process.exit(0);
@@ -114,22 +119,31 @@ app.get('/solvingInfo', function(req, res) {
 // @query {String} value: If type is 'clauses', value is a node path. If type
 // is 'learnts', value is a solver address.
 app.get('/cnf/:type', function(req, res) {
+    let pipename = '';
+    let error = '';
+
     if (!req.query.instanceName) {
-        tools.sendError(res, 400, 'No instance given', 'GET /cnf');
+        error = 'No instance given';
     } else if (req.params.type === 'clauses') {
-        if (!req.query.value) {
-            tools.sendError(res, 400, 'No node path given', 'GET /cnf/clauses');
+        if (req.query.value) {
+            pipename = taskHandler.getCnfClauses(req.query.instanceName, req.query.value);
         } else {
-            tools.sendJson(res, 200, taskHandler.getCnfClauses(req.query.instanceName, req.query.value));
+            error = 'No node path given';
         }
     } else if (req.params.type === 'learnts') {
-        if (!req.query.value) {
-            tools.sendError(res, 400, 'No solver address given', 'GET /cnf/learnts');
+        if (req.query.value) {
+            pipename = taskHandler.getCnfLearnts(req.query.instanceName, req.query.value);
         } else {
-            tools.sendJson(res, 200, taskHandler.getCnfLearnts(req.query.instanceName, req.query.value));
+            error = 'No solver address given';
         }
     } else {
-        tools.sendError(res, 400, 'No valid CNF type given (`clauses` or `learnts`)', 'GET /cnf');
+        error = 'No valid CNF type given (`clauses` or `learnts`)';
+    }
+
+    if (pipename) {
+        tools.sendJson(res, 200, pipename);
+    } else {
+        tools.sendError(res, 500, error, 'GET /cnf');
     }
 });
 
@@ -137,9 +151,9 @@ app.get('/cnf/:type', function(req, res) {
 app.get('/instances', function(req, res) {
     globals.database.all("SELECT DISTINCT name FROM SolvingHistory", function(err, instances) {
         if (err) {
-            tools.sendFatalError(res, 500, err, 'GET /instances');
+            tools.sendFatal(res, 500, err, 'GET /instances');
         } else if (!instances) {
-            tools.sendFatalError(res, 404, `Instances not found`, 'GET /instances');
+            tools.sendFatal(res, 404, `Instances not found`, 'GET /instances');
         }
         tools.sendJson(res, 200, instances);
     });
@@ -156,9 +170,9 @@ app.get('/events/:instance', function(req, res) {
     }
     globals.database.all(query, function(err, events) {
         if (err) {
-            tools.sendFatalError(res, 500, err, `GET /events/:instance`);
+            tools.sendFatal(res, 500, err, `GET /events/:instance`);
         } else if (!events) {
-            tools.sendFatalError(res, 404, `Events not found`, `GET /events/:instance`);
+            tools.sendFatal(res, 404, `Events not found`, `GET /events/:instance`);
         }
         let eventsJson = [];
         events.forEach(function(event) {
@@ -199,7 +213,7 @@ app.post('/upload/database', function(req, res) {
     // Save file in `temp` directory
     file.mv(path, function(err) {
         if (err) {
-            tools.sendFatalError(res, 500, 'Failed to save database file', 'POST /upload/database');
+            tools.sendFatal(res, 500, 'Failed to save database file', 'POST /upload/database');
         }
         // Set database
         globals.databasePath = path;
@@ -226,7 +240,7 @@ app.post('/upload/instance', function(req, res) {
     // Save file in `temp` directory
     file.mv(path, function(err) {
         if (err) {
-            tools.sendFatalError(res, 500, 'Failed to save instance file', 'POST /upload/instance');
+            tools.sendFatal(res, 500, 'Failed to save instance file', 'POST /upload/instance');
         }
         // Start solving new instance
         taskHandler.newInstance(path);
@@ -293,7 +307,7 @@ function initialize() {
                 case '--port':
                     serverPort = parseInt(process.argv[i + 1], 10);
                     if (serverPort < 0 || 65536 <= serverPort) {
-                        tools.fatalError(0, 'No valid port provided', 'initialize');
+                        tools.fatal(0, 'No valid port provided', 'initialize');
                         process.exit(0);
                     }
                     break;
@@ -305,7 +319,7 @@ function initialize() {
                     if (databasePath) {
                         globals.databasePath = databasePath;
                     } else {
-                        tools.fatalError(0, 'No valid database provided', 'initialize');
+                        tools.fatal(0, 'No valid database provided', 'initialize');
                     }
                     break;
 
@@ -316,7 +330,7 @@ function initialize() {
                     databasePath = taskHandler.getDatabase();
                     globals.isRealTime = true;
                     if (!databasePath) {
-                        tools.fatalError(0, 'No valid database on the server', 'initialize');
+                        tools.fatal(0, 'No valid database on the server', 'initialize');
                     }
                     break;
             }
@@ -324,18 +338,25 @@ function initialize() {
 
         // Quit if no database provided
         if (!databasePath) {
-            tools.fatalError(0, 'No database provided', 'initialize');
+            tools.fatal(0, 'No database provided', 'initialize');
         }
 
         // Open connection with database
         if (!fs.existsSync(databasePath)) {
-            tools.fatalError(0, 'Database file not found', 'initialize');
+            tools.fatal(0, 'Database file not found', 'initialize');
         }
         globals.database = new sqlite.Database(databasePath);
 
         // Start application
-        app.listen(serverPort, function() {
+        let server = app.listen(serverPort, function() {
             console.log(`GUI running on ${serverPort}...`);
+        });
+
+        // Setup socket server
+        io.listen(server).on('connection', function(client) {
+            client.on('get-cnf', function(pipename) {
+                taskHandler.readPipeAndSend(pipename, client, 'get-cnf');
+            });
         });
     }
 }
