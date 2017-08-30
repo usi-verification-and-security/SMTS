@@ -1,4 +1,4 @@
-app.controller('ViewController', ['$scope', '$rootScope', '$window', '$http', 'sharedService', 'sharedTree', 'currentRow',
+app.controller('WindowController', ['$scope', '$rootScope', '$window', '$http', 'sharedService', 'sharedTree', 'currentRow',
     function($scope, $rootScope, $window, $http, sharedService, sharedTree, currentRow) {
 
         // Page initial setup
