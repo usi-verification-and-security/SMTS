@@ -1,5 +1,5 @@
-app.controller('WindowController', ['$scope', '$rootScope', '$window', '$http', 'sharedService', 'sharedTree', 'currentRow',
-    function($scope, $rootScope, $window, $http, sharedService, sharedTree, currentRow) {
+app.controller('WindowController', ['$scope', '$rootScope', '$window', '$http', 'sharedService',
+    function($scope, $rootScope, $window, $http, sharedService) {
 
         // Page initial setup
         $(window).load(function() {
@@ -24,9 +24,9 @@ app.controller('WindowController', ['$scope', '$rootScope', '$window', '$http', 
 
         // Regenerate tree on window resize
         $(window).resize(function() {
-            if (sharedTree.tree) {
-                sharedTree.tree.arrangeTree(currentRow.value);
-                smts.tree.make(sharedTree.tree, smts.tree.getPosition());
+            if (smts.tree.tree) {
+                smts.tree.tree.arrangeTree(smts.events.index);
+                smts.tree.build();
             }
         });
     }]);

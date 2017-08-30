@@ -1,14 +1,14 @@
-app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', 'sharedService', 'sharedTree', 'currentRow',
-    function($scope, $rootScope, $window, $http, sharedService, sharedTree, currentRow) {
+app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', 'sharedService',
+    function($scope, $rootScope, $window, $http, sharedService) {
 
         // Update events on instance selected
         $scope.$on('select-instance', function() {
             // Check if events table is scrolled to bottom. The check has to be
             // performed here, because later the scroll will change.
-            let isScrollBottom = smts.tables.events.isScrollBottom();
+            let isScrollBottom = smts.events.isScrollBottom();
 
             // Make timeline
-            let events = sharedTree.tree.getEvents(currentRow.value + 1);
+            let events = smts.tree.tree.getEvents(smts.events.index + 1);
             $scope.events = events;
 
             // Select last event
@@ -26,13 +26,13 @@ app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', '
         // event in sight, in case of live update.
         $scope.selectEvent = function(event, index, isScrollBottom) {
             // Build tree
-            currentRow.value = index;
-            sharedTree.tree.arrangeTree(currentRow.value);
-            smts.tree.make(sharedTree.tree, smts.tree.getPosition());
+            smts.events.index = index;
+            smts.tree.tree.arrangeTree(smts.events.index);
+            smts.tree.build();
 
             // Update data table
             let nodeName = event.getMainNode();
-            smts.tables.data.update(sharedTree.tree.root.getNode(nodeName), 'node');
+            smts.data.update(smts.tree.tree.root.getNode(nodeName), 'node');
 
             // Update timeline
             smts.timeline.update(event);
@@ -42,11 +42,11 @@ app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', '
             // is impossible to detect when the DOM elements are actually
             // ready, thus the functions are called asyncronously.
             window.setTimeout(function() {
-                smts.tables.events.highlight([event]);
-                smts.tables.events.update(sharedTree.tree.selectedNodes);
-                smts.tables.solvers.update(sharedTree.tree.selectedNodes);
+                smts.events.highlight([event]);
+                smts.events.update(smts.tree.tree.selectedNodes);
+                smts.solvers.update(smts.tree.tree.selectedNodes);
                 if (isScrollBottom) {
-                    smts.tables.events.scrollBottom();
+                    smts.events.scrollBottom();
                 }
             }, 0);
 
@@ -62,20 +62,20 @@ app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', '
         $scope.shiftSelected = function(e) {
             if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                smts.tables.events.shift('up');
+                smts.events.shift('up');
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                smts.tables.events.shift('down');
+                smts.events.shift('down');
             }
         };
 
         // Show all events in events table
         $scope.showAll = function() {
-            smts.tables.events.showAll();
+            smts.events.showAll();
         };
 
         // Show only events in events table related to selected nodes
         $scope.showSelected = function() {
-            smts.tables.events.showSelected(sharedTree.tree.selectedNodes);
+            smts.events.showSelected(smts.tree.tree.selectedNodes);
         };
     }]);

@@ -58,11 +58,11 @@ smts.timeline = {
                 dash.addEventListener('click', function() {
                     smts.timeline.selectEvent(event.id);
 
-                    let eventRow = smts.tables.events.getRows(`[data-event="${event.id}"]`)[0];
+                    let eventRow = smts.events.getRows(`[data-event="${event.id}"]`)[0];
                     if (eventRow) {
                         // Simulate event click to rebuild the tree
                         eventRow.click();
-                        smts.tables.events.scroll(event);
+                        smts.events.scroll(event);
                     }
                 });
 

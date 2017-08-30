@@ -213,7 +213,6 @@ app.post('/upload/database', function(req, res) {
     let dir = tmp.dirSync({unsafeCleanup: true});
     let path = `${dir.name}/${file.name}`;
 
-    // Save file in `temp` directory
     file.mv(path, function(err) {
         if (err) {
             tools.sendFatal(res, 500, 'Failed to save database file', 'POST /upload/database');
@@ -236,7 +235,6 @@ app.post('/upload/instance', function(req, res) {
     let dir = tmp.dirSync({unsafeCleanup: true});
     let path = `${dir.name}/${file.name}`;
 
-    // Save file in `temp` directory
     file.mv(path, function(err) {
         if (err) {
             tools.sendFatal(res, 500, err, 'POST /upload/instance');

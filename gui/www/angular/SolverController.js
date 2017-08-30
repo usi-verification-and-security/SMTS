@@ -1,15 +1,15 @@
-app.controller('SolverController', ['$scope', '$rootScope', '$window', '$http', 'sharedService', 'sharedTree', 'currentRow',
-    function($scope, $rootScope, $window, $http, sharedService, sharedTree, currentRow) {
+app.controller('SolverController', ['$scope', '$rootScope', '$window', '$http', 'sharedService',
+    function($scope, $rootScope, $window, $http, sharedService, sharedTree) {
 
         // Trigger when an instance is selected
         $scope.$on('select-instance', function() {
-            $scope.solvers = sharedTree.tree.solvers;
-            sharedTree.tree.assignSolvers(0, currentRow.value);
+            $scope.solvers = smts.tree.tree.solvers;
+            smts.tree.tree.assignSolvers(0, smts.events.index);
         });
 
         // Trigger when an event is selected
         $scope.$on('select-event', function() {
-            sharedTree.tree.assignSolvers(0, currentRow.value);
+            smts.tree.tree.assignSolvers(0, smts.events.index);
         });
 
         // Get learnts clauses of currently selected solver
@@ -17,7 +17,7 @@ app.controller('SolverController', ['$scope', '$rootScope', '$window', '$http', 
         // the CNF.
         $scope.getLearnts = function(evt, solver) {
             evt.stopPropagation();
-            let instanceName = smts.tables.instances.getSelected();
+            let instanceName = smts.instances.getSelected();
             let nodePath = JSON.stringify(smts.tree.getSelectedNodes()[0].name);
             let solverName = solver.name;
             smts.cnf.load(instanceName, nodePath, solverName);
@@ -31,7 +31,7 @@ app.controller('SolverController', ['$scope', '$rootScope', '$window', '$http', 
         // @return {String}: The execution time converted to stirng, or `` if
         // the solver is currently not associated with any event.
         $scope.formatExecutionTime = function(solver) {
-            let event = sharedTree.tree.getEvent(currentRow.value);
+            let event = smts.tree.tree.getEvent(smts.events.index);
             return solver.event ? `${event.ts - solver.event.ts}s` : ``;
         };
 
@@ -39,17 +39,17 @@ app.controller('SolverController', ['$scope', '$rootScope', '$window', '$http', 
         // @param {TreeManager.Solver} solver: the solver to be represented in
         // the data table.
         $scope.updateDataTable = function(solver) {
-            smts.tables.data.update(solver.event, 'event');
-            smts.tables.solvers.highlight([solver]);
+            smts.data.update(solver.event, 'event');
+            smts.solvers.highlight([solver]);
         };
 
         // Show all solvers
         $scope.showAll = function() {
-            smts.tables.solvers.showAll();
+            smts.solvers.showAll();
         };
 
         // Show only solvers related to currently selected nodes
         $scope.showSelected = function() {
-            smts.tables.solvers.showSelected(sharedTree.tree.selectedNodes);
+            smts.solvers.showSelected(smts.tree.tree.selectedNodes);
         };
     }]);

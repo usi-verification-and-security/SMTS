@@ -1,5 +1,5 @@
-app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http', 'sharedService', 'sharedTree', 'currentRow',
-    function($scope, $rootScope, $window, $http, sharedService, sharedTree, currentRow) {
+app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http', 'sharedService',
+    function($scope, $rootScope, $window, $http, sharedService) {
 
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,7 +80,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
         // @param {Instance} instance: Selected instance.
         $scope.selectInstance = function(instance) {
             // Highlight instance
-            smts.tables.instances.highlight([instance]);
+            smts.instances.highlight([instance]);
 
             // First time an instance is selected
             document.getElementById('smts-content').classList.remove('smts-hidden');
@@ -111,7 +111,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
                     if (!eventId) $scope.events = []; // Reset events if new request
 
                     // Return if we receive an empty update from the current instance
-                    let instanceName = smts.tables.instances.getSelected();
+                    let instanceName = smts.instances.getSelected();
                     if (instance.name === instanceName && !events.length) {
                         return;
                     }
@@ -122,14 +122,12 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
                     if (lastEvent) $scope.lastEventId = lastEvent.id;
 
                     // Initialize tree
-                    sharedTree.tree = new TreeManager.Tree();
-                    sharedTree.tree.createEvents($scope.events);
-                    sharedTree.tree.initializeSolvers($scope.events);
-                    currentRow.value = $scope.events.length - 1;
+                    smts.tree.setEvents($scope.events);
+                    smts.events.index = $scope.events.length - 1;
 
                     // Initialize timeline
                     smts.timeline.clear();
-                    smts.timeline.make(sharedTree.tree.getEvents(currentRow.value + 1));
+                    smts.timeline.make(smts.tree.tree.getEvents(smts.events.index + 1));
 
                     // Notify an instance has been selected
                     sharedService.broadcastSelectInstance();
@@ -147,7 +145,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
                 function(res) {
                     let instanceData = res.data;
                     // Bold running instance
-                    smts.tables.instances.bold([instanceData]);
+                    smts.instances.bold([instanceData]);
                     // Broadcast running instance data
                     sharedService.broadcastUpdateInstanceData(instanceData);
                 }, $scope.error);

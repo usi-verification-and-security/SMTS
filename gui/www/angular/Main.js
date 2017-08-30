@@ -1,16 +1,6 @@
 let app = angular.module('myApp', ['ngFileUpload'])
-
-    // N.B.: All values are wrapped around an object in order not to lose the reference
-
-    // {Number}: How many rows of the db needs to be read
-    .value('currentRow', {value: 0})
-
-    // {TreeManager.Tree}: Structure representing the tree generated from the
-    // database.
-    .value('sharedTree', {})
-
-    // {Object}: Contains functions to broadcast signals received by other
-    // Angular components.
+    // `sharedService` contains functions to broadcast signals that will be
+    // received by other AngularJS components
     .factory('sharedService', function ($rootScope) {
         let sharedService = {};
 

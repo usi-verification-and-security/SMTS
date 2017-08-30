@@ -1,5 +1,5 @@
-app.controller('TaskHandler', ['$scope', '$rootScope', '$window', '$http', 'sharedService', 'sharedTree', 'currentRow',
-    function($scope, $rootScope, $window, $http, sharedService, sharedTree, currentRow) {
+app.controller('TaskHandler', ['$scope', '$rootScope', '$window', '$http', 'sharedService',
+    function($scope, $rootScope, $window, $http, sharedService) {
 
         // Update instance data values in server container
         $scope.$on('update-instance-data', function(e, instanceData) {
