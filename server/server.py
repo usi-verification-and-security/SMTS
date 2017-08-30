@@ -94,17 +94,10 @@ class Solver(net.Socket):
         }, '')
 
     def make_pipe(self, name):
-        pipename, i = 'server/temp/' + name, 0
-
-        # Make unique pipename
-        while pathlib.Path(pipename + str(i)).exists(): ++i
-        pipename += str(i)
-        
-        # Make pipe
+        pipename = str(framework.TempFile())
         try:
             os.mkfifo(pipename)
-            # Return absolute path
-            return str(pathlib.Path(pipename).resolve())
+            return pipename
         except:
             return ''
 

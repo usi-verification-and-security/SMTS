@@ -1,44 +1,32 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// REQUIRES
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // Express
 const express = require('express');
-const app = express();
-// Libraries
+const app     = express();
+
+// External libraries
 const fileUpload = require('express-fileupload');
 const bodyParser = require('body-parser');
-const sqlite = require('sqlite3').verbose();
-const fs = require('fs');
-// Taskhandler
+const sqlite     = require('sqlite3').verbose();
+const fs         = require('fs');
+const io         = require('socket.io');
+const tmp        = require('tmp');
+
+// Custom libraries
+const config      = require('./config.js');
 const taskHandler = require('./taskHandler');
-// Websocket server
-const io = require('socket.io');
-
-app.use(function(req, res, next) { //allow cross origin requests
-    res.setHeader("Access-Control-Allow-Methods", "POST, PUT, OPTIONS, DELETE, GET");
-    res.header("Access-Control-Allow-Origin", "http://localhost");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    next();
-});
-
-// app.use(bodyParser.urlencoded({ extended : false,limit: '50mb' }));
-app.use(bodyParser.json({limit: '50mb'}));
-app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
-
-app.use(express.static('./www'));
-app.use(bodyParser.json());
-app.use(fileUpload());
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CONSTANTS AND GLOBAL VARIABLES
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// {Database} The SQLite database
+// {Database}: The SQLite database
 let database = null;
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// TOOLS
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+// Collection of utility functions
 const tools = {
 
     // Set of statuses
@@ -92,13 +80,34 @@ const tools = {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BASIC SETUP
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Allow cross origin requests
+app.use(function(req, res, next) {
+    res.setHeader("Access-Control-Allow-Methods", "POST, PUT, OPTIONS, DELETE, GET");
+    res.header("Access-Control-Allow-Origin", "http://localhost");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
+
+// app.use(bodyParser.urlencoded({ extended : false,limit: '50mb' }));
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+
+app.use(express.static('./www'));
+app.use(bodyParser.json());
+app.use(fileUpload());
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // GET
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Get information about the execution
 app.get('/info', function(req, res) {
     let info = {
-        isLive: taskHandler.isLive(),
+        isLive:  taskHandler.isLive(),
         version: taskHandler.getVersion(),
         // TODO: add database name / server address
     };
@@ -189,7 +198,7 @@ app.get('/events/:instance', function(req, res) {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// UPLOAD
+// FILES UPLOAD
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Upload database to be used from the application
@@ -200,13 +209,9 @@ app.post('/upload/database', function(req, res) {
         return;
     }
 
-    // Create `temp` directory if not already present
-    if (!fs.existsSync(`${__dirname}/databases/temp`)) {
-        fs.mkdirSync(`${__dirname}/databases/temp`);
-    }
-
     let file = req.files['smts-upload-database'];
-    let path = `${__dirname}/databases/temp/${file.name}`;
+    let dir = tmp.dirSync({unsafeCleanup: true});
+    let path = `${dir.name}/${file.name}`;
 
     // Save file in `temp` directory
     file.mv(path, function(err) {
@@ -227,18 +232,14 @@ app.post('/upload/instance', function(req, res) {
         return;
     }
 
-    // Create `temp` directory if not already present
-    if (!fs.existsSync(`${__dirname}/benchmarks/temp`)) {
-        fs.mkdirSync(`${__dirname}/benchmarks/temp`);
-    }
-
     let file = req.files['smts-upload-instance'];
-    let path = `${__dirname}/benchmarks/temp/${file.name}`;
+    let dir = tmp.dirSync({unsafeCleanup: true});
+    let path = `${dir.name}/${file.name}`;
 
     // Save file in `temp` directory
     file.mv(path, function(err) {
         if (err) {
-            tools.sendFatal(res, 500, 'Failed to save instance file', 'POST /upload/instance');
+            tools.sendFatal(res, 500, err, 'POST /upload/instance');
         }
         // Start solving new instance
         taskHandler.newInstance(path);
@@ -267,14 +268,14 @@ app.post('/stop', function(req, res) {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SOLVERS INTERACTION
+// PARTITIONS
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Partition a given solver
 // @body {string} instanceName: Name of the instance.
 // @body {string} nodePath: Path of the node to be partitioned.
 app.post('/partition', function(req, res) {
-    taskHandler.partition(req.body.instanceName, req.body.nodePath);
+    taskHandler.newPartition(req.body.instanceName, req.body.nodePath);
     tools.sendJson(res, 201, `Partition asked`);
 });
 
@@ -295,15 +296,15 @@ function initialize() {
     }
     else {
         let databasePath;
-        let serverPort = 8080; // TODO: remove hardcoded
+        let portHttp = config.portHttp;
 
         for (let i = 2; i < process.argv.length - 1; i++) {
             switch (process.argv[i]) {
                 // Port
                 case '-p':
                 case '--port':
-                    serverPort = parseInt(process.argv[i + 1], 10);
-                    if (serverPort < 0 || 65536 <= serverPort) {
+                    portHttp = parseInt(process.argv[i + 1], 10);
+                    if (portHttp < 0 || 65536 <= portHttp) {
                         tools.fatal(0, 'No valid port provided', 'initialize');
                         process.exit(0);
                     }
@@ -313,9 +314,7 @@ function initialize() {
                 case '-d':
                 case '--database':
                     databasePath = process.argv[i + 1];
-                    if (databasePath) {
-                        databasePath = databasePath;
-                    } else {
+                    if (!databasePath) {
                         tools.fatal(0, 'No valid database provided', 'initialize');
                     }
                     break;
@@ -324,7 +323,7 @@ function initialize() {
                 case '-s':
                 case'--server':
                     taskHandler.setLive(true);
-                    taskHandler.setPort(process.argv[i + 1]);
+                    taskHandler.setPortServer(process.argv[i + 1]);
                     databasePath = taskHandler.getDatabase();
                     if (!databasePath) {
                         tools.fatal(0, 'No valid database on the server', 'initialize');
@@ -345,14 +344,14 @@ function initialize() {
         database = new sqlite.Database(databasePath);
 
         // Start application
-        let server = app.listen(serverPort, function() {
-            console.log(`GUI running on ${serverPort}...`);
+        let server = app.listen(portHttp, function() {
+            console.log(`GUI running on ${portHttp}...`);
         });
 
         // Setup socket server
         io.listen(server).on('connection', function(client) {
             client.on('get-cnf', function(pipename) {
-                taskHandler.readPipeAndSend(pipename, client, 'get-cnf');
+                taskHandler.readPipeAndSend(pipename, client, 'get-cnf', true);
             });
         });
     }
@@ -378,20 +377,6 @@ function exitHandler() {
     if (database && database.open) {
         database.close();
     }
-
-    // Delete database temp files
-    if (fs.existsSync(`${__dirname}/databases/temp/`)) {
-        let files = fs.readdirSync(`${__dirname}/databases/temp/`);
-        files.forEach(file => fs.unlinkSync(`${__dirname}/databases/temp/${file}`));
-    }
-
-    // Delete benchmarks temp files
-    if (fs.existsSync(`${__dirname}/benchmarks/temp/`)) {
-        let files = fs.readdirSync(`${__dirname}/benchmarks/temp/`);
-        files.forEach(file => fs.unlinkSync(`${__dirname}/benchmarks/temp/${file}`));
-    }
-
-    process.kill(process.pid, 'SIGKILL');
 }
 
 // Show help
@@ -408,7 +393,7 @@ function showHelp() {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// MAIN
+// EVENTS
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Catch uncaught exceptions
@@ -420,5 +405,9 @@ process.on('SIGINT', () => process.exit(0));
 // Catch `exit` event
 process.on('exit', exitHandler);
 
-// Initialize
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// MAIN
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 initialize();

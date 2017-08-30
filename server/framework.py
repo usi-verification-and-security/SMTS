@@ -3,7 +3,9 @@ from . import config
 import enum
 import re
 import json
+import shutil
 import sys
+import tempfile
 
 __author__ = 'Matteo Marescotti'
 
@@ -323,6 +325,27 @@ class Fixedpoint(Root):
 #             return self.smt, '(query ' + self.query + ')'
 #         elif isinstance(node, AndNode):
 #             return node.parent.smt, node.smt
+
+
+class Singleton(type):
+    instance = None
+    def __call__(cls, *args, **kw):
+        if not cls.instance:
+             cls.instance = super(Singleton, cls).__call__(*args, **kw)
+        return cls.instance
+
+    
+class TempFile(metaclass=Singleton):
+    def __init__(self):
+        self.next_id = 0
+        self.dir = tempfile.mkdtemp()
+    
+    def __del__(self):
+        shutil.rmtree(self.dir)
+
+    def __repr__(self):
+        self.next_id += 1
+        return self.dir + '/' + str(self.next_id)
 
 
 def smt2json(smt, return_string=False):
