@@ -21,7 +21,7 @@
 
 <body ng-app="myApp">
 
-<div id="smts-main" class="row container-fluid">
+<div id="smts-main" class="row container-fluid" ng-controller="WindowController">
     <!--LEFT COLUMN-->
     <!--Title, Instances, Utilities-->
     <div id="smts-menu" class="col-sm-3">
@@ -288,7 +288,8 @@
 <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="scripts/bootstrap-switch.min.js"></script>
 <!--Angular-->
-<script type="text/javascript" src="https://code.angularjs.org/1.5.3/angular.min.js"></script>
+<!-- Live   --> <!--<script type="text/javascript" src="https://code.angularjs.org/1.5.3/angular.min.js"></script>-->
+<!-- Static --> <script type="text/javascript" src="scripts/angular.1.5.3.min.js"></script>
 <script type="text/javascript" src="scripts/ng-file-upload.min.js"></script>
 <!--Other external libraries-->
 <script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
@@ -306,11 +307,11 @@
 <script type="text/javascript" src="scripts/smts-timeline.js"></script>
 <script type="text/javascript" src="scripts/smts-tree.js"></script>
 <!--Angular-->
-<script type="text/javascript" src="angular/main.js"></script>
+<script type="text/javascript" src="angular/Main.js"></script>
 <script type="text/javascript" src="angular/EventController.js"></script>
 <script type="text/javascript" src="angular/InstancesController.js"></script>
 <script type="text/javascript" src="angular/SolverController.js"></script>
 <script type="text/javascript" src="angular/TaskHandlerController.js"></script>
-<script type="text/javascript" src="angular/ViewController.js"></script>
+<script type="text/javascript" src="angular/WindowController.js"></script>
 
 </html>
