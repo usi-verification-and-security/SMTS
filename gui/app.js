@@ -187,7 +187,7 @@ app.get('/events/:instance', function(req, res) {
                 id:     event.id,
                 ts:     event.ts,
                 node:   JSON.parse(event.node),
-                event:  event.event,
+                type:   event.event,
                 solver: event.solver,
                 data:   JSON.parse(event.data)
             });

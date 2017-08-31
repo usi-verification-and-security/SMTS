@@ -78,7 +78,6 @@ module TreeManager {
         updateSelectedNodes(i: number) : void {
             this.selectedNodes.length = 0; // Clear selected nodes
             let event = this.events[i];
-            console.log('ROOT:', this.root);
             this.selectedNodes.push(this.root.getNode(event.node));
             if (event.data && event.data.node) {
                 this.selectedNodes.push(this.root.getNode(JSON.parse(event.data.node)));
@@ -94,7 +93,7 @@ module TreeManager {
 
             for (let i = begin; i <= end; ++i) {
                 let event = this.events[i];
-                switch (event.event) {
+                switch (event.type) {
                     case '+':
                         this.solvers.forEach(function(solver) {
                             if (solver.name === event.solver) {

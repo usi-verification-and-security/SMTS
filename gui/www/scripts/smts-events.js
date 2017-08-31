@@ -1,38 +1,30 @@
 // Set of functions that manipulate the DOM object 'smts-events-container'
 smts.events = {
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // VARIABLES
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     // {number}: Index of current event selected in events table
     index: -1,
 
     // {TreeManager.Event[]}: List of events to be shown in the events table
     events: [],
 
-    // Make cells of events table with selected nodes bold
-    // @param {Node[]} selectedNodes: List of nodes for which corresponding
-    // events' cells have to be selected.
-    boldSelected: function(selectedNodes) {
-        // Remove bold from all event cells
-        let rows = this.getRows('>td.smts-bold');
-        if (rows) rows.forEach(row => row.classList.remove('smts-bold'));
 
-        // Apply bold to event cells with selected nodes
-        for (let selectedNode of selectedNodes) {
-            let selectedNodeNameStr = JSON.stringify(selectedNode.name);
-            // node
-            rows = this.getRows(`[data-node="${selectedNodeNameStr}"]`);
-            if (rows) rows.forEach(row => row.children[2].classList.add('smts-bold'));
-            // data-node
-            rows = this.getRows(`[data-data-node="${selectedNodeNameStr}"]`);
-            if (rows) rows.forEach(row => row.children[4].classList.add('smts-bold'));
-        }
-    },
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // EVENTS
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Append events to existing ones
     // @param {TreeManager.Event[]}: The events to append.
     append: function(events) {
         // Transform objects into TreeManager.Event
-        for (let event of events) {
-            this.events.push(new TreeManager.Event(event));
+        if (events) {
+            let startTime = events[0].ts;
+            for (let event of events) {
+                this.events.push(new TreeManager.Event(event, startTime));
+            }
         }
     },
 
@@ -76,6 +68,31 @@ smts.events = {
             return this.events[this.index];
         }
         return null;
+    },
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // EVENTS TABLE
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // Make cells of events table with selected nodes bold
+    // @param {Node[]} selectedNodes: List of nodes for which corresponding
+    // events' cells have to be selected.
+    boldSelected: function(selectedNodes) {
+        // Remove bold from all event cells
+        let rows = this.getRows('>td.smts-bold');
+        if (rows) rows.forEach(row => row.classList.remove('smts-bold'));
+
+        // Apply bold to event cells with selected nodes
+        for (let selectedNode of selectedNodes) {
+            let selectedNodeNameStr = JSON.stringify(selectedNode.name);
+            // node
+            rows = this.getRows(`[data-node="${selectedNodeNameStr}"]`);
+            if (rows) rows.forEach(row => row.children[2].classList.add('smts-bold'));
+            // data-node
+            rows = this.getRows(`[data-data-node="${selectedNodeNameStr}"]`);
+            if (rows) rows.forEach(row => row.children[4].classList.add('smts-bold'));
+        }
     },
 
     // Get rows of events table

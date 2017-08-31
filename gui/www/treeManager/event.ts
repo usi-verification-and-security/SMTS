@@ -3,7 +3,7 @@ module TreeManager {
         id:     number;   // Identification number of the event
         ts:     number;   // Time stamp, when the event occurred
         node:   number[]; // Name of the node associated to the event
-        event:   string;   // Type of the event ('AND', 'OR', '+', '-', 'SOLVED' or 'STATUS')
+        type:   string;   // Type of the event ('AND', 'OR', '+', '-', 'SOLVED' or 'STATUS')
         solver: string;   // Address of the solver associated to the event
         data:   any;      // Extra data associated to the event
 
@@ -13,11 +13,11 @@ module TreeManager {
         // event.
         // @param {number} startTime [default=0]: Optional starting time. If
         // provided, the starting time is detracted to the event time stamp.
-        constructor(event: any, startTime: number = 0) {
+        constructor(event: any, startTime) {
             this.id     = event.id;
             this.ts     = event.ts - startTime;
             this.node   = event.node;
-            this.event  = event.event;
+            this.type   = event.type;
             this.solver = event.solver;
             this.data   = event.data;
 
@@ -37,16 +37,5 @@ module TreeManager {
             }
             return this.node;
         }
-
-        // TODO: remove
-        equalAny(events) {
-            for (let event of events) {
-                if (this.id === event.id) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
     }
 }

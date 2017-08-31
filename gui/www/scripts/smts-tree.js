@@ -37,7 +37,7 @@ smts.tree = {
 
     // Node spacing
     LINE_HEIGHT: 35, // Vertical space between to nodes (in pixels)
-    LINK_LENGTH: 10, // Horizontal space between two nodes (in pixels)
+    LINK_LENGTH: 50, // Horizontal space between two nodes (in pixels)
 
     // Nodes
     NODE_AND_RADIUS: 4.5,        // Radius of circle (in pixels)
@@ -86,10 +86,6 @@ smts.tree = {
         root.x0 = height / 2;
         root.y0 = 0;
 
-        // Calculate max label length
-        // This has to be computed before reversing the root.
-        let maxLabelLength = root.getMaxLabelLength();
-
         // Compute the new tree layout
         // Using `getMaxLevelWidth` prevents the layout looking squashed when new nodes are made visible or looking sparse
         // when nodes are removed, making the layout more consistent.
@@ -98,7 +94,7 @@ smts.tree = {
         let d3Links = d3Tree.links(d3Nodes);
 
         // Set widths between levels based on maxLabelLength
-        d3Nodes.forEach(node => node.y = (node.depth * (maxLabelLength * this.LINK_LENGTH)));
+        d3Nodes.forEach(node => node.y = (node.depth * this.LINK_LENGTH));
 
         // Generate DOM tree
         this.makeNodes(svgGroup, d3Nodes);
