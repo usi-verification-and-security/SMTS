@@ -25,7 +25,7 @@ app.controller('WindowController', ['$scope', '$rootScope', '$window', '$http', 
         // Regenerate tree on window resize
         $(window).resize(function() {
             if (smts.tree.tree) {
-                smts.tree.tree.arrangeTree(smts.events.index);
+                smts.tree.tree.resize(smts.events.index);
                 smts.tree.build();
             }
         });

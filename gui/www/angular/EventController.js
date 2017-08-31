@@ -3,16 +3,16 @@ app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', '
 
         // Update events on instance selected
         $scope.$on('select-instance', function() {
-            // Check if events table is scrolled to bottom. The check has to be
-            // performed here, because later the scroll will change.
+            // The check has to be done here before updating the events
             let isScrollBottom = smts.events.isScrollBottom();
 
-            // Make timeline
-            let events = smts.tree.tree.getEvents(smts.events.index + 1);
-            $scope.events = events;
+            // Events have to be stored in `$scope` so that Angular can update
+            // them automatically.
+            // $scope.events = smts.tree.tree.getEvents(smts.events.index + 1);
+            $scope.events = smts.events.get();
 
-            // Select last event
-            $scope.selectEvent($scope.events[$scope.events.length - 1], $scope.events.length - 1, isScrollBottom);
+            // Select event
+            $scope.selectEvent($scope.events[smts.events.index], smts.events.index, isScrollBottom);
         });
 
         // Show tree up to clicked event
@@ -27,7 +27,7 @@ app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', '
         $scope.selectEvent = function(event, index, isScrollBottom) {
             // Build tree
             smts.events.index = index;
-            smts.tree.tree.arrangeTree(smts.events.index);
+            smts.tree.tree.resize(smts.events.index);
             smts.tree.build();
 
             // Update data table
@@ -45,9 +45,7 @@ app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', '
                 smts.events.highlight([event]);
                 smts.events.update(smts.tree.tree.selectedNodes);
                 smts.solvers.update(smts.tree.tree.selectedNodes);
-                if (isScrollBottom) {
-                    smts.events.scrollBottom();
-                }
+                if (isScrollBottom) smts.events.scrollBottom();
             }, 0);
 
             // Focus the events table for fast arrow selection

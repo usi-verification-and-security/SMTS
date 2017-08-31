@@ -63,6 +63,7 @@ module TreeManager {
 
         // Get node in tree with corresponding node name
         getNode(nodeName) {
+            console.log(nodeName);
             let node: Node = this;
             for (let i = 0; i < nodeName.length; ++i) {
                 node = node.children[nodeName[i]];

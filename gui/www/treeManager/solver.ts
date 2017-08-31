@@ -1,7 +1,7 @@
 module TreeManager {
     export class Solver {
-        name: string;
-        node: number[]; // node on which the solver is working
+        name: string;   // TODO: change to `address`
+        node: number[]; // TODO: change to `nodeName`
         data: Object;
         event: Event;
 

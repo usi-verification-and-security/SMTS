@@ -184,12 +184,12 @@ app.get('/events/:instance', function(req, res) {
         let eventsJson = [];
         events.forEach(function(event) {
             eventsJson.push({
-                id: event.id,
-                ts: event.ts,
-                node: JSON.parse(event.node),
-                event: event.event,
+                id:     event.id,
+                ts:     event.ts,
+                node:   JSON.parse(event.node),
+                event:  event.event,
                 solver: event.solver,
-                data: JSON.parse(event.data)
+                data:   JSON.parse(event.data)
             });
         });
         tools.sendJson(res, 200, eventsJson);

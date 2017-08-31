@@ -108,22 +108,34 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
                 function(res) {
                     let events = res.data || [];
 
-                    if (!eventId) $scope.events = []; // Reset events if new request
+                    // Reset events if new request
+                    if (!eventId) smts.events.reset();
 
                     // Return if we receive an empty update from the current instance
                     let instanceName = smts.instances.getSelected();
                     if (instance.name === instanceName && !events.length) {
                         return;
                     }
-                    $scope.events = $scope.events.concat(events);
+
+                    // Update tree only if the selected event is the last one
+                    // and the table is scrolled at bottom. The check has to be
+                    // done here before updating the events.
+                    let isUpdate = smts.events.isLastSelected() && smts.events.isScrollBottom();
+
+                    // Append new events
+                    smts.events.append(events);
 
                     // Update last event
-                    let lastEvent = $scope.events[$scope.events.length - 1];
+                    let lastEvent = smts.events.getLast();
                     if (lastEvent) $scope.lastEventId = lastEvent.id;
 
-                    // Initialize tree
-                    smts.tree.setEvents($scope.events);
-                    smts.events.index = $scope.events.length - 1;
+                    // Update tree and set new index
+                    smts.tree.update(smts.events.get());
+
+                    // Update index
+                    if (isUpdate) {
+                        smts.events.index = smts.events.events.length - 1;
+                    }
 
                     // Initialize timeline
                     smts.timeline.clear();

@@ -122,10 +122,8 @@ smts.tree = {
     },
 
 
-    setEvents: function(events) {
-        this.tree = new TreeManager.Tree();
-        this.tree.createEvents(events);
-        this.tree.initializeSolvers(events);
+    update: function(events) {
+        this.tree = new TreeManager.Tree(events);
     },
 
 

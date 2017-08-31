@@ -2,7 +2,10 @@
 smts.events = {
 
     // {number}: Index of current event selected in events table
-    index: 0,
+    index: -1,
+
+    // {TreeManager.Event[]}: List of events to be shown in the events table
+    events: [],
 
     // Make cells of events table with selected nodes bold
     // @param {Node[]} selectedNodes: List of nodes for which corresponding
@@ -22,6 +25,57 @@ smts.events = {
             rows = this.getRows(`[data-data-node="${selectedNodeNameStr}"]`);
             if (rows) rows.forEach(row => row.children[4].classList.add('smts-bold'));
         }
+    },
+
+    // Append events to existing ones
+    // @param {TreeManager.Event[]}: The events to append.
+    append: function(events) {
+        // Transform objects into TreeManager.Event
+        for (let event of events) {
+            this.events.push(new TreeManager.Event(event));
+        }
+    },
+
+    // Get all events
+    // @return {TreeManager.Event[]}: The events.
+    get: function() {
+        return this.events;
+    },
+
+    // Tell if last event is the selected one.
+    // @return {boolean}: `true` if last event is the selected one, `false`
+    // otherwise.
+    isLastSelected: function() {
+        return this.index === this.events.length - 1;
+    },
+
+    // Reset events
+    reset: function() {
+        this.events.length = 0;
+        this.index = -1;
+    },
+
+    // Set events
+    // @param {object[]}: The events.
+    set: function(events) {
+        this.events.length = 0;
+        this.append(events);
+    },
+
+    // Get last event
+    // @return {TreeManager.Event}: The last event.
+    getLast: function() {
+        return this.events[this.events.length - 1];
+    },
+
+    // Get selected event
+    // @return {TreeManager.Event}: The selected event, or null if none is
+    // selected.
+    getSelected: function() {
+        if (0 <= this.index && this.index < this.events.length) {
+            return this.events[this.index];
+        }
+        return null;
     },
 
     // Get rows of events table
