@@ -11,6 +11,9 @@ smts.events = {
     // {TreeManager.Event[]}: List of events to be shown in the events table
     events: [],
 
+    // {number}: Start time (in seconds) for events time stamp
+    startTime: 0,
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // EVENTS
@@ -20,19 +23,19 @@ smts.events = {
     // @param {TreeManager.Event[]}: The events to append.
     append: function(events) {
         // Transform objects into TreeManager.Event
-        if (events) {
-            let startTime = this.events.length > 0
-                ? this.events[0].ts
-                : events[0].ts;
-            for (let event of events) {
-                this.events.push(new TreeManager.Event(event, startTime));
-            }
+        for (let event of events) {
+            this.events.push(new TreeManager.Event(event, this.startTime));
         }
     },
 
-    // Get all events
+    // Get events
+    // @param {number} n [dafault=0]: Number of elements to be takes. If `n` is
+    // 0 (default value), all events are taken.
     // @return {TreeManager.Event[]}: The events.
-    get: function() {
+    get: function(n = 0) {
+        if (n > 0) {
+            return this.events.slice(0, n)
+        }
         return this.events;
     },
 
@@ -44,15 +47,19 @@ smts.events = {
     },
 
     // Reset events
-    reset: function() {
+    // @param {number} startTime [default=0]: New start time (in seconds) for
+    // events time stamps.
+    reset: function(startTime = 0) {
         this.events.length = 0;
         this.index = -1;
+        this.startTime = startTime;
     },
 
     // Set events
     // @param {object[]}: The events.
     set: function(events) {
         this.events.length = 0;
+        if (events.length > 0) this.startTime = events[0].ts;
         this.append(events);
     },
 

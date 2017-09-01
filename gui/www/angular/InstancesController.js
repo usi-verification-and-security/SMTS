@@ -109,7 +109,7 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
                     let events = res.data || [];
 
                     // Reset events if new request
-                    if (!eventId) smts.events.reset();
+                    if (!eventId) smts.events.reset(events.length > 0 ? events[0].ts : 0);
 
                     // Return if we receive an empty update from the current instance
                     let instanceName = smts.instances.getSelected();
@@ -137,9 +137,9 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
                         smts.events.index = smts.events.events.length - 1;
                     }
 
-                    // Initialize timeline
+                    // Build timeline
                     smts.timeline.clear();
-                    smts.timeline.make(smts.tree.tree.getEvents(smts.events.index + 1));
+                    smts.timeline.make(smts.events.get(smts.events.index + 1));
 
                     // Notify an instance has been selected
                     sharedService.broadcastSelectInstance();
