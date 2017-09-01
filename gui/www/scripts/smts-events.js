@@ -159,6 +159,15 @@ smts.events = {
         container.scrollTop = container.scrollHeight - container.offsetHeight;
     },
 
+    // Select most recent event in events table
+    mostRecent: function() {
+        if (this.events.length > 0) {
+            let rows = this.getRows(':last-child');
+            if (rows) rows[0].click();
+            this.scrollBottom();
+        }
+    },
+
     // Highlight next element in events table
     // Allows events navigation through up and down arrow keys while focus
     // is on events table.
