@@ -11,7 +11,7 @@ smts.solvers = {
 
         // Apply bold to solver cells with selected nodes
         for (let selectedNode of selectedNodes) {
-            let selectedNodeNameStr = JSON.stringify(selectedNode.name);
+            let selectedNodeNameStr = JSON.stringify(selectedNode.path);
             rows = this.getRows(`[data-node="${selectedNodeNameStr}"]`);
             if (rows) rows.forEach(row => row.children[1].classList.add('smts-bold'));
         }
@@ -51,7 +51,7 @@ smts.solvers = {
 
         // Highlight selected nodes
         for (let solver of solvers) {
-            rows = this.getRows(`[data-solver='${solver.name}']`);
+            rows = this.getRows(`[data-solver='${solver.address}']`);
             if (rows) rows.forEach(row => row.classList.add('smts-highlight'));
         }
     },
@@ -80,9 +80,9 @@ smts.solvers = {
         let rows = this.getRows();
         if (rows) rows.forEach(row => row.classList.add('smts-hidden'));
 
-        // Show nodes that are in solver.node
+        // Show nodes that are in solver.nodePath
         for (let selectedNode of selectedNodes) {
-            let selectedNodeNameStr = JSON.stringify(selectedNode.name);
+            let selectedNodeNameStr = JSON.stringify(selectedNode.path);
             rows = this.getRows(`[data-node="${selectedNodeNameStr}"]`);
             if (rows) rows.forEach(row => row.classList.remove('smts-hidden'));
         }

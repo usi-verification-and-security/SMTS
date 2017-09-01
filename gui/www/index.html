@@ -183,16 +183,16 @@
                                     <tbody ng-keydown="shiftSelected($event)" tabindex="0">
                                     <tr id="smts-events-event-{{event.id}}"
                                         data-event="{{event.id}}"
-                                        data-node="{{event.node}}"
+                                        data-node="{{event.nodeName}}"
                                         data-data-node="{{event.data && event.data.node ? event.data.node : null}}"
                                         ng-repeat="event in events"
                                         ng-click="selectEvent(event, $index)">
                                         <td>{{$index}}</td>
                                         <td>{{event.ts}}s</td>
-                                        <td>{{event.node}}</td>
+                                        <td>{{event.nodeName}}</td>
                                         <td>{{event.type}}</td>
                                         <td>{{event.data && event.data.node ? event.data.node : ''}}</td>
-                                        <td>{{event.solver}}</td>
+                                        <td>{{event.solverAddress}}</td>
                                     </tr>
                                     </tbody>
                                 </table>
@@ -223,12 +223,12 @@
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    <tr data-solver="{{solver.name}}"
-                                        data-node="{{solver.node}}"
+                                    <tr data-solver="{{solver.address}}"
+                                        data-node="{{solver.nodePath}}"
                                         ng-repeat="solver in solvers"
                                         ng-click="updateDataTable(solver)">
-                                        <td>{{solver.name}}</td>
-                                        <td>{{solver.node}}</td>
+                                        <td>{{solver.address}}</td>
+                                        <td>{{solver.nodePath}}</td>
                                         <td>{{formatExecutionTime(solver)}}</td>
                                         <td class="smts-hide-on-mode-database">
                                             <div class="btn btn-default btn-xs"

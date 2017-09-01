@@ -10,7 +10,7 @@ smts.data = {
         getClausesBtn.className = 'btn btn-default btn-xs smts-hide-on-mode-database';
         getClausesBtn.innerHTML = 'Get Clauses';
         let instanceName =  smts.instances.getSelected();
-        let nodePath = JSON.stringify(smts.tree.getSelectedNodes()[0].name);
+        let nodePath = JSON.stringify(smts.tree.getSelectedNodes()[0].path);
         getClausesBtn.addEventListener('click', () => smts.cnf.load(instanceName, nodePath, null));
         return getClausesBtn;
     },
@@ -39,7 +39,7 @@ smts.data = {
         let itemNode = {};
         if (node) {
             itemNode.status = node.status;
-            itemNode.solvers = node.solvers.length;
+            itemNode.solversCount = node.solversAddresses.length;
             itemNode.balanceness = node.getBalanceness();
             if (node.info) {
                 for (let key in node.info) {

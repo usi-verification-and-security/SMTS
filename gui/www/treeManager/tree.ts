@@ -25,15 +25,15 @@ module TreeManager {
         // Initialize solvers of the tree
         // @param {any[]} events: List of events from which the solvers are
         // taken.
-        initializeSolvers(nodes) : void {
-            for (let node of nodes) {
-                if (!node.solver) {
+        initializeSolvers(events) : void {
+            for (let event of events) {
+                if (!event.solverAddress) {
                     continue;
                 }
                 // Insert solver in `this.solvers`, only if the solver is not
                 // already present.
-                if (!this.solvers.some(solver => solver.name === node.solver)) {
-                    this.solvers.push(new Solver(node.solver));
+                if (!this.solvers.some(solver => solver.address === event.solverAddress)) {
+                    this.solvers.push(new Solver(event.solverAddress));
                 }
             }
         }
@@ -78,7 +78,7 @@ module TreeManager {
         updateSelectedNodes(i: number) : void {
             this.selectedNodes.length = 0; // Clear selected nodes
             let event = this.events[i];
-            this.selectedNodes.push(this.root.getNode(event.node));
+            this.selectedNodes.push(this.root.getNode(event.nodeName));
             if (event.data && event.data.node) {
                 this.selectedNodes.push(this.root.getNode(JSON.parse(event.data.node)));
             }
@@ -96,7 +96,7 @@ module TreeManager {
                 switch (event.type) {
                     case '+':
                         this.solvers.forEach(function(solver) {
-                            if (solver.name === event.solver) {
+                            if (solver.address === event.solverAddress) {
                                 solver.update(event);
                             }
                         });
@@ -104,7 +104,7 @@ module TreeManager {
 
                     case '-':
                         this.solvers.forEach(function(solver) {
-                            if (solver.name === event.solver) {
+                            if (solver.address === event.solverAddress) {
                                 solver.update(null);
                             }
                         });

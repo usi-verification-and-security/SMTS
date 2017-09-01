@@ -1,9 +1,9 @@
 module TreeManager {
     export class Node {
-        name:               number[];             // Path that identifies the node, e.g. [0,3,4,0,1]
+        path:               number[];             // Path that identifies the node, e.g.: [0,3,4,0,1]
         type:               string;               // 'AND' or 'OR'
         children:           Node[]   = [];        // Children nodes
-        solvers:            string[] = [];        // Solvers working on node
+        solversAddresses:   string[] = [];        // Addresses of solvers working on node
         status:             string   = 'unknown'; // 'sat', 'unsat' or 'unknown'
         info:               object   = {};        // Information concerning the node
         isStatusPropagated: boolean  = false;     // `true` if status has been propagated from children
@@ -12,7 +12,7 @@ module TreeManager {
         // @param {number[]} path: Path of the node.
         // @param {string} tye: Type of the node.
         constructor(path: number[], type: string) {
-            this.name = path;
+            this.path = path;
             this.type = type;
         }
 
@@ -23,11 +23,11 @@ module TreeManager {
         // otherwise.
         equalAny(nodes: Node[]) : boolean {
             return nodes.some(node => {
-                if (this.name.length !== node.name.length) {
+                if (this.path.length !== node.path.length) {
                     return false;
                 }
-                for (let i = 0; i < this.name.length; ++i) {
-                    if (this.name[i] !== node.name[i]) {
+                for (let i = 0; i < this.path.length; ++i) {
+                    if (this.path[i] !== node.path[i]) {
                         return false;
                     }
                 }
@@ -106,26 +106,26 @@ module TreeManager {
                     if (event.data && event.data.node) {
                         // Insert node in correct position
                         node = new Node(JSON.parse(event.data.node), event.type);
-                        let parent = this.getNode(node.name.slice(0, node.name.length - 1));
-                        parent.children[node.name[node.name.length - 1]] = node;
+                        let parent = this.getNode(node.path.slice(0, node.path.length - 1));
+                        parent.children[node.path[node.path.length - 1]] = node;
                     }
                     break;
 
                 case '+':
-                    node = this.getNode(event.node);
-                    node.solvers.push(event.solver);
+                    node = this.getNode(event.nodeName);
+                    node.solversAddresses.push(event.solverAddress);
                     break;
 
                 case '-':
-                    node = this.getNode(event.node);
-                    let index = node.solvers.indexOf(event.solver);
+                    node = this.getNode(event.nodeName);
+                    let index = node.solversAddresses.indexOf(event.solverAddress);
                     if (index > -1) {
-                        node.solvers.splice(index, 1);
+                        node.solversAddresses.splice(index, 1);
                     }
                     break;
 
                 case 'STATUS':
-                    node = this.getNode(event.node);
+                    node = this.getNode(event.nodeName);
                     node.status = event.data.report;
                     break;
 
@@ -138,7 +138,7 @@ module TreeManager {
                                 node.isStatusPropagated = true;
                             }
                             else {
-                                console.log(`ERROR: status propagated for node ${node.name} already solved`);
+                                console.error(`ERROR: status propagated for node ${node.path} already solved`);
                             }
                         }
                     }

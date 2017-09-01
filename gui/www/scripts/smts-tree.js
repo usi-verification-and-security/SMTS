@@ -271,7 +271,7 @@ smts.tree = {
             .attr('x', node => node.children ? -this.TEXT_OFFSET : this.TEXT_OFFSET)
             .attr('dy', '.35em')
             .attr('text-anchor', node => node.children ? 'end' : 'start')
-            .text(node => node.type === 'AND' ? node.solvers.length : null);
+            .text(node => node.type === 'AND' ? node.solversAddresses.length : null);
 
         // Transition nodes to their new position.
         svgNodes.transition()
@@ -304,7 +304,7 @@ smts.tree = {
     // is not partitioned yet.
     requestPartitioning: function(node) {
         let instanceName = smts.instances.getSelected();
-        let nodePath = JSON.stringify(node.name);
+        let nodePath = JSON.stringify(node.path);
         $.ajax({
             url: `/partition`,
             type: 'POST',

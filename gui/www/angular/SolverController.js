@@ -18,9 +18,9 @@ app.controller('SolverController', ['$scope', '$rootScope', '$window', '$http', 
         $scope.getLearnts = function(evt, solver) {
             evt.stopPropagation();
             let instanceName = smts.instances.getSelected();
-            let nodePath = JSON.stringify(smts.tree.getSelectedNodes()[0].name);
-            let solverName = solver.name;
-            smts.cnf.load(instanceName, nodePath, solverName);
+            let nodePath = JSON.stringify(smts.tree.getSelectedNodes()[0].path);
+            let solverAddress = solver.address;
+            smts.cnf.load(instanceName, nodePath, solverAddress);
         };
 
         // Get execution time of solver

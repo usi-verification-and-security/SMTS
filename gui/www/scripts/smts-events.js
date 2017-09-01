@@ -21,7 +21,9 @@ smts.events = {
     append: function(events) {
         // Transform objects into TreeManager.Event
         if (events) {
-            let startTime = events[0].ts;
+            let startTime = this.events.length > 0
+                ? this.events[0].ts
+                : events[0].ts;
             for (let event of events) {
                 this.events.push(new TreeManager.Event(event, startTime));
             }
@@ -85,7 +87,7 @@ smts.events = {
 
         // Apply bold to event cells with selected nodes
         for (let selectedNode of selectedNodes) {
-            let selectedNodeNameStr = JSON.stringify(selectedNode.name);
+            let selectedNodeNameStr = JSON.stringify(selectedNode.path);
             // node
             rows = this.getRows(`[data-node="${selectedNodeNameStr}"]`);
             if (rows) rows.forEach(row => row.children[2].classList.add('smts-bold'));
@@ -201,9 +203,9 @@ smts.events = {
         let rows = this.getRows();
         if (rows) rows.forEach(row => row.classList.add('smts-hidden'));
 
-        // Show nodes that are in event.node or event.data.node
+        // Show nodes that are in event.nodeName or event.data.node
         for (let selectedNode of selectedNodes) {
-            let selectedNodeNameStr = JSON.stringify(selectedNode.name);
+            let selectedNodeNameStr = JSON.stringify(selectedNode.path);
             // node
             rows = this.getRows(`[data-node="${selectedNodeNameStr}"]`);
             if (rows) rows.forEach(row => row.classList.remove('smts-hidden'));

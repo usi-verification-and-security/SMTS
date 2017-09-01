@@ -1,19 +1,23 @@
 module TreeManager {
     export class Solver {
-        name:  string;   // TODO: change to `address`
-        node:  number[]; // TODO: change to `nodeName`
-        data:  any;      // Extra information concerning the solving
-        event: Event;    // Event currently associated to solver
+        address:  string;    // Address of the solver, e.g.: '["127.0.0.1", 64742]'
+        nodePath: number[];  // Path of the node associated to the solver
+        data:     any;       // Extra information concerning the solving
+        event:    Event;     // Event currently associated to solver
 
-        constructor(name: string) {
-            this.name = name;
-            this.node = [];
+        // Constructor
+        // @param {string} address: Address of the solver.
+        constructor(address: string) {
+            this.address  = address;
+            this.nodePath = [];
         }
 
-        update(event: Event) {
-            this.data  = event ? event.data : null;
-            this.node  = event ? event.node : null;
-            this.event = event;
+        // Update solver with given event information
+        // @param {Event} event: The event.
+        update(event: Event) : void {
+            this.data      = event ? event.data     : null;
+            this.nodePath  = event ? event.nodeName : null;
+            this.event     = event;
         }
     }
 }
