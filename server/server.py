@@ -136,7 +136,6 @@ class Solver(net.Socket):
                 'command': 'cnf-learnts',
                 'pipename': pipename
             }, '')
-            print(pipename)
         return pipename
             
     def ask_partitions(self, n, node: framework.AndNode = None):

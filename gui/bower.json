@@ -1,0 +1,15 @@
+{
+  "name": "SMTS Viewer",
+  "dependencies": {
+    "jquery": "1.11.1",
+    "bootstrap": "3.3.7",
+    "bootstrap-switch": "3.3.4",
+    "angular": "angularjs#1.5.3",
+    "ng-file-upload": "10.0.4",
+    "d3": "3.5.17",
+    "vis": "4.20.1"
+  },
+  "resolutions": {
+    "jquery": "1.11.1"
+  }
+}

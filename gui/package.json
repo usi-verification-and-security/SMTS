@@ -4,7 +4,7 @@
   "main": "app.js",
   "description": "Jelena's bachelor project",
   "scripts": {
-    "install": "node ./node_modules/.bin/tsc ./www/treeManager/*.ts",
+    "install": "bower install && node ./node_modules/.bin/tsc ./www/treeManager/*.ts",
     "start": "node ./app.js",
     "dev": "npm install && node ./app.js"
   },
@@ -15,6 +15,7 @@
   "dependencies": {
     "@types/node": "^7.0.11",
     "body-parser": "1.17.1",
+    "bower": "^1.8.0",
     "express": "4.15.2",
     "express-fileupload": "^0.1.3",
     "fs": "0.0.2",

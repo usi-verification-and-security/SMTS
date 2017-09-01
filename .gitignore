@@ -7,6 +7,7 @@ gui/.idea/
 gui/benchmarks/
 gui/databases/
 gui/node_modules/
+gui/www/scripts-external/
 gui/www/SMT/*.d.ts
 gui/www/SMT/*.js
 gui/www/SMT/*.map

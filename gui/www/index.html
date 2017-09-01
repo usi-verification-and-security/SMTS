@@ -8,13 +8,17 @@
     <link rel="stylesheet" href="css/smts-tables.css">
     <link rel="stylesheet" href="css/smts-timeline.css">
     <link rel="stylesheet" href="css/smts-tree.css">
-    <link rel="stylesheet" href="css/bootstrap-switch.min.css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.20.1/vis.min.css">
+
+    <!--External styles-->
+    <link rel="stylesheet" href="scripts-external/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="scripts-external/bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.min.css">
+    <link rel="stylesheet" href="scripts-external/vis/dist/vis.min.css">
+
+    <!--Custom styles-->
     <style type="text/css"></style>
 
+    <!--Other-->
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
     <link rel="shortcut icon" type="image/x-icon" href="images/Logo_Budakovic.png"/>
     <base href="">
 </head>
@@ -283,27 +287,28 @@
     </div>
 </div>
 
-</body>
-
 <!--jQuery-->
-<script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
-<!--<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>-->
+<script type="text/javascript" src="scripts-external/jquery/dist/jquery.min.js"></script>
+
 <!--Bootstrap-->
-<script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-<script type="text/javascript" src="scripts/bootstrap-switch.min.js"></script>
+<script type="text/javascript" src="scripts-external/bootstrap/dist/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="scripts-external/bootstrap-switch/dist/js/bootstrap-switch.min.js"></script>
+
 <!--Angular-->
-<!-- Live   --> <!--<script type="text/javascript" src="https://code.angularjs.org/1.5.3/angular.min.js"></script>-->
-<!-- Static --> <script type="text/javascript" src="scripts/angular.1.5.3.min.js"></script>
-<script type="text/javascript" src="scripts/ng-file-upload.min.js"></script>
+<script type="text/javascript" src="scripts-external/angular/angular.min.js"></script>
+<script type="text/javascript" src="scripts-external/ng-file-upload/ng-file-upload.min.js"></script>
+
 <!--Other external libraries-->
-<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.20.1/vis.min.js"></script>
+<script type="text/javascript" src="scripts-external/d3/d3.min.js"></script>
+<script type="text/javascript" src="scripts-external/vis/dist/vis.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
+
 <!--TreeManager-->
 <script type="text/javascript" src="treeManager/Event.js"></script>
 <script type="text/javascript" src="treeManager/Node.js"></script>
 <script type="text/javascript" src="treeManager/Solver.js"></script>
 <script type="text/javascript" src="treeManager/Tree.js"></script>
+
 <!--Utilities-->
 <script type="text/javascript" src="scripts/smts.js"></script>
 <script type="text/javascript" src="scripts/smts-cnf.js"></script>
@@ -313,7 +318,8 @@
 <script type="text/javascript" src="scripts/smts-solvers.js"></script>
 <script type="text/javascript" src="scripts/smts-timeline.js"></script>
 <script type="text/javascript" src="scripts/smts-tree.js"></script>
-<!--Angular-->
+
+<!--Controllers-->
 <script type="text/javascript" src="angular/Main.js"></script>
 <script type="text/javascript" src="angular/EventController.js"></script>
 <script type="text/javascript" src="angular/InstancesController.js"></script>
@@ -321,4 +327,5 @@
 <script type="text/javascript" src="angular/TaskHandlerController.js"></script>
 <script type="text/javascript" src="angular/WindowController.js"></script>
 
+</body>
 </html>
