@@ -142,8 +142,12 @@
         <!--<div id="smts-content-title" class="smts-container-title">Content</div>-->
 
         <ul id="smts-content-navbar" class="nav nav-tabs smts-navbar">
-            <li id="smts-content-navbar-tree" class="active"><a data-toggle="tab" href="#smts-content-instance">Tree</a></li>
-            <li id="smts-content-navbar-cnf" class="smts-hide-on-mode-database"><a data-toggle="tab" href="#smts-content-cnf">CNF</a></li>
+            <li id="smts-content-navbar-tree" class="active" onclick="smts.tree.build()">
+                <a data-toggle="tab" href="#smts-content-instance">Tree</a>
+            </li>
+            <li id="smts-content-navbar-cnf" class="smts-hide-on-mode-database">
+                <a data-toggle="tab" href="#smts-content-cnf">CNF</a>
+            </li>
         </ul>
 
         <div id="smts-content-tab-content" class="tab-content">

@@ -687,6 +687,7 @@ smts.cnf = {
     // Turn on loading animation
     // The animation should turned on while the network is being rendered.
     loadAnimationOn: function() {
+        // First child is `<a>` element
         let tab = document.getElementById('smts-content-navbar-cnf').firstChild;
         let animations = [ 'CNF.', 'CNF..', 'CNF...' ];
         let animationCurrent = 0;
@@ -699,7 +700,9 @@ smts.cnf = {
     // Turn off loading animation
     // The animation should be turned off once the network has been rendered.
     loadAnimationOff: function() {
+        console.log('ANIMATION OFF');
         clearInterval(this.loadAnimationInterval);
+        // First child is `<a>` element
         let tab = document.getElementById('smts-content-navbar-cnf').firstChild;
         tab.innerHTML = 'CNF';
     },

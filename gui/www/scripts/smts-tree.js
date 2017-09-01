@@ -52,7 +52,7 @@ smts.tree = {
     // Scale
     SCALE_MIN: 0.1, // Minimum scale factor
     SCALE_MAX: 3.0, // Maximum scale factor
-    scale: 1,       // Current scaling factor
+    scale: 1,       // Current scale factor
 
     // Frame movement
     TRANSITION_DURATION: 0, // Duration of frame transition to another node (in milliseconds)
@@ -62,7 +62,7 @@ smts.tree = {
     /// TREE MANIPULATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // Generate DOM tree
+    // Build DOM tree, based on `this.tree`
     build: function() {
 
         let root = this.tree.root;
@@ -87,8 +87,9 @@ smts.tree = {
         root.y0 = 0;
 
         // Compute the new tree layout
-        // Using `getMaxLevelWidth` prevents the layout looking squashed when new nodes are made visible or looking sparse
-        // when nodes are removed, making the layout more consistent.
+        // Using `getMaxLevelWidth` prevents the layout looking squashed when
+        // new nodes are made visible or looking sparse when nodes are removed,
+        // making the layout more consistent.
         let d3Tree = this.makeD3Tree(width, this.getMaxLevelWidth(root) * this.LINE_HEIGHT);
         let d3Nodes = d3Tree.nodes(root).reverse();
         let d3Links = d3Tree.links(d3Nodes);
@@ -97,8 +98,8 @@ smts.tree = {
         d3Nodes.forEach(node => node.y = (node.depth * this.LINK_LENGTH));
 
         // Generate DOM tree
-        this.makeNodes(svgGroup, d3Nodes);
-        this.makeLinks(svgGroup, d3Links);
+        this.populateNodes(svgGroup, d3Nodes);
+        this.populateLinks(svgGroup, d3Links);
 
         // Stash the old positions for transition
         d3Nodes.forEach(function(node) {
@@ -111,15 +112,32 @@ smts.tree = {
         smts.data.update(selectedNode, 'node');
 
         // Move view in correct position
+        // For some reason, the function must be in a callback
         window.setTimeout(() => {
             this.centerTree(width, height, selectedNode, zoomListener);
             d3.select('#smts-tree').classed('smts-hidden', false);
         }, 0);
     },
 
-
+    // Update tree
+    // @param {object[]} events: List of events needed to build a new tree.
     update: function(events) {
         this.tree = new TreeManager.Tree(events);
+    },
+
+    // Toggle balanceness halos visibility surrounding OR nodes
+    toggleBalanceness: function() {
+        let balancenessOption = document.getElementById('smts-option-balanceness');
+        let balancenessHalos = document.querySelectorAll('.smts-balanceness');
+        if (balancenessOption.checked) {
+            for (let balancenessHalo of balancenessHalos) {
+                balancenessHalo.classList.remove('smts-hidden');
+            }
+        } else {
+            for (let balancenessHalo of balancenessHalos) {
+                balancenessHalo.classList.add('smts-hidden');
+            }
+        }
     },
 
 
@@ -128,7 +146,7 @@ smts.tree = {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Get the position of the tree
-    // @return {String}: The position in the form 'translate(174,150) scale(1)'
+    // @return {string}: The position in the form 'translate(174,150) scale(1)'
     // or `null` if the tree is not present.
     getPosition: function() {
         let tree = document.getElementById('smts-tree');
@@ -146,7 +164,14 @@ smts.tree = {
     /// ZOOM LISTENER
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // Make the zoomListener which calls the zoom function on the "zoom" event constrained within the scaleExtents
+    // Make the zoomListener
+    // The `zoomListener` calls the zoom function on the 'zoom' event,
+    // constrained within the `scaleExtents`.
+    // @param {DOMElement} listener: The element which listens to the 'zoom'
+    // event.
+    // @param {DOMElement} target: The element affected by the zoom (the zoomed
+    // element).
+    // @return {d3.ZoomBehavior}: The zoom behavior used by the d3 library.
     makeZoomListener: function(listener, target) {
         // Update scale on zoom
         let zoomListener = d3.behavior.zoom().scaleExtent([this.SCALE_MIN, this.SCALE_MAX]).on('zoom', () => {
@@ -163,12 +188,15 @@ smts.tree = {
     /// SVG CONTAINER
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // Remove the previous svg element
+    // Remove the previous tree SVG element
     clearSvg: function() {
         d3.select('#smts-tree-container').select('svg').remove();
     },
 
-    // Make an svg element
+    // Make a SVG element, which will be the base for the new tree
+    // @param {number} width: Width of the container.
+    // @param {number} heigh: Height of the container.
+    // @return {DOMElement}: The SVG element.
     makeSvg: function(width, height) {
         return d3.select('#smts-tree-container')
             .append('svg')
@@ -177,7 +205,10 @@ smts.tree = {
             .classed('smts-overlay', true);
     },
 
-    // Append a group which holds all nodes and on which the zoom Listener can act upon
+    // Make group which holds all nodes and on which the zoomListener acts upon
+    // @param {DOMElement} svgBase: The SVG element in which the new element
+    // will be appended.
+    // @return {DOMElement}: The new SVG element.
     makeSvgGroup: function(svgBase) {
         return svgBase.append('g')
             .attr('id', 'smts-tree')
@@ -191,12 +222,18 @@ smts.tree = {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Make a d3 tree
+    // @param {number} width: Width of the tree.
+    // @param {number} heigt: Height of the tree.
+    // @return {d3.TreeLayout}: Layout used by d3 library, that represents the
+    // tree.
     makeD3Tree: function(width, height) {
         // Width and height have swapped order
         return d3.layout.tree().size([height, width]);
     },
 
     // Make a d3 diagonal projection for use by the node paths
+    // @return {d3.DiagonalProjection}: Projection used by the d3 library to
+    // compute the positioning of links between nodes.
     makeD3Diagonal: function() {
         return d3.svg.diagonal().projection(node => [node.y, node.x]);
     },
@@ -206,8 +243,13 @@ smts.tree = {
     /// NODES
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // Make nodes, put them in correct position and assign styles
-    makeNodes: function(svgGroup, d3Nodes) {
+    // Populate nodes with elements and listeners, place them and assign styles
+    // @param {DOMElement} svgGroup: Element containing all nodes. The nodes
+    // will be filled with the actual visible elements (circles, diamonds,
+    // etc.) and event listeners, placed in their correct position, and styles
+    // will be applied.
+    // @param {d3.Node[]} d3Nodes: List containing nodes data.
+    populateNodes: function(svgGroup, d3Nodes) {
         let id = 0;
         let svgNodes = svgGroup.selectAll('g.smts-node')
             .data(d3Nodes, node => node.id || (node.id = ++id));
@@ -280,6 +322,9 @@ smts.tree = {
     },
 
     // Update selected node
+    // Remove previous selected nodes, select the given node and update events
+    // and solvers tables to show only rows concerning that node.
+    // @param {DOMElement} node: The node to be selected.
     updateSelectedNode: function(node) {
         // Remove previous selections
         d3.selectAll('.smts-nodeSelected')
@@ -302,6 +347,8 @@ smts.tree = {
     // Request partitioning on given AND node
     // This works only if the instance is currently being solved and the node
     // is not partitioned yet.
+    // @param {TreeManager.Node} node: The node to be partitioned by the solver
+    // application.
     requestPartitioning: function(node) {
         let instanceName = smts.instances.getSelected();
         let nodePath = JSON.stringify(node.path);
@@ -318,8 +365,11 @@ smts.tree = {
     /// LINKS
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // Make links between nodes, put them in correct position and assign styles
-    makeLinks: function(svgGroup, d3Links) {
+    // Populate links between nodes, place them and assign styles
+    // @param {DOMElement} svgGroup: Element containing all links. The links
+    // will be placed in their correct position and styles will be applied.
+    // @param {d3.Link[]} d3Links: List containing links data.
+    populateLinks: function(svgGroup, d3Links) {
 
         let root = this.tree.root;
 
@@ -353,6 +403,7 @@ smts.tree = {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Set global scale value and call all scaling functions
+    // @param {number} scale: The new scale factor.
     setScale: function(scale) {
         this.scale = scale;
         this.scaleSelectedCircles();
@@ -364,8 +415,12 @@ smts.tree = {
         circles.forEach(circle => circle.setAttribute('r', (this.NODE_SELECTED_RADIUS / this.scale).toString()));
     },
 
-    // Move frame to x, y coordinates
-    move: function(zoomListener, x, y, scale) {
+    // Move frame to (x,y) coordinates
+    // @param {number} x: New horizontal position.
+    // @param {number} y: New vertical position.
+    // @param {number} scale: New scale factor.
+    // @param {d3.ZoomBehavior} zoomListener: Listener that manages the zoom.
+    move: function(x, y, scale, zoomListener) {
         let position = `translate(${x}, ${y}) scale(${scale})`;
 
         d3.select('g')
@@ -379,20 +434,44 @@ smts.tree = {
         zoomListener.translate([x, y]);
     },
 
-    // Move frame centering x, y coordinates
-    center: function(zoomListener, x, y, width, height, scale) {
-        this.move(zoomListener, -y * scale + width / 2, -x * scale + height / 2, scale);
+    // Move frame, centering on (x,y) coordinates
+    // @param {number} x: New horizontal position.
+    // @param {number} y: New vertical position.
+    // @param {number} width: Width of the frame.
+    // @param {number} height: Height of the frame.
+    // @param {number} scale: New scale factor.
+    // @param {d3.ZoomBehavior} zoomListener: Listener that manages the zoom.
+    center: function(x, y, width, height, scale, zoomListener) {
+        this.move(-y * scale + width / 2, -x * scale + height / 2, scale, zoomListener);
     },
 
     // Check if position is between bounds
+    // The (x,y) coordinates must be in the rectangle (left, right, bottom,
+    // top), with an error margin for the rectangle proportional to its size.
+    // @param {number} x: The horizontal position.
+    // @param {number} y: The vertical position.
+    // @param {number} left: The rectangle left bound.
+    // @param {number} right: The rectangle right bound.
+    // @param {number} bottom: The rectangle bottom bound.
+    // @param {number} top: The rectangle top bound.
+    // @return {boolean}: `true` if (x,y) is in the rectangle (considering the
+    // margin of error), `false` otherwise.
     isInBounds: function(x, y, left, right, bottom, top) {
         let errX = (right - left) * this.BOUNDS_ERROR_FACTOR;
         let errY = (top - bottom) * this.BOUNDS_ERROR_FACTOR;
         return left + errX <= x && x < right - errX && bottom + errY <= y && y < top - errY;
     },
 
-    // Center selected node if not in visible frame, otherwise restore the view as it was before
-    centerTree: function(viewerWidth, viewerHeight, node, zoomListener) {
+    // Center tree to correct position
+    // If the selected node is not already visible in the current frame (or if
+    // it is visible, but really close to the border of the frame), then frame
+    // is moved to center the selected node, otherwise the position is restored
+    // as it was in the previous tree representation.
+    // @param {number} width: Width of the frame.
+    // @param {number} height: Height of the frame.
+    // @param {TreeManager.Node} node: Node to be centered.
+    // @param {d3.ZoomBehavior} zoomListener: Listener that manages the zoom.
+    centerTree: function(width, height, node, zoomListener) {
         let position = this.getPosition();
         if (position) {
             let positionSelected = document.querySelector('circle.smts-selected').parentNode.getAttribute('transform');
@@ -402,16 +481,16 @@ smts.tree = {
             let x = translateSelected[0] * scale + translateFrame[0];
             let y = translateSelected[1] * scale + translateFrame[1];
 
-            if (this.isInBounds(x, y, 0, viewerWidth, 0, viewerHeight)) {
-                this.move(zoomListener, translateFrame[0], translateFrame[1], scale);
+            if (this.isInBounds(x, y, 0, width, 0, height)) {
+                this.move(translateFrame[0], translateFrame[1], scale, zoomListener);
             }
             else {
                 let scale = this.getScale(position) || zoomListener.scale();
-                this.center(zoomListener, node.x0, node.y0, viewerWidth, viewerHeight, scale);
+                this.center(node.x0, node.y0, width, height, scale, zoomListener);
             }
         }
         else {
-            this.center(zoomListener, node.x0, node.y0, viewerWidth, viewerHeight, zoomListener.scale());
+            this.center(node.x0, node.y0, width, height, zoomListener.scale(), zoomListener);
         }
     },
 
@@ -420,7 +499,11 @@ smts.tree = {
     /// OTHER
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // Count total number of nodes in each level of depth, and return the greatest
+    // Get width of tree level with the greatest number of nodes
+    // Count total number of nodes in each level of depth, and return the
+    // greatest.
+    // @param {TreeManager.Tree} tree: The tree to be analyzed.
+    // @return {number}: The max level width.
     getMaxLevelWidth: function(tree) {
         let levelWidths = [1];
         getMaxLevelWidthRec(tree, 0);
@@ -437,7 +520,12 @@ smts.tree = {
         }
     },
 
-    // Return `[x, y]` from a transform string of the form 'translate(x, y) scale(z)', null if no translate
+    // Parse a CSS `transform` and get `translate` coordinates
+    // @param {string} position: The CSS `transform` attribute value.
+    // Example: 'translate(12, -15) scale(1.3)'
+    // @return {number[]}: An array containing the `translate` coordinates, or
+    // `null` if the `translate` property is not present.
+    // Example: [12, -15]
     getTranslate: function(position) {
         if (position && position.includes('translate')) {
             let values = position.match(/translate\(([^)]+)\)/)[1].split(',');
@@ -446,25 +534,16 @@ smts.tree = {
         return null;
     },
 
-    // Return `z` from a transform string of the form 'translate(x, y) scale(z)', null if no scale
+    // Parse a CSS `transform` and get `scale` factor
+    // @param {string} position: The CSS `transform` attribute value.
+    // Example: 'translate(12, -15) scale(1.3)'
+    // @return {number}: The value of the `scale` factor, or `null` if the
+    // `scale` property is not present.
+    // Example: 1.3
     getScale: function(position) {
         if (position && position.includes('scale')) {
             return parseFloat(position.match(/scale\(([^)]+)\)/)[1]);
         }
         return null;
-    },
-
-    toggleBalanceness: function() {
-        let balancenessOption = document.getElementById('smts-option-balanceness');
-        let balancenessHalos = document.querySelectorAll('.smts-balanceness');
-        if (balancenessOption.checked) {
-            for (let balancenessHalo of balancenessHalos) {
-                balancenessHalo.classList.remove('smts-hidden');
-            }
-        } else {
-            for (let balancenessHalo of balancenessHalos) {
-                balancenessHalo.classList.add('smts-hidden');
-            }
-        }
     }
 };

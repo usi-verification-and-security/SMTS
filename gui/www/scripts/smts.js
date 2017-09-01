@@ -13,7 +13,7 @@ smts.tools = {
         }
     },
 
-    // Display filename/error message for bootstrap file upload  forms
+    // Display filename/error message for bootstrap file upload forms
     // @param {Event} e: JS event.
     formBrowse: function(e) {
         let file = e.target;
@@ -30,11 +30,5 @@ smts.tools = {
                 message.innerHTML = filename;
             }
         }
-    },
-
-    // Display error message from HTTP request in form
-    // @param {Event} e: JS event.
-    formSubmit: function(e) {
-        // TODO: show error message
     }
 };
