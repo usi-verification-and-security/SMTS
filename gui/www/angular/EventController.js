@@ -1,8 +1,11 @@
 app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', 'sharedService',
-    function($scope, $rootScope, $window, $http, sharedService) {
+    function ($scope, $rootScope, $window, $http, sharedService) {
 
         // Update events on instance selected
-        $scope.$on('select-instance', function() {
+        $scope.$on('select-instance', function () {
+            if (smts.events.index > 0) {
+                return;
+            }
             // The check has to be done here before updating the events
             let isScrollBottom = smts.events.isScrollBottom();
 
@@ -24,7 +27,7 @@ app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', '
         // already scrolled to the bottom. If yes, then the scroll is updated
         // to keep it to the bottom, in order to always have the most recent
         // event in sight, in case of live update.
-        $scope.selectEvent = function(event, index, isScrollBottom) {
+        $scope.selectEvent = function (event, index, isScrollBottom) {
             // Build tree
             smts.events.index = index;
             smts.tree.tree.resize(smts.events.index);
@@ -41,7 +44,7 @@ app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', '
             // N.B.: Angular doesn't offer a `ready` functionality, so it
             // is impossible to detect when the DOM elements are actually
             // ready, thus the functions are called asyncronously.
-            window.setTimeout(function() {
+            window.setTimeout(function () {
                 smts.events.highlight([event]);
                 smts.events.update(smts.tree.tree.selectedNodes);
                 smts.solvers.update(smts.tree.tree.selectedNodes);
@@ -57,7 +60,7 @@ app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', '
 
         // Shift selected element above or below current one
         // @param {event} e: The event triggered by a keyboard input.
-        $scope.shiftSelected = function(e) {
+        $scope.shiftSelected = function (e) {
             if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 smts.events.shift('up');
@@ -68,12 +71,12 @@ app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', '
         };
 
         // Show all events in events table
-        $scope.showAll = function() {
+        $scope.showAll = function () {
             smts.events.showAll();
         };
 
         // Show only events in events table related to selected nodes
-        $scope.showSelected = function() {
+        $scope.showSelected = function () {
             smts.events.showSelected(smts.tree.tree.selectedNodes);
         };
     }]);

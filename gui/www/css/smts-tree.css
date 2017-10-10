@@ -59,5 +59,7 @@ circle.smts-balanceness {
 
 rect.smts-nodeRect {
     fill: lightblue;
-    transform: rotate(45deg) translate(-50%, -50%);
+    transform: rotate(45deg) translate(-5px, -5px);
+    height: 10px;
+    width: 10px;
 }

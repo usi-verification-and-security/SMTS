@@ -41,7 +41,6 @@ smts.tree = {
 
     // Nodes
     NODE_AND_RADIUS: 4.5,        // Radius of circle (in pixels)
-    NODE_OR_SIDE: 10,            // Width of rhombus side (in pixels)
     NODE_SELECTED_RADIUS: 20,    // Radius of selected node circle (in pixels)
     NODE_BALANCENESS_RADIUS: 30, // Radius of height ratio circle (in pixels)
     TEXT_OFFSET: 10,             // Text offset with respect to the center of the circle/rhombus node (in pixels)
@@ -273,8 +272,6 @@ smts.tree = {
         // Add rhombi to OR nodes
         svgGroup.selectAll('.smts-nodeOr')
             .append('rect')
-            .attr('width', this.NODE_OR_SIDE)
-            .attr('height', this.NODE_OR_SIDE)
             .classed('smts-nodeRect', true);
 
         // Make balanceness circle for OR nodes
