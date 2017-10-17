@@ -88,7 +88,7 @@ def entrust(node, header: dict, solver_name, solvers: set):
         if len(solvers) % 3 == 0:
             header["-p"] = "def"
             header["parameter.fixedpoint.pdr.flexible_trace"] = "true"
-            header["parameter.fixedpoint.reset_obligation_queue"] = "false"
+            header["parameter.fixedpoint.spacer.reset_obligation_queue"] = "false"
         if len(solvers) % 3 == 1:
             header["-p"] = "ic3"
             header["parameter.fixedpoint.pdr.flexible_trace"] = "true"

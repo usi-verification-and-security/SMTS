@@ -41,6 +41,7 @@ private:
     net::Pipe pipe;
     std::string instance;
     net::Header header;
+    std::shared_ptr<void> state;
 
     void main() {
         if (!this->header.count("lemmas")) {

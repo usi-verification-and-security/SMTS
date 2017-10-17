@@ -14,42 +14,53 @@
 
 const char *SolverProcess::solver = "Spacer";
 
-z3::context context;
-z3::fixedpoint fixedpoint(context);
-SolverProcess *solverProcess;
-uint8_t level = 0;
+struct State {
+    z3::context context;
+    z3::fixedpoint fixedpoint;
+    SolverProcess *solverProcess;
 
-void push(Z3_fixedpoint_lemma_set s) {
-    std::vector<net::Lemma> lemmas;
-    Z3_fixedpoint_lemma *lemma;
-    while ((lemma = Z3_fixedpoint_lemma_pop(context, s))) {
-        lemmas.push_back(net::Lemma(std::to_string(lemma->level) + " " + lemma->str, level));
-        free(lemma->str);
-        free(lemma);
-    }
-    solverProcess->lemma_push(lemmas);
+    State(SolverProcess *solverProcess) : fixedpoint(context), solverProcess(solverProcess) {}
+};
+
+std::vector<net::Lemma> lemmas;
+
+void new_lemma_eh(void *_state, Z3_ast lemma, unsigned level) {
+    State &state = *static_cast<State *>(_state);
+    z3::solver solver(state.context);
+    solver.add(z3::expr(state.context, lemma));
+    std::ostringstream ss;
+    ss << std::to_string(level) << " " << solver;
+    lemmas.emplace_back(net::Lemma(ss.str(), 0));
 }
 
-void pull(Z3_fixedpoint_lemma_set s) {
+void predecessor_eh(void *_state) {
+    State &state = *static_cast<State *>(_state);
     std::vector<net::Lemma> lemmas;
-    solverProcess->lemma_pull(lemmas);
-    Z3_fixedpoint_lemma l;
+    unsigned level;
+    state.solverProcess->lemma_pull(lemmas);
     for (net::Lemma &lemma:lemmas) {
         std::istringstream is(lemma.smtlib);
-        is >> l.level;
-        l.str = strdup(std::string(std::istreambuf_iterator<char>(is), {}).c_str());
-        Z3_fixedpoint_lemma_push(context, s, &l);
-        free(l.str);
+        is >> level;
+        z3::expr e = state.context.parse_string(std::string(std::istreambuf_iterator<char>(is), {}).c_str());
+        Z3_fixedpoint_add_constraint(state.context, state.fixedpoint, e, level);
     }
 }
 
+void unfold_eh(void *_state) {
+    State &state = *static_cast<State *>(_state);
+    state.solverProcess->lemma_push(lemmas);
+    lemmas.clear();
+}
+
+
 void SolverProcess::init() {
-    solverProcess = this;
+    this->state.reset(new State(this));
+    State &state = *static_cast<State *>(this->state.get());
     FILE *file = fopen("/dev/null", "w");
     //dup2(fileno(file), fileno(stdout));
     //dup2(fileno(file), fileno(stderr));
     fclose(file);
-    z3::params p(context);
+    z3::params p(state.context);
 
     try {
         for (auto &key:this->header.keys(net::Header::parameter)) {
@@ -68,37 +79,34 @@ void SolverProcess::init() {
                         p.set(key.c_str(), (unsigned) stoi(value));
                     }
                     catch (std::exception) {
-                        p.set(key.c_str(), context.str_symbol(value.c_str()));
+                        p.set(key.c_str(), state.context.str_symbol(value.c_str()));
                     }
                 }
             }
 
         }
-        p.set(":engine", context.str_symbol("spacer"));
-        fixedpoint.set(p);
+        p.set(":engine", state.context.str_symbol("spacer"));
+        state.fixedpoint.set(p);
     }
     catch (z3::exception &ex) { // i'm not sending the msg because it's too long
         this->error("cannot set parameters");
     }
+    Z3_fixedpoint_add_callback(state.context, state.fixedpoint, &state, new_lemma_eh, predecessor_eh, unfold_eh);
 }
 
 void SolverProcess::solve() {
-
-    Z3_fixedpoint_set_lemma_pull_callback(context, fixedpoint, pull);
-    Z3_fixedpoint_set_lemma_push_callback(context, fixedpoint, push);
-    level = this->header.level();
-
-    z3::solver solver(context);
+    State &state = *static_cast<State *>(this->state.get());
+    z3::solver solver(state.context);
     std::string smtlib = this->instance;
 
     while (true) {
-        Z3_ast_vector v = Z3_fixedpoint_from_string(context, fixedpoint, (smtlib + this->header["query"]).c_str());
-        //unsigned size = Z3_ast_vector_size(context, v);
-        Z3_ast a = Z3_ast_vector_get(context, v, 0);
+        Z3_ast_vector v = Z3_fixedpoint_from_string(state.context, state.fixedpoint,
+                                                    (smtlib + this->header["query"]).c_str());
+        Z3_ast a = Z3_ast_vector_get(state.context, v, 0);
 
-        Z3_lbool res = Z3_fixedpoint_query(context, fixedpoint, a);
+        Z3_lbool res = Z3_fixedpoint_query(state.context, state.fixedpoint, a);
 
-        z3::stats statistics(context, Z3_fixedpoint_get_statistics(context, fixedpoint));
+        z3::stats statistics(state.context, Z3_fixedpoint_get_statistics(state.context, state.fixedpoint));
         for (uint32_t i = 0; i < statistics.size(); i++) {
             this->header.set(net::Header::statistic, statistics.key(i),
                              statistics.is_uint(i) ?
@@ -125,15 +133,15 @@ void SolverProcess::solve() {
 }
 
 void SolverProcess::interrupt() {
-    context.interrupt();
+    (*static_cast<State *>(this->state.get())).context.interrupt();
 }
 
 void SolverProcess::getCnfClauses(net::Header &header, const std::string &payload) {
-	this->report(header, header["command"], "");
+    this->report(header, header["command"], "");
 }
 
 void SolverProcess::getCnfLearnts(net::Header &header) {
-	this->report(header, header["command"], "");
+    this->report(header, header["command"], "");
 }
 
 void SolverProcess::partition(uint8_t) {}

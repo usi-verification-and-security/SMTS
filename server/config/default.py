@@ -31,12 +31,10 @@ parameters = {
     "Spacer.fixedpoint.spacer.restarts": "false",
     "Spacer.fixedpoint.spacer.share_lemmas": "true",
     "Spacer.fixedpoint.spacer.share_invariants": "true",
-    "Spacer.fixedpoint.spacer.share_lemmas.level": 0,
     "Spacer.fixedpoint.xform.slice": "false",
     "Spacer.fixedpoint.xform.inline_linear": "false",
     "Spacer.fixedpoint.xform.inline_eager": "false",
     "Spacer.fixedpoint.xform.tail_simplifier_pve": "false",
-    "Spacer.fixedpoint.use_heavy_mev": "true",
     "Spacer.fixedpoint.spacer.elim_aux": "false",
     "Spacer.fixedpoint.spacer.reach_dnf": "false"
 }
