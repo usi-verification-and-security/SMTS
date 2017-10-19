@@ -133,14 +133,14 @@ app.controller('InstancesController', ['$scope', '$rootScope', '$window', '$http
                     smts.tree.update(smts.events.get());
 
                     // Update index
-                    if (isUpdate) {
-                        smts.events.index = smts.events.events.length - 1;
-                    }
+                    // TODO! the if cause an error sometimes when changing instance
+                    // if (isUpdate) {
+                         smts.events.index = smts.events.events.length - 1;
+                    // }
 
                     // Build timeline
                     smts.timeline.clear();
                     smts.timeline.make(smts.events.get(smts.events.index + 1));
-
                     // Notify an instance has been selected
                     sharedService.broadcastSelectInstance();
                 }, $scope.error);

@@ -3,9 +3,6 @@ app.controller('EventController', ['$scope', '$rootScope', '$window', '$http', '
 
         // Update events on instance selected
         $scope.$on('select-instance', function () {
-            if (smts.events.index > 0) {
-                return;
-            }
             // The check has to be done here before updating the events
             let isScrollBottom = smts.events.isScrollBottom();
 
