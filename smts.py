@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--version', action='version', version=str(version))
     parser.add_argument('-c', dest='config_path', nargs='+', type=lambda value: server.config.extend(value),
-                        help='config files path. following file updates previous one, and so on ...')
+                        help='config files path. following files update previous ones')
     parser.add_argument('-d', dest='db_path', help='sqlite3 database file path')
     parser.add_argument('-g', dest='gui', action='store_true', help='run GUI in live mode')
     lg = parser.add_argument_group('lemma sharing')
