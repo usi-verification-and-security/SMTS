@@ -171,7 +171,7 @@ module.exports = {
     // @return {number}: The elapsed time in seconds since the instance has
     // started, or `0` if no instance is currently being solved.
     getElapsedTime: function() {
-        return run(`round(time.time() - self.current.started, 2) if self.current else 0`);
+        return run(`round(time.time() - self.current.started, 2) if self.current and self.current.started else 0`);
     },
 
     // Get remaining time until timeout goes off and solving is interrupted
