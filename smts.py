@@ -17,7 +17,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', dest='config_path', nargs='+', type=lambda value: server.config.extend(value),
                         help='config files path. following file updates previous one, and so on ...')
     parser.add_argument('-d', dest='db_path', help='sqlite3 database file path')
-    parser.add_argument('-g', dest='gui', action='store_true', help='run gui in live mode')
+    parser.add_argument('-g', dest='gui', action='store_true', help='run GUI in live mode')
     lg = parser.add_argument_group('lemma sharing')
     lg.add_argument('-l', dest='lemma', action='store_true', help='enable lemma sharing')
     lg.add_argument('-D', dest='lemmaDB', action='store_true', help='store lemmas in database')
@@ -35,6 +35,9 @@ if __name__ == '__main__':
     ps = server.ParallelizationServer(logging.getLogger('server'))
 
     if args.gui:
+        if not args.db_path:
+            logging.error('GUI requires a database. please specify one with -d')
+            sys.exit(-1)
         utils.gui_install()
         gui_thread = threading.Thread(target=utils.gui_start, args=(['-s', str(server.config.port)],))
         gui_thread.daemon = True
