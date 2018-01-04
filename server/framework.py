@@ -334,12 +334,12 @@ class Singleton(type):
              cls.instance = super(Singleton, cls).__call__(*args, **kw)
         return cls.instance
 
-    
+
 class TempFile(metaclass=Singleton):
     def __init__(self):
         self.next_id = 0
         self.dir = tempfile.mkdtemp()
-    
+
     def __del__(self):
         shutil.rmtree(self.dir)
 
@@ -366,7 +366,7 @@ def smt2json(smt, return_string=False):
 
         s = re.sub(r"\"([^\"\\]*(?:\\.[^\"\\]*)*)\"", lambda x: add_string(x.group(1)), smt, 0, re.DOTALL)
         s = re.sub(r"([^\"\s()]+)", r'"\1", ', s)
-        s = re.sub(r", *\)", ")", s)
+        s = re.sub(r",\s*\)", ")", s)
 
         s = re.sub(r"\)\s*[(]", "), (", s)
         s = re.sub(r"\)(?!\s*,|\s*\))", "), ", s)
