@@ -35,7 +35,7 @@ if __name__ == '__main__':
     ps = server.ParallelizationServer(logging.getLogger('server'))
 
     if args.gui:
-        if not args.db_path:
+        if not server.config.db_path:
             logging.error('GUI requires a database. please specify one with -d')
             sys.exit(-1)
         utils.gui_install()
