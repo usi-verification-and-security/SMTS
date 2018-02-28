@@ -37,9 +37,22 @@ def get_benchmarks(db_path):
         if (ts_start is None):
             continue
         benchmark.ts_start = ts_start
-        row_solved = c.execute('SELECT ts, data FROM SolvingHistory WHERE id = (SELECT min(id) '
-                               'FROM SolvingHistory '
-                               'WHERE name = ? AND event = "SOLVED");', (benchmark.name,)).fetchone()
+
+        row_solved = c.execute('select ts, data FROM SolvingHistory where id = (select min(id) '
+                               'from SolvingHistory '
+                               'where name = ? and event = "STATUS" and node = "[]");', (benchmark.name,)).fetchone()
+        if row_solved:
+            benchmark.data = json.loads(row_solved[1])
+            benchmark.data['status'] = benchmark.data['report']
+        else:
+            row_solved = c.execute('select ts, data FROM SolvingHistory where id = (select max(id) '
+                               'from SolvingHistory '
+                               'where name = ? and event = "SOLVED");', (benchmark.name,)).fetchone()
+            if row_solved:
+                benchmark.data = json.loads(row_solved[1])
+                if data['node'] != '[]':
+                    row_solved = None
+
         if not row_solved:
             next_started = c.execute('SELECT ts, data FROM SolvingHistory WHERE id = (SELECT min(id) '
                                      'FROM SolvingHistory '
@@ -50,29 +63,8 @@ def get_benchmarks(db_path):
                 row_solved = (next_started[0], None)
             else:
                 row_solved = (c.execute('SELECT max(ts) FROM SolvingHistory;').fetchone()[0], None)
-        else:
-            # if there is STATUS event on root I use that record instead because
-            # it contains more data (statistics of the solver)
-            # otherwise if STATUS comes from SOLVED of deeper node, then I just use data from STATUS
-            # which is just the status itself.
-            row_root_status = c.execute('SELECT ts, data FROM SolvingHistory WHERE id = (SELECT min(id) '
-                                        'FROM SolvingHistory '
-                                        'WHERE name = ? AND event = "STATUS" AND node="[]");',
-                                        (benchmark.name,)).fetchone()
-            if row_root_status:
-                try:
-                    json_solved = json.loads(row_solved[1])
-                except:
-                    json_solved = {}
-                try:
-                    json_root_status = json.loads(row_root_status[1])
-                except:
-                    json_root_status = {}
-                json_root_status.update(json_solved)
-                row_solved = (row_root_status[0], json.dumps(json_root_status))
 
         benchmark.ts_end = row_solved[0]
-        benchmark.data = json.loads(row_solved[1]) if row_solved[1] else None
     return benchmarks
 
 
