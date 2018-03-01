@@ -376,8 +376,8 @@ def smt2json(smt, return_string=False):
         s = re.sub(r"\(", "[", s)
         s = re.sub(r"\)", "]", s)
 
-        for key in strings:
-            s = s.replace(key, strings[key])
+
+        s = re.sub('(\{[0-9]*\})', lambda x: strings[x.group(1)], s)
 
         return s if return_string else json.loads(s)
 
