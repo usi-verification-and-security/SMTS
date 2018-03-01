@@ -23,7 +23,7 @@ add_executable(solver_opensmt ../main.cpp SolverProcess.cpp OpenSMTSolver.cpp)
 #    add_dependencies(solver_opensmt OpenSMT2)
 #endif ()
 
-set(solver_opensmt_flags "-DPRODUCE_PROOF -DIGNORE_DL_THEORYPROPAGATION -DOPTIMIZE -DNDEBUG -DOSMT1_SUBSTITUTION -DCUSTOM_EL_ALLOC -DTERMS_HAVE_EXPLANATIONS -DUSE_GZ -w")
+set(solver_opensmt_flags "-w")
 
 set_target_properties(solver_opensmt PROPERTIES
         COMPILE_FLAGS ${solver_opensmt_flags}
