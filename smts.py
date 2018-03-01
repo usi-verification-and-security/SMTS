@@ -16,6 +16,7 @@ if __name__ == '__main__':
     parser.add_argument('--version', action='version', version=str(version))
     parser.add_argument('-c', dest='config_path', nargs='+', type=lambda value: server.config.extend(value),
                         help='config files path. following files update previous ones')
+    parser.add_argument('-L', dest='list', action='store_true', help='list config parameters and exit')
     parser.add_argument('-d', dest='db_path', help='sqlite3 database file path')
     parser.add_argument('-g', dest='gui', action='store_true', help='run GUI in live mode')
     lg = parser.add_argument_group('lemma sharing')
@@ -31,6 +32,16 @@ if __name__ == '__main__':
     if args.db_path:
         server.config.db_path = args.db_path
     server.config.db()
+
+    if args.list:
+        for attr_name in dir(server.config):
+            if attr_name.startswith('_'):
+                continue
+            attr = getattr(server.config, attr_name)
+            if type(attr) not in [list, dict, str, int, bool]:
+                continue
+            print('{}: {}'.format(attr_name, getattr(server.config, attr_name)))
+        sys.exit(0)
 
     ps = server.ParallelizationServer(logging.getLogger('server'))
 

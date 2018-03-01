@@ -58,7 +58,7 @@ def extend(path):
     path = pathlib.Path(path).resolve()
     module = _import(path)
     for attr_name in dir(module):
-        if attr_name[:1] == '_':
+        if attr_name.startswith('_'):
             continue
         attr = getattr(module, attr_name)
         if isinstance(attr, dict):
