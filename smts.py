@@ -72,7 +72,7 @@ if __name__ == '__main__':
         files_thread.daemon = True
         files_thread.start()
 
-    if server.config.lemma:
+    if server.config.lemma_sharing:
         # done in separate thread because gethostbyname could take time
         lemma_thread = threading.Thread(target=utils.run_lemma_server, args=(
             server.config.build_path + '/lemma_server',
