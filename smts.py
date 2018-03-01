@@ -20,9 +20,9 @@ if __name__ == '__main__':
     parser.add_argument('-d', dest='db_path', help='sqlite3 database file path')
     parser.add_argument('-g', dest='gui', action='store_true', help='run GUI in live mode')
     lg = parser.add_argument_group('lemma sharing')
-    lg.add_argument('-l', dest='lemma', action='store_true', help='enable lemma sharing')
-    lg.add_argument('-D', dest='lemmaDB', action='store_true', help='store lemmas in database')
-    lg.add_argument('-a', dest='lemmaAgain', action='store_true', help='send lemmas again to solver')
+    lg.add_argument('-l', dest='lemma_sharing', action='store_true', help='enable lemma sharing')
+    lg.add_argument('-D', dest='lemma_db', action='store_true', help='store lemmas in database')
+    lg.add_argument('-r', dest='lemma_resend', action='store_true', help='send same lemmas multiple times to solver')
     sg = parser.add_argument_group('solvers')
     sg.add_argument('-o', dest='opensmt', type=int, metavar='N', help='run N opensmt2 solvers')
     sg.add_argument('-z', dest='z3spacer', type=int, metavar='N', help='run N z3spacer solvers')
@@ -32,6 +32,19 @@ if __name__ == '__main__':
     if args.db_path:
         server.config.db_path = args.db_path
     server.config.db()
+
+    if args.gui:
+        server.config.gui = args.gui
+    if args.lemma_sharing:
+        server.config.lemma_sharing = args.lemma_sharing
+    if args.lemma_db:
+        server.config.lemma_db_path = args.lemma_db
+    if args.lemma_resend:
+        server.config.lemma_resend = args.lemma_resend
+    if args.opensmt:
+        server.config.opensmt = args.opensmt
+    if args.z3spacer:
+        server.config.z3spacer = args.z3spacer
 
     if args.list:
         for attr_name in dir(server.config):
@@ -45,7 +58,7 @@ if __name__ == '__main__':
 
     ps = server.ParallelizationServer(logging.getLogger('server'))
 
-    if args.gui:
+    if server.config.gui:
         if not server.config.db_path:
             logging.error('GUI requires a database. please specify one with -d')
             sys.exit(-1)
@@ -59,20 +72,20 @@ if __name__ == '__main__':
         files_thread.daemon = True
         files_thread.start()
 
-    if args.lemma:
+    if server.config.lemma:
         # done in separate thread because gethostbyname could take time
         lemma_thread = threading.Thread(target=utils.run_lemma_server, args=(
             server.config.build_path + '/lemma_server',
-            server.config.db_path if args.lemmaDB else None,
-            args.lemmaAgain
+            server.config.db_path if server.config.lemma_db_path else None,
+            server.config.lemma_resend
         ))
         lemma_thread.daemon = True
         lemma_thread.start()
 
-    if args.opensmt or args.z3spacer:
+    if server.config.opensmt or server.config.z3spacer:
         utils.run_solvers(
-            (server.config.build_path + '/solver_opensmt', args.opensmt),
-            (server.config.build_path + '/solver_z3spacer', args.z3spacer)
+            (server.config.build_path + '/solver_opensmt', server.config.opensmt),
+            (server.config.build_path + '/solver_z3spacer', server.config.z3spacer)
         )
 
     try:
