@@ -140,8 +140,8 @@ if __name__ == '__main__':
         print(framework.smt2json(file.read(), True))
 
     if args.json:
-        if args.smt2 is True:
+        if args.json is True:
             file = sys.stdin
         else:
-            file = open(args.smt2, 'r')
+            file = open(args.json, 'r')
         print(framework.json2smt(file.read(), True))

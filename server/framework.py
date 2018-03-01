@@ -359,12 +359,13 @@ def smt2json(smt, return_string=False):
         def add_string(s):
             nonlocal strings
             key = '{{{}}}'.format(len(strings))
-            strings[key] = '\\"{}\\"'.format(json.dumps(s)[1:-1])
+            strings[key] = json.dumps(s)[1:-1]
             return key
 
         smt = '({})'.format(smt)
 
-        s = re.sub(r"\"([^\"\\]*(?:\\.[^\"\\]*)*)\"", lambda x: add_string(x.group(1)), smt, 0, re.DOTALL)
+        s = re.sub(r"(\|[^\|]*\|)", lambda x: add_string(x.group(1)), smt, 0, re.DOTALL)
+        s = re.sub(r"(\"[^\"\\]*(?:\\.[^\"\\]*)*\")", lambda x: add_string(x.group(1)), s, 0, re.DOTALL)
         s = re.sub(r"([^\"\s()]+)", r'"\1", ', s)
         s = re.sub(r",\s*\)", ")", s)
 
