@@ -38,9 +38,9 @@ if __name__ == '__main__':
             if attr_name.startswith('_'):
                 continue
             attr = getattr(server.config, attr_name)
-            if type(attr) not in [list, dict, str, int, bool]:
+            if type(attr) not in [list, dict, str, int, bool, type(None)]:
                 continue
-            print('{}: {}'.format(attr_name, getattr(server.config, attr_name)))
+            print('{} = {}'.format(attr_name, repr(getattr(server.config, attr_name))))
         sys.exit(0)
 
     ps = server.ParallelizationServer(logging.getLogger('server'))
