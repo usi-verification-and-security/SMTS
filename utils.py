@@ -96,7 +96,8 @@ def send_files(port, files):
 
 
 def send_file(address, path):
-    pathlib.Path(path).resolve()
+    path = pathlib.Path(path)
+    path.resolve()
     if path.suffix == '.bz2':
         import bz2
         with bz2.open(str(path)) as file:
