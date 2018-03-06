@@ -87,15 +87,18 @@ def run_solvers(*solvers):
     return ps
 
 
-def send_files(port, files):
+def send_files(files, address):
+    socket = net.Socket()
+    socket.connect(address)
     for path in files:
         try:
-            send_file(('127.0.0.1', port), path)
+            send_file(path, socket)
         except:
             pass
+    socket.close()
 
 
-def send_file(address, path):
+def send_file(path, socket):
     path = pathlib.Path(path)
     path.resolve()
     if path.suffix == '.bz2':
@@ -107,8 +110,6 @@ def send_file(address, path):
         with open(str(path), 'r') as file:
             content = file.read()
         name = path.stem
-    socket = net.Socket()
-    socket.connect(address)
     socket.write({
         'command': 'solve',
         'name': name

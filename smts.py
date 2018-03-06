@@ -68,7 +68,8 @@ if __name__ == '__main__':
         gui_thread.start()
 
     if server.config.files_path:
-        files_thread = threading.Thread(target=utils.send_files, args=(server.config.port, server.config.files_path))
+        files_thread = threading.Thread(target=utils.send_files,
+                                        args=(server.config.files_path, ('127.0.0.1', server.config.port)))
         files_thread.daemon = True
         files_thread.start()
 

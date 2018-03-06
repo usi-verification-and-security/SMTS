@@ -29,16 +29,16 @@ if __name__ == '__main__':
         sys.exit(1)
 
     try:
+        socket = net.Socket()
+        socket.connect(address)
         if args.files:
             for path in args.files:
                 try:
-                    utils.send_file(address, path)
+                    utils.send_file(path, socket)
                 except FileNotFoundError:
                     print('File not found: {}'.format(path), file=sys.stderr)
         else:
             history_file = pathlib.Path.home() / '.smts_client_history'
-            socket = net.Socket()
-            socket.connect(address)
             if sys.stdin.isatty() and history_file.is_file():
                 readline.read_history_file(str(history_file.resolve()))
             while True:
@@ -54,6 +54,7 @@ if __name__ == '__main__':
                 socket.write({'eval': line.strip()}, '')
                 header, message = socket.read()
                 print(message.decode())
+        socket.close()
     except ConnectionError as ex:
         print(ex, file=sys.stderr)
         sys.exit(1)

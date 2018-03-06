@@ -136,6 +136,8 @@ class Server(object):
         if timeout is None:
             timeout = self._timeout
         try:
+            if not self._rlist:
+                return
             rlist = select.select(self._rlist, [], [], timeout)[0]
             if len(rlist) == 0 or timeout == 0:
                 timeout_time = time.time()
@@ -166,6 +168,8 @@ class Server(object):
     def run_forever(self):
         last = time.time()
         while True:
+            if not self._rlist:
+                return
             lts = self.run_until_timeout(
                 max(0, self._timeout - (time.time() - last)) if self._timeout else None
             )
@@ -173,7 +177,9 @@ class Server(object):
                 last = lts
 
     def close(self):
-        self._sock.close()
+        while self._rlist:
+            socket = self._rlist.pop()
+            socket.close()
 
     def log(self, level, message):
         self._logger.log(level, message)

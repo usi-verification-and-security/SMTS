@@ -160,6 +160,9 @@ class Solver(net.Socket):
         if self.node is None:
             return header, payload
 
+        if 'name' not in header or 'node' not in header:
+            return header, payload
+
         if self.node.root.name != header['name'] or str(self.node.path()) != header['node']:
             return {}, b''
 
@@ -248,7 +251,7 @@ class Instance(object):
 
     @property
     def when_timeout(self):
-        return self.started + self.timeout - time.time() if self.started and self.timeout else float('inf')
+        return self.started + self.timeout - time.time() if self.started and self.timeout is not None else float('inf')
 
 
 class ParallelizationServer(net.Server):
@@ -272,6 +275,8 @@ class ParallelizationServer(net.Server):
                 try:
                     level, message = header['report'].split(':', 1)
                     level = logging._nameToLevel[level.upper()]
+                    if level == logging.ERROR:
+                        self.current.timeout = 0
                 except:
                     level = logging.INFO
                     message = header['report']
@@ -378,6 +383,9 @@ class ParallelizationServer(net.Server):
         if self.current is None:
             if solving is not None:
                 self.log(logging.INFO, 'all done.')
+                if self.config.idle_quit:
+                    if not any([type(socket) == net.Socket and socket is not self._sock for socket in self._rlist]):
+                        self.close()
             return
 
         assert isinstance(self.current, Instance)
