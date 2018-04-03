@@ -47,11 +47,11 @@ def run_log(args, **kwargs):
 
 
 def gui_install():
-    run_log(['npm', 'install'], cwd='gui', stdout=subprocess.DEVNULL)
+    run_log(['npm', 'install'], cwd='../gui', stdout=subprocess.DEVNULL)
 
 
 def gui_start(args):
-    run_log(['npm', 'start', '--silent', '--'] + args, cwd='gui')
+    run_log(['npm', 'start', '--silent', '--'] + args, cwd='../gui')
 
 
 def run_lemma_server(lemma_server, database, send_again):
