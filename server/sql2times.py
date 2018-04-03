@@ -49,9 +49,11 @@ def get_benchmarks(db_path):
                                'from SolvingHistory '
                                'where name = ? and event = "SOLVED");', (benchmark.name,)).fetchone()
             if row_solved:
-                benchmark.data = json.loads(row_solved[1])
+                data = json.loads(row_solved[1])
                 if data['node'] != '[]':
                     row_solved = None
+                else:
+                    benchmark.data = data
 
         if not row_solved:
             next_started = c.execute('SELECT ts, data FROM SolvingHistory WHERE id = (SELECT min(id) '

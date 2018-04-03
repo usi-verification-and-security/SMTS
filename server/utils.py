@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from server import server, net, version, framework
+from version import version
+import server
+import net
+import framework
 import subprocess
 import logging
 import socket

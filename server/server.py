@@ -1,7 +1,7 @@
-from .version import version
-from . import framework
-from . import net
-from . import config
+from version import version
+import framework
+import net
+import config
 import json
 import logging
 import pathlib

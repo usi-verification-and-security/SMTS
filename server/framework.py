@@ -1,5 +1,5 @@
-from .version import version
-from . import config
+import version
+import config
 import enum
 import re
 import json
