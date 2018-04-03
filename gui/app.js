@@ -233,6 +233,7 @@ app.post('/upload/instance', function(req, res) {
 
     let file = req.files['smts-upload-instance'];
     let dir = tmp.dirSync({unsafeCleanup: true});
+    let path = `${dir.name}/${file.name}`;
 
     file.mv(path, function(err) {
         if (err) {
