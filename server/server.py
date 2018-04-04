@@ -277,7 +277,7 @@ class ParallelizationServer(net.Server):
                 try:
                     level, message = header['report'].split(':', 1)
                     level = logging._nameToLevel[level.upper()]
-                    if level == logging.ERROR:
+                    if level == logging.ERROR: # if a solver sends an error then the instance is skipped
                         self.current.timeout = 0
                 except:
                     level = logging.INFO

@@ -36,7 +36,17 @@ def solver(address, w_sat, w_unsat, w_timeout, max):
         status = solve(w_sat, w_unsat, w_timeout, max)
         sock.write({'name': name, 'node': node, 'report': status}, '')
 
-    p = name = node = None
+    def get_cnf():
+        nonlocal clauses
+        filename_smt = str(utils.TempFile())
+        open(filename_smt, 'w').write('{}{}'.format(smt.decode() if smt else '', query if query else ''))
+        subprocess.Popen([config.build_path + '/solver_opensmt', '-d', filename_smt]).wait()
+        filename_cnf = filename_smt + '.cnf'
+        cnf_string = open(filename_cnf).read()
+        clauses = utils.smt2json(cnf_string)
+        return filename_smt, filename_cnf, cnf_string
+
+    p = name = node = query = smt = clauses = None
     sock = net.Socket()
     sock.connect(address)
     sock.write({'solver': 'dummy solver'}, '')
@@ -47,7 +57,7 @@ def solver(address, w_sat, w_unsat, w_timeout, max):
             break
         if p and header['command'] == 'stop':
             p.terminate()
-            p = name = node = query = smt = None
+            p = name = node = query = smt = clauses = None
         elif header['command'] in ['solve', 'incremental']:
             if p:
                 p.terminate()
@@ -63,20 +73,32 @@ def solver(address, w_sat, w_unsat, w_timeout, max):
             logging.info('creating {} partitions'.format(header['partitions']))
             message = '\0'.join(['true' for _ in range(int(header['partitions']))])
             sock.write({'name': name, 'node': node, 'report': 'partitions'}, message)
-        elif header['command'] == 'cnf-clauses':
+        elif header['command'] in 'cnf-clauses':
             # run solver_opensmt with -d
             # and send back the clauses
             if 'query' in header:
                 query = header['query']
                 smt = message
-            filename_smt = str(utils.TempFile())
-            open(filename_smt, 'w').write('{}{}'.format(smt.decode() if smt else '', query if query else ''))
-            subprocess.Popen([config.build_path + '/solver_opensmt', '-d', filename_smt]).wait()
-            filename_cnf = filename_smt + '.cnf'
+            filename_smt, filename_cnf, cnf_string = get_cnf()
             logging.info('sending CNF {} of {}'.format(filename_cnf, filename_smt))
             header["report"] = header["command"]
             header.pop('command')
-            sock.write(header, open(filename_cnf).read())
+            sock.write(header, cnf_string)
+        elif header['command'] == 'cnf-learnts':
+            if clauses is None:
+                get_cnf()
+            learnts = []
+            for _ in range(int(len(clauses[0])/10)):
+                learnt = ['or']
+                two_clauses = random.choices(clauses[0], k=2)
+                for clause in two_clauses:
+                    learnt.append(random.choices(clause[1:])[0])
+                learnts.append(learnt)
+            logging.info('sending {} random learnts'.format(len(learnts)))
+            learnts = [learnts]
+            header["report"] = header["command"]
+            header.pop('command')
+            sock.write(header, utils.json2smt(learnts))
         else:
             print(header, message)
 
