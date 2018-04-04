@@ -79,12 +79,14 @@ class Solver(net.Socket):
     def stop(self):
         if self.node is None:
             raise ValueError('not solving anything')
+        name = self.node.root.name
+        path = self.node.path()
         self._db_log('-')
         self._reset()
         self.write({
             'command': 'stop',
-            'name': self.node.root.name,
-            'node': self.node.path()
+            'name': name,
+            'node': path
         }, '')
 
     def set_lemma_server(self, lemma_server: LemmaServer = None):
