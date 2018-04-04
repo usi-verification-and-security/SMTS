@@ -55,14 +55,27 @@ void FileThread::main() {
         header["name"] = filename;
         header["node"] = "[]";
         client->write(header, payload);
+        if (this->settings.dump_clauses) {
+            header["command"] = "cnf-clauses";
+            client->write(header, payload);
+        }
         do {
             client->read(header, payload);
+            if (header["report"] == "cnf-clauses") {
+                auto clauses_filename = filename + ".cnf";
+                std::ofstream clauses_file(clauses_filename);
+                clauses_file << payload << "\n";
+                Logger::log(Logger::INFO, "clauses stored in " + clauses_filename);
+                break;
+            }
+            if (header["report"] == "sat" || header["report"] == "unsat" || header["report"] == "unknown") {
+                if (!this->settings.dump_clauses)
+                    break;
+            }
             if (this->settings.verbose) {
                 Logger::log(Logger::INFO, header);
             }
-        } while (header.count("report") == 0 || (
-                header["report"] != "sat" && header["report"] != "unsat" && header["report"] != "unknown"
-        ));
+        } while (true);
         if (lemmas and !this->settings.keep_lemmas) {
             try {
                 header["lemmas"] = "0";

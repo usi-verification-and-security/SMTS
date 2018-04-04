@@ -83,10 +83,14 @@ namespace net {
         uint32_t r = 0;
         while (length > r) {
             ssize_t t = ::read(this->fd, &buffer[r], length - r);
+            if (t < 0) {
+                if (errno == ECONNRESET)
+                    t = 0;
+                else
+                    throw SocketException(strerror(errno));
+            }
             if (t == 0)
                 throw SocketClosedException();
-            if (t < 0)
-                throw SocketException("file descriptor error");
             r += t;
         }
         return r;
@@ -141,7 +145,7 @@ namespace net {
         for (auto &pair : header) {
             std::string keyval[2] = {pair.first, pair.second};
             for (uint8_t i = 0; i < 2; i++) {
-                if (keyval[i].length() > (uint8_t) -1)
+                if (keyval[i].length() > (uint8_t) - 1)
                     throw SocketException("header key or value is too big");
                 message += (char) keyval[i].length();
                 message += keyval[i];

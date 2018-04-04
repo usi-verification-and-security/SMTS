@@ -4,6 +4,7 @@
 from version import version
 import utils
 import net
+import config
 import random
 import argparse
 import time
@@ -12,6 +13,7 @@ import logging
 import os
 import signal
 import multiprocessing
+import subprocess
 
 __author__ = 'Matteo Marescotti'
 
@@ -45,20 +47,36 @@ def solver(address, w_sat, w_unsat, w_timeout, max):
             break
         if p and header['command'] == 'stop':
             p.terminate()
-            p = name = node = None
+            p = name = node = query = smt = None
         elif header['command'] in ['solve', 'incremental']:
             if p:
                 p.terminate()
             name = header['name']
             node = header['node'] if 'node_' not in header else header['node_']
+            query = header['query'] if 'query' in header else ''
+            smt = message if header['command'] == 'solve' else smt + message
             logging.info('solving {}'.format(name + node))
             p = multiprocessing.Process(target=solve_process, args=(sock, name, node))
             p.daemon = True
             p.start()
         elif header['command'] == 'partition':
             logging.info('creating {} partitions'.format(header['partitions']))
-            message = '\0'.join(['p' + str(i) for i in range(int(header['partitions']))])
+            message = '\0'.join(['true' for _ in range(int(header['partitions']))])
             sock.write({'name': name, 'node': node, 'report': 'partitions'}, message)
+        elif header['command'] == 'cnf-clauses':
+            # run solver_opensmt with -d
+            # and send back the clauses
+            if 'query' in header:
+                query = header['query']
+                smt = message
+            filename_smt = str(utils.TempFile())
+            open(filename_smt, 'w').write('{}{}'.format(smt.decode() if smt else '', query if query else ''))
+            subprocess.Popen([config.build_path + '/solver_opensmt', '-d', filename_smt]).wait()
+            filename_cnf = filename_smt + '.cnf'
+            logging.info('sending CNF {} of {}'.format(filename_cnf, filename_smt))
+            header["report"] = header["command"]
+            header.pop('command')
+            sock.write(header, open(filename_cnf).read())
         else:
             print(header, message)
 

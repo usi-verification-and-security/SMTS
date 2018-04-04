@@ -2,12 +2,15 @@
 # -*- coding: utf-8 -*-
 
 from version import version
-import server
+import config
 import net
-import framework
+import json
 import subprocess
 import logging
 import socket
+import tempfile
+import shutil
+import re
 import sys
 import pathlib
 import argparse
@@ -16,7 +19,7 @@ import threading
 
 __author__ = 'Matteo Marescotti'
 
-logging.basicConfig(level=server.config.log_level, format='%(asctime)s\t%(levelname)s\t%(message)s')
+logging.basicConfig(level=config.log_level, format='%(asctime)s\t%(levelname)s\t%(message)s')
 
 
 def run_log(args, **kwargs):
@@ -64,7 +67,7 @@ def run_lemma_server(lemma_server, database, send_again):
     except:
         pass
 
-    args = [lemma_server, '-s', ip + ':' + str(server.config.port)]
+    args = [lemma_server, '-s', ip + ':' + str(config.port)]
     if database:
         database = pathlib.Path(database)
         args += ['-d', str(database.parent / (database.stem + '.lemma.db'))]
@@ -82,7 +85,7 @@ def run_solvers(*solvers):
         if n:
             for _ in range(n):
                 try:
-                    ps.append(subprocess.Popen([path, '-s127.0.0.1:' + str(server.config.port)],
+                    ps.append(subprocess.Popen([path, '-s127.0.0.1:' + str(config.port)],
                                                stdout=subprocess.DEVNULL,
                                                stderr=subprocess.DEVNULL))
                 except BaseException as ex:
@@ -119,6 +122,88 @@ def send_file(path, socket):
     }, content)
 
 
+class Singleton(type):
+    instance = None
+
+    def __call__(cls, *args, **kw):
+        if not cls.instance:
+            cls.instance = super(Singleton, cls).__call__(*args, **kw)
+        return cls.instance
+
+
+class TempFile(metaclass=Singleton):
+    def __init__(self):
+        self.next_id = 0
+        self.dir = tempfile.mkdtemp()
+
+    def __del__(self):
+        shutil.rmtree(self.dir)
+
+    def __repr__(self):
+        self.next_id += 1
+        return self.dir + '/' + str(self.next_id)
+
+
+def smt2json(smt, return_string=False):
+    orl = sys.getrecursionlimit()
+
+    try:
+        sys.setrecursionlimit(100000)
+
+        strings = {}
+
+        def add_string(s):
+            nonlocal strings
+            key = '{{{}}}'.format(len(strings))
+            strings[key] = json.dumps(s)[1:-1]
+            return key
+
+        smt = '({})'.format(smt)
+
+        s = re.sub(r"(\|[^\|]*\|)", lambda x: add_string(x.group(1)), smt, 0, re.DOTALL)
+        s = re.sub(r"(\"[^\"\\]*(?:\\.[^\"\\]*)*\")", lambda x: add_string(x.group(1)), s, 0, re.DOTALL)
+        s = re.sub(r"([^\"\s()]+)", r'"\1", ', s)
+        s = re.sub(r",\s*\)", ")", s)
+
+        s = re.sub(r"\)\s*[(]", "), (", s)
+        s = re.sub(r"\)(?!\s*,|\s*\))", "), ", s)
+        s = re.sub(r",\s*$", "", s)
+
+        s = re.sub(r"\(", "[", s)
+        s = re.sub(r"\)", "]", s)
+
+        s = re.sub('(\{[0-9]*\})', lambda x: strings[x.group(1)], s)
+
+        return s if return_string else json.loads(s)
+
+    except:
+        raise
+    finally:
+        sys.setrecursionlimit(orl)
+
+
+def json2smt(obj, obj_string=False):
+    orl = sys.getrecursionlimit()
+
+    try:
+        sys.setrecursionlimit(100000)
+
+        if obj_string:
+            obj = json.loads(obj)
+
+        def smt(obj):
+            if isinstance(obj, str):
+                return obj
+            return '({})'.format(' '.join(map(smt, obj)))
+
+        return '\n'.join(map(smt, obj))
+
+    except:
+        raise
+    finally:
+        sys.setrecursionlimit(orl)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='=== SMTS version {} ==='.format(version))
 
@@ -142,11 +227,11 @@ if __name__ == '__main__':
             file = sys.stdin
         else:
             file = open(args.smt2, 'r')
-        print(framework.smt2json(file.read(), True))
+        print(smt2json(file.read(), True))
 
     if args.json:
         if args.json is True:
             file = sys.stdin
         else:
             file = open(args.json, 'r')
-        print(framework.json2smt(file.read(), True))
+        print(json2smt(file.read(), True))

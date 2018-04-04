@@ -1,11 +1,8 @@
 import version
 import config
 import enum
-import re
+import utils
 import json
-import shutil
-import sys
-import tempfile
 
 __author__ = 'Matteo Marescotti'
 
@@ -183,7 +180,7 @@ class SMT(Root):
 
 class Fixedpoint(Root):
     def __init__(self, name: str, smt: str):
-        self.json = smt2json(smt)
+        self.json = utils.smt2json(smt)
         self.query = None
         for i in self.json:
             if i[0] == 'query':
@@ -217,7 +214,7 @@ class Fixedpoint(Root):
                     obj.insert(i, ['declare-rel', query, []])
                 break
 
-        parent = OrNode(self, json2smt(obj))
+        parent = OrNode(self, utils.json2smt(obj))
         if config.db():
             config.db().cursor().execute("INSERT INTO {}SolvingHistory (name, node, event, solver, data) "
                                          "VALUES (?,?,?,?,?)".format(config.table_prefix), (
@@ -325,88 +322,6 @@ class Fixedpoint(Root):
 #             return self.smt, '(query ' + self.query + ')'
 #         elif isinstance(node, AndNode):
 #             return node.parent.smt, node.smt
-
-
-class Singleton(type):
-    instance = None
-    def __call__(cls, *args, **kw):
-        if not cls.instance:
-             cls.instance = super(Singleton, cls).__call__(*args, **kw)
-        return cls.instance
-
-
-class TempFile(metaclass=Singleton):
-    def __init__(self):
-        self.next_id = 0
-        self.dir = tempfile.mkdtemp()
-
-    def __del__(self):
-        shutil.rmtree(self.dir)
-
-    def __repr__(self):
-        self.next_id += 1
-        return self.dir + '/' + str(self.next_id)
-
-
-def smt2json(smt, return_string=False):
-    orl = sys.getrecursionlimit()
-
-    try:
-        sys.setrecursionlimit(100000)
-
-        strings = {}
-
-        def add_string(s):
-            nonlocal strings
-            key = '{{{}}}'.format(len(strings))
-            strings[key] = json.dumps(s)[1:-1]
-            return key
-
-        smt = '({})'.format(smt)
-
-        s = re.sub(r"(\|[^\|]*\|)", lambda x: add_string(x.group(1)), smt, 0, re.DOTALL)
-        s = re.sub(r"(\"[^\"\\]*(?:\\.[^\"\\]*)*\")", lambda x: add_string(x.group(1)), s, 0, re.DOTALL)
-        s = re.sub(r"([^\"\s()]+)", r'"\1", ', s)
-        s = re.sub(r",\s*\)", ")", s)
-
-        s = re.sub(r"\)\s*[(]", "), (", s)
-        s = re.sub(r"\)(?!\s*,|\s*\))", "), ", s)
-        s = re.sub(r",\s*$", "", s)
-
-        s = re.sub(r"\(", "[", s)
-        s = re.sub(r"\)", "]", s)
-
-
-        s = re.sub('(\{[0-9]*\})', lambda x: strings[x.group(1)], s)
-
-        return s if return_string else json.loads(s)
-
-    except:
-        raise
-    finally:
-        sys.setrecursionlimit(orl)
-
-
-def json2smt(obj, obj_string=False):
-    orl = sys.getrecursionlimit()
-
-    try:
-        sys.setrecursionlimit(100000)
-
-        if obj_string:
-            obj = json.loads(obj)
-
-        def smt(obj):
-            if isinstance(obj, str):
-                return obj
-            return '({})'.format(' '.join(map(smt, obj)))
-
-        return '\n'.join(map(smt, obj))
-
-    except:
-        raise
-    finally:
-        sys.setrecursionlimit(orl)
 
 
 def parse(name: str, smt: str):

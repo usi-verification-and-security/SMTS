@@ -21,7 +21,7 @@ SolverServer::SolverServer(const net::Address &server) :
 SolverServer::~SolverServer() {
 }
 
-void SolverServer::log(uint8_t level, std::string message) {
+void SolverServer::log(log_level level, std::string message) {
     if (message.find("\n") != std::string::npos) {
         ::replace(message, "\n", "\n    ");
         message = "\n" + message;
@@ -91,7 +91,7 @@ void SolverServer::handle_message(net::Socket &socket, net::Header &header, std:
         this->server.write(header, payload);
         if (header.count("report")) {
             auto report = ::split(header["report"], ":", 2);
-            uint8_t level = Logger::INFO;
+            log_level level = Logger::INFO;
             if (report.size() == 2) {
                 if (report[0] == "error")
                     level = Logger::ERROR;

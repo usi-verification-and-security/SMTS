@@ -1,10 +1,10 @@
 from version import version
 import framework
+import utils
 import net
 import config
 import json
 import logging
-import pathlib
 import os
 import threading
 import traceback
@@ -79,13 +79,13 @@ class Solver(net.Socket):
     def stop(self):
         if self.node is None:
             raise ValueError('not solving anything')
+        self._db_log('-')
+        self._reset()
         self.write({
             'command': 'stop',
             'name': self.node.root.name,
             'node': self.node.path()
         }, '')
-        self._db_log('-')
-        self._reset()
 
     def set_lemma_server(self, lemma_server: LemmaServer = None):
         self.write({
@@ -94,7 +94,7 @@ class Solver(net.Socket):
         }, '')
 
     def make_pipe(self, name):
-        pipename = str(framework.TempFile())
+        pipename = str(utils.TempFile())
         try:
             os.mkfifo(pipename)
             return pipename
@@ -113,17 +113,17 @@ class Solver(net.Socket):
                 }, '')
             else:
                 smt, query = node.root.to_string(node)
-                stop = 'false;'
+                stop = 'false'
                 if self.node is None:
-                    self.solve(node, {});
+                    self.solve(node, {})
                     stop = 'true'
                 self.write({
                     'name': node.root.name,
                     'node': node.path(),
                     'command': 'cnf-clauses',
-                    'pipename': pipename,
+                    'pipename': pipename,  # used here later in read()
                     'query': query,
-                    'stop': stop
+                    'stop': stop  # used here later in read()
                 }, smt)
         return pipename
 
@@ -176,7 +176,7 @@ class Solver(net.Socket):
                 pipe = open(pipename, 'w')
                 if pipe:
                     # Make CNF JSON compatible
-                    cnf = framework.smt2json(payload.decode(), True)
+                    cnf = utils.smt2json(payload.decode(), True)
                     # Write CNF in pipe
                     pipe.write(cnf)
                     pipe.flush()
@@ -341,11 +341,14 @@ class ParallelizationServer(net.Server):
         ))
         if isinstance(sock, Solver):
             if sock.or_waiting:
-                self.log(logging.WARNING, '{} had waiting or-nodes {}'.format(
+                self.log(logging.WARNING, '{} had waiting or-nodes {}'.format( # todo: manage what to do now
                     sock,
                     sock.or_waiting
                 ))
-                # todo: manage what to do now
+            try:
+                sock.stop()
+            except:
+                pass
         if isinstance(sock, LemmaServer):
             for solver in self.solvers(False):
                 solver.set_lemma_server()

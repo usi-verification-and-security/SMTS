@@ -21,6 +21,7 @@ public:
     std::string lemmas;
     std::list<std::string> files;
     bool keep_lemmas;
+    bool dump_clauses;
     net::Header parameters;
 };
 
