@@ -21,7 +21,6 @@ struct Task {
         incremental, resume
     } command;
     std::string smtlib;
-    uint8_t partitions;
 };
 
 
