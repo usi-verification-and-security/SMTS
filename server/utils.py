@@ -49,12 +49,16 @@ def run_log(args, **kwargs):
         thread.join()
 
 
+def gui_path():
+    return str(pathlib.Path(__file__).parent.parent / 'gui')
+
+
 def gui_install():
-    run_log(['npm', 'install'], cwd='../gui', stdout=subprocess.DEVNULL)
+    run_log(['npm', 'install'], cwd=gui_path(), stdout=subprocess.DEVNULL)
 
 
 def gui_start(args):
-    run_log(['npm', 'start', '--silent', '--'] + args, cwd='../gui')
+    run_log(['npm', 'start', '--silent', '--'] + args, cwd=gui_path())
 
 
 def run_lemma_server(lemma_server, database, send_again):
