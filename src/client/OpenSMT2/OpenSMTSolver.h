@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <functional>
+#include "MainSolver.h"
 #include "SimpSMTSolver.h"
 #include "Interpret.h"
 #include "client/SolverProcess.h"

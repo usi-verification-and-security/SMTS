@@ -22,10 +22,10 @@ std::mutex mtx_solve;
 
 void SolverProcess::init() {
     mtx_solve.lock();
-    //FILE *file = fopen("/dev/null", "w");
-    //dup2(fileno(file), fileno(stdout));
-    //dup2(fileno(file), fileno(stderr));
-    //fclose(file);
+    FILE *file = fopen("/dev/null", "w");
+    dup2(fileno(file), fileno(stdout));
+    dup2(fileno(file), fileno(stderr));
+    fclose(file);
 
     static const char *default_split = "lookahead";
     static const char *default_seed = "0";
