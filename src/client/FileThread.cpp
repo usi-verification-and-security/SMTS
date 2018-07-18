@@ -68,12 +68,12 @@ void FileThread::main() {
                 Logger::log(Logger::INFO, "clauses stored in " + clauses_filename);
                 break;
             }
+            if (this->settings.verbose) {
+                Logger::log(Logger::INFO, header);
+            }
             if (header["report"] == "sat" || header["report"] == "unsat" || header["report"] == "unknown") {
                 if (!this->settings.dump_clauses)
                     break;
-            }
-            if (this->settings.verbose) {
-                Logger::log(Logger::INFO, header);
             }
         } while (true);
         if (lemmas and !this->settings.keep_lemmas) {
