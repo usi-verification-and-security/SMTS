@@ -85,14 +85,17 @@ def entrust(node, header: dict, solver_name, solvers: set):
         else:
             header['parameter.{}'.format(parameter)] = parameters[key]
     if solver_name == "Spacer":
-        if len(solvers) % 3 == 0:
+        if len(solvers) % 4 == 0:
             header["-p"] = "def"
-            header["parameter.fixedpoint.pdr.flexible_trace"] = "true"
-            header["parameter.fixedpoint.spacer.reset_obligation_queue"] = "false"
-        if len(solvers) % 3 == 1:
+            header["parameter.fp.spacer.push_pob"] = "true"
+            header["parameter.fp.spacer.reset_pob_queue"] = "false"
+        if len(solvers) % 4 == 1:
             header["-p"] = "ic3"
-            header["parameter.fixedpoint.pdr.flexible_trace"] = "true"
-        if len(solvers) % 3 == 2:
+            header["parameter.fp.spacer.push_pob"] = "true"
+        if len(solvers) % 4 == 2:
+            header["parameter.fp.spacer.gpdr"] = "true"
+            header["-p"] = "newgpdr"
+        if len(solvers) % 4 == 3:
             header["-p"] = "gpdr"
 
 

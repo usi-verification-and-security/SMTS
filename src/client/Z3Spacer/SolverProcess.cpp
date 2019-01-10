@@ -41,8 +41,10 @@ void predecessor_eh(void *_state) {
     for (net::Lemma &lemma:lemmas) {
         std::istringstream is(lemma.smtlib);
         is >> level;
-        z3::expr e = state.context.parse_string(std::string(std::istreambuf_iterator<char>(is), {}).c_str());
-        Z3_fixedpoint_add_constraint(state.context, state.fixedpoint, e, level);
+        z3::expr_vector v = state.context.parse_string(std::string(std::istreambuf_iterator<char>(is), {}).c_str());
+        for (unsigned i = 0; i < v.size(); i++) {
+            Z3_fixedpoint_add_constraint(state.context, state.fixedpoint, v[i], level);
+        }
     }
 }
 

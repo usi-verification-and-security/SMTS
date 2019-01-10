@@ -34,14 +34,14 @@ parameters = {
     "OpenSMT2.seed": lambda: random.randint(0, 0xFFFFFF),
     "OpenSMT2.split": "lookahead",
 
-    "Spacer.fixedpoint.spacer.random_seed": lambda: random.randint(0, 0xFFFFFF),
-    "Spacer.fixedpoint.spacer.restarts": "false",
-    "Spacer.fixedpoint.spacer.share_lemmas": "true",
-    "Spacer.fixedpoint.spacer.share_invariants": "true",
-    "Spacer.fixedpoint.xform.slice": "false",
-    "Spacer.fixedpoint.xform.inline_linear": "false",
-    "Spacer.fixedpoint.xform.inline_eager": "false",
-    "Spacer.fixedpoint.xform.tail_simplifier_pve": "false",
-    "Spacer.fixedpoint.spacer.elim_aux": "false",
-    "Spacer.fixedpoint.spacer.reach_dnf": "false"
+    "Spacer.fp.spacer.random_seed": lambda: random.randint(0, 0xFFFFFF),
+    "Spacer.fp.spacer.restarts": "false",
+    "Spacer.fp.spacer.p3.share_lemmas": "true",
+    "Spacer.fp.spacer.p3.share_invariants": "true",
+    "Spacer.fp.xform.slice": "false",
+    "Spacer.fp.xform.inline_linear": "false",
+    "Spacer.fp.xform.inline_eager": "false",
+    "Spacer.fp.xform.tail_simplifier_pve": "false",
+    "Spacer.fp.spacer.elim_aux": "false",
+    "Spacer.fp.spacer.reach_dnf": "false"
 }
