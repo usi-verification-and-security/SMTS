@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import sqlite3
-import sys
 import json
 import traceback
 import pathlib
+import argparse
 
 
 class Benchmark:
@@ -71,11 +71,17 @@ def get_benchmarks(db_path):
 
 
 def main():
-    for arg in sys.argv[1:]:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', dest='col', help='dump the specified data column as the 3rd column')
+    parser.add_argument('-d', dest='coldef', help='default if -c column is not available', default='0')
+    parser.add_argument('files', metavar='files', nargs='+', help='db files')
+    args = parser.parse_args()
+
+    for arg in args.files:
         try:
             path = pathlib.Path(arg)
             benchmarks = get_benchmarks(path)
-        except BaseException as ex:
+        except:
             print(traceback.format_exc())
             continue
         total_time = 0
@@ -84,11 +90,18 @@ def main():
                 if not benchmark.ts_start:
                     print('not started: ' + benchmark.name)
                     continue
+                if args.col:
+                    if benchmark.data and args.col in benchmark.data:
+                        third = benchmark.data[args.col]
+                    else:
+                        third = args.coldef
+                else:
+                    third = benchmark.ts_end - benchmark.ts_start
                 file_times.write(
                     '{} {} {}\n'.format(
                         benchmark.name,
                         benchmark.status,
-                        benchmark.ts_end - benchmark.ts_start))
+                        third))
                 total_time += benchmark.ts_end - benchmark.ts_start
         print('TOTAL for ' + arg + ': {}'.format(total_time))
 
