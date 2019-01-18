@@ -22,5 +22,3 @@ add_executable(solver_z3spacer ../main.cpp SolverProcess.cpp)
 
 target_link_libraries(solver_z3spacer client ${Z3SPACER_LIBRARY})
 
-add_executable(test_spacer ./main.cpp)
-target_link_libraries(test_spacer Lib)
