@@ -83,6 +83,7 @@ private:
                 this->pipe.writer()->write(header, payload);
             }
         });
+        t.detach();
         this->solve();
     }
 
