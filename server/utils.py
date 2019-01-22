@@ -119,7 +119,7 @@ def send_file(path, socket):
     else:
         with open(str(path), 'r') as file:
             content = file.read()
-        name = path.stem
+        name = path.name
     socket.write({
         'command': 'solve',
         'name': name
@@ -164,7 +164,8 @@ def smt2json(smt, return_string=False):
 
         smt = '({})'.format(smt)
 
-        s = re.sub(r"(\|[^\|]*\|)", lambda x: add_string(x.group(1)), smt, 0, re.DOTALL)
+        s = re.sub(r";.*", "", smt)
+        s = re.sub(r"(\|[^\|]*\|)", lambda x: add_string(x.group(1)), s, 0, re.DOTALL)
         s = re.sub(r"(\"[^\"\\]*(?:\\.[^\"\\]*)*\")", lambda x: add_string(x.group(1)), s, 0, re.DOTALL)
         s = re.sub(r"([^\"\s()]+)", r'"\1", ', s)
         s = re.sub(r",\s*\)", ")", s)

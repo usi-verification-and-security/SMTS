@@ -43,5 +43,7 @@ parameters = {
     "Spacer.fp.xform.inline_eager": "false",
     "Spacer.fp.xform.tail_simplifier_pve": "false",
     "Spacer.fp.spacer.elim_aux": "false",
-    "Spacer.fp.spacer.reach_dnf": "false"
+    "Spacer.fp.spacer.reach_dnf": "false",
+
+    "SALLY.opensmt2-random_seed": lambda: random.randint(0, 0xFFFFFF)
 }

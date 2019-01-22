@@ -324,19 +324,18 @@ class Fixedpoint(Root):
 #             return node.parent.smt, node.smt
 
 
-def parse(name: str, smt: str):
-    # Still testing...
+class MCMT(Root):
+    def __init__(self, name: str, smt: str):
+        super().__init__(name, smt)
 
-    # context = config.z3().Context()
-    # fixedpoint = config.z3().Fixedpoint(ctx=context)
-    # queries = fixedpoint.parse_string(smt)
-    # if not queries:
-    #     return SMT(name, smt)
-    # else:
-    #     root = Fixedpoint(name, fixedpoint, queries)
-    #     if config.fixedpoint_partition:
-    #         root.partition(fixedpoint, queries)
-    #     return root
+    def to_string(self, node: AndNode, start: AndNode = None):
+        return self.smt, ''
+
+
+def parse(name: str, smt: str):
+    print(name)
+    if name.endswith(".mcmt"):
+        return MCMT(name, smt)
     if smt.find('(query ') > 0:
         return Fixedpoint(name, smt)
     else:

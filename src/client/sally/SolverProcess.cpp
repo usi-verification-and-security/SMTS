@@ -22,6 +22,9 @@ struct ContextWrapper {
 
 void SolverProcess::init() {
     std::map<std::string, std::string> opts;
+    opts["engine"] = "pdkind";
+    opts["solver-logic"] = "QF_LRA";
+    opts["solver"] = "y2o2";
     for (auto &key:this->header.keys(net::Header::parameter)) {
         const std::string & value = this->header.get(net::Header::parameter, key);
         opts[key] = value;
@@ -37,7 +40,7 @@ void SolverProcess::init() {
 void SolverProcess::solve() {
     ContextWrapper* wrapper = static_cast<ContextWrapper* >(this->state.get());
     sally_context ctx = wrapper->ctx;
-    std::string instance = this->instance;
+    std::string instance = this->instance + this->header["query"];
     while (true) {
         // Capture std::cout
         std::stringstream buffer;
@@ -46,20 +49,17 @@ void SolverProcess::solve() {
         // get the result
         std::string res = buffer.str();
 //        std::string res = "";
-        auto result = [res](){
+
             if (res.rfind("valid") == 0) {
-                return Status::unsat;
+                report(Status::unsat);
             }
             else if (res.rfind("invalid") == 0) {
-                return Status::sat;
+                report(Status::sat);
             }
             else {
-                return Status::unknown;
+                error(res);
             }
-        }();
         std::cout.rdbuf(old);
-//        std::cout << res << '\n';
-        this->report(result);
 
         Task t = this->wait();
         switch (t.command) {

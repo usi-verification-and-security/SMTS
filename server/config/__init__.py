@@ -98,6 +98,16 @@ def entrust(node, header: dict, solver_name, solvers: set):
         if len(solvers) % 4 == 3:
             header["-p"] = "gpdr"
 
+    if solver_name == "SALLY":
+        if len(solvers) % 4 == 0:
+            header['parameter.opensmt2-itp'] = "0"
+        elif len(solvers) % 4 == 1:
+            header['parameter.opensmt2-itp'] = "2"
+        elif len(solvers) % 4 == 2:
+            header['parameter.opensmt2-itp'] = "4"
+        elif len(solvers) % 4 == 3:
+            header['parameter.opensmt2-itp'] = "5"
+
 
 extend(pathlib.Path(pathlib.Path(__file__).parent / 'default.py'))
 try:
