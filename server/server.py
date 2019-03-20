@@ -258,7 +258,7 @@ class Instance(object):
 
 class ParallelizationServer(net.Server):
     def __init__(self, logger: logging.Logger = None):
-        super().__init__(port=config.port, timeout=1, logger=logger)
+        super().__init__(port=config.port, timeout=0.1, logger=logger)
         self.config = config
         self.trees = []
         self.current = None
@@ -495,6 +495,7 @@ class ParallelizationServer(net.Server):
                     solver.solve(node, parameters)
                     if self.current.started is None:
                         self.current.started = time.time()
+                    return
 
         # only standard instances can partition
         if not isinstance(self.current.root, framework.SMT):

@@ -109,7 +109,7 @@ class Socket(object):
 
 
 class Server(object):
-    def __init__(self, port: int = None, timeout: int = None, logger: logging.Logger = None):
+    def __init__(self, port: int = None, timeout: float = None, logger: logging.Logger = None):
         self._rlist = set()
         if port:
             self.port = port
