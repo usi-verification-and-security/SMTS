@@ -12,6 +12,8 @@ if __name__ == '__main__':
                       default=None, help='output file')
     parser.add_option('-b', dest='bottom', action='store_true',
                       default=False, help='put legend on bottom right')
+    parser.add_option('-S', dest='only_solved', action='store_true',
+                      default=False, help='plot only benchmarks solved by all approaches')
 
     options, args = parser.parse_args()
 
@@ -27,11 +29,17 @@ if __name__ == '__main__':
             res = mk_scatter.times2res(path)
         else:
             res = mk_scatter.db2res(path)
-
+        
         if i == 0:
-            files = set(res.keys())
+            if options.only_solved:
+                files = set([k for k in res if res[k][0]!='unknown'])
+            else:
+                files = set(res.keys())
 
-        values = [[k, res[k][0], res[k][1]] for k in res if k in files]
+        if options.only_solved:
+            values = [[k, res[k][0], res[k][1]] for k in res if k in files and res[k][0]!='unknown']
+        else:
+            values = [[k, res[k][0], res[k][1]] for k in res if k in files]
         files.intersection_update(set([i[0] for i in values]))
         all_res.append([args[i + int(len(args) / 2)], values])
 
