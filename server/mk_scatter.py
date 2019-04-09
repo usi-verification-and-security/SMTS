@@ -22,7 +22,6 @@ def times2res(times_path):
                 time = -1
             if name in h_out:
                 print("Duplicate result: %s" % name, file=sys.stderr)
-                continue
             if res in ['unknown', 'indet']:
                 time = -1  # time out
             h_out[name] = [res, float(time)]
