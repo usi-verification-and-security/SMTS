@@ -20,6 +20,18 @@ struct ContextWrapper {
     }
 };
 
+std::vector<net::Lemma> lemmas;
+
+void new_lemma_eh(void* context, size_t level, const sally::expr::term_ref& lemma) {
+    auto ctx = static_cast<sally_context>(context);
+    auto lemma_str = sally::term_to_string(ctx, lemma);
+    std::ostringstream ss;
+    ss << std::to_string(level) << " " << lemma_str;
+
+//    std::cout << "Lemma: "<< ss.str() << std::endl;
+    lemmas.emplace_back(net::Lemma(ss.str(), 0));
+}
+
 void SolverProcess::init() {
     std::map<std::string, std::string> opts;
     opts["engine"] = "pdkind";
@@ -34,6 +46,7 @@ void SolverProcess::init() {
     wrapper->ctx = ctx;
     this->state.reset(wrapper);
 
+    sally::set_new_reachability_lemma_eh(ctx, new_lemma_eh);
 //    Z3_fixedpoint_add_callback(state.context, state.fixedpoint, &state, new_lemma_eh, predecessor_eh, unfold_eh);
 }
 
@@ -48,17 +61,15 @@ void SolverProcess::solve() {
         run_on_mcmt_string(instance, ctx);
         // get the result
         std::string res = buffer.str();
-//        std::string res = "";
-
-            if (res.rfind("valid") == 0) {
-                report(Status::unsat);
-            }
-            else if (res.rfind("invalid") == 0) {
-                report(Status::sat);
-            }
-            else {
-                error(res);
-            }
+        if (res.rfind("valid") == 0) {
+            report(Status::unsat);
+        }
+        else if (res.rfind("invalid") == 0) {
+            report(Status::sat);
+        }
+        else {
+            error(res);
+        }
         std::cout.rdbuf(old);
 
         Task t = this->wait();
