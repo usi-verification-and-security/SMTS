@@ -32,6 +32,14 @@ void new_lemma_eh(void* context, size_t level, const sally::expr::term_ref& lemm
     lemmas.emplace_back(net::Lemma(ss.str(), 0));
 }
 
+void push_lemmas(void* context) {
+    std::cerr << "Push lemma called\n";
+}
+
+void pull_lemmas(void* context) {
+    std::cerr << "Pull lemma called\n";
+}
+
 void SolverProcess::init() {
     std::map<std::string, std::string> opts;
     opts["engine"] = "pdkind";
@@ -47,6 +55,8 @@ void SolverProcess::init() {
     this->state.reset(wrapper);
 
     sally::set_new_reachability_lemma_eh(ctx, new_lemma_eh);
+    sally::add_next_frame_eh(ctx, push_lemmas);
+    sally::add_next_frame_eh(ctx, pull_lemmas);
 //    Z3_fixedpoint_add_callback(state.context, state.fixedpoint, &state, new_lemma_eh, predecessor_eh, unfold_eh);
 }
 
