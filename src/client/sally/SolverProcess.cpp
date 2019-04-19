@@ -15,9 +15,12 @@ using namespace sally;
 
 struct ContextWrapper {
     sally_context ctx;
+    SolverProcess* process;
     ~ContextWrapper() {
         delete_context(ctx);
     }
+
+    ContextWrapper(SolverProcess* process): process(process) {}
 };
 
 std::vector<net::Lemma> lemmas;
@@ -32,12 +35,28 @@ void new_lemma_eh(void* context, size_t level, const sally::expr::term_ref& lemm
     lemmas.emplace_back(net::Lemma(ss.str(), 0));
 }
 
-void push_lemmas(void* context) {
-    std::cerr << "Push lemma called\n";
+void push_lemmas(void* state) {
+//    std::cerr << "Push lemma called\n";
+    auto cw = static_cast<ContextWrapper*>(state);
+    cw->process->lemma_push(lemmas);
+    lemmas.clear();
 }
 
-void pull_lemmas(void* context) {
-    std::cerr << "Pull lemma called\n";
+void pull_lemmas(void* state) {
+//    std::cerr << "Pull lemma called\n";
+    auto cw = static_cast<ContextWrapper*>(state);
+    std::vector<net::Lemma> lemmas;
+    unsigned level;
+    cw->process->lemma_pull(lemmas);
+    for (net::Lemma &lemma:lemmas) {
+        std::istringstream is(lemma.smtlib);
+        is >> level;
+//        TODO: parse lemma and push them to the engine
+//        z3::expr_vector v = state.context.parse_string(std::string(std::istreambuf_iterator<char>(is), {}).c_str());
+//        for (unsigned i = 0; i < v.size(); i++) {
+//            Z3_fixedpoint_add_constraint(state.context, state.fixedpoint, v[i], level);
+//        }
+    }
 }
 
 void SolverProcess::init() {
@@ -50,13 +69,13 @@ void SolverProcess::init() {
         opts[key] = value;
     }
     sally_context ctx = create_context(opts);
-    ContextWrapper* wrapper = new ContextWrapper();
+    ContextWrapper* wrapper = new ContextWrapper(this);
     wrapper->ctx = ctx;
     this->state.reset(wrapper);
 
     sally::set_new_reachability_lemma_eh(ctx, new_lemma_eh);
-    sally::add_next_frame_eh(ctx, push_lemmas);
-    sally::add_next_frame_eh(ctx, pull_lemmas);
+    sally::add_next_frame_eh(ctx, push_lemmas, wrapper);
+    sally::add_next_frame_eh(ctx, pull_lemmas, wrapper);
 //    Z3_fixedpoint_add_callback(state.context, state.fixedpoint, &state, new_lemma_eh, predecessor_eh, unfold_eh);
 }
 
