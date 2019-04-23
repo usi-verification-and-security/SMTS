@@ -43,7 +43,6 @@ void pull_lemmas(void* state) {
     auto cw = static_cast<ContextWrapper*>(state);
     std::vector<net::Lemma> lemmas;
     cw->process->lemma_pull(lemmas);
-//    sally::add_reachability_lemma(cw->ctx, "( lemma 1 (= |state_type::state.x| 997) )");
     for (net::Lemma &lemma:lemmas) {
         sally::add_reachability_lemma(cw->ctx, lemma.smtlib);
     }
