@@ -27,12 +27,8 @@ std::vector<net::Lemma> lemmas;
 
 void new_lemma_eh(void* context, size_t level, const sally::expr::term_ref& lemma) {
     auto ctx = static_cast<sally_context>(context);
-    auto lemma_str = sally::term_to_string(ctx, lemma);
-    std::ostringstream ss;
-    ss << std::to_string(level) << " " << lemma_str;
-
-//    std::cout << "Lemma: "<< ss.str() << std::endl;
-    lemmas.emplace_back(net::Lemma(ss.str(), 0));
+    auto lemma_str = sally::reachability_lemma_to_command(ctx, level, lemma);
+    lemmas.emplace_back(net::Lemma(lemma_str, 0));
 }
 
 void push_lemmas(void* state) {
@@ -46,16 +42,10 @@ void pull_lemmas(void* state) {
 //    std::cerr << "Pull lemma called\n";
     auto cw = static_cast<ContextWrapper*>(state);
     std::vector<net::Lemma> lemmas;
-    unsigned level;
     cw->process->lemma_pull(lemmas);
+//    sally::add_reachability_lemma(cw->ctx, "( lemma 1 (= |state_type::state.x| 997) )");
     for (net::Lemma &lemma:lemmas) {
-        std::istringstream is(lemma.smtlib);
-        is >> level;
-//        TODO: parse lemma and push them to the engine
-//        z3::expr_vector v = state.context.parse_string(std::string(std::istreambuf_iterator<char>(is), {}).c_str());
-//        for (unsigned i = 0; i < v.size(); i++) {
-//            Z3_fixedpoint_add_constraint(state.context, state.fixedpoint, v[i], level);
-//        }
+        sally::add_reachability_lemma(cw->ctx, lemma.smtlib);
     }
 }
 
