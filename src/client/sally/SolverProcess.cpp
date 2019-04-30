@@ -78,7 +78,12 @@ void SolverProcess::solve() {
         std::stringstream buffer;
         std::streambuf *old = std::cout.rdbuf(buffer.rdbuf());
         try {
-            run_on_mcmt_string(instance, ctx);
+            if (instance.find("set-logic HORN") != std::string::npos) {
+                run_on_chc_string(instance, ctx);
+            }
+            else {
+                run_on_mcmt_string(instance, ctx);
+            }
             // get the result
             std::string res = buffer.str();
             if (res.rfind("valid") == 0) {
