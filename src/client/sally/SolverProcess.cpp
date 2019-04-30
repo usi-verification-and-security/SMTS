@@ -15,32 +15,33 @@ using namespace sally;
 
 struct ContextWrapper {
     sally_context ctx;
-    SolverProcess* process;
+    SolverProcess *process;
+
     ~ContextWrapper() {
         delete_context(ctx);
     }
 
-    ContextWrapper(SolverProcess* process): process(process) {}
+    ContextWrapper(SolverProcess *process) : process(process) {}
 };
 
 std::vector<net::Lemma> lemmas;
 
-void new_lemma_eh(void* context, size_t level, const sally::expr::term_ref& lemma) {
+void new_lemma_eh(void *context, size_t level, const sally::expr::term_ref &lemma) {
     auto ctx = static_cast<sally_context>(context);
     auto lemma_str = sally::reachability_lemma_to_command(ctx, level, lemma);
     lemmas.emplace_back(net::Lemma(lemma_str, 0));
 }
 
-void push_lemmas(void* state) {
+void push_lemmas(void *state) {
 //    std::cerr << "Push lemma called\n";
-    auto cw = static_cast<ContextWrapper*>(state);
+    auto cw = static_cast<ContextWrapper *>(state);
     cw->process->lemma_push(lemmas);
     lemmas.clear();
 }
 
-void pull_lemmas(void* state) {
+void pull_lemmas(void *state) {
 //    std::cerr << "Pull lemma called\n";
-    auto cw = static_cast<ContextWrapper*>(state);
+    auto cw = static_cast<ContextWrapper *>(state);
     std::vector<net::Lemma> lemmas;
     cw->process->lemma_pull(lemmas);
     for (net::Lemma &lemma:lemmas) {
@@ -54,11 +55,11 @@ void SolverProcess::init() {
     opts["solver-logic"] = "QF_LRA";
     opts["solver"] = "y2o2";
     for (auto &key:this->header.keys(net::Header::parameter)) {
-        const std::string & value = this->header.get(net::Header::parameter, key);
+        const std::string &value = this->header.get(net::Header::parameter, key);
         opts[key] = value;
     }
     sally_context ctx = create_context(opts);
-    ContextWrapper* wrapper = new ContextWrapper(this);
+    ContextWrapper *wrapper = new ContextWrapper(this);
     wrapper->ctx = ctx;
     this->state.reset(wrapper);
 
@@ -69,26 +70,29 @@ void SolverProcess::init() {
 }
 
 void SolverProcess::solve() {
-    ContextWrapper* wrapper = static_cast<ContextWrapper* >(this->state.get());
+    ContextWrapper *wrapper = static_cast<ContextWrapper * >(this->state.get());
     sally_context ctx = wrapper->ctx;
     std::string instance = this->instance + this->header["query"];
     while (true) {
         // Capture std::cout
         std::stringstream buffer;
-        std::streambuf * old = std::cout.rdbuf(buffer.rdbuf());
-        run_on_mcmt_string(instance, ctx);
-        // get the result
-        std::string res = buffer.str();
-        if (res.rfind("valid") == 0) {
-            report(Status::unsat);
+        std::streambuf *old = std::cout.rdbuf(buffer.rdbuf());
+        try {
+            run_on_mcmt_string(instance, ctx);
+            // get the result
+            std::string res = buffer.str();
+            if (res.rfind("valid") == 0) {
+                report(Status::unsat);
+            } else if (res.rfind("invalid") == 0) {
+                report(Status::sat);
+            } else {
+                error(res);
+            }
+            std::cout.rdbuf(old);
+        } catch (std::logic_error &ex) {
+            error(ex.what());
         }
-        else if (res.rfind("invalid") == 0) {
-            report(Status::sat);
-        }
-        else {
-            error(res);
-        }
-        std::cout.rdbuf(old);
+
 
         Task t = this->wait();
         switch (t.command) {

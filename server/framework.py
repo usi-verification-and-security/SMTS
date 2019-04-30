@@ -333,7 +333,6 @@ class MCMT(Root):
 
 
 def parse(name: str, smt: str):
-    print(name)
     if name.endswith(".mcmt"):
         return MCMT(name, smt)
     if smt.find('(query ') > 0:
