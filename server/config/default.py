@@ -45,5 +45,8 @@ parameters = {
     "Spacer.fp.spacer.elim_aux": "false",
     "Spacer.fp.spacer.reach_dnf": "false",
 
-    "SALLY.opensmt2-random_seed": lambda: random.randint(0, 0xFFFFFF)
+    "SALLY.opensmt2-random_seed": lambda: random.randint(0, 0xFFFFFF),
+    "SALLY.pdkind-minimize-frames": "true",
+    "SALLY.pdkind-minimize-interpolants": "true",
+    "SALLY.opensmt2-simplify_itp": "2"
 }
