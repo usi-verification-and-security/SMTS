@@ -66,7 +66,6 @@ void SolverProcess::init() {
     sally::set_new_reachability_lemma_eh(ctx, new_lemma_eh);
     sally::add_next_frame_eh(ctx, push_lemmas, wrapper);
     sally::add_next_frame_eh(ctx, pull_lemmas, wrapper);
-//    Z3_fixedpoint_add_callback(state.context, state.fixedpoint, &state, new_lemma_eh, predecessor_eh, unfold_eh);
 }
 
 void SolverProcess::solve() {
@@ -84,6 +83,13 @@ void SolverProcess::solve() {
             else {
                 run_on_mcmt_string(instance, ctx);
             }
+
+            sally::stats stats(ctx);
+            auto keyvalpairs = stats.get_stats();
+            for (auto& keyval : keyvalpairs) {
+                this->header.set(net::Header::statistic, keyval.first, keyval.second);
+            }
+
             // get the result
             std::string res = buffer.str();
             if (res.rfind("valid") == 0) {
