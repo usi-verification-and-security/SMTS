@@ -48,5 +48,8 @@ parameters = {
     "SALLY.opensmt2-random_seed": lambda: random.randint(0, 0xFFFFFF),
     "SALLY.pdkind-minimize-frames": "true",
     "SALLY.pdkind-minimize-interpolants": "true",
-    "SALLY.opensmt2-simplify_itp": "2"
+    "SALLY.opensmt2-simplify_itp": "0",
+    "SALLY.opensmt2-itp-lra": "0",
+    "SALLY.opensmt2-itp-bool": "0",
+    "SALLY.pdkind-induction-max": "0"
 }
