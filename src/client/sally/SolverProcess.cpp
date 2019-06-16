@@ -29,7 +29,8 @@ std::vector<net::Lemma> lemmas;
 void new_lemma_eh(void *context, size_t level, const sally::expr::term_ref &lemma) {
     auto ctx = static_cast<sally_context>(context);
     auto lemma_str = sally::reachability_lemma_to_command(ctx, level, lemma);
-    lemmas.emplace_back(net::Lemma(lemma_str, 0));
+    lemmas.push_back(net::Lemma(lemma_str, 0));
+//    std::cerr << "Pushing reachability lemma" << std::endl;
 }
 
 void push_lemmas(void *state) {
@@ -45,8 +46,17 @@ void pull_lemmas(void *state) {
     std::vector<net::Lemma> lemmas;
     cw->process->lemma_pull(lemmas);
     for (net::Lemma &lemma:lemmas) {
-        sally::add_reachability_lemma(cw->ctx, lemma.smtlib);
+        sally::add_lemma(cw->ctx, lemma.smtlib);
     }
+}
+
+void new_induction_lemma_eh(void * context, size_t level, const sally::expr::term_ref &lemma,
+        const sally::expr::term_ref &cex, size_t cex_depth) {
+    auto ctx = static_cast<sally_context>(context);
+    auto lemma_str = sally::induction_lemma_to_command(ctx, level, lemma, cex, cex_depth);
+    lemmas.push_back(net::Lemma(lemma_str, 0));
+//    std::cerr << "Pushing induction lemma" << std::endl;
+//    std::cerr << lemma_str << std::endl;
 }
 
 void SolverProcess::init() {
@@ -54,8 +64,19 @@ void SolverProcess::init() {
     opts["engine"] = "pdkind";
     opts["solver-logic"] = "QF_LRA";
     opts["solver"] = "y2o2";
+    opts["yices2-mode"] = "dpllt";
+    bool share_reachability_lemmas = false;
+    bool share_induction_lemmas = false;
     for (auto &key:this->header.keys(net::Header::parameter)) {
         const std::string &value = this->header.get(net::Header::parameter, key);
+        if (key == "share-reachability-lemmas") {
+            share_reachability_lemmas = (value == "true");
+            continue;
+        }
+        if (key == "share-induction-lemmas") {
+            share_induction_lemmas = (value == "true");
+            continue;
+        }
         opts[key] = value;
     }
     sally_context ctx = create_context(opts);
@@ -63,7 +84,14 @@ void SolverProcess::init() {
     wrapper->ctx = ctx;
     this->state.reset(wrapper);
 
-    sally::set_new_reachability_lemma_eh(ctx, new_lemma_eh);
+    if (share_reachability_lemmas) {
+//        std::cout << "Sharing reachability lemmas" << std::endl;
+        sally::set_new_reachability_lemma_eh(ctx, new_lemma_eh);
+    }
+    if (share_induction_lemmas) {
+//        std::cout << "Sharing induction lemmas" << std::endl;
+        sally::set_obligation_pushed_eh(ctx, new_induction_lemma_eh);
+    }
     sally::add_next_frame_eh(ctx, push_lemmas, wrapper);
     sally::add_next_frame_eh(ctx, pull_lemmas, wrapper);
 }
@@ -103,7 +131,6 @@ void SolverProcess::solve() {
         } catch (std::logic_error &ex) {
             error(ex.what());
         }
-
 
         Task t = this->wait();
         switch (t.command) {
