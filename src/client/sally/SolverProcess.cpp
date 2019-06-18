@@ -8,14 +8,43 @@
 #include <sally_api.h>
 
 #include <memory>
+#include <chrono>
 
 const char *SolverProcess::solver = "SALLY";
 
 using namespace sally;
 
+struct ScopedNanoTimer
+{
+    std::chrono::high_resolution_clock::time_point t0;
+    std::function<void(long long int)> cb;
+
+    ScopedNanoTimer(std::function<void(long long int)> callback)
+            : t0(std::chrono::high_resolution_clock::now())
+            , cb(callback)
+    {
+    }
+    ~ScopedNanoTimer(void)
+    {
+        auto t1 = std::chrono::high_resolution_clock::now();
+        auto nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(t1-t0).count();
+
+        cb(nanos);
+    }
+};
+
+struct TimeStats{
+    double total = 0;
+
+    void operator()(long long int nanosecs) {
+        total += nanosecs / (1000*1000*1000.0);
+    }
+};
+
 struct ContextWrapper {
     sally_context ctx;
     SolverProcess *process;
+    TimeStats ts;
 
     ~ContextWrapper() {
         delete_context(ctx);
@@ -26,8 +55,10 @@ struct ContextWrapper {
 
 std::vector<net::Lemma> lemmas;
 
-void new_lemma_eh(void *context, size_t level, const sally::expr::term_ref &lemma) {
-    auto ctx = static_cast<sally_context>(context);
+void new_lemma_eh(void *state, size_t level, const sally::expr::term_ref &lemma) {
+    auto cw = static_cast<ContextWrapper *>(state);
+    ScopedNanoTimer times(cw->ts);
+    auto ctx = cw->ctx;
     auto lemma_str = sally::reachability_lemma_to_command(ctx, level, lemma);
     lemmas.push_back(net::Lemma(lemma_str, 0));
 //    std::cerr << "Pushing reachability lemma" << std::endl;
@@ -36,6 +67,7 @@ void new_lemma_eh(void *context, size_t level, const sally::expr::term_ref &lemm
 void push_lemmas(void *state) {
 //    std::cerr << "Push lemma called\n";
     auto cw = static_cast<ContextWrapper *>(state);
+    ScopedNanoTimer times(cw->ts);
     cw->process->lemma_push(lemmas);
     lemmas.clear();
 }
@@ -43,16 +75,19 @@ void push_lemmas(void *state) {
 void pull_lemmas(void *state) {
 //    std::cerr << "Pull lemma called\n";
     auto cw = static_cast<ContextWrapper *>(state);
-    std::vector<net::Lemma> lemmas;
-    cw->process->lemma_pull(lemmas);
-    for (net::Lemma &lemma:lemmas) {
+    ScopedNanoTimer times(cw->ts);
+    std::vector<net::Lemma> new_lemmas;
+    cw->process->lemma_pull(new_lemmas);
+    for (net::Lemma &lemma : new_lemmas) {
         sally::add_lemma(cw->ctx, lemma.smtlib);
     }
 }
 
-void new_induction_lemma_eh(void * context, size_t level, const sally::expr::term_ref &lemma,
+void new_induction_lemma_eh(void * state, size_t level, const sally::expr::term_ref &lemma,
         const sally::expr::term_ref &cex, size_t cex_depth) {
-    auto ctx = static_cast<sally_context>(context);
+    auto cw = static_cast<ContextWrapper *>(state);
+    ScopedNanoTimer times(cw->ts);
+    auto ctx = cw->ctx;
     auto lemma_str = sally::induction_lemma_to_command(ctx, level, lemma, cex, cex_depth);
     lemmas.push_back(net::Lemma(lemma_str, 0));
 //    std::cerr << "Pushing induction lemma" << std::endl;
@@ -65,6 +100,7 @@ void SolverProcess::init() {
     opts["solver-logic"] = "QF_LRA";
     opts["solver"] = "y2o2";
     opts["yices2-mode"] = "dpllt";
+//    opts["opensmt2-simplify_itp"] = "2";
     bool share_reachability_lemmas = false;
     bool share_induction_lemmas = false;
     for (auto &key:this->header.keys(net::Header::parameter)) {
@@ -86,11 +122,11 @@ void SolverProcess::init() {
 
     if (share_reachability_lemmas) {
 //        std::cout << "Sharing reachability lemmas" << std::endl;
-        sally::set_new_reachability_lemma_eh(ctx, new_lemma_eh);
+        sally::set_new_reachability_lemma_eh(ctx, new_lemma_eh, wrapper);
     }
     if (share_induction_lemmas) {
 //        std::cout << "Sharing induction lemmas" << std::endl;
-        sally::set_obligation_pushed_eh(ctx, new_induction_lemma_eh);
+        sally::set_obligation_pushed_eh(ctx, new_induction_lemma_eh, wrapper);
     }
     sally::add_next_frame_eh(ctx, push_lemmas, wrapper);
     sally::add_next_frame_eh(ctx, pull_lemmas, wrapper);
@@ -117,6 +153,7 @@ void SolverProcess::solve() {
             for (auto& keyval : keyvalpairs) {
                 this->header.set(net::Header::statistic, keyval.first, keyval.second);
             }
+            this->header.set(net::Header::statistic, "lemma_sharing_time", std::to_string(wrapper->ts.total));
 
             // get the result
             std::string res = buffer.str();
