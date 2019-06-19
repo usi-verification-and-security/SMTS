@@ -21,6 +21,7 @@ files_path = []  # list of files path absolute or relative to the config file, t
 gui = False  # enable GUI
 opensmt = 0  # number of opensmt2 processes
 z3spacer = 0  # number of z3spacer processes
+sally = 0  # number of sally processes
 idle_quit = False  # quit smts after solving the last instance
 
 # parameters is a dictionary solver_name.solver_parameter -> value:(int, str, callable)  where:

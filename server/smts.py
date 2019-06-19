@@ -27,6 +27,7 @@ if __name__ == '__main__':
     sg = parser.add_argument_group('solvers')
     sg.add_argument('-o', dest='opensmt', type=int, metavar='N', help='run N opensmt2 solvers')
     sg.add_argument('-z', dest='z3spacer', type=int, metavar='N', help='run N z3spacer solvers')
+    sg.add_argument('-s', dest='sally', type=int, metavar='N', help='run N sally solvers')
 
     args = parser.parse_args()
 
@@ -46,6 +47,8 @@ if __name__ == '__main__':
         server.config.opensmt = args.opensmt
     if args.z3spacer:
         server.config.z3spacer = args.z3spacer
+    if args.sally:
+        server.config.sally = args.sally
 
     if args.list:
         for attr_name in dir(server.config):
@@ -84,10 +87,11 @@ if __name__ == '__main__':
         lemma_thread.daemon = True
         lemma_thread.start()
 
-    if server.config.opensmt or server.config.z3spacer:
+    if server.config.opensmt or server.config.z3spacer or server.config.sally:
         utils.run_solvers(
             (server.config.build_path + '/solver_opensmt', server.config.opensmt),
-            (server.config.build_path + '/solver_z3spacer', server.config.z3spacer)
+            (server.config.build_path + '/solver_z3spacer', server.config.z3spacer),
+            (server.config.build_path + '/solver_sally', server.config.sally)
         )
 
     try:
