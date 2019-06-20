@@ -57,7 +57,7 @@ std::vector<net::Lemma> lemmas;
 
 void new_lemma_eh(void *state, size_t level, const sally::expr::term_ref &lemma) {
     auto cw = static_cast<ContextWrapper *>(state);
-    ScopedNanoTimer times(cw->ts);
+    ScopedNanoTimer times(std::ref(cw->ts));
     auto ctx = cw->ctx;
     auto lemma_str = sally::reachability_lemma_to_command(ctx, level, lemma);
     lemmas.push_back(net::Lemma(lemma_str, 0));
@@ -67,7 +67,7 @@ void new_lemma_eh(void *state, size_t level, const sally::expr::term_ref &lemma)
 void push_lemmas(void *state) {
 //    std::cerr << "Push lemma called\n";
     auto cw = static_cast<ContextWrapper *>(state);
-    ScopedNanoTimer times(cw->ts);
+    ScopedNanoTimer times(std::ref(cw->ts));
     cw->process->lemma_push(lemmas);
     lemmas.clear();
 }
@@ -75,7 +75,7 @@ void push_lemmas(void *state) {
 void pull_lemmas(void *state) {
 //    std::cerr << "Pull lemma called\n";
     auto cw = static_cast<ContextWrapper *>(state);
-    ScopedNanoTimer times(cw->ts);
+    ScopedNanoTimer times(std::ref(cw->ts));
     std::vector<net::Lemma> new_lemmas;
     cw->process->lemma_pull(new_lemmas);
     for (net::Lemma &lemma : new_lemmas) {
@@ -86,7 +86,7 @@ void pull_lemmas(void *state) {
 void new_induction_lemma_eh(void * state, size_t level, const sally::expr::term_ref &lemma,
         const sally::expr::term_ref &cex, size_t cex_depth) {
     auto cw = static_cast<ContextWrapper *>(state);
-    ScopedNanoTimer times(cw->ts);
+    ScopedNanoTimer times(std::ref(cw->ts));
     auto ctx = cw->ctx;
     auto lemma_str = sally::induction_lemma_to_command(ctx, level, lemma, cex, cex_depth);
     lemmas.push_back(net::Lemma(lemma_str, 0));
