@@ -105,19 +105,17 @@ def entrust(node, header: dict, solver_name, solvers: set):
             header['parameter.opensmt2-itp-lra'] = "2"
         elif len(solvers) % 3 == 2:
             header['parameter.opensmt2-itp-lra'] = "4"
-        if (len(solvers)/2) % 3 == 0:
+        if len(solvers) % 2 == 0:
             header['parameter.opensmt2-itp-bool'] = "0"
-        elif (len(solvers)/2) % 3 == 1:
+        elif len(solvers) % 2 == 1:
             header['parameter.opensmt2-itp-bool'] = "1"
-        elif (len(solvers)/2) % 3 == 2:
-            header['parameter.opensmt2-itp-bool'] = "2"
-        if (len(solvers)/4) % 3 == 0:
+        '''if len(solvers) % 2 == 0:
             header['parameter.pdkind-induction-max'] = "0"
         elif (len(solvers)/4) % 3 == 1:
             header['parameter.pdkind-induction-max'] = "1"
         elif (len(solvers)/4) % 3 == 2:
             header['parameter.pdkind-induction-max'] = "2"
-
+'''
 
 
 extend(pathlib.Path(pathlib.Path(__file__).parent / 'default.py'))
