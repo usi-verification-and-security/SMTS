@@ -45,6 +45,7 @@ struct ContextWrapper {
     sally_context ctx;
     SolverProcess *process;
     TimeStats ts;
+    unsigned long long int lemma_pulled = 0;
 
     ~ContextWrapper() {
         delete_context(ctx);
@@ -61,7 +62,7 @@ void new_lemma_eh(void *state, size_t level, const sally::expr::term_ref &lemma)
     auto ctx = cw->ctx;
     auto lemma_str = sally::reachability_lemma_to_command(ctx, level, lemma);
     lemmas.push_back(net::Lemma(lemma_str, 0));
-//    std::cerr << "Pushing reachability lemma" << std::endl;
+//    std::cerr << "New lemma learned: " << lemma_str << " by " << reinterpret_cast<u_int64_t>(state) << std::endl;
 }
 
 void push_lemmas(void *state) {
@@ -79,6 +80,7 @@ void pull_lemmas(void *state) {
     std::vector<net::Lemma> new_lemmas;
     cw->process->lemma_pull(new_lemmas);
     for (net::Lemma &lemma : new_lemmas) {
+        ++cw->lemma_pulled;
         sally::add_lemma(cw->ctx, lemma.smtlib);
     }
 }
@@ -128,8 +130,10 @@ void SolverProcess::init() {
 //        std::cout << "Sharing induction lemmas" << std::endl;
         sally::set_obligation_pushed_eh(ctx, new_induction_lemma_eh, wrapper);
     }
-    sally::add_next_frame_eh(ctx, push_lemmas, wrapper);
-    sally::add_next_frame_eh(ctx, pull_lemmas, wrapper);
+    if (share_induction_lemmas || share_reachability_lemmas) {
+        sally::add_next_obligation_eh(ctx, push_lemmas, wrapper);
+        sally::add_next_obligation_eh(ctx, pull_lemmas, wrapper);
+    }
 }
 
 void SolverProcess::solve() {
@@ -154,6 +158,7 @@ void SolverProcess::solve() {
                 this->header.set(net::Header::statistic, keyval.first, keyval.second);
             }
             this->header.set(net::Header::statistic, "lemma_sharing_time", std::to_string(wrapper->ts.total));
+            this->header.set(net::Header::statistic, "lemmas_pulled", std::to_string(wrapper->lemma_pulled));
 
             // get the result
             std::string res = buffer.str();
