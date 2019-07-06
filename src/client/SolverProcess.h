@@ -9,6 +9,7 @@
 #include <random>
 #include <mutex>
 #include <ctime>
+#include <chrono>
 #include "lib/lib.h"
 
 
@@ -46,9 +47,12 @@ private:
         if (!this->header.count("lemmas")) {
             this->header["lemmas"] = std::to_string(1000);
         }
+        if (!this->header.count("max_memory")) {
+            this->header["max_memory"] = std::to_string(0);
+        }
         this->init();
         this->info("start");
-        std::thread t([&] {
+        std::thread t_messages([&] {
             net::Header header;
             std::string payload;
             while (true) {
@@ -83,7 +87,22 @@ private:
                 this->pipe.writer()->write(header, payload);
             }
         });
-        t.detach();
+        t_messages.detach();
+        std::thread t_memory([&] {
+            size_t limit = atoll(this->header["max_memory"].c_str());
+            if (limit == 0)
+                return;
+
+            while (true) {
+                size_t cmem = current_memory();
+                if (cmem > limit * 1024 * 1024) {
+                    this->error(std::string("max memory reached: ") + std::to_string(cmem));
+                    exit(-1);
+                }
+                std::this_thread::sleep_for(std::chrono::seconds(3));
+            }
+        });
+        t_memory.detach();
         this->solve();
     }
 

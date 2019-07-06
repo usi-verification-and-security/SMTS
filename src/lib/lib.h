@@ -71,5 +71,6 @@ const std::string to_string(const T &obj) {
 #include "Thread.h"
 #include "sqlite3.h"
 #include "net.h"
+#include "memory.h"
 
 #endif

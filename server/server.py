@@ -52,6 +52,7 @@ class Solver(net.Socket):
         self.parameters = parameters.copy()
         smt, query = self.node.root.to_string(self.node)
         parameters.update({
+            'max_memory': config.max_memory,
             'command': 'solve',
             'name': self.node.root.name,
             'node': self.node.path(),

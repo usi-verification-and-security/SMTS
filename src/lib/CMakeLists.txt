@@ -5,8 +5,7 @@ include_directories(${SQLITE3_INCLUDE_DIR})
 
 add_library(Lib
         lib.cpp
-        sqlite3/Connection.cpp
-        sqlite3/Statement.cpp
+        memory.cpp
         Thread.cpp
         Process.cpp
         Logger.h
@@ -15,6 +14,8 @@ add_library(Lib
         net/Pipe.cpp
         net/Server.cpp
         net/Socket.cpp
+        sqlite3/Connection.cpp
+        sqlite3/Statement.cpp
         )
 
 target_link_libraries(Lib ${SQLITE3_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})

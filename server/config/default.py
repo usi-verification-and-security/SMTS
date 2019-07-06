@@ -9,6 +9,7 @@ portfolio_min = 0  # 0 if no limit
 partition_timeout = 1000  # None if no partitioning
 partition_policy = [1, 2]  #
 solving_timeout = None  # None for no timeout
+max_memory = 0  # max memory for each solver process in MB
 build_path = "../../build"  # build path absolute or relative to the config file
 lemma_sharing = False  # enabling lemma sharing
 lemma_amount = None  # None for auto
