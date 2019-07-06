@@ -102,11 +102,15 @@ void SolverProcess::solve() {
     std::string smtlib = this->instance;
 
     while (true) {
-        Z3_ast_vector v = Z3_fixedpoint_from_string(state.context, state.fixedpoint,
-                                                    (smtlib + this->header["query"]).c_str());
-        Z3_ast a = Z3_ast_vector_get(state.context, v, 0);
-
-        Z3_lbool res = Z3_fixedpoint_query(state.context, state.fixedpoint, a);
+        Z3_lbool res;
+        try {
+            Z3_ast_vector v = Z3_fixedpoint_from_string(state.context, state.fixedpoint,
+                                                        (smtlib + this->header["query"]).c_str());
+            Z3_ast a = Z3_ast_vector_get(state.context, v, 0);
+            res = Z3_fixedpoint_query(state.context, state.fixedpoint, a);
+        } catch (z3::exception &e) {
+            this->error(std::string("Z3 exception: ") + e.msg());
+        }
 
         z3::stats statistics(state.context, Z3_fixedpoint_get_statistics(state.context, state.fixedpoint));
         for (uint32_t i = 0; i < statistics.size(); i++) {

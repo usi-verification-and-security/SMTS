@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include "Process.h"
-#include "Process.h"
 
 
 Process::Process() :

@@ -1,4 +1,5 @@
 import sys
+import os
 import pathlib
 import sqlite3
 import importlib.util
@@ -44,11 +45,16 @@ def _import(path, name=None):
             path /= name
         if path.suffix != '.py':
             path = pathlib.Path(str(path) + '.py')
-        sys.path.insert(0, str(path.parent))
-        spec = importlib.util.spec_from_file_location(path.stem, str(path))
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        sys.path.pop(0)
+        cwd = os.getcwd()
+        try:
+            os.chdir(str(path.parent))
+            spec = importlib.util.spec_from_file_location(path.stem, str(path))
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+        except:
+            raise
+        finally:
+            os.chdir(cwd)
     else:
         module = importlib.import_module(name)
     return module

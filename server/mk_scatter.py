@@ -22,7 +22,6 @@ def times2res(times_path):
                 time = -1
             if name in h_out:
                 print("Duplicate result: %s" % name, file=sys.stderr)
-                continue
             if res in ['unknown', 'indet']:
                 time = -1  # time out
             h_out[name] = [res, float(time)]
@@ -90,12 +89,14 @@ if __name__ == '__main__':
 
     print("Not in y:", file=sys.stderr)
     for k in x_res.keys():
-        if (k in y_res and x_res[k][1] >= 0 and y_res[k][1] > 0):
-            speedups.append(float(x_res[k][1]) / float(y_res[k][1]))
-            x_total += float(x_res[k][1])
-            y_total += float(y_res[k][1])
-        elif k not in y_res:
+        if k not in y_res:
             print("  %s" % k, file=sys.stderr)
+            continue
+        if k in y_res and x_res[k][1] >= 0 and y_res[k][1] > 0:
+            if x_res[k][0] != 'unknown' and y_res[k][0] != 'unknown':
+                speedups.append(float(x_res[k][1]) / float(y_res[k][1]))
+                x_total += float(x_res[k][1])
+                y_total += float(y_res[k][1])
     print(file=sys.stderr)
 
     print("Not in x:", file=sys.stderr)
@@ -162,8 +163,8 @@ if __name__ == '__main__':
     print('set arrow from %f, graph 0 to %f,%f nohead' % (options.max, options.max, options.max))
     print('set arrow from %f, graph 0 to graph 1.05, graph -.05 backhead' % bnd)
     print('set label "timeout" at graph 1.05, graph -0.06')
-    # print('set label "sp tot %.02f" at graph -0.3,1' % (x_total / float(y_total)))
-    print('set label "sp %.02f" at graph -0.3,0.95' % speedup)
+    print('set label "sp tot x/y %.02f" at graph -0.3,1' % (x_total / float(y_total)))
+    print('set label "sp x/y %.02f" at graph -0.3,0.95' % speedup)
     print('set label "solved x %d" at graph -0.3,0.9' % solved_x)
     print('set label "solved y %d" at graph -0.3,0.85' % solved_y)
     solved_both = len(
