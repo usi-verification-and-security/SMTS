@@ -46,11 +46,15 @@ def _import(path, name=None):
         if path.suffix != '.py':
             path = pathlib.Path(str(path) + '.py')
         cwd = os.getcwd()
-        os.chdir(str(path.parent))
-        spec = importlib.util.spec_from_file_location(path.stem, str(path))
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        os.chdir(cwd)
+        try:
+            os.chdir(str(path.parent))
+            spec = importlib.util.spec_from_file_location(path.stem, str(path))
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+        except:
+            raise
+        finally:
+            os.chdir(cwd)
     else:
         module = importlib.import_module(name)
     return module
