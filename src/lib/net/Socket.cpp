@@ -17,10 +17,10 @@ namespace net {
         struct hostent *he;
 
         if ((sockfd = ::socket(AF_INET, SOCK_STREAM, 0)) < 0)
-            throw SocketException("socket init error");
+            throw SocketException(__FILE__, __LINE__, "socket init error");
 
         if ((he = ::gethostbyname(address.hostname.c_str())) == nullptr)
-            throw SocketException("invalid hostname");
+            throw SocketException(__FILE__, __LINE__, "invalid hostname");
 
         ::bzero(&server_addr, sizeof(server_addr));
         ::memcpy(&server_addr.sin_addr, he->h_addr_list[0], (size_t) he->h_length);
@@ -28,7 +28,7 @@ namespace net {
         server_addr.sin_port = htons(address.port);
 
         if (::connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) != 0)
-            throw SocketException("connect error");
+            throw SocketException(__FILE__, __LINE__, "connect error");
 
         new(this) Socket(sockfd);
     }
@@ -40,11 +40,11 @@ namespace net {
         struct sockaddr_in server_addr;
 
         if ((sockfd = ::socket(AF_INET, SOCK_STREAM, 0)) < 0)
-            throw SocketException("socket init failed");
+            throw SocketException(__FILE__, __LINE__, "socket init failed");
 
         int reuse = 1;
         if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0)
-            throw SocketException("socket SO_REUSEADDR failed");
+            throw SocketException(__FILE__, __LINE__, "socket SO_REUSEADDR failed");
 
         ::bzero(&server_addr, sizeof(server_addr));
         server_addr.sin_family = AF_INET;
@@ -52,10 +52,10 @@ namespace net {
         server_addr.sin_port = htons(port);
 
         if (::bind(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) != 0)
-            throw SocketException("bind failed");
+            throw SocketException(__FILE__, __LINE__, "bind failed");
 
         if (::listen(sockfd, 1024) != 0)
-            throw SocketException("listen error");
+            throw SocketException(__FILE__, __LINE__, "listen error");
 
         new(this) Socket(sockfd);
     }
@@ -74,7 +74,7 @@ namespace net {
         socklen_t addr_len = sizeof(client_addr);
 
         if ((clientfd = ::accept(this->fd, (struct sockaddr *) &client_addr, &addr_len)) < 0)
-            throw SocketException("accept error");
+            throw SocketException(__FILE__, __LINE__, "accept error");
 
         return std::shared_ptr<Socket>(new Socket(clientfd));
     }
@@ -87,10 +87,10 @@ namespace net {
                 if (errno == ECONNRESET)
                     t = 0;
                 else
-                    throw SocketException(strerror(errno));
+                    throw SocketException(__FILE__, __LINE__, strerror(errno));
             }
             if (t == 0)
-                throw SocketClosedException();
+                throw SocketClosedException(__FILE__, __LINE__);
             r += t;
         }
         return r;
@@ -109,7 +109,7 @@ namespace net {
                  (uint32_t) ((uint8_t) buffer[3]);
         std::unique_ptr<char> message((char *) malloc(length));
         if (message == nullptr)
-            throw SocketException("can't malloc");
+            throw SocketException(__FILE__, __LINE__, "can't malloc");
 
         length = this->readn(message.get(), length);
 
@@ -120,7 +120,7 @@ namespace net {
             for (uint8_t j = 0; j < 2; j++) {
                 uint8_t l = (uint8_t) message.get()[i++];
                 if (i + l >= length)
-                    throw SocketException("error during header parsing");
+                    throw SocketException(__FILE__, __LINE__, "error during header parsing");
                 keyval[j] += std::string(&message.get()[i], l);
                 i += l;
             }
@@ -139,14 +139,14 @@ namespace net {
         std::lock_guard<std::mutex> _l(this->write_mtx);
 
         if (header.count(""))
-            throw SocketException("empty key is not allowed");
+            throw SocketException(__FILE__, __LINE__, "empty key is not allowed");
         std::string message;
         message += "\xFF\xFF\xFF\xFF";
         for (auto &pair : header) {
             std::string keyval[2] = {pair.first, pair.second};
             for (uint8_t i = 0; i < 2; i++) {
-                if (keyval[i].length() > (uint8_t) - 1)
-                    throw SocketException("header key or value is too big");
+                if (keyval[i].length() > (uint8_t) -1)
+                    throw SocketException(__FILE__, __LINE__, "header key or value is too big");
                 message += (char) keyval[i].length();
                 message += keyval[i];
             }
@@ -156,14 +156,14 @@ namespace net {
         message += payload;
 
         if (message.length() > (uint32_t) -1)
-            throw SocketException("resulting message is too big");
+            throw SocketException(__FILE__, __LINE__, "resulting message is too big");
         uint32_t length = (uint32_t) message.length() - 4;
         message[3] = (char) length;
         message[2] = (char) (length >> 8);
         message[1] = (char) (length >> 16);
         message[0] = (char) (length >> 24);
         if (::write(this->fd, message.c_str(), message.size()) != (ssize_t) message.size())
-            throw SocketException("write error");
+            throw SocketException(__FILE__, __LINE__, "write error");
 
         return length;
     }

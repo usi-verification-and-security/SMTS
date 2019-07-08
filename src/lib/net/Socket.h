@@ -16,15 +16,15 @@
 namespace net {
     class SocketException : public Exception {
     public:
-        explicit SocketException(const char *message) : SocketException(std::string(message)) {}
-
-        explicit SocketException(const std::string &message) : Exception("SocketException: " + message) {}
+        explicit SocketException(const char *file, unsigned line, const std::string &message) :
+                Exception(file, line, "SocketException: " + message) {}
     };
 
 
     class SocketClosedException : public SocketException {
     public:
-        explicit SocketClosedException() : SocketException("file descriptor closed") {}
+        explicit SocketClosedException(const char *file, unsigned line) :
+                SocketException(file, line, "file descriptor closed") {}
     };
 
 

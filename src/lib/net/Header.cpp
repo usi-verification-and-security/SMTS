@@ -31,9 +31,9 @@ namespace net {
                     break;
                 if (c == '"') {
                     if (!stream.get(c))
-                        throw Exception("unexpected end");
+                        throw Exception(__FILE__, __LINE__, "unexpected end");
                 } else
-                    throw Exception("double quotes expected");
+                    throw Exception(__FILE__, __LINE__, "double quotes expected");
             }
             if (!escape) {
                 switch (c) {
@@ -45,7 +45,7 @@ namespace net {
                         }
                         if (s == &pair.first) {
                             if (c != ':')
-                                throw Exception("colon expected");
+                                throw Exception(__FILE__, __LINE__, "colon expected");
                             s = &pair.second;
                             continue;
                         } else {
@@ -53,7 +53,7 @@ namespace net {
                             if (c == '}')
                                 stream.unget();
                             else if (c != ',')
-                                throw Exception("comma expected");
+                                throw Exception(__FILE__, __LINE__, "comma expected");
                             pair.first.clear();
                             pair.second.clear();
                             s = &pair.first;
@@ -61,7 +61,7 @@ namespace net {
                         break;
                     default:
                         if ('\x00' <= c && c <= '\x1f')
-                            throw Exception("control char not allowed");
+                            throw Exception(__FILE__, __LINE__, "control char not allowed");
                         *s += c;
                 }
             } else {
@@ -79,13 +79,13 @@ namespace net {
                         break;
                     case 'u':
                         if (!(stream.get(c) && c == '0' && stream.get(c) && c == '0'))
-                            throw Exception("unicode not supported");
+                            throw Exception(__FILE__, __LINE__, "unicode not supported");
                         for (uint8_t _ = 0; _ < 2; _++) {
                             if (!stream.get(c))
-                                throw Exception("unexpected end");
+                                throw Exception(__FILE__, __LINE__, "unexpected end");
                             c = (char) toupper(c);
                             if ((c < '0') || (c > 'F') || ((c > '9') && (c < 'A')))
-                                throw Exception("bad hex string");
+                                throw Exception(__FILE__, __LINE__, "bad hex string");
                             c -= '0';
                             if (c > 9)
                                 c -= 7;
@@ -94,7 +94,7 @@ namespace net {
                         *s += i;
                         break;
                     default:
-                        throw Exception("bad char after escape");
+                        throw Exception(__FILE__, __LINE__, "bad char after escape");
                 }
             }
         }

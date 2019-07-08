@@ -11,9 +11,8 @@
 namespace SQLite3 {
     class Exception : public ::Exception {
     public:
-        explicit Exception(const char *message) : Exception(std::string(message)) {}
-
-        explicit Exception(const std::string &message) : ::Exception("SQLiteException: " + message) {}
+        explicit Exception(const char *file, unsigned line, const std::string &message) :
+                ::Exception(file, line, "SQLiteException: " + message) {}
     };
 }
 

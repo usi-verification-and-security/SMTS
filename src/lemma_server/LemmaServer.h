@@ -28,7 +28,7 @@ protected:
 
     void handle_message(net::Socket &, net::Header &, std::string &);
 
-    void handle_exception(net::Socket &, const net::SocketException &);
+    void handle_exception(net::Socket &, const std::exception &);
 
 public:
     LemmaServer(uint16_t, const std::string &, const std::string &, bool send_again);

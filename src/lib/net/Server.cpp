@@ -71,7 +71,7 @@ namespace net {
                             this->handle_exception(**socket, ex);
                         }
                         catch (std::exception &ex) {
-                            this->handle_exception(**socket, SocketException(ex.what()));
+                            this->handle_exception(**socket, ex);
                         }
                     }
                 } else {

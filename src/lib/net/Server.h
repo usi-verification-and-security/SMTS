@@ -23,7 +23,7 @@ namespace net {
 
         virtual void handle_message(Socket &, net::Header &, std::string &) {}
 
-        virtual void handle_exception(Socket &, const SocketException &) {}
+        virtual void handle_exception(Socket &, const std::exception &) {}
 
     public:
         Server();

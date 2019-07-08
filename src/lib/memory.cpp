@@ -9,7 +9,7 @@ size_t current_memory() {
 #ifdef SMTS_MEMORY_SUPPORTED
     struct rusage usage;
     if (getrusage(RUSAGE_SELF, &usage) != 0) {
-        throw Exception("getrusage() error");
+        throw Exception(__FILE__, __LINE__, "getrusage() error");
     }
 
 #ifdef __linux__
