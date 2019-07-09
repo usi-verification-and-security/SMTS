@@ -61,7 +61,7 @@ void LemmaServer::handle_close(net::Socket &client) {
     }
 }
 
-void LemmaServer::handle_exception(net::Socket &client, const net::SocketException &ex) {
+void LemmaServer::handle_exception(net::Socket &client, const std::exception &ex) {
     Logger::log(Logger::WARNING, "Exception from: " + to_string(client.get_remote()) + ": " + ex.what());
 }
 

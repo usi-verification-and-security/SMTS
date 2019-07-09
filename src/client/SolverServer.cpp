@@ -42,7 +42,7 @@ void SolverServer::handle_close(net::Socket &socket) {
     }
 }
 
-void SolverServer::handle_exception(net::Socket &socket, const net::SocketException &exception) {
+void SolverServer::handle_exception(net::Socket &socket, const std::exception &exception) {
     this->log(Logger::ERROR, exception.what());
 }
 

@@ -17,7 +17,7 @@ namespace net {
     Pipe::Pipe() {
         int fd[2];
         if (::pipe(fd) == -1)
-            throw SocketException("pipe creation error");
+            throw SocketException(__FILE__, __LINE__, "pipe creation error");
         new(this) Pipe(fd[0], fd[1]);
     }
 

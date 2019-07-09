@@ -13,7 +13,7 @@ namespace net {
         for (i = 0; address[i] != ':' && i < address.size() && i < (uint8_t) -1; i++) {
         }
         if (address[i] != ':')
-            throw Exception("invalid host:port");
+            throw Exception(__FILE__, __LINE__, "invalid host:port");
         new(this) Address(address.substr(0, i), (uint16_t) ::atoi(address.substr(i + 1).c_str()));
     }
 

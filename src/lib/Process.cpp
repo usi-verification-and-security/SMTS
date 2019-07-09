@@ -19,7 +19,7 @@ Process::~Process() {
 void Process::start() {
     this->process = fork();
     if (this->process < 0)
-        throw ProcessException("fork error");
+        throw ProcessException(__FILE__, __LINE__, "fork error");
     if (this->process == 0) {
         this->piper.writer()->close();
         this->pipew.reader()->close();

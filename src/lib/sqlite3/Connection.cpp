@@ -12,7 +12,7 @@ namespace SQLite3 {
         const char *filename = db_filename.size() ? db_filename.c_str() : ":memory:";
         int rc = sqlite3_open(filename, (sqlite3 **) &this->db);
         if (rc)
-            throw Exception(std::string("can't open: ") + filename);
+            throw Exception(__FILE__, __LINE__, std::string("can't open: ") + filename);
     }
 
     Connection::~Connection() {
@@ -27,7 +27,7 @@ namespace SQLite3 {
                 n,
                 &stmt,
                 0) != SQLITE_OK) {
-            throw Exception("could not prepare the statement.");
+            throw Exception(__FILE__, __LINE__, "could not prepare the statement.");
         }
         return new Statement(stmt);
     }
@@ -45,7 +45,7 @@ namespace SQLite3 {
         if (rc != SQLITE_OK) {
             std::string err(errc);
             sqlite3_free(errc);
-            throw Exception(err);
+            throw Exception(__FILE__, __LINE__, err);
         }
     }
 
@@ -60,7 +60,7 @@ namespace SQLite3 {
         if (rc != SQLITE_OK) {
             std::string err(errc);
             sqlite3_free(errc);
-            throw Exception(err);
+            throw Exception(__FILE__, __LINE__, err);
         }
     }
 

@@ -209,7 +209,7 @@ public:
             instance(instance),
             header(header) {
         if (!header.count("name") || !header.count("node"))
-            throw Exception("missing mandatory key in header");
+            throw Exception(__FILE__, __LINE__, "missing mandatory key in header");
         this->start();
     }
 

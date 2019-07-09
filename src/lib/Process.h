@@ -11,9 +11,8 @@
 
 class ProcessException : public Exception {
 public:
-    explicit ProcessException(const char *message) : ProcessException(std::string(message)) {}
-
-    explicit ProcessException(const std::string &message) : Exception("ProcessException: " + message) {}
+    explicit ProcessException(const char *file, unsigned line, const std::string &message) :
+            Exception(file, line, "ProcessException: " + message) {}
 };
 
 
