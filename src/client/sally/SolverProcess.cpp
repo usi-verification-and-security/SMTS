@@ -11,6 +11,7 @@
 #include <chrono>
 
 const char *SolverProcess::solver = "SALLY";
+const std::size_t LEMMA_SIZE_LIMIT = 1000000;
 
 using namespace sally;
 
@@ -61,8 +62,12 @@ void new_lemma_eh(void *state, size_t level, const sally::expr::term_ref &lemma)
     ScopedNanoTimer times(std::ref(cw->ts));
     auto ctx = cw->ctx;
     auto lemma_str = sally::reachability_lemma_to_command(ctx, level, lemma);
-    lemmas.push_back(net::Lemma(lemma_str, 0));
+    if (lemma_str.size() < LEMMA_SIZE_LIMIT) {
+        // MB: introducing size limit on lemmas to share, since in some cases, HUGE reachability lemmas were produced
+        lemmas.push_back(net::Lemma(lemma_str, 0));
 //    std::cerr << "New lemma learned: " << lemma_str << " by " << reinterpret_cast<u_int64_t>(state) << std::endl;
+    }
+
 }
 
 void push_lemmas(void *state) {
