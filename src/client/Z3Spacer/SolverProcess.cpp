@@ -26,8 +26,9 @@ std::vector<net::Lemma> lemmas;
 
 void new_lemma_eh(void *_state, Z3_ast lemma, unsigned level) {
     State &state = *static_cast<State *>(_state);
+    z3::expr lemma_expr(state.context, lemma);
     z3::solver solver(state.context);
-    solver.add(z3::expr(state.context, lemma));
+    solver.add(lemma_expr);
     std::ostringstream ss;
     ss << std::to_string(level) << " " << solver;
     lemmas.emplace_back(net::Lemma(ss.str(), 0));
