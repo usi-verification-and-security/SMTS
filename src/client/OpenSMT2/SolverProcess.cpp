@@ -130,7 +130,7 @@ void SolverProcess::partition(uint8_t n) {
             vec<SplitData> &splits = interpret->main_solver->getSMTSolver().splits;
             for (int i = 0; i < splits.size(); i++) {
                 vec<vec<PtAsgn>> constraints;
-                splits[i].constraintsToPTRefs(constraints);
+                splits[i].constraintsToPTRefs(constraints, interpret->main_solver->getTHandler());
                 vec<PTRef> clauses;
                 for (int j = 0; j < constraints.size(); j++) {
                     vec<PTRef> clause;
