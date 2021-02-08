@@ -125,6 +125,11 @@ def send_file(path, socket):
         'name': name
     }, content)
 
+# Send terminate command
+def send_command(command, socket):
+    socket.write({
+        'command': 'terminate'
+    }, 0)
 
 class Singleton(type):
     instance = None
