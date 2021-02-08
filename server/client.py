@@ -17,7 +17,7 @@ if __name__ == '__main__':
     parser.add_argument('--version', action='version', version=str(version))
     parser.add_argument('host_port', metavar='[host:]port', nargs=1, help='default host=127.0.0.1')
     parser.add_argument('files', metavar='file', nargs='*', help='SMT files to submit. CLI mode if empty')
-    parser.add_argument('-terminate',metavar='q', help='Terminating SMTS Server from client By q')
+    parser.add_argument('-t', dest='terminate', action='store_true', help='Terminating SMTS Server from client By -t')
 
     args = parser.parse_args()
 
@@ -34,8 +34,10 @@ if __name__ == '__main__':
         socket = net.Socket()
         socket.connect(address)
         # Terminate server from client
-        if args.terminate is not None and args.terminate[0] == 'q':
-            utils.send_command(args.terminate, socket)
+        if args.terminate:
+            socket.write({
+                'command': 'terminate'
+            }, 0)
         elif args.files:
             for path in args.files:
                 try:
