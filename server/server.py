@@ -287,7 +287,11 @@ class ParallelizationServer(net.Server):
             self.entrust()
             return
         if 'command' in header:
-            if header['command'] == 'solve':
+            # if terminate command is found, close the server
+            if header['command'] == 'terminate':
+                self.log(logging.INFO, 'Termination command is received!')
+                self.close()
+            elif header['command'] == 'solve':
                 if 'name' not in header:
                     return
                 self.log(logging.INFO, 'new instance "{}"'.format(

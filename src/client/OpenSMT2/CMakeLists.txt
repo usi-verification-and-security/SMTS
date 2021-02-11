@@ -29,4 +29,4 @@ set_target_properties(solver_opensmt PROPERTIES
         COMPILE_FLAGS ${solver_opensmt_flags}
         )
 
-target_link_libraries(solver_opensmt client ${OPENSMT2_LIBRARY} gmp gmpxx z readline)
+target_link_libraries(solver_opensmt client ${OPENSMT2_LIBRARY} gmp gmpxx z)
