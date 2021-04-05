@@ -3,6 +3,12 @@ cmake_minimum_required(VERSION 3.2)
 project(SMTS C CXX)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
+set(CMAKE_SOURCE_DIR "src")
+
+get_filename_component(CMAKE_MODULE_PATH
+        "${CMAKE_SOURCE_DIR}/../cmake_modules/" ABSOLUTE)
+
+
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
 endif ()
