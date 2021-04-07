@@ -10,11 +10,11 @@ FetchContent_GetProperties(opensmt)
 
 if(NOT opensmt_POPULATED)
     FetchContent_Populate(opensmt)
-    add_subdirectory(${opensmt_SOURCE_DIR} ${opensmt_BINARY_DIR})
+    add_subdirectory(${opensmt_SOURCE_DIR} ${opensmt_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 FetchContent_MakeAvailable(opensmt)
 
-
+include_directories(${GMP_INCLUDE_DIR})
 include_directories(${opensmt_SOURCE_DIR})
 include_directories(${opensmt_SOURCE_DIR}/src/api)
 include_directories(${opensmt_SOURCE_DIR}/src/cnfizers)
@@ -49,4 +49,4 @@ set_target_properties(solver_opensmt PROPERTIES
         COMPILE_FLAGS ${solver_opensmt_flags}
         )
 
-target_link_libraries(solver_opensmt client ${opensmt_BINARY_DIR} gmp gmpxx z)
+    target_link_libraries(solver_opensmt client api_static ${GMP_LIBRARY} ${GMPXX_LIBRARY} z)
