@@ -24,8 +24,6 @@ endif ()
 execute_process(COMMAND ${CMAKE_CURRENT_LIST_DIR}/version.sh
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
         OUTPUT_VARIABLE SMTS_VERSION)
-add_definitions(-DSMTS_VERSION=${SMTS_VERSION})
-
 include_directories("src")
 
 add_subdirectory(src/module)

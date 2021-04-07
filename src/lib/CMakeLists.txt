@@ -19,3 +19,4 @@ add_library(Lib
         )
 
 target_link_libraries(Lib ${SQLITE3_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+target_compile_definitions(Lib PRIVATE -DSMTS_VERSION=${SMTS_VERSION})
