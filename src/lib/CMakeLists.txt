@@ -3,7 +3,7 @@ find_package(Threads REQUIRED)
 find_package(SQLITE3 REQUIRED)
 include_directories(${SQLITE3_INCLUDE_DIR})
 
-add_library(Lib
+add_library(Lib STATIC
         lib.cpp
         memory.cpp
         Thread.cpp
