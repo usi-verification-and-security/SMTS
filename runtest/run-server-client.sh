@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OPENSMTDIR="/home/circleci/externalRepo/opensmt/"
+OPENSMTDIR="build/_deps/opensmt-src"
 ./server/smts.py -d test.db -o4 -l  &
 sleep 3
 ./server/client.py 3000  ${OPENSMTDIR}/regression/QF_UF/NEQ004_size4.smt2

@@ -2,8 +2,8 @@ include(FetchContent)
 
 FetchContent_Declare(
         opensmt
-        GIT_REPOSITORY https://github.com/usi-verification-and-security/opensmt.git
-        GIT_TAG v2.0.1
+        GIT_REPOSITORY https://github.com/MasoudAsadzade/OpenSMT2.git
+        GIT_TAG parallel-infra
         BUILD_COMMAND make
 )
 FetchContent_GetProperties(opensmt)
@@ -16,6 +16,9 @@ FetchContent_MakeAvailable(opensmt)
 
 include_directories(${GMP_INCLUDE_DIR})
 include_directories(${opensmt_SOURCE_DIR})
+
+include_directories(${opensmt_SOURCE_DIR}/src/bin)
+include_directories(${opensmt_SOURCE_DIR}/src/models)
 include_directories(${opensmt_SOURCE_DIR}/src/api)
 include_directories(${opensmt_SOURCE_DIR}/src/cnfizers)
 include_directories(${opensmt_SOURCE_DIR}/src/common)
@@ -48,5 +51,9 @@ set(solver_opensmt_flags "-w")
 set_target_properties(solver_opensmt PROPERTIES
         COMPILE_FLAGS ${solver_opensmt_flags}
         )
-
-    target_link_libraries(solver_opensmt client api_static ${GMP_LIBRARY} ${GMPXX_LIBRARY} z)
+#find_library(api_static)
+#if (NOT api_static)
+#    message(SEND_ERROR "Did not find lib api_static")
+#endif()
+#link_directories(${opensmt_SOURCE_DIR})
+target_link_libraries(solver_opensmt client OpenSMT-static ${GMP_LIBRARY} ${GMPXX_LIBRARY} z)

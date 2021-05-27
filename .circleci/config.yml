@@ -9,13 +9,13 @@ jobs:
             environment:
                 CMAKE_BUILD_TYPE: Release
                 FLAGS: -Wall
-                INSTALL: ~/externalRepo/opensmt
-                EXTERNALREPODIR: externalRepo
+                #INSTALL: ~/externalRepo/opensmt
+                #EXTERNALREPODIR: externalRepo
                 USE_READLINE: OFF
         steps:
             - checkout
             - run:
-                name: apt-get update
+                name: apt-get update`
                 command: sudo apt-get update
             - run:
                 name: Install Dependencies
@@ -24,11 +24,11 @@ jobs:
             - run:
                 name: Install Sqllite
                 command: sudo apt-get install zlib1g-dev libsqlite3-dev      
-            - run: 
-                name: Install external opensmt Tag V2.0.1
-                command: sh ./ci/run_travis_opensmtCommands.sh
-                environment:
-                    CMAKE_BUILD_TYPE: Release
+#            - run:
+#                name: Install external opensmt Tag V2.0.1
+#                command: sh ./ci/run_travis_opensmtCommands.sh
+#                environment:
+#                    CMAKE_BUILD_TYPE: Release
             - run:
                 name: Create the build directory
                 command: mkdir build

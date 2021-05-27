@@ -7,30 +7,30 @@
 
 
 void OpenSMTInterpret::new_solver() {
-    this->solver = new OpenSMTSolver(*this);
+    this->smt_solver= std::unique_ptr<SimpSMTSolver> (new OpenSMTSolver(*this));
 }
 
 
 OpenSMTSolver::OpenSMTSolver(OpenSMTInterpret &interpret) :
-        SimpSMTSolver(interpret.config, *interpret.thandler),
+        ScatterSplitter(interpret.config, interpret.main_solver->getTHandler()),
         interpret(interpret),
         trail_sent(0),
-        learned_push(false) {}
+        learned_push(false) {
+}
 
 OpenSMTSolver::~OpenSMTSolver() {}
 
 void inline OpenSMTSolver::clausesPublish() {
     if (this->interpret.lemma_push == nullptr)
         return;
-
     std::vector<net::Lemma> lemmas;
 
     int trail_max = this->trail_lim.size() == 0 ? this->trail.size() : this->trail_lim[0];
     for (int i = this->trail_sent; i < trail_max; i++) {
         this->trail_sent++;
-        PTRef pt = this->interpret.thandler->varToTerm(var(this->trail[i]));
+        PTRef pt = this->interpret.main_solver->getTHandler().varToTerm(var(this->trail[i]));
         pt = sign(this->trail[i]) ? this->interpret.logic->mkNot(pt) : pt;
-        char *s = this->interpret.thandler->getLogic().printTerm(pt, false, true);
+        char *s = this->interpret.main_solver->getLogic().printTerm(pt, false, true);
         lemmas.push_back(net::Lemma(s, 0));
         free(s);
     }
@@ -44,6 +44,7 @@ void inline OpenSMTSolver::clausesPublish() {
     for (int i = 0; i < this->learnts.size(); i++) {
         CRef cr = this->learnts[i];
         Clause &c = this->ca[cr];
+
         if (c.size() > 3 || c.mark() == 3)
             continue;
         uint16_t level = 0;
@@ -60,14 +61,14 @@ void inline OpenSMTSolver::clausesPublish() {
             }
             if (k != enabled_assumptions.size())
                 continue;
-            PTRef pt = this->interpret.thandler->varToTerm(var(l));
+            PTRef pt = this->interpret.main_solver->getTHandler().varToTerm(var(l));
             pt = sign(l) ? this->interpret.logic->mkNot(pt) : pt;
             clause.push(pt);
         }
         if (clause.size() == 0)
             continue;
         PTRef pt = this->interpret.logic->mkOr(clause);
-        char *s = this->interpret.thandler->getLogic().printTerm(pt, false, true);
+        char *s = this->interpret.main_solver->getTHandler().getLogic().printTerm(pt, false, true);
         lemmas.push_back(net::Lemma(s, level));
         free(s);
         c.mark(3);
@@ -78,7 +79,6 @@ void inline OpenSMTSolver::clausesPublish() {
 void inline OpenSMTSolver::clausesUpdate() {
     if (this->interpret.lemma_pull == nullptr)
         return;
-
     std::vector<net::Lemma> lemmas;
 
     this->interpret.lemma_pull(lemmas);

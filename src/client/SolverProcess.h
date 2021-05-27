@@ -60,6 +60,7 @@ private:
                 // if command=local the answer is built here and delivered to SolverServer
                 // otherwise the solver is interrupted and the message forwarder through pipe
                 this->reader()->read(header, payload);
+
                 if (!header.count("command"))
                     continue;
                 if (header["command"] == "local" && header.count("local")) {
@@ -220,7 +221,6 @@ public:
     void lemma_push(const std::vector<net::Lemma> &lemmas) {
         if (lemmas.size() == 0 && this->lemma.to_push.size() == 0)
             return;
-
         std::lock_guard<std::mutex> _l(this->lemma.mtx);
 
         this->lemma.to_push.insert(this->lemma.to_push.end(), lemmas.begin(), lemmas.end());

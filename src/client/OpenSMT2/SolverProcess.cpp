@@ -27,7 +27,7 @@ void SolverProcess::init() {
     dup2(fileno(file), fileno(stderr));
     fclose(file);
 
-    static const char *default_split = "lookahead";
+    static const char *default_split = "scattering";
     static const char *default_seed = "0";
 
     if (this->header.get(net::Header::parameter, "seed").size() == 0) {
@@ -49,6 +49,7 @@ void SolverProcess::init() {
 }
 
 void SolverProcess::solve() {
+    const char *msg;
     SMTConfig config;
     config.setRandomSeed(atoi(this->header.get(net::Header::parameter, "seed").c_str()));
     auto lemma_push = [&](const std::vector<net::Lemma> &lemmas) {
@@ -61,42 +62,50 @@ void SolverProcess::solve() {
     std::string smtlib = this->instance;
 
     while (true) {
+
         opensmt::stop = false;
         mtx_solve.unlock();
+
         interpret->interpFile((char *) (smtlib + this->header["query"]).c_str());
         mtx_solve.lock();
         sstat status = interpret->main_solver->getStatus();
         interpret->f_exit = false;
         opensmt::stop = false;
 
-        if (status == s_True)
+        if (status == s_True) {
             this->report(Status::sat);
-        else if (status == s_False)
+        }
+        else if (status == s_False) {
             this->report(Status::unsat);
-
+        }
         Task task = this->wait();
         switch (task.command) {
             case Task::incremental:
+
                 smtlib = task.smtlib;
-                if (((OpenSMTSolver *) interpret->solver)->learned_push) {
-                    ((OpenSMTSolver *) interpret->solver)->learned_push = false;
+                if (((OpenSMTSolver *) interpret->main_solver.get())->learned_push) {
+                    ((OpenSMTSolver *) interpret->main_solver.get())->learned_push = false;
                     interpret->main_solver->pop();
                 }
                 break;
+
             case Task::resume:
                 smtlib.clear();
                 break;
+
         }
     }
 }
 
 void SolverProcess::interrupt() {
     std::lock_guard<std::mutex> _l(mtx_solve);
-    opensmt::stop = true;
+    opensmt::stop= true;
 }
 
 void SolverProcess::partition(uint8_t n) {
     pid_t pid = getpid();
+    //fork() returns -1 if it fails, and if it succeeds, it returns the forked child's pid in the parent, and 0 in the child.
+    // So if (fork() != 0) tests whether it's the parent process.
     if (fork() != 0) {
         return;
     }
@@ -119,17 +128,21 @@ void SolverProcess::partition(uint8_t n) {
                                                           SMTOption(this->header.get(net::Header::parameter, "split")
                                                                             .c_str()),
                                                           msg) &&
+            interpret->main_solver->getConfig().setOption(SMTConfig::o_smt_split_format_length,
+                                                                  SMTOption("brief"),
+                                                                  msg) &&
             interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_units, SMTOption(spts_time), msg) &&
             interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_inittune, SMTOption(double(2)), msg) &&
             interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_midtune, SMTOption(double(2)), msg) &&
             interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_asap, SMTOption(1), msg))) {
         this->report(partitions, msg);
-    } else {
+    }
+    else {
         sstat status = interpret->main_solver->solve();
         if (status == s_Undef) {
-            vec<SplitData> &splits = interpret->main_solver->getSMTSolver().splits;
+            std::vector<SplitData>& splits=static_cast<ScatterSplitter&>(interpret->main_solver->getSMTSolver()).splits;
             for (int i = 0; i < splits.size(); i++) {
-                vec<vec<PtAsgn>> constraints;
+                std::vector<vec<PtAsgn> > constraints;
                 splits[i].constraintsToPTRefs(constraints, interpret->main_solver->getTHandler());
                 vec<PTRef> clauses;
                 for (int j = 0; j < constraints.size(); j++) {
@@ -149,12 +162,16 @@ void SolverProcess::partition(uint8_t n) {
                 free(str);
             }
             this->report(partitions);
-        } else if (status == s_True)
+        } else if (status == s_True) {
             this->report(Status::sat);
-        else if (status == s_False)
+        }
+        else if (status == s_False) {
+
             this->report(Status::unsat);
-        else
+        }
+        else {
             this->report(partitions, "error during partitioning");
+        }
     }
     exit(0);
 }
@@ -179,19 +196,19 @@ void SolverProcess::getCnfClauses(net::Header &header, const std::string &payloa
         interpret = new OpenSMTInterpret(header, nullptr, nullptr, config);
         interpret->interpFile((char *) (payload + header["query"]).c_str());
 
-        char *cnf = interpret->solver->printCnfClauses();
+        char *cnf = interpret->main_solver->getSMTSolver().printCnfClauses();
         this->report(header, header["command"], cnf);
         free(cnf);
         exit(0);
     } else {
-        char *cnf = interpret->solver->printCnfClauses();
+        char *cnf = interpret->main_solver->getSMTSolver().printCnfClauses();
         this->report(header, header["command"], cnf);
         free(cnf);
     }
 }
 
 void SolverProcess::getCnfLearnts(net::Header &header) {
-    char *cnf = interpret->solver->printCnfLearnts();
+    char *cnf = interpret->main_solver->getSMTSolver().printCnfLearnts();
     this->report(header, header["command"], cnf);
     free(cnf);
 }
