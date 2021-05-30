@@ -65,17 +65,24 @@ void SolverProcess::solve() {
 
         opensmt::stop = false;
         mtx_solve.unlock();
-
+#ifdef ENABLE_DEBUGING
+        std::thread first (Logger::writeIntoFile,false,"SolverProcess: Start to Solve...","Recieved command: "+header["command"],getpid());
+            first.join();
+#endif
         interpret->interpFile((char *) (smtlib + this->header["query"]).c_str());
         mtx_solve.lock();
         sstat status = interpret->main_solver->getStatus();
         interpret->f_exit = false;
         opensmt::stop = false;
-
+#ifdef ENABLE_DEBUGING
+        std::thread log (Logger::writeIntoFile,false,"SolverProcess: Finished solving...","Recieved command: "+header["command"],getpid());
+            log.join();
+#endif
         if (status == s_True) {
             this->report(Status::sat);
         }
         else if (status == s_False) {
+
             this->report(Status::unsat);
         }
         Task task = this->wait();
@@ -86,9 +93,8 @@ void SolverProcess::solve() {
                 if (((OpenSMTSolver *) interpret->main_solver.get())->learned_push) {
                     ((OpenSMTSolver *) interpret->main_solver.get())->learned_push = false;
                     interpret->main_solver->pop();
+                    break;
                 }
-                break;
-
             case Task::resume:
                 smtlib.clear();
                 break;
@@ -106,6 +112,11 @@ void SolverProcess::partition(uint8_t n) {
     pid_t pid = getpid();
     //fork() returns -1 if it fails, and if it succeeds, it returns the forked child's pid in the parent, and 0 in the child.
     // So if (fork() != 0) tests whether it's the parent process.
+#ifdef ENABLE_DEBUGING
+    std::thread log (Logger::writeIntoFile,false,"SolverProcess - Main Thread: Start to fork partition process",
+                     "Recieved command: "+header["command"],getpid());
+        log.join();
+#endif
     if (fork() != 0) {
         return;
     }
@@ -118,6 +129,11 @@ void SolverProcess::partition(uint8_t n) {
     //dup2(fileno(file), fileno(stdout));
     //dup2(fileno(file), fileno(stderr));
     //fclose(file);
+#ifdef ENABLE_DEBUGING
+    std::thread logger (Logger::writeIntoFile,false,"PartitionProcess - Main Thread: Start to set SMTConfig to do partiotion",
+                     "Recieved command: "+header["command"],getpid());
+        logger.join();
+#endif
     std::vector<std::string> partitions;
     const char *msg;
     if (!(
@@ -138,6 +154,11 @@ void SolverProcess::partition(uint8_t n) {
         this->report(partitions, msg);
     }
     else {
+#ifdef ENABLE_DEBUGING
+        std::thread log (Logger::writeIntoFile,false,"PartitionProcess - Main Thread: Start to partitioning",
+                     "Recieved command: "+header["command"],getpid());
+        log.join();
+#endif
         sstat status = interpret->main_solver->solve();
         if (status == s_Undef) {
             std::vector<SplitData>& splits=static_cast<ScatterSplitter&>(interpret->main_solver->getSMTSolver()).splits;
@@ -159,6 +180,11 @@ void SolverProcess::partition(uint8_t n) {
                 char *str = interpret->main_solver->getTHandler().getLogic().
                         printTerm(interpret->main_solver->getLogic().mkAnd(clauses), false, true);
                 partitions.push_back(str);
+#ifdef ENABLE_DEBUGING
+                std::thread log (Logger::writeIntoFile,false,"PartitionProcess - Main Thread: Finished partitioning",
+                     str,getpid());
+        log.join();
+#endif
                 free(str);
             }
             this->report(partitions);
@@ -166,7 +192,6 @@ void SolverProcess::partition(uint8_t n) {
             this->report(Status::sat);
         }
         else if (status == s_False) {
-
             this->report(Status::unsat);
         }
         else {

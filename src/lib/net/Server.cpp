@@ -5,8 +5,8 @@
 #include <unistd.h>
 #include <algorithm>
 #include "Server.h"
-
-
+#include <thread>
+#include "lib/Logger.h"
 namespace net {
     Server::Server(std::shared_ptr<Socket> socket) :
             socket(socket) {
@@ -57,9 +57,16 @@ namespace net {
                         }
                         this->sockets.insert(client);
                         this->handle_accept(*client);
+
                     } else {
                         try {
                             (*socket)->read(header, payload);
+#ifdef ENABLE_DEBUGING
+       if(header["command"].size()!=0){
+        std::thread log (Logger::writeIntoFile,true,"Server","Recieved command: "+header["command"],getpid());
+        log.join();
+    }
+#endif
                             this->handle_message(**socket, header, payload);
                         }
                         catch (SocketClosedException &ex) {
@@ -80,8 +87,6 @@ namespace net {
                 }
                 socket = this->sockets.begin();
             }
-//        if (result < 0) {
-//        }
         }
     }
 

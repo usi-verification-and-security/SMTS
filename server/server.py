@@ -263,13 +263,16 @@ class ParallelizationServer(net.Server):
         self.config = config
         self.trees = []
         self.current = None
-        self.log(logging.INFO, 'server start. version {}'.format(version))
+        if self.config.enableLog:
+            self.log(logging.INFO, 'server start. version {}'.format(version))
 
     def handle_accept(self, sock):
-        self.log(logging.DEBUG, 'new connection from {}'.format(sock.remote_address))
+        if self.config.enableLog:
+            self.log(logging.DEBUG, 'new connection from {}'.format(sock.remote_address))
 
     def handle_message(self, sock, header, payload):
-        self.log(logging.DEBUG, 'message from {}'.format(sock.remote_address),
+        if self.config.enableLog:
+            self.log(logging.DEBUG, 'message from {}'.format(sock.remote_address),
                  {'header': header, 'payload': payload.decode()})
         if isinstance(sock, Solver):
             if not header:
@@ -283,7 +286,8 @@ class ParallelizationServer(net.Server):
                 except:
                     level = logging.INFO
                     message = header['report']
-                self.log(level, '{}: {}'.format(sock, message), {'header': header, 'payload': payload.decode()})
+                if self.config.enableLog:
+                    self.log(level, '{}: {}'.format(sock, message), {'header': header, 'payload': payload.decode()})
             self.entrust()
             return
         if 'command' in header:
@@ -294,7 +298,8 @@ class ParallelizationServer(net.Server):
             elif header['command'] == 'solve':
                 if 'name' not in header:
                     return
-                self.log(logging.INFO, 'new instance "{}"'.format(
+                if self.config.enableLog:
+                    self.log(logging.INFO, 'new instance "{}"'.format(
                     header['name']
                 ), {'header': header})
                 try:
@@ -309,7 +314,8 @@ class ParallelizationServer(net.Server):
                 self.entrust()
         elif 'solver' in header:
             solver = Solver(sock, header['solver'])
-            self.log(logging.INFO, 'new {}'.format(
+            if self.config.enableLog:
+                self.log(logging.INFO, 'new {}'.format(
                 solver,
             ), {'header': header, 'payload': payload.decode()})
             self._rlist.remove(sock)
@@ -326,7 +332,8 @@ class ParallelizationServer(net.Server):
                 lemma_server.close()
             self._rlist.remove(sock)
             lemma_server = LemmaServer(sock, header["lemmas"])
-            self.log(logging.INFO, 'new {}'.format(
+            if self.config.enableLog:
+                self.log(logging.INFO, 'new {}'.format(
                 lemma_server
             ), {'header': header, 'payload': payload.decode()})
             self._rlist.add(lemma_server)
@@ -343,12 +350,14 @@ class ParallelizationServer(net.Server):
                 sock.write({}, response_payload)
 
     def handle_close(self, sock):
-        self.log(logging.DEBUG, 'connection closed by {}'.format(
+        if self.config.enableLog:
+            self.log(logging.DEBUG, 'connection closed by {}'.format(
             sock
         ))
         if isinstance(sock, Solver):
             if sock.or_waiting:
-                self.log(logging.WARNING, '{} had waiting or-nodes {}'.format( # todo: manage what to do now
+                if self.config.enableLog:
+                    self.log(logging.WARNING, '{} had waiting or-nodes {}'.format( # todo: manage what to do now
                     sock,
                     sock.or_waiting
                 ))
@@ -371,7 +380,15 @@ class ParallelizationServer(net.Server):
         # if the current tree is already solved or timed out: stop it
         if isinstance(self.current, Instance):
             if self.current.root.status != framework.SolveStatus.unknown or self.current.when_timeout < 0:
-                self.log(
+                if not self.config.enableLog:
+                    self.log(
+                        logging.INFO,
+                        '{}'.format(
+                            self.current.root.status
+                        )
+                    )
+                else:
+                    self.log(
                     logging.INFO,
                     '{} instance "{}" after {:.2f} seconds'.format(
                         'solved' if self.current.root.status != framework.SolveStatus.unknown else 'timeout',
@@ -387,12 +404,14 @@ class ParallelizationServer(net.Server):
                             instance.root.status == framework.SolveStatus.unknown and instance.when_timeout > 0]
             if schedulables:
                 self.current = schedulables[0]
-                self.log(logging.INFO, 'solving instance "{}"'.format(self.current.root.name))
+                if self.config.enableLog:
+                    self.log(logging.INFO, 'solving instance "{}"'.format(self.current.root.name))
         if solving is not None and solving != self.current and self.lemma_server:
             self.lemma_server.reset(solving.root)
         if self.current is None:
             if solving is not None:
-                self.log(logging.INFO, 'all done.')
+                if self.config.enableLog:
+                    self.log(logging.INFO, 'all done.')
                 if self.config.idle_quit:
                     if not any([type(socket) == net.Socket and socket is not self._sock for socket in self._rlist]):
                         self.close()
@@ -572,7 +591,10 @@ class ParallelizationServer(net.Server):
             return lemmas[0]
 
     def log(self, level, message, data=None):
-        super().log(level, message)
+        if self.config.enableLog:
+            super().log(level, message)
+        else:
+            print(message)
         if not config.db() or level < self.config.log_level:
             return
         config.db().cursor().execute("INSERT INTO {}ServerLog (level, message, data) "

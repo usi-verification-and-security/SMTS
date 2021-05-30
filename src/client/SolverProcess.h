@@ -169,6 +169,10 @@ private:
     }
 
     Task wait() {
+#ifdef ENABLE_DEBUGING
+        std::thread log (Logger::writeIntoFile,false,"SolverProcess - Main Thread: Start to read the pipe...","Recieved command: "+header["command"],getpid());
+        log.join();
+#endif
         net::Header header;
         std::string payload;
         this->pipe.reader()->read(header, payload);
