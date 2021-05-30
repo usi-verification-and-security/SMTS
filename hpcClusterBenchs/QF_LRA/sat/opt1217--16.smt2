@@ -1,8 +1,3 @@
-(set-option :split-type "scattering")
-(set-option :split-num 2)
-(set-option :split-format smt2)
-(set-option :split-format-length "brief")
-(set-option :output-dir "splits_here")
 (set-info :smt-lib-version 2.6)
 (set-logic QF_LRA)
 (set-info :source |
