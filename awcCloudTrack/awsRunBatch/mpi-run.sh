@@ -90,8 +90,8 @@ report_to_master () {
   ping -c 3 ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}
   until scp $HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX} ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:$HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX}
   do
-    echo "Sleeping 2 seconds and trying again"
-    sleep 2
+    echo "Sleeping 1 seconds and trying again"
+    sleep 1
   done
   #echo "$ip slots=2" >> $HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX}
   mpirun --mca btl_tcp_if_include eth0 --allow-run-as-root -np ${AWS_BATCH_JOB_NUM_NODES}  --hostfile $HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX} SMTS/build/solver_opensmt -s ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:3000 &
