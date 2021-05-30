@@ -8,7 +8,7 @@ portfolio_max = 0  # 0 if no limit
 portfolio_min = 0  # 0 if no limit
 partition_timeout = 60  # None if no partitioning
 partition_policy = [1, 2]  #
-solving_timeout = None  # None for no timeout
+solving_timeout = 1200  # None for no timeout
 max_memory = 0  # max memory for each solver process in MB
 build_path = "../../build"  # build path absolute or relative to the config file
 lemma_sharing = False  # enabling lemma sharing
@@ -23,7 +23,7 @@ gui = False  # enable GUI
 opensmt = 0  # number of opensmt2 processes
 z3spacer = 0  # number of z3spacer processes
 sally = 0  # number of sally processes
-idle_quit = False  # quit smts after solving the last instance
+idle_quit = True  # quit smts after solving the last instance
 enableLog = True
 # parameters is a dictionary solver_name.solver_parameter -> value:(int, str, callable)  where:
 # solver_parameter is a valid parameter for the solver solver_name and
