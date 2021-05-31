@@ -71,8 +71,7 @@ wait_for_nodes () {
    # fi
   #done
   echo "Send bench files"
-  echo "${COMP_S3_PROBLEM_PATH}"
-  SMTS/server/client.py 3000 SMTS/hpcClusterBenchs/${COMP_S3_PROBLEM_PATH}
+  SMTS/awcCloudTrack/awsRunBatch/run_aws_smtsClient.sh "SMTS/hpcClusterBenchs"
   ps -ef | grep sshd
   tail -f /dev/null
 #  echo "Close SMTS server"
