@@ -52,58 +52,6 @@ private:
         }
         this->init();
         this->info("start");
-        std::thread t_messages([&] {
-            net::Header header;
-            std::string payload;
-            while (true) {
-                // receives both commands from the server(forwarded by SolverServer) and from SolverServer.
-                // if command=local the answer is built here and delivered to SolverServer
-                // otherwise the solver is interrupted and the message forwarder through pipe
-                this->reader()->read(header, payload);
-
-                if (!header.count("command"))
-                    continue;
-                if (header["command"] == "local" && header.count("local")) {
-                    if (header["local"] == "report")
-                        this->report();
-                    else if (header["local"] == "lemma_server" && header.count("lemma_server")) {
-                        if (!header["lemma_server"].size()) {
-                            std::lock_guard<std::mutex> _l(this->lemma.mtx);
-                            this->lemma.server.reset();
-                        } else {
-                            try {
-                                std::lock_guard<std::mutex> _l(this->lemma.mtx);
-                                this->lemma.server.reset(new net::Socket(header["lemma_server"]));
-                                this->lemma.errors = 0;
-                            } catch (net::SocketException &ex) {
-                                this->error(std::string("lemma server connection failed: ") + ex.what());
-                                continue;
-                            }
-                            this->lemma_push(std::vector<net::Lemma>());
-                        }
-                    }
-                    continue;
-                }
-                this->interrupt();
-                this->pipe.writer()->write(header, payload);
-            }
-        });
-        t_messages.detach();
-        std::thread t_memory([&] {
-            size_t limit = atoll(this->header["max_memory"].c_str());
-            if (limit == 0)
-                return;
-
-            while (true) {
-                size_t cmem = current_memory();
-                if (cmem > limit * 1024 * 1024) {
-                    this->error(std::string("max memory reached: ") + std::to_string(cmem));
-                    exit(-1);
-                }
-                std::this_thread::sleep_for(std::chrono::seconds(3));
-            }
-        });
-        t_memory.detach();
         this->solve();
     }
 

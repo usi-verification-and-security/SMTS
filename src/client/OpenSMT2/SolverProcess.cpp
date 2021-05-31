@@ -85,21 +85,6 @@ void SolverProcess::solve() {
 
             this->report(Status::unsat);
         }
-        Task task = this->wait();
-        switch (task.command) {
-            case Task::incremental:
-
-                smtlib = task.smtlib;
-                if (((OpenSMTSolver *) interpret->main_solver.get())->learned_push) {
-                    ((OpenSMTSolver *) interpret->main_solver.get())->learned_push = false;
-                    interpret->main_solver->pop();
-                    break;
-                }
-            case Task::resume:
-                smtlib.clear();
-                break;
-
-        }
     }
 }
 
