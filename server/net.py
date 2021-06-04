@@ -4,6 +4,7 @@ import struct
 import logging
 import traceback
 import time
+from datetime import datetime
 
 __author__ = 'Matteo Marescotti'
 
@@ -155,6 +156,7 @@ class Server(object):
                     sock.close()
                     self._rlist.remove(sock)
                 else:
+                    # print("time =", datetime.now().strftime("%H:%M:%S"))
                     self.handle_message(sock, header, message)
         except KeyboardInterrupt:
             raise

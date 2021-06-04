@@ -4,7 +4,6 @@ FetchContent_Declare(
         opensmt
         GIT_REPOSITORY https://github.com/MasoudAsadzade/OpenSMT2.git
         GIT_TAG parallel-infra
-        BUILD_COMMAND make
 )
 FetchContent_GetProperties(opensmt)
 
@@ -51,9 +50,4 @@ set(solver_opensmt_flags "-w")
 set_target_properties(solver_opensmt PROPERTIES
         COMPILE_FLAGS ${solver_opensmt_flags}
         )
-#find_library(api_static)
-#if (NOT api_static)
-#    message(SEND_ERROR "Did not find lib api_static")
-#endif()
-#link_directories(${opensmt_SOURCE_DIR})
 target_link_libraries(solver_opensmt client OpenSMT-static ${GMP_LIBRARY} ${GMPXX_LIBRARY} z)

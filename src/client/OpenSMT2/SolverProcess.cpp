@@ -14,7 +14,7 @@
 
 using namespace opensmt;
 
-OpenSMTInterpret *interpret = nullptr;
+OpenSMTSolver *openSMTSolver = nullptr;
 
 const char *SolverProcess::solver = "OpenSMT2";
 
@@ -58,7 +58,8 @@ void SolverProcess::solve() {
     auto lemma_pull = [&](std::vector<net::Lemma> &lemmas) {
         this->lemma_pull(lemmas);
     };
-    interpret = new OpenSMTInterpret(this->header, lemma_push, lemma_pull, config);
+    openSMTSolver = new OpenSMTSolver(this->header, lemma_push, lemma_pull, config);
+    //OpenSMTSolver *os= new OpenSMTSolver(openSMTSolver,static_cast<ScatterSplitter&>(openSMTSolver->interpret->getMainSolver().getSMTSolver()));
     std::string smtlib = this->instance;
 
     while (true) {
@@ -69,10 +70,9 @@ void SolverProcess::solve() {
         std::thread first (Logger::writeIntoFile,false,"SolverProcess: Start to Solve...","Recieved command: "+header["command"],getpid());
             first.join();
 #endif
-        interpret->interpFile((char *) (smtlib + this->header["query"]).c_str());
+        openSMTSolver->interpret->interpFile((char *) (smtlib + this->header["query"]).c_str());
         mtx_solve.lock();
-        sstat status = interpret->main_solver->getStatus();
-        interpret->f_exit = false;
+        sstat status = openSMTSolver->interpret->getMainSolver().getStatus();
         opensmt::stop = false;
 #ifdef ENABLE_DEBUGING
         std::thread log (Logger::writeIntoFile,false,"SolverProcess: Finished solving...","Recieved command: "+header["command"],getpid());
@@ -84,6 +84,22 @@ void SolverProcess::solve() {
         else if (status == s_False) {
 
             this->report(Status::unsat);
+        }
+        Task task = this->wait();
+        switch (task.command) {
+            case Task::incremental:
+
+                smtlib = task.smtlib;
+
+                if (openSMTSolver->learned_push) {
+                    openSMTSolver->learned_push= false;
+                    openSMTSolver->interpret->getMainSolver().pop();
+                    break;
+                }
+            case Task::resume:
+                smtlib.clear();
+                break;
+
         }
     }
 }
@@ -122,20 +138,20 @@ void SolverProcess::partition(uint8_t n) {
     std::vector<std::string> partitions;
     const char *msg;
     if (!(
-            interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_num,
-                                                          SMTOption(int(n)),
-                                                          msg) &&
-            interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_type,
-                                                          SMTOption(this->header.get(net::Header::parameter, "split")
-                                                                            .c_str()),
-                                                          msg) &&
-            interpret->main_solver->getConfig().setOption(SMTConfig::o_smt_split_format_length,
-                                                                  SMTOption("brief"),
-                                                                  msg) &&
-            interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_units, SMTOption(spts_time), msg) &&
-            interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_inittune, SMTOption(double(2)), msg) &&
-            interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_midtune, SMTOption(double(2)), msg) &&
-            interpret->main_solver->getConfig().setOption(SMTConfig::o_sat_split_asap, SMTOption(1), msg))) {
+            openSMTSolver->interpret->getMainSolver().getConfig().setOption(SMTConfig::o_sat_split_num,
+                                                                            SMTOption(int(n)),
+                                                                            msg) &&
+            openSMTSolver->interpret->getMainSolver().getConfig().setOption(SMTConfig::o_sat_split_type,
+                                                                            SMTOption(this->header.get(net::Header::parameter, "split")
+                                                                                              .c_str()),
+                                                                            msg) &&
+            openSMTSolver->interpret->getMainSolver().getConfig().setOption(SMTConfig::o_smt_split_format_length,
+                                                                            SMTOption("brief"),
+                                                                            msg) &&
+            openSMTSolver->interpret->getMainSolver().getConfig().setOption(SMTConfig::o_sat_split_units, SMTOption(spts_time), msg) &&
+            openSMTSolver->interpret->getMainSolver().getConfig().setOption(SMTConfig::o_sat_split_inittune, SMTOption(double(2)), msg) &&
+            openSMTSolver->interpret->getMainSolver().getConfig().setOption(SMTConfig::o_sat_split_midtune, SMTOption(double(2)), msg) &&
+            openSMTSolver->interpret->getMainSolver().getConfig().setOption(SMTConfig::o_sat_split_asap, SMTOption(1), msg))) {
         this->report(partitions, msg);
     }
     else {
@@ -144,12 +160,12 @@ void SolverProcess::partition(uint8_t n) {
                      "Recieved command: "+header["command"],getpid());
         log.join();
 #endif
-        sstat status = interpret->main_solver->solve();
+        sstat status = openSMTSolver->interpret->getMainSolver().solve();
         if (status == s_Undef) {
-            std::vector<SplitData>& splits=static_cast<ScatterSplitter&>(interpret->main_solver->getSMTSolver()).splits;
+            std::vector<SplitData>& splits=static_cast<ScatterSplitter&>(openSMTSolver->interpret->getMainSolver().getSMTSolver()).splits;
             for (int i = 0; i < splits.size(); i++) {
                 std::vector<vec<PtAsgn> > constraints;
-                splits[i].constraintsToPTRefs(constraints, interpret->main_solver->getTHandler());
+                splits[i].constraintsToPTRefs(constraints, openSMTSolver->interpret->getMainSolver().getTHandler());
                 vec<PTRef> clauses;
                 for (int j = 0; j < constraints.size(); j++) {
                     vec<PTRef> clause;
@@ -157,13 +173,13 @@ void SolverProcess::partition(uint8_t n) {
                         PTRef pt =
                                 constraints[j][k].sgn == l_True ?
                                 constraints[j][k].tr :
-                                interpret->main_solver->getLogic().mkNot(constraints[j][k].tr);
+                                openSMTSolver->interpret->getMainSolver().getLogic().mkNot(constraints[j][k].tr);
                         clause.push(pt);
                     }
-                    clauses.push(interpret->main_solver->getLogic().mkOr(clause));
+                    clauses.push(openSMTSolver->interpret->getMainSolver().getLogic().mkOr(clause));
                 }
-                char *str = interpret->main_solver->getTHandler().getLogic().
-                        printTerm(interpret->main_solver->getLogic().mkAnd(clauses), false, true);
+                char *str = openSMTSolver->interpret->getMainSolver().getTHandler().getLogic().
+                        printTerm(openSMTSolver->interpret->getMainSolver().getLogic().mkAnd(clauses), false, true);
                 partitions.push_back(str);
 #ifdef ENABLE_DEBUGING
                 std::thread log (Logger::writeIntoFile,false,"PartitionProcess - Main Thread: Finished partitioning",
@@ -203,22 +219,22 @@ void SolverProcess::getCnfClauses(net::Header &header, const std::string &payloa
 
         SMTConfig config;
         config.set_dryrun(true);
-        interpret = new OpenSMTInterpret(header, nullptr, nullptr, config);
-        interpret->interpFile((char *) (payload + header["query"]).c_str());
+        openSMTSolver = new OpenSMTSolver(header, nullptr, nullptr, config);
+        openSMTSolver->interpret->interpFile((char *) (payload + header["query"]).c_str());
 
-        char *cnf = interpret->main_solver->getSMTSolver().printCnfClauses();
+        char *cnf = openSMTSolver->interpret->getMainSolver().getSMTSolver().printCnfClauses();
         this->report(header, header["command"], cnf);
         free(cnf);
         exit(0);
     } else {
-        char *cnf = interpret->main_solver->getSMTSolver().printCnfClauses();
+        char *cnf = openSMTSolver->interpret->getMainSolver().getSMTSolver().printCnfClauses();
         this->report(header, header["command"], cnf);
         free(cnf);
     }
 }
 
 void SolverProcess::getCnfLearnts(net::Header &header) {
-    char *cnf = interpret->main_solver->getSMTSolver().printCnfLearnts();
+    char *cnf = openSMTSolver->interpret->getMainSolver().getSMTSolver().printCnfLearnts();
     this->report(header, header["command"], cnf);
     free(cnf);
 }

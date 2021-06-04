@@ -18,7 +18,6 @@ void Settings::load(int argc, char **argv) {
             case 'h':
                 new(this) Settings();
                 std::cout << "\n=== SMTS version " << SMTS_VERSION << " ===\n\n"
-
                         "Usage: " << argv[0] << "\n"
                                   "[-h] display this message\n"
                                   "[-s server-host:port]\n"

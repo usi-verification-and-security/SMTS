@@ -57,7 +57,8 @@ if __name__ == '__main__':
             attr = getattr(server.config, attr_name)
             if type(attr) not in [list, dict, str, int, bool, type(None)]:
                 continue
-            print('{} = {}'.format(attr_name, repr(getattr(server.config, attr_name))))
+            if server.config.enableLog:
+                print('{} = {}'.format(attr_name, repr(getattr(server.config, attr_name))))
         sys.exit(0)
 
     ps = server.ParallelizationServer(logging.getLogger('server'))

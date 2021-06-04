@@ -21,10 +21,8 @@ void Process::start() {
     if (this->process < 0)
         throw ProcessException(__FILE__, __LINE__, "fork error");
     if (this->process == 0) {
-        //std::cout << "Running child, closing sockets" << std::endl;
         this->piper.writer()->close();
         this->pipew.reader()->close();
-        //std::cout << "Closed the sockets" << std::endl;
         this->main();
         exit(0);
     } else {
