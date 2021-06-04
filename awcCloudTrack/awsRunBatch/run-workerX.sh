@@ -12,15 +12,11 @@ aws --profile $1 ecs run-task --launch-type EC2 --cluster $2 --task-definition $
 --overrides \
 "{
   \"containerOverrides\": [{
-    \"name\": \"$8\",
+    \"name\": \"$9\",
     \"environment\": [
         {
-            \"name\":\"COMP_S3_PROBLEM_PATH\",
-            \"value\": \"$6\"
-        },
-        {
             \"name\":\"AWS_BATCH_JOB_NODE_INDEX\",
-            \"value\": \"0\"
+            \"value\":  \"$6\"
         },
         {
             \"name\":\"NUM_PROCESSES\",
@@ -32,7 +28,11 @@ aws --profile $1 ecs run-task --launch-type EC2 --cluster $2 --task-definition $
         },
         {
             \"name\":\"S3_BKT\",
-            \"value\":\"sat-comp-2020\"
+            \"value\":\"smt-comp-2021\"
+        },
+        {
+            \"name\":\"AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS\",
+            \"value\":\"$8\"
         }
     ]
   }]

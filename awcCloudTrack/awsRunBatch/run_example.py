@@ -6,6 +6,8 @@ import subprocess
 from time import sleep
 import re
 import boto3
+import socket
+import string
 
 class LogAnalyzer:
     def __init__(self, cloudwatch):
@@ -44,7 +46,7 @@ class LogAnalyzer:
     def get_ip_address(self, solver_name, task_arn):
         log_group_name = self.get_log_group(solver_name)
         log_stream_name = self.get_log_stream(solver_name, task_arn)
-        # print(f"Getting ip address from logs in {log_group_name}/{log_stream_name}")
+        print(f"Getting ip address from logs in {solver_name}/{task_arn}")
         try:
             events_obj = self.cloudwatch.get_log_events(logGroupName=log_group_name,
                                                         logStreamName=log_stream_name,
@@ -57,8 +59,8 @@ class LogAnalyzer:
             cur_token = events_obj["nextBackwardToken"]
 
             for e in events_obj["events"]:
-                if "server IP:" in e["message"]:
-                    return e["message"].split("server IP:")[1].replace(" ", "")
+                if "main IP:" in e["message"]:
+                    return e["message"].split("main IP:")[1].replace(" ", "")
             events_obj = self.cloudwatch.get_log_events(logGroupName=log_group_name,
                                                         logStreamName=log_stream_name,
                                                         nextToken=events_obj["nextBackwardToken"],
@@ -112,13 +114,33 @@ class Cloudformation:
 
 def main(args):
     session = boto3.session.Session(profile_name=args.profile)
-
+    # Proxy check for the S3 VLAN1 network
+    #     proxyHost = None
+    #     proxyPort = None
+    #
+    # # Local proxy setting determination
+    #
+    #     myAddress = socket.gethostbyaddr(socket.gethostname())
+    #     print(myAddress)
+    #     exit(1)
+    #     if string.find(myAddress[0], "s3group") > 0:
+    #         if string.find(myAddress[-1][0], "193.120") == 0:
+    #             proxyHost = 'w3proxy.s3group.com'
+    #             proxyPort = 3128
+    #     as_con = boto3.ec2.autoscale.connect_to_region(region_name="us-east-2", proxy=proxyHost, proxy_port=proxyPort)
+    #     collectorTierScalingGroup = AutoScalingGroup(name='job-queue-smt-EcsInstanceAsg-DARN6V3IAXHK',
+    #                                                  desired_capacity=4,
+    #                                                  min_size=0,
+    #                                                  max_size=4)
+    #     as_con.create_auto_scaling_group(collectorTierScalingGroup)
     CLUSTER_NAME = "UsiVeriySMTCompCluster"
     cf = Cloudformation(session.client("cloudformation"))
     stack_outputs = cf.get_outputs(f"job-queue-{args.project_name}")
     print(stack_outputs)
 
-    output = subprocess.check_output(['./run-solver-main.sh', args.profile, CLUSTER_NAME, stack_outputs["SolverProjectDefinition"], stack_outputs["Subnet"], stack_outputs["SecurityGroupId"], args.file, '1', args.project_name])
+    output = subprocess.check_output(['./run-solver-main.sh', args.profile, CLUSTER_NAME, stack_outputs["SolverProjectDefinition"], stack_outputs["Subnet"], stack_outputs["SecurityGroupId"], args.file, int(args.NWorker)+1, args.project_name])
+    print('result here.....')
+
     task_output = json.loads(output)
 
     task_arn = task_output['tasks'][0]['taskArn']
@@ -127,22 +149,23 @@ def main(args):
     main_task = Task(ecs_client=session.client("ecs"), cluster_name=CLUSTER_NAME, task_arn=task_arn)
 
     log_client = session.client("logs")
+
     log_analyzer = LogAnalyzer(log_client)
+
     ip_fetcher = IpFetch(log_analyzer)
+
     ip_addr = ip_fetcher.fetch_ip(args.project_name, task_id)
 
-    output2 = subprocess.check_output(['./run-worker.sh', args.profile, CLUSTER_NAME, stack_outputs["SolverProjectDefinition"], stack_outputs["Subnet"], stack_outputs["SecurityGroupId"], args.file, '2', ip_addr, args.project_name])
-    task_output2 = json.loads(output2)
+    for worker_Index in range(int(args.NWorker)):
 
-    task_arn2 = task_output2['tasks'][0]['taskArn']
-    task_id2 = task_arn2.split('/')[2]
-    worker_task = Task(ecs_client=session.client("ecs"), cluster_name=CLUSTER_NAME, task_arn=task_id2)
+        workerOutput = subprocess.check_output(['./run-workerX.sh', args.profile, CLUSTER_NAME, stack_outputs["SolverProjectDefinition"], stack_outputs["Subnet"], stack_outputs["SecurityGroupId"], str(worker_Index+1),int(args.NWorker)+1, ip_addr, args.project_name,args.file])
+
     main_task.wait_for_task_complete()
 
-    worker_task.kill()
     logs = log_analyzer.fetch_logs(args.project_name, task_id)
     print(logs)
     regStr="(<SMT \"(.*)\":(sat|unsat)>\[(.*)\]>:\ (sat|unsat)\n*)*(.*)(solved|timeout) instance \"(.*)\" after [0-9]+.[0-9]+ seconds"
+    #satmatchedStr=re.findall(regStr, logs)
     for match in re.finditer(regStr, logs):
         time=re.findall("[0-9]+\.[0-9]+", match.group())
         benchname=re.findall("\"(.*)\"\ ", match.group())
@@ -151,15 +174,21 @@ def main(args):
 
 pars = argparse.ArgumentParser()
 for arg in [{
-        "flags": ["-p", "--profile"],
-        "metavar": "P",
-        "help": "What aws profile you will use",
-        "required": True,
+    "flags": ["-N", "--NWorker"],
+    "metavar": "N",
+    "help": "Number of worker nodes",
+    "required": True,
+},
+    {
+    "flags": ["-p", "--profile"],
+    "metavar": "P",
+    "help": "What aws profile you will use",
+    "required": True,
 }, {
-        "flags": ["-pn", "--project-name"],
-        "help": "Project name",
-        "metavar": "A",
-        "required": True,
+    "flags": ["-pn", "--project-name"],
+    "help": "Project name",
+    "metavar": "A",
+    "required": True,
 },{
 
     "flags": ["-f", "--file"],
