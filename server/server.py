@@ -10,7 +10,7 @@ import threading
 import traceback
 import random
 import time
-
+from datetime import datetime
 __author__ = 'Matteo Marescotti'
 
 
@@ -298,8 +298,8 @@ class ParallelizationServer(net.Server):
             elif header['command'] == 'solve':
                 if 'name' not in header:
                     return
-                if self.config.enableLog:
-                    self.log(logging.INFO, 'new instance "{}"'.format(
+                # if self.config.enableLog:
+                self.log(logging.INFO, 'new instance "{}"'.format(
                     header['name']
                 ), {'header': header})
                 try:
@@ -539,6 +539,7 @@ class ParallelizationServer(net.Server):
             for solver in solvers:
                 # ask the solver to partition if timeout or if needed because idle solvers
                 if force or solver.started + self.config.partition_timeout <= time.time():
+                    self.log(logging.INFO,'Server:Send Partition Command')
                     solver.ask_partitions(self.level_children(node.level + 1))
                     break
 
@@ -591,10 +592,7 @@ class ParallelizationServer(net.Server):
             return lemmas[0]
 
     def log(self, level, message, data=None):
-        if self.config.enableLog:
-            super().log(level, message)
-        else:
-            print(message)
+        super().log(level, message)
         if not config.db() or level < self.config.log_level:
             return
         config.db().cursor().execute("INSERT INTO {}ServerLog (level, message, data) "

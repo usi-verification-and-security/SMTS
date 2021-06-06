@@ -150,13 +150,14 @@ class Server(object):
                     self.handle_accept(new_socket)
                     continue
                 try:
+                    # print("Server: Start to read -> time =", datetime.now().strftime("%H:%M:%S"))
                     header, message = sock.read()
+                    # print("Finished Reading -> time =", datetime.now().strftime("%H:%M:%S"),header,message)
                 except ConnectionAbortedError:
                     self.handle_close(sock)
                     sock.close()
                     self._rlist.remove(sock)
                 else:
-                    # print("time =", datetime.now().strftime("%H:%M:%S"))
                     self.handle_message(sock, header, message)
         except KeyboardInterrupt:
             raise

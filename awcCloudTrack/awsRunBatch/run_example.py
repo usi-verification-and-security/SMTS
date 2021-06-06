@@ -138,7 +138,7 @@ def main(args):
     stack_outputs = cf.get_outputs(f"job-queue-{args.project_name}")
     print(stack_outputs)
 
-    output = subprocess.check_output(['./run-solver-main.sh', args.profile, CLUSTER_NAME, stack_outputs["SolverProjectDefinition"], stack_outputs["Subnet"], stack_outputs["SecurityGroupId"], args.file, int(args.NWorker)+1, args.project_name])
+    output = subprocess.check_output(['./run-solver-main.sh', args.profile, CLUSTER_NAME, stack_outputs["SolverProjectDefinition"], stack_outputs["Subnet"], stack_outputs["SecurityGroupId"], args.file, str(int(args.NWorker)+1), args.project_name])
     print('result here.....')
 
     task_output = json.loads(output)
@@ -158,14 +158,14 @@ def main(args):
 
     for worker_Index in range(int(args.NWorker)):
 
-        workerOutput = subprocess.check_output(['./run-workerX.sh', args.profile, CLUSTER_NAME, stack_outputs["SolverProjectDefinition"], stack_outputs["Subnet"], stack_outputs["SecurityGroupId"], str(worker_Index+1),int(args.NWorker)+1, ip_addr, args.project_name,args.file])
+        workerOutput = subprocess.check_output(['./run-workerX.sh', args.profile, CLUSTER_NAME, stack_outputs["SolverProjectDefinition"], stack_outputs["Subnet"], stack_outputs["SecurityGroupId"], str(worker_Index+1),   str(int(args.NWorker)+1), ip_addr, args.project_name,args.file])
 
     main_task.wait_for_task_complete()
 
     logs = log_analyzer.fetch_logs(args.project_name, task_id)
     print(logs)
-    regStr="(<SMT \"(.*)\":(sat|unsat)>\[(.*)\]>:\ (sat|unsat)\n*)*(.*)(solved|timeout) instance \"(.*)\" after [0-9]+.[0-9]+ seconds"
-    #satmatchedStr=re.findall(regStr, logs)
+    # regStr="(<SMT \"(.*)\":(sat|unsat)>\[(.*)\]>:\ (sat|unsat)\n*)*(.*)(solved|timeout) instance \"(.*)\" after [0-9]+.[0-9]+ seconds"
+    regStr="(sat|unsat|unknown)\n*(solved|timeout) instance \"(.*)\" after [0-9]+.[0-9]+ seconds"
     for match in re.finditer(regStr, logs):
         time=re.findall("[0-9]+\.[0-9]+", match.group())
         benchname=re.findall("\"(.*)\"\ ", match.group())

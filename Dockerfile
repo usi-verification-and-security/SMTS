@@ -33,6 +33,7 @@ RUN cd SMTS && chmod 755 awcCloudTrack/awsRunBatch/make_combined_hostfile.py
 RUN cd SMTS && chmod 755 awcCloudTrack/awsRunBatch/mpi-run.sh
 RUN cd SMTS && chmod 755 awcCloudTrack/awsRunBatch/run_aws_smtsClient.sh
 RUN cd SMTS && chmod 777 awcCloudTrack/awsRunBatch
+RUN chmod 777 .
 USER smts
 CMD ["/usr/sbin/sshd", "-D", "-f", "/home/.ssh/sshd_config"]
 CMD SMTS/awcCloudTrack/awsRunBatch/mpi-run.sh
