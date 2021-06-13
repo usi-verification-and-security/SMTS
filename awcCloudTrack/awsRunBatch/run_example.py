@@ -164,8 +164,8 @@ def main(args):
 
     logs = log_analyzer.fetch_logs(args.project_name, task_id)
     print(logs)
-    # regStr="(<SMT \"(.*)\":(sat|unsat)>\[(.*)\]>:\ (sat|unsat)\n*)*(.*)(solved|timeout) instance \"(.*)\" after [0-9]+.[0-9]+ seconds"
-    regStr="(sat|unsat|unknown)\n*(solved|timeout) instance \"(.*)\" after [0-9]+.[0-9]+ seconds"
+    regStr="(<SMT \"(.*)\":(sat|unsat)>\[(.*)\]>:\ (sat|unsat)\n*)*(.*)(solved|timeout) instance \"(.*)\" after [0-9]+.[0-9]+ seconds"
+    # regStr="(sat|unsat|unknown)\n*(solved|timeout) instance \"(.*)\" after [0-9]+.[0-9]+ seconds"
     for match in re.finditer(regStr, logs):
         time=re.findall("[0-9]+\.[0-9]+", match.group())
         benchname=re.findall("\"(.*)\"\ ", match.group())

@@ -16,7 +16,7 @@ aws --profile $1 ecs run-task --launch-type EC2 --cluster $2 --task-definition $
     \"environment\": [
         {
             \"name\":\"COMP_S3_PROBLEM_PATH\",
-            \"value\": \"$6\"
+            \"value\": \"shared-entries/$6\"
         },
         {
             \"name\":\"AWS_BATCH_JOB_NODE_INDEX\",
@@ -32,7 +32,7 @@ aws --profile $1 ecs run-task --launch-type EC2 --cluster $2 --task-definition $
         },
         {
             \"name\":\"S3_BKT\",
-            \"value\":\"sat-comp-2020\"
+            \"value\":\"smt-comp-2021\"
         }
     ]
   }]

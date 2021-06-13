@@ -397,7 +397,7 @@ Resources:
             - Name: COMP_S3_PROBLEM_PATH
               Value: "shared-entries/test.cnf"
             - Name: S3_BKT
-              Value: "sat-comp-2020"
+              Value: "smt-comp-2021"
           LogConfiguration:
             LogDriver: awslogs
             Options:
