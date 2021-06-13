@@ -1,5 +1,5 @@
 #!/bin/bash
-/usr/sbin/sshd -D &
+/usr/sbin/sshd &
 
 PATH="$PATH:/opt/openmpi/bin/"
 BASENAME="${0##*/}"
@@ -70,8 +70,7 @@ wait_for_nodes () {
   #done
   echo "Send .smt2 Instance"
   SMTS/server/client.py 3000 test.smt2
-  ps -ef | grep sshd
-  tail -f /dev/null
+  wait
 }
 
 # Fetch and run a script
@@ -92,7 +91,7 @@ report_to_master () {
   mpirun --mca btl_tcp_if_include eth0 --allow-run-as-root -np 4  --hostfile $HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX} SMTS/build/solver_opensmt -s ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:3000 &
 
   ps -ef | grep sshd
-  tail -f /dev/null
+  wait
 }
 ##
 # Main - dispatch user request to appropriate function

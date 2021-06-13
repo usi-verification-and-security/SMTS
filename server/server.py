@@ -592,7 +592,10 @@ class ParallelizationServer(net.Server):
             return lemmas[0]
 
     def log(self, level, message, data=None):
-        super().log(level, message)
+        if config.enableLog:
+            super().log(level, message)
+        else:
+            print(message)
         if not config.db() or level < self.config.log_level:
             return
         config.db().cursor().execute("INSERT INTO {}ServerLog (level, message, data) "
