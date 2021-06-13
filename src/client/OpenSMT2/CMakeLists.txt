@@ -2,8 +2,8 @@ include(FetchContent)
 
 FetchContent_Declare(
         opensmt
-        GIT_REPOSITORY https://github.com/MasoudAsadzade/OpenSMT2.git
-        GIT_TAG parallel-infra
+        GIT_REPOSITORY https://github.com/usi-verification-and-security/opensmt.git
+        GIT_TAG smtcomp2021
 )
 FetchContent_GetProperties(opensmt)
 
@@ -43,7 +43,7 @@ include_directories(${opensmt_SOURCE_DIR}/src/logics)
 include_directories(${opensmt_SOURCE_DIR}/src/symbols)
 include_directories(${opensmt_SOURCE_DIR}/src/sorts)
 
-add_executable(solver_opensmt ../main.cpp SolverProcess.cpp OpenSMTSolver.cpp)
+add_executable(solver_opensmt ../main.cpp SolverProcess.cpp)
 
 set(solver_opensmt_flags "-w")
 

@@ -298,8 +298,8 @@ class ParallelizationServer(net.Server):
             elif header['command'] == 'solve':
                 if 'name' not in header:
                     return
-                # if self.config.enableLog:
-                self.log(logging.INFO, 'new instance "{}"'.format(
+                if self.config.enableLog:
+                    self.log(logging.INFO, 'new instance "{}"'.format(
                     header['name']
                 ), {'header': header})
                 try:
@@ -384,18 +384,18 @@ class ParallelizationServer(net.Server):
                     self.log(
                         logging.INFO,
                         '{}'.format(
-                            self.current.root.status
+                            self.current.root.status.name
                         )
                     )
                 else:
                     self.log(
-                    logging.INFO,
-                    '{} instance "{}" after {:.2f} seconds'.format(
-                        'solved' if self.current.root.status != framework.SolveStatus.unknown else 'timeout',
-                        self.current.root.name,
-                        time.time() - self.current.started
+                        logging.INFO,
+                        '{} instance "{}" after {:.2f} seconds'.format(
+                            'solved' if self.current.root.status != framework.SolveStatus.unknown else 'timeout',
+                            self.current.root.name,
+                            time.time() - self.current.started
+                        )
                     )
-                )
                 for solver in {solver for solver in self.solvers(True) if solver.node.root == self.current.root}:
                     solver.stop()
                 self.current = None
@@ -539,7 +539,7 @@ class ParallelizationServer(net.Server):
             for solver in solvers:
                 # ask the solver to partition if timeout or if needed because idle solvers
                 if force or solver.started + self.config.partition_timeout <= time.time():
-                    self.log(logging.INFO,'Server:Send Partition Command')
+                    # self.log(logging.INFO,'Server:Send Partition Command')
                     solver.ask_partitions(self.level_children(node.level + 1))
                     break
 

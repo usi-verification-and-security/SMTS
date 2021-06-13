@@ -68,9 +68,9 @@ wait_for_nodes () {
    #   sleep 1
    # fi
   #done
-  echo "Send bench files"
-  SMTS/server/client.py 3000 test.smt2
-#  SMTS/awcCloudTrack/awsRunBatch/run_aws_smtsClient.sh "SMTS/hpcClusterBenchs-timedout"
+  echo "Send .smt2 Instance"
+#  SMTS/server/client.py 3000 test.smt2
+  SMTS/awcCloudTrack/awsRunBatch/run_aws_smtsClient.sh "SMTS/hpcClusterBenchs-timedout"
   ps -ef | grep sshd
   tail -f /dev/null
 }
