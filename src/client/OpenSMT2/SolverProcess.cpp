@@ -52,14 +52,7 @@ void SolverProcess::solve() {
     const char *msg;
     SMTConfig config;
     config.setRandomSeed(atoi(this->header.get(net::Header::parameter, "seed").c_str()));
-    auto lemma_push = [&](const std::vector<net::Lemma> &lemmas) {
-        this->lemma_push(lemmas);
-    };
-    auto lemma_pull = [&](std::vector<net::Lemma> &lemmas) {
-        this->lemma_pull(lemmas);
-    };
-    openSMTSolver = new OpenSMTSolver(this->header, lemma_push, lemma_pull, config);
-    //OpenSMTSolver *os= new OpenSMTSolver(openSMTSolver,static_cast<ScatterSplitter&>(openSMTSolver->interpret->getMainSolver().getSMTSolver()));
+    openSMTSolver = new OpenSMTSolver(this->header, config);
     std::string smtlib = this->instance;
 
     while (true) {
@@ -219,7 +212,7 @@ void SolverProcess::getCnfClauses(net::Header &header, const std::string &payloa
 
         SMTConfig config;
         config.set_dryrun(true);
-        openSMTSolver = new OpenSMTSolver(header, nullptr, nullptr, config);
+        openSMTSolver = new OpenSMTSolver(header, config);
         openSMTSolver->interpret->interpFile((char *) (payload + header["query"]).c_str());
 
         char *cnf = openSMTSolver->interpret->getMainSolver().getSMTSolver().printCnfClauses();
