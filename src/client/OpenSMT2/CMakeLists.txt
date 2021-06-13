@@ -3,7 +3,7 @@ include(FetchContent)
 FetchContent_Declare(
         opensmt
         GIT_REPOSITORY https://github.com/usi-verification-and-security/opensmt.git
-        GIT_TAG smtcomp2021
+        GIT_TAG smtcomp2021-cloud
 )
 FetchContent_GetProperties(opensmt)
 
