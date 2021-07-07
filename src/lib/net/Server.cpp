@@ -63,8 +63,8 @@ namespace net {
                             (*socket)->read(header, payload);
 #ifdef ENABLE_DEBUGING
        if(header["command"].size()!=0){
-        std::thread log (Logger::writeIntoFile,true,"Server","Recieved command: "+header["command"],getpid());
-        log.join();
+        Logger::writeIntoFile(true,payload,"Recieved command: "+header["command"],getpid());
+
     }
 #endif
                             this->handle_message(**socket, header, payload);

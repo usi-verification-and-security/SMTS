@@ -13,6 +13,7 @@
 #include "lib/lib.h"
 
 
+
 enum Status {
     unknown, sat, unsat
 };
@@ -33,7 +34,7 @@ private:
         std::shared_ptr<net::Socket> server;
         std::vector<net::Lemma> to_push;
         uint8_t errors = 0;
-        uint8_t interval = 2;
+        uint8_t interval = 3;
         std::time_t last_push = 0;
         std::time_t last_pull = 0;
     } lemma;
@@ -42,7 +43,7 @@ private:
     std::string instance;
     net::Header header;
     std::shared_ptr<void> state;
-
+    bool lemma_server;
     void main() {
         if (!this->header.count("lemmas")) {
             this->header["lemmas"] = std::to_string(1000);
@@ -52,6 +53,7 @@ private:
         }
         this->init();
         this->info("start");
+
         std::thread t_messages([&] {
             net::Header header;
             std::string payload;
@@ -84,6 +86,7 @@ private:
                     }
                     continue;
                 }
+                std::cout<<"header[command] : "<<header["command"]<<endl;
                 this->interrupt();
                 this->pipe.writer()->write(header, payload);
             }
@@ -113,6 +116,7 @@ private:
     // class field are read only
     void solve();
 
+    void search();
 
     void partition(uint8_t);
 
@@ -210,9 +214,10 @@ private:
 
 public:
     SolverProcess(net::Header header,
-                  std::string instance) :
+                  std::string instance, bool lemma_server) :
             instance(instance),
-            header(header) {
+            header(header),
+            lemma_server(lemma_server){
         if (!header.count("name") || !header.count("node"))
             throw Exception(__FILE__, __LINE__, "missing mandatory key in header");
         this->start();
@@ -223,9 +228,11 @@ public:
     }
 
     void lemma_push(const std::vector<net::Lemma> &lemmas) {
+        //std::cout <<"lemma size: "<< lemmas.size() << std::endl;
         if (lemmas.size() == 0 && this->lemma.to_push.size() == 0)
             return;
-        std::lock_guard<std::mutex> _l(this->lemma.mtx);
+        //std::cout <<"After lemma size: "<< lemmas.size() << std::endl;
+        //std::lock_guard<std::mutex> _l(this->lemma.mtx);
 
         this->lemma.to_push.insert(this->lemma.to_push.end(), lemmas.begin(), lemmas.end());
 
@@ -241,6 +248,7 @@ public:
         header["lemmas"] = "+" + std::to_string(this->lemma.to_push.size());
 
         try {
+            std::cout << "\033[1;51m [t comunication] Synchronize lemmas with CC: -> size::\033[0m"<< this->lemma.to_push.size()<< std::endl;
             this->lemma.server->write(header, ::to_string(this->lemma.to_push));
         } catch (net::SocketException &ex) {
             this->lemma.errors++;
@@ -293,6 +301,9 @@ public:
     }
 
     static const char *solver;
+    void clausesPublish(net::Lemma& lemma);
+    void inline clausesUpdate(std::vector<net::Lemma>& lemmas);
+    //void pull();
 };
 
 #endif

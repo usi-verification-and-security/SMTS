@@ -142,6 +142,7 @@ class Solver(net.Socket):
         return pipename
             
     def ask_partitions(self, n, node: framework.AndNode = None):
+        # print('Partition Numbers: ',n,'\n')
         if self.node is None:
             raise ValueError('not solving anything')
         self.write({
@@ -361,6 +362,7 @@ class ParallelizationServer(net.Server):
                     sock,
                     sock.or_waiting
                 ))
+                self.close()
             try:
                 sock.stop()
             except:

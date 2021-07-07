@@ -78,7 +78,7 @@ void SolverServer::handle_message(net::Socket &socket, net::Header &header, std:
         } else if (header["command"] == "solve") {
             this->stop_solver();
             header.erase("command");
-            this->solver = new SolverProcess(header, payload);
+            this->solver = new SolverProcess(header, payload, this->lemmas_address.empty() ? false:true);
             this->update_lemmas();
             this->add_socket(this->solver->reader());
             this->log(Logger::INFO, "solver started: " + header["name"] + header["node"]);

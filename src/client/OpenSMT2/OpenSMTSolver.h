@@ -25,15 +25,30 @@ private:
     net::Header &header;
     std::unique_ptr<Interpret> interpret;
     bool learned_push;
-
+    sstat result;
 public:
-    OpenSMTSolver(net::Header &header,
-                     SMTConfig &c) :
-            interpret(new Interpret(c)),
+    OpenSMTSolver(net::Header &header, SMTConfig &config, char* instance) :
             header(header),
-            learned_push(false)  {
-    }
+            learned_push(false),
+            result(Status::unknown)
 
+    {
+        interpret.reset( new Interpret(config));
+        config.SMTConfig::o_smts_check_sat_ON = false;
+        config.SMTConfig::o_smts_mainSplitter_ON = true;
+        interpret->interpFile(instance);
+    }
+    void search();
+    sstat getResult() const { return result; }
+
+    Channel& getChannel() const {
+        //assert(mainSolver->getChannel());
+       return ( (MainSplitter&) interpret->getMainSolver() ).getChannel();
+    };
+
+    MainSplitter& getMainSplitter() const {
+        return (MainSplitter&) interpret->getMainSolver();
+    };
 };
 
 

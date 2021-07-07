@@ -185,7 +185,7 @@ void LemmaServer::handle_message(net::Socket &client,
             n++;
         }
 
-        Logger::log(Logger::INFO,
+        Logger::log(Logger::PUSH,
                     header["name"] + header["node"] + " " + to_string(client.get_remote()) +
                     " push [" + std::to_string(clauses_request) + "]\t" +
                     std::to_string(n) +
@@ -220,7 +220,7 @@ void LemmaServer::handle_message(net::Socket &client,
         client.write(header, ::to_string(lemmas_send));
 
         if (n > 0)
-            Logger::log(Logger::INFO,
+            Logger::log(Logger::PULL,
                         header["name"] + header["node"] + " " + to_string(client.get_remote()) +
                         " pull [" + std::to_string(clauses_request) + "]\t" +
                         std::to_string(n));

@@ -15,6 +15,7 @@
 #include <iostream>
 #include <string>
 #include "unistd.h"
+
 using namespace std;
 
 typedef uint8_t log_level;
@@ -29,9 +30,9 @@ public:
         mtx.lock();
         string fileName;
         if(parent)
-            fileName="Parent-"+to_string(processId)+".txt";
+            fileName="logs/Parent-"+to_string(processId)+".txt";
         else
-            fileName="Child-"+to_string(processId)+".txt";
+            fileName="logs/Child-"+to_string(processId)+".txt";
         string filename(fileName);
         fstream file;
         std::time_t time = std::time(nullptr);
@@ -42,7 +43,7 @@ public:
 
             file <<""<< type << endl;
             file <<" "<< description << endl;
-            file <<" time: " <<std::put_time(&tm, "%H:%M:%S") << "\t";
+            //file <<" time: " <<std::put_time(&tm, "%H:%M:%S") << "\t";
             file <<endl<<endl<<endl;
         }
         mtx.unlock();
@@ -92,6 +93,20 @@ public:
                 }
                 stream << "ERROR\t";
                 break;
+            case PUSH:
+                if (getenv("TERM")) {
+                    r += system("tput setaf 2");
+                    r += system("tput bold");
+                }
+                stream << "PUSH\t";
+                break;
+            case PULL:
+                if (getenv("TERM")) {
+                    r += system("tput setaf 3");
+                    r += system("tput bold");
+                }
+                stream << "PULL\t";
+                break;
             default:
                 stream << "UNKNOWN\t";
         }
@@ -105,7 +120,30 @@ public:
     static const log_level INFO = 1;
     static const log_level WARNING = 2;
     static const log_level ERROR = 3;
+    static const log_level PUSH = 4;
+    static const log_level PULL = 5;
 };
 
 
+namespace Color {
+    enum Code {
+        FG_RED      = 31,
+        FG_GREEN    = 32,
+        FG_BLUE     = 34,
+        FG_DEFAULT  = 39,
+        BG_RED      = 41,
+        BG_GREEN    = 42,
+        BG_BLUE     = 44,
+        BG_DEFAULT  = 49
+    };
+    class Modifier {
+        Code code;
+    public:
+        Modifier(Code pCode) : code(pCode) {}
+        friend std::ostream&
+        operator<<(std::ostream& os, const Modifier& mod) {
+            return os << "\033[" << mod.code << "m";
+        }
+    };
+}
 #endif
