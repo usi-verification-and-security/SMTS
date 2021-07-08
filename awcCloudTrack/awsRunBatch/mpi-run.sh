@@ -38,7 +38,7 @@ wait_for_nodes () {
   else
     aws s3 cp s3://${S3_BKT}/${COMP_S3_PROBLEM_PATH} test.smt2
   fi
-  python3 SMTS/server/smts.py  &
+  python3 SMTS/server/smts.py -l  &
   sleep 1
   #echo "$ip" >> $HOST_FILE_PATH
   lines=$(ls -dq /tmp/hostfile* | wc -l)

@@ -66,10 +66,11 @@ def run_lemma_server(lemma_server, database, send_again):
     # this IP will be sent to the solvers
     # that perhaps are on another host, this 127.0.0.1 would not work
     ip = '127.0.0.1'
-    # try:
-    #     ip = socket.gethostbyname(socket.gethostname())
-    # except:
-    #     pass
+    try:
+        ip = socket.gethostbyname(socket.gethostname())
+        print(ip)
+    except:
+        pass
 
     args = [lemma_server, '-s', ip + ':' + str(config.port)]
     if database:
@@ -78,6 +79,7 @@ def run_lemma_server(lemma_server, database, send_again):
     if send_again:
         args += ['-a']
     try:
+        print(args)
         return subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except BaseException as ex:
         print(ex)
