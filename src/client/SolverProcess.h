@@ -28,6 +28,10 @@ struct Task {
 
 class SolverProcess : public Process {
 private:
+
+    net::Pipe pipe;
+    // async interrupt the solver
+    void interrupt();
     struct {
         const uint8_t errors_max = 3;
         std::mutex mtx;
@@ -39,7 +43,6 @@ private:
         std::time_t last_pull = 0;
     } lemma;
 
-    net::Pipe pipe;
     std::string instance;
     net::Header header;
     std::shared_ptr<void> state;
@@ -62,7 +65,6 @@ private:
                 // if command=local the answer is built here and delivered to SolverServer
                 // otherwise the solver is interrupted and the message forwarder through pipe
                 this->reader()->read(header, payload);
-
                 if (!header.count("command"))
                     continue;
                 if (header["command"] == "local" && header.count("local")) {
@@ -86,7 +88,6 @@ private:
                     }
                     continue;
                 }
-                std::cout<<"header[command] : "<<header["command"]<<endl;
                 this->interrupt();
                 this->pipe.writer()->write(header, payload);
             }
@@ -120,8 +121,7 @@ private:
 
     void partition(uint8_t);
 
-    // async interrupt the solver
-    void interrupt();
+
 
     // Get CNF corresponding to a particular solver
     void getCnfClauses(net::Header &header, const std::string &payload);
@@ -213,6 +213,7 @@ private:
     }
 
 public:
+
     SolverProcess(net::Header header,
                   std::string instance, bool lemma_server) :
             instance(instance),
@@ -228,12 +229,8 @@ public:
     }
 
     void lemma_push(const std::vector<net::Lemma> &lemmas) {
-        //std::cout <<"lemma size: "<< lemmas.size() << std::endl;
         if (lemmas.size() == 0 && this->lemma.to_push.size() == 0)
             return;
-        //std::cout <<"After lemma size: "<< lemmas.size() << std::endl;
-        //std::lock_guard<std::mutex> _l(this->lemma.mtx);
-
         this->lemma.to_push.insert(this->lemma.to_push.end(), lemmas.begin(), lemmas.end());
 
         if (

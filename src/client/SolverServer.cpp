@@ -84,8 +84,16 @@ void SolverServer::handle_message(net::Socket &socket, net::Header &header, std:
             this->log(Logger::INFO, "solver started: " + header["name"] + header["node"]);
         } else if (header["command"] == "stop") {
             this->stop_solver();
-        } else
+        }
+        else {
             this->solver->writer()->write(header, payload);
+            //this->solver->pipe.writer()->write(header, payload);
+//            std::cout << "\033[1;51m [t Listener] \033[0m"<<"Header:"+ header["command"]
+//                    <<"Header:"+ header["local"]
+//                    <<"Header:"+ header["lemma_server"]
+//            <<endl;
+        }
+
     } else if (this->solver && &socket == this->solver->reader()) {
         this->server.write(header, payload);
         if (header.count("report")) {

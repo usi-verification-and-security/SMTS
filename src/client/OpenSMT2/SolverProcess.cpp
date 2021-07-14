@@ -59,8 +59,8 @@ void SolverProcess::solve() {
 //                          "Solver -> instance: "
 //            ,(char *) (smtlib + this->header["query"]).c_str()
 //            ,getpid());
-    openSMTSolver = new OpenSMTSolver(this->header, config, (char *) (smtlib + this->header["query"]).c_str());
-    config.SMTConfig::o_smts_check_sat_ON = true;
+    openSMTSolver = new OpenSMTSolver(this->header, config, (char *) smtlib.c_str());
+
 
     std::thread t_Solve([&] {
         search();
@@ -80,8 +80,6 @@ void SolverProcess::solve() {
                               << openSMTSolver->getChannel().size() << std::endl;
                     for (auto term = openSMTSolver->getChannel().cbegin();
                          term != openSMTSolver->getChannel().cend(); ++term) {
-                        //std::cout <<"term->first: "<< term->first<< std::endl;
-                        //std::cout <<"term->level: "<< term->second<< std::endl;
                         lemmas.push_back(net::Lemma(term->first, term->second));
                     }
 //Synchronize with CC
@@ -98,7 +96,6 @@ void SolverProcess::solve() {
 //Read from CC
             this->lemma_pull(pulled_lemmas);
             //sleep(1);
-
             if (pulled_lemmas.size()) {
                 std::cout << "[t comunication] Signal to OpenSMT to stop " << "\tLemmas:"<<pulled_lemmas.size() << std::endl;
                 //std::unique_lock<std::mutex> lk(openSMTSolver->getChannel().getMutex());
@@ -156,7 +153,7 @@ void SolverProcess::solve() {
 //}
 void SolverProcess::search()
 {
-    std::string smtlib;
+    std::string smtlib= this->instance;
     while (true)
     {
         openSMTSolver->getChannel().getMutex().lock();
@@ -191,8 +188,8 @@ void SolverProcess::search()
                 smtlib = task.smtlib;
                 if (openSMTSolver->learned_push) {
                     openSMTSolver->learned_push = false;
-                    std::cout << "\033[1;51m [t solve] pop \033[0m"<<endl;
-                    //openSMTSolver->getMainSplitter().pop();
+                    std::cout << "\033[1;51m [t solve] learned_push pop \033[0m"<<endl;
+                    openSMTSolver->getMainSplitter().pop();
 
                     break;
                 }
@@ -213,6 +210,7 @@ void SolverProcess::interrupt() {
 
     std::scoped_lock<std::mutex> lk(openSMTSolver->getChannel().getMutex());
     opensmt::stop= true;
+    std::cout <<"interrupt "<<endl;
 }
 
 void SolverProcess::partition(uint8_t n) {
@@ -257,7 +255,8 @@ void SolverProcess::partition(uint8_t n) {
             openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_units, SMTOption(spts_time), msg) &&
             openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_inittune, SMTOption(double(2)), msg) &&
             openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_midtune, SMTOption(double(2)), msg) &&
-            openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_asap, SMTOption(1), msg))) {
+            openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_asap, SMTOption(1), msg)))
+    {
         this->report(partitions, msg);
     }
     else {
@@ -339,13 +338,8 @@ void inline SolverProcess::clausesUpdate(std::vector<net::Lemma>& lemmas) {
     for (auto &lemma:lemmas) {
         if (lemma.smtlib.size() > 0) {
 #ifdef ENABLE_DEBUGING
-            std::cout <<"term->first: "<< (char *) ("(assert " + lemma.smtlib + ")").c_str()<< std::endl;
             Logger::writeIntoFile(false,"clausesUpdate: Instance ",("(assert " + lemma.smtlib + ")"),getpid());
 #endif
-//            Logger::writeIntoFile(false,
-//                    "clausesUpdate -> instance: "
-//                    ,(char *) ("(assert " + lemma.smtlib + ")").c_str()
-//                    ,getpid());
             openSMTSolver->interpret->interpFile((char *) ("(assert " + lemma.smtlib + ")").c_str());
 
         }

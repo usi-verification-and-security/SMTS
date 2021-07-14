@@ -8,6 +8,7 @@
 #include <vector>
 #include <functional>
 #include "Interpret.h"
+#include "PreInterpret.h"
 #include "client/SolverProcess.h"
 #include "client/Settings.h"
 #include "lib/net/Lemma.h"
@@ -24,6 +25,7 @@ class OpenSMTSolver  {
 private:
     net::Header &header;
     std::unique_ptr<Interpret> interpret;
+
     bool learned_push;
     sstat result;
 public:
@@ -31,12 +33,9 @@ public:
             header(header),
             learned_push(false),
             result(Status::unknown)
-
     {
-        interpret.reset( new Interpret(config));
-        config.SMTConfig::o_smts_check_sat_ON = false;
-        config.SMTConfig::o_smts_mainSplitter_ON = true;
-        interpret->interpFile(instance);
+        MainSplitter* mainSplitter = (new PreInterpret(config))->preInterpFile(instance);
+        interpret.reset( new Interpret(config, mainSplitter, &mainSplitter->getLogic()));
     }
     void search();
     sstat getResult() const { return result; }
