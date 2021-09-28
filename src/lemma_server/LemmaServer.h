@@ -12,15 +12,18 @@
 #include "Lemma.h"
 #include "Settings.h"
 #include "Node.h"
+#include "Server.h"
+#include "lib/Thread_pool.hpp"
 
-
-class LemmaServer : public net::Server {
+class LemmaServer : public Server {
 private:
     bool send_again;
     std::shared_ptr<net::Socket> server;
     std::shared_ptr<SQLite3::Connection> db;
     std::map<std::string, Node> lemmas;                            // name -> lemmas
     std::map<std::string, std::map<net::Socket *, std::map<Lemma *, bool>>> solvers;  // name -> solver -> lemma -> t/f
+    mutable std::mutex solvers_mutex;
+
 protected:
     void handle_accept(net::Socket &);
 

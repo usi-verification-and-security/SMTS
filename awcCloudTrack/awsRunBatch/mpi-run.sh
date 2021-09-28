@@ -19,6 +19,16 @@ if [ "${AWS_BATCH_JOB_MAIN_NODE_INDEX}" == "${AWS_BATCH_JOB_NODE_INDEX}" ]; then
   log "Running synchronize as the main node"
   NODE_TYPE="main"
 fi
+
+if  [ "${LemmaServer}" == "ON" ]
+  then
+    if [ "$((AWS_BATCH_JOB_MAIN_NODE_INDEX + 1))" == "${AWS_BATCH_JOB_NODE_INDEX}" ];
+    then
+      log "Running synchronize as the LemmaServer node"
+      NODE_TYPE="lemma"
+    fi
+fi
+
 # wait for all nodes to report
 wait_for_nodes () {
 
@@ -30,15 +40,28 @@ wait_for_nodes () {
   log "main details (ip:cores) -> $ip:$availablecores"
   log "main IP: $ip"
   echo "$ip" >> $HOST_FILE_PATH
-  echo Downloading problem from S3: ${COMP_S3_PROBLEM_PATH}
-  if [[ "${COMP_S3_PROBLEM_PATH}" == *".xz" ]];
-  then
-    aws s3 cp s3://${S3_BKT}/${COMP_S3_PROBLEM_PATH} test.smt2.xz
-    unxz test.smt2.xz
-  else
-    aws s3 cp s3://${S3_BKT}/${COMP_S3_PROBLEM_PATH} test.smt2
+  if  [ "${DownloadFromS3}" == "ON" ]
+    then
+        echo Downloading problem from S3: ${COMP_S3_PROBLEM_PATH}
+        if [[ "${COMP_S3_PROBLEM_PATH}" == *".xz" ]];
+          then
+            aws s3 cp s3://${S3_BKT}/${COMP_S3_PROBLEM_PATH} test.smt2.xz
+            unxz test.smt2.xz
+          else
+            aws s3 cp s3://${S3_BKT}/${COMP_S3_PROBLEM_PATH} test.smt2
+        fi
+    else
+      echo Distributing problem from DockerImage: SMTS/${COMP_S3_PROBLEM_PATH}
   fi
-  python3 SMTS/server/smts.py -l  &
+
+  python3 SMTS/server/smts.py  &
+#  if  [ "${LemmaServer}" == "ON" ]
+#    then
+#      python3 SMTS/server/smts.py -l &
+#    else
+#      python3 SMTS/server/smts.py  &
+#    fi
+
   sleep 1
   #echo "$ip" >> $HOST_FILE_PATH
   lines=$(ls -dq /tmp/hostfile* | wc -l)
@@ -69,8 +92,12 @@ wait_for_nodes () {
    # fi
   #done
   echo "Send .smt2 Instance"
-  SMTS/server/client.py 3000 SMTS/hpcClusterBenchs-timedout/${COMP_S3_PROBLEM_PATH}
-#  SMTS/awcCloudTrack/awsRunBatch/run_aws_smtsClient.sh "SMTS/hpcClusterBenchs-timedout"
+    if  [ "${DownloadFromS3}" == "ON" ]
+    then
+      SMTS/server/client.py 3000 test.smt2
+    else
+      SMTS/server/client.py 3000 SMTS/${COMP_S3_PROBLEM_PATH}
+    fi
   wait
 }
 
@@ -89,8 +116,26 @@ report_to_master () {
     echo "Sleeping 1 seconds and trying again"
   done
   #echo "$ip slots=2" >> $HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX}
-  mpirun --mca btl_tcp_if_include eth0 --allow-run-as-root -np 8  --hostfile $HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX} SMTS/build/solver_opensmt -s ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:3000 &
+  mpirun --mca btl_tcp_if_include eth0 --allow-run-as-root -np ${NSolver}  --hostfile $HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX} SMTS/build/solver_opensmt -s ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:3000 &
 
+  ps -ef | grep sshd
+  wait
+}
+startLemmaServer () {
+  # get own ip
+  ip=$(/sbin/ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
+  availablecores=$(nproc)
+
+  log "LemmaServer node${AWS_BATCH_JOB_NODE_INDEX} -> $ip:$availablecores, Connect to the server node -> ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}"
+
+  echo "$ip" >> $HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX}
+  ping -c 3 ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}
+  until scp $HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX} ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:$HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX}
+  do
+    echo "Sleeping 1 seconds and trying again"
+  done
+  #echo "$ip slots=2" >> $HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX}
+  SMTS/build/lemma_server -s ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:3000
   ps -ef | grep sshd
   wait
 }
@@ -101,7 +146,9 @@ case $NODE_TYPE in
   main)
     wait_for_nodes "${@}"
     ;;
-
+  lemma)
+    startLemmaServer "${@}"
+    ;;
   child)
     report_to_master "${@}"
     ;;

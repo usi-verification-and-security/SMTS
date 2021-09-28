@@ -1,5 +1,5 @@
 add_library(client STATIC Settings.cpp FileThread.cpp SolverServer.cpp)
-#include_directories(../../build/_deps/opensmt-src/src/api)
+#include_directories(${opensmt_SOURCE_DIR}/src/api)
 target_link_libraries(client Lib)
 
 add_subdirectory(OpenSMT2)

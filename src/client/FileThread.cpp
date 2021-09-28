@@ -14,7 +14,7 @@ FileThread::FileThread(Settings &settings) :
     if (settings.server.size())
         throw Exception(__FILE__, __LINE__, "server must be null");
     settings.server = to_string(this->server.get_local());
-    this->start();
+    this->main();
 }
 
 void FileThread::main() {

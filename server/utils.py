@@ -68,7 +68,6 @@ def run_lemma_server(lemma_server, database, send_again):
     ip = '127.0.0.1'
     try:
         ip = socket.gethostbyname(socket.gethostname())
-        print(ip)
     except:
         pass
 
@@ -79,7 +78,6 @@ def run_lemma_server(lemma_server, database, send_again):
     if send_again:
         args += ['-a']
     try:
-        print(args)
         return subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except BaseException as ex:
         print(ex)

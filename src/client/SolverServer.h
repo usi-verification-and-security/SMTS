@@ -20,7 +20,9 @@ private:
 
     net::Socket server;
     std::string lemmas_address;
-    SolverProcess *solver;
+    SolverProcess* solver;
+
+
 protected:
     void handle_close(net::Socket &);
 

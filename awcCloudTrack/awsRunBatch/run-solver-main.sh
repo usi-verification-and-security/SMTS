@@ -33,6 +33,10 @@ aws --profile $1 ecs run-task --launch-type EC2 --cluster $2 --task-definition $
         {
             \"name\":\"S3_BKT\",
             \"value\":\"smt-comp-2021\"
+        },
+        {
+            \"name\":\"LemmaServer\",
+            \"value\": \"$9\"
         }
     ]
   }]

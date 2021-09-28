@@ -57,6 +57,11 @@ class Solver(net.Socket):
             'name': self.node.root.name,
             'node': self.node.path(),
             'query': query,
+            'lemma_push_min': config.lemmaPush_timeoutMin,
+            'lemma_pull_min': config.lemmaPull_timeoutMin,
+            'lemma_push_max': config.lemmaPush_timeoutMax,
+            'lemma_pull_max': config.lemmaPull_timeoutMax,
+            'lemma_amount': config.lemma_amount,
         })
         self.write(parameters, smt)
         self.started = time.time()

@@ -41,10 +41,12 @@ namespace net {
             } while (result == -1 && errno == EINTR);
 
             auto socket = this->sockets.begin();
-            while (socket != this->sockets.end()) {
+            while (socket != this->sockets.end())
+            {
                 if ((*socket)->get_fd() < 0) {
                     this->del_socket(*socket);
-                } else if (FD_ISSET((*socket)->get_fd(), &readset)) {
+                }
+                else if (FD_ISSET((*socket)->get_fd(), &readset)) {
                     FD_CLR((*socket)->get_fd(), &readset);
                     if (this->socket && (*socket)->get_fd() == this->socket->get_fd()) {
                         std::shared_ptr<Socket> client;
@@ -58,7 +60,8 @@ namespace net {
                         this->sockets.insert(client);
                         this->handle_accept(*client);
 
-                    } else {
+                    }
+                    else {
                         try {
                             (*socket)->read(header, payload);
 #ifdef ENABLE_DEBUGING
@@ -81,7 +84,8 @@ namespace net {
                             this->handle_exception(**socket, ex);
                         }
                     }
-                } else {
+                }
+                else{
                     ++socket;
                     continue;
                 }

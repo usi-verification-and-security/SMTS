@@ -43,7 +43,7 @@ public:
 
             file <<""<< type << endl;
             file <<" "<< description << endl;
-            //file <<" time: " <<std::put_time(&tm, "%H:%M:%S") << "\t";
+            file <<" time: " <<std::put_time(&tm, "%H:%M:%S") << "\t";
             file <<endl<<endl<<endl;
         }
         mtx.unlock();
@@ -102,7 +102,7 @@ public:
                 break;
             case PULL:
                 if (getenv("TERM")) {
-                    r += system("tput setaf 3");
+                    r += system("tput setaf 9");
                     r += system("tput bold");
                 }
                 stream << "PULL\t";

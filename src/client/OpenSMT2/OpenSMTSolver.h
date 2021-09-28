@@ -7,7 +7,6 @@
 
 #include <vector>
 #include <functional>
-#include "Interpret.h"
 #include "PreInterpret.h"
 #include "client/SolverProcess.h"
 #include "client/Settings.h"
@@ -24,26 +23,27 @@ class OpenSMTSolver  {
 
 private:
     net::Header &header;
-    std::unique_ptr<Interpret> interpret;
-
+//    PreInterpret* preInterpret;
+    std::unique_ptr<PreInterpret> interpret;
     bool learned_push;
     sstat result;
 public:
-    OpenSMTSolver(net::Header &header, SMTConfig &config, char* instance) :
-            header(header),
-            learned_push(false),
-            result(Status::unknown)
+    OpenSMTSolver(net::Header &header, SMTConfig &config, string & instance, Channel& ch) :
+    header(header),
+    learned_push(false),
+    result(Status::unknown)
     {
-        MainSplitter* mainSplitter = (new PreInterpret(config))->preInterpFile(instance);
-        interpret.reset( new Interpret(config, mainSplitter, &mainSplitter->getLogic()));
+        interpret.reset(new PreInterpret(config , ch));
+        interpret->interpFile((char *)instance.c_str());
+//        interpret.reset( std::move(preInterpret));
+//        interpret.reset( new Interpret(config, std::move(std::shared_ptr<MainSolver>(&preInterpret->getMainSolver())),
+//                                       std::move(std::shared_ptr<Logic>(&preInterpret->getLogic()))));
     }
+
     void search();
     sstat getResult() const { return result; }
 
-    Channel& getChannel() const {
-        //assert(mainSolver->getChannel());
-       return ( (MainSplitter&) interpret->getMainSolver() ).getChannel();
-    };
+
 
     MainSplitter& getMainSplitter() const {
         return (MainSplitter&) interpret->getMainSolver();

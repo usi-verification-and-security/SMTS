@@ -62,6 +62,7 @@ namespace net {
 
     Socket::Socket(int fd) :
             fd(fd) {
+
     };
 
     Socket::~Socket() {
@@ -97,7 +98,7 @@ namespace net {
     }
 
     uint32_t Socket::read(net::Header &header, std::string &payload) const {
-        std::lock_guard<std::mutex> _l(this->read_mtx);
+        std::scoped_lock<std::mutex> _l(this->read_mtx);
 
         uint32_t length = 0;
         char buffer[4];
@@ -136,8 +137,7 @@ namespace net {
     }
 
     uint32_t Socket::write(const net::Header &header, const std::string &payload) const {
-        std::lock_guard<std::mutex> _l(this->write_mtx);
-
+        std::scoped_lock<std::mutex> _l(this->write_mtx);
         if (header.count(""))
             throw SocketException(__FILE__, __LINE__, "empty key is not allowed");
         std::string message;

@@ -19,10 +19,10 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    std::unique_ptr<FileThread> ft;
-    if (!settings.server.size() && settings.files.size()) {
-        ft.reset(new FileThread(settings));
-    }
+//    std::unique_ptr<FileThread> ft;
+//    if (!settings.server.size() && settings.files.size()) {
+//        ft.reset(new FileThread(settings));
+//    }
 
     if (settings.server.size()) {
         try {
@@ -30,6 +30,8 @@ int main(int argc, char **argv) {
         } catch (net::SocketException &ex) {
             Logger::log(Logger::ERROR, ex.what());
             return -1;
+        }
+        catch (...) {
         }
         Logger::log(Logger::INFO, "all done. bye!");
     }

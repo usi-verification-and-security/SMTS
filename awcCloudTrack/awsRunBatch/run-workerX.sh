@@ -34,6 +34,11 @@ aws --profile $1 ecs run-task --launch-type EC2 --cluster $2 --task-definition $
             \"name\":\"AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS\",
             \"value\":\"$8\"
         }
+        ,
+        {
+            \"name\":\"test\",
+            \"value\":\"$$10\"
+        }
     ]
   }]
 }

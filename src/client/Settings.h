@@ -15,7 +15,6 @@ public:
     Settings();
 
     void load(int, char **);
-
     bool verbose;
     std::string server;
     std::string lemmas;

@@ -29,7 +29,7 @@ RUN apt-get update \
 RUN git clone https://github.com/usi-verification-and-security/SMTS.git --branch cube-and-conquer --single-branch
 RUN cd SMTS && sh awcCloudTrack/awsRunBatch/make_smts.sh
 # RUN cd SMTS && rm -rf hpcClusterBenchs-timedout
-RUN cd SMTS && rm -rf hpcClusterBenchs
+# RUN cd SMTS && rm -rf hpcClusterBenchs
 RUN cd SMTS && chmod 755 awcCloudTrack/awsRunBatch/make_combined_hostfile.py
 RUN cd SMTS && chmod 755 awcCloudTrack/awsRunBatch/mpi-run.sh
 RUN cd SMTS && chmod 755 awcCloudTrack/awsRunBatch/run_aws_smtsClient.sh
