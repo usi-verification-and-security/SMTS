@@ -45,7 +45,7 @@ public:
      *
      * @param _thread_count The number of threads to use. The default value is the total number of hardware threads available, as reported by the implementation. With a hyperthreaded CPU, this will be twice the number of CPU cores. If the argument is zero, the default value will be used instead.
      */
-    thread_pool(const ui32 &_thread_count = std::thread::hardware_concurrency())
+    thread_pool(const ui32 &_thread_count = std::thread::hardware_concurrency() / 4)
         : thread_count(_thread_count ? _thread_count : std::thread::hardware_concurrency()), threads(new std::thread[_thread_count ? _thread_count : std::thread::hardware_concurrency()])
     {
         create_threads();
@@ -515,7 +515,7 @@ public:
      */
     i64 ms() const
     {
-        return (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time)).count();
+        return (std::chrono::duration_cast<std::chrono::seconds>(elapsed_time)).count();
     }
 
 private:

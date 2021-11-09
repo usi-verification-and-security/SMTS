@@ -1,3 +1,4 @@
+.DS_Store
 .idea/
 __pycache__/
 build/
@@ -15,8 +16,11 @@ gui/www/treeManager/*.d.ts
 gui/www/treeManager/*.js
 gui/www/treeManager/*.map
 server/*.db
+server/*.pdf
+server/*.gv
 server/__pycache__/
 server/config/config.py
 server/config/__pycache__/
 src/cmake-build-debug/
 tests/
+*/logs

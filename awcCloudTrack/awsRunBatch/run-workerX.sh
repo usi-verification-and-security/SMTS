@@ -36,8 +36,12 @@ aws --profile $1 ecs run-task --launch-type EC2 --cluster $2 --task-definition $
         }
         ,
         {
-            \"name\":\"test\",
-            \"value\":\"$$10\"
+            \"name\":\"LemmaServer\",
+            \"value\":\"ON\"
+        },
+        {
+            \"name\":\"LemmaServer_onServerNode\",
+            \"value\":\"Y\"
         }
     ]
   }]

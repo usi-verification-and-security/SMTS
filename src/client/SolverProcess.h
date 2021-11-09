@@ -5,61 +5,49 @@
 #ifndef SMTS_CLIENT_SOLVERPROCESS_H
 #define SMTS_CLIENT_SOLVERPROCESS_H
 
-#include <atomic>
 #include <random>
 #include <mutex>
 #include <ctime>
 #include <chrono>
-#include "lib/lib.h"
 #include "deque"
-#include "../../build/_deps/opensmt-src/src/api/Channel.h"
-enum Status {
-    unknown, sat, unsat
-};
-//static const size_t Capacity = 4;
-//std::string Command[Capacity] = { "incremental","partition","cnf-clauses","cnf-learnts"};
-
-struct Task {
-    const enum {
-        incremental, resume, partition
-    } command;
-    std::string smtlib;
-};
+#include "../../build/_deps/partition-channel-src/src/Channel.h"
+#include "../../build/_deps/opensmt-src/src/common/Printer.h"
+#include "lib/lib.h"
+//#include "lib/Thread_pool.hpp"
 
 
-class SolverProcess : public Thread {
+class SolverProcess  : public SMTSThread {
     friend class SolverServer;
 private:
-    std::vector<net::Lemma> pulled_lemmas;
-    Channel channel;
-
-    std::condition_variable cv;
-    std::string instance;
-    bool lemma_server;
-    std::deque<std::string> instance_Temp;
+    opensmt::synced_stream synced_stream;
+    opensmt::StoppableWatch timer;
     net::Header header;
+//    net::Socket* SMTSServer;
+//    std::vector<std::thread> vecOfThreads;
+    std::map<std::string , std::vector<net::Lemma>>  node_PulledLemmas;
+    Channel & channel;
+    std::string instance;
+    std::deque<std::string> instance_Temp;
+//    bool colorMode;
     std::deque<net::Header> header_Temp;
-    std::mutex mtx_listener_solve;
-    int lemmaPush_timeout_min;
-    int lemmaPush_timeout_max;
-    int lemmaPull_timeout_min;
-    int lemmaPull_timeout_max;
-    std::string currentLemmaPulledNodePath;
+    mutable std::mutex mtx_listener_solve;
+
+
     // async interrupt the solver
-    void interrupt(string command);
+    void interrupt(const string& command);
 
 
-    void main() override {
+    void main()  {
 //        try {
-            getChannel().getMutex().lock();
-            this->header["lemmas"] = this->header["lemma_amount"];
-            if (!this->header.count("max_memory")) {
-                this->header["max_memory"] = std::to_string(0);
-            }
-            this->init();
-            this->info("start");
+        getChannel().getMutex().lock();
+        this->header["lemmas"] = this->header["lemma_amount"];
+        if (!this->header.count("max_memory")) {
+            this->header["max_memory"] = std::to_string(0);
+        }
+        this->init();
+        this->info("start");
 
-            this->solve();
+        this->solve();
 //        }
 //        catch (...) {
 //            std::cout << "exception main " << std::endl;
@@ -90,19 +78,18 @@ private:
         }
 
         this->writer()->write(header, payload);
-        //write(header, payload);
     }
 
     void report() {
         this->report(this->header, "", "");
     }
 
-    void report(Status status, net::Header header = net::Header()) {
+    void report(PartitionChannel::Status status, net::Header header = net::Header()) {
         if (header.size() == 0)
             header = this->header.copy(this->header.keys(net::Header::statistic));
-        if (status == Status::sat)
+        if (status == PartitionChannel::Status::sat)
             this->report(header, "sat", "");
-        else if (status == Status::unsat)
+        else if (status == PartitionChannel::Status::unsat)
             this->report(header, "unsat", "");
         else
             this->report(header, "unknown", "");
@@ -113,7 +100,7 @@ private:
         net::Header header;
         if (error != nullptr)
             return this->error(error);
-        std::cout<<"start to report partition "<<endl<<"header: "<<header<<endl;
+        std::cout<<endl<<::to_string(partitions)<<endl;
         this->report(header, "partitions", ::to_string(partitions));
     }
 
@@ -128,22 +115,18 @@ private:
     void error(const std::string &error, net::Header header = net::Header()) {
         this->report(header, "error:" + error, "");
     }
-    Channel& getChannel()  {
-        //assert(mainSolver->getChannel());
-        return channel;
-//       return ( (MainSplitter&) interpret->getMainSolver() ).getChannel();
-    };
-    Task wait(int index) {
+    inline Channel& getChannel()  {  return channel; };
+
+    PartitionChannel::Task wait(int index) {
 #ifdef ENABLE_DEBUGING
-        std::thread log (Logger::writeIntoFile,false,"SolverProcess - Main Thread: Start to read the pipe...","Recieved command: "+header["command"],getpid());
-        log.join();
+
 #endif
 //        if (tryWait)
 //        std::scoped_lock<std::mutex> _l(this->mtx_listener_solve);
         if (header_Temp[index]["name"] != this->header_Temp[index]["name"] || header_Temp[index]["node"] != this->header_Temp[index]["node"]) {
             this->error("not expected: " + header_Temp[index]["name"] + header_Temp[index]["node"]);
-            return Task{
-                    .command=Task::resume
+            return PartitionChannel::Task{
+                    .command = PartitionChannel::Task::resume
             };
         }
 //        if (header_Temp["command"] == "stop") {
@@ -151,7 +134,7 @@ private:
 //                    .command=Task::stop,
 //            };
 //        }
-        if (header_Temp[index]["command"] == "incremental") {
+        if (header_Temp[index]["command"] == PartitionChannel::Command.Incremental) {
             if (header_Temp[index].count("node_") && header_Temp[index].count("query")) {
                 this->instance += instance_Temp[index];
 //                string temp =instance_Temp[index];
@@ -160,107 +143,138 @@ private:
                 this->info("incremental solving step from " + header_Temp[index]["node"]);
 //                header_Temp.erase(header_Temp.begin()+index,header_Temp.begin() + index + 1);
 //                instance_Temp.erase(instance_Temp.begin()+index,instance_Temp.begin() + index + 1);
-                return Task{
-                        .command =Task::incremental,
-                        .smtlib =instance_Temp[index]
+                return PartitionChannel::Task {
+                        .command = PartitionChannel::Task::incremental,
+                        .smtlib = instance_Temp[index]
                 };
             }
         }
-        if (header_Temp[index]["command"] == "partition" && header_Temp[index].count("partitions") == 1) {
+        if (header_Temp[index]["command"] == PartitionChannel::Command.Partition && header_Temp[index].count("partitions") == 1) {
+
             this->partition((uint8_t) atoi(header_Temp[index]["partitions"].c_str()));
 //            return Task{
 //                    .command=Task::partition,
 //            };
         }
-        if (header_Temp[index]["command"] == "cnf-clauses") {
+        if (header_Temp[index]["command"] == PartitionChannel::Command.CnfClauses) {
             this->getCnfClauses(header_Temp[index], instance_Temp[index]);
         }
-        if (header_Temp[index]["command"] == "cnf-learnts") {
+        if (header_Temp[index]["command"] == PartitionChannel::Command.Cnflearnts) {
             this->getCnfLearnts(header_Temp[index]);
         }
 //        header_Temp.erase(header_Temp.begin()+index,header_Temp.begin() + index + 1);
 //        instance_Temp.erase(instance_Temp.begin()+index,instance_Temp.begin() + index + 1);
-        return Task{
-                .command=Task::resume
+        return PartitionChannel::Task{
+                .command=PartitionChannel::Task::resume
         };
     }
 
 public:
     struct {
         const uint8_t errors_max = 3;
-        std::mutex mtx_li;
         std::shared_ptr<net::Socket> server;
 //        std::vector<net::Lemma> to_push;
         uint8_t errors = 0;
         uint8_t interval = 3;
         std::time_t last_push = 0;
         std::time_t last_pull = 0;
+        mutable std::mutex lemma_mutex;
     } lemma;
 
-    SolverProcess(net::Header header,
-                  std::string instance, net::Socket* server, bool lemma_server) :
-                  instance(instance),
-                  lemma_server(lemma_server),
-                  header(header)
-                  {
-                      smtsServer = server;
-                      if (!header.count("name") || !header.count("node"))
-                          throw Exception(__FILE__, __LINE__, "missing mandatory key in header");
-                      start_thread("solver");
-                  }
+    SolverProcess(net::Header header,std::string instance, net::Socket* server,Channel& ch, bool lemma_server) :
+            synced_stream(std::clog),
+            header (header),
+            channel(ch),
+            instance (instance)
+    {
+        SMTSServer = server;
+        if (!header.count("name") || !header.count("node"))
+            throw Exception(__FILE__, __LINE__, "missing mandatory key in header");
 
-    ~SolverProcess(){if(pulled_lemmas.empty()) pulled_lemmas.clear();}
+        start_Thread(PartitionChannel::ThreadName::Comunication);
+
+        if (lemma_server)
+            start_lemma_threads();
+    }
+    void start_lemma_threads()
+    {
+        std::string seed = this->header.get(net::Header::parameter, "seed");
+        int interval= atoi(this->header["lemma_push_min"].c_str()) + ( atoi(seed.substr(1, seed.size() - 1).c_str())
+                                                                       % ( atoi(this->header["lemma_push_max"].c_str())- atoi(this->header["lemma_push_min"].c_str()) + 1 ) );
+        getChannel().setClauseShareMode();
+
+        getChannel().setClauseLearnInterval(interval/2);
+
+        start_Thread(PartitionChannel::ThreadName::ClausePush, seed,this->header["lemma_push_min"],this->header["lemma_push_max"]);
+
+        start_Thread(PartitionChannel::ThreadName::ClausePull,seed,this->header["lemma_pull_min"], this->header["lemma_pull_max"]);
+
+        this->header.erase("lemma_push_min");
+        this->header.erase("lemma_push_max");
+        this->header.erase("lemma_pull_max");
+        this->header.erase("lemma_pull_min");
+        this->header.erase("colorMode");
+    }
+    ~SolverProcess()
+    {
+        this->wait_ForThreads();
+    }
+
     bool is_sharing() {
         return this->lemma.server != nullptr;
     }
 
-    void lemma_push(const std::vector<net::Lemma> &lemmas) {
+    void lemma_push(const std::map<std::string, std::vector<net::Lemma>> &lemmas) {
         if (lemmas.empty()) return;
-        std::unique_lock<std::mutex> _l(this->mtx_listener_solve);
-//        std::scoped_lock<std::mutex> _loc(this->lemma.mtx_li);
-        net::Header header = this->header.copy({"name", "node"});
-        header["lemmas"] = "+" + std::to_string(lemmas.size());
+        for ( const auto &toPush_lemma : lemmas )
+        {
+            std::unique_lock<std::mutex> _l(this->mtx_listener_solve);
+            if (!is_sharing())
+                return;
+            net::Header header = this->header.copy({"name", "node"});
+            header["node"] = toPush_lemma.first;
+            header["lemmas"] = "+" + std::to_string(toPush_lemma.second.size());
 
-        try {
-            std::cout << "[t push -> PID= "+to_string(getpid())+" ] SWriting lemmas to LemmaServer: -> size::"<< lemmas.size()<< std::endl;
-            _l.unlock();
-            this->lemma.server->write(header, ::to_string(lemmas));
-            std::cout << "[t push -> PID= "+to_string(getpid())+" ] EWriting lemmas to LemmaServer: -> size::"<< lemmas.size()<< std::endl;
-        } catch (net::SocketException &ex) {
-            _l.unlock();
-            this->lemma.errors++;
-            this->error(std::string("lemma push failed: ") + ex.what());
-            return;
+            try {
+                std::cout << "[t push ]-> PID= "+to_string(getpid())+" ] SWriting lemmas to LemmaServer: -> size::"<< toPush_lemma.second.size()
+                          <<"   from node -> "+header["node"]<< std::endl;
+                _l.unlock();
+                this->lemma.lemma_mutex.lock();
+                this->lemma.server->write(header, ::to_string(toPush_lemma.second));
+//            std::cout<<::to_string(lemmas);
+//            exit(0);
+                this->lemma.lemma_mutex.unlock();
+                std::cout << "[t push ]-> PID= "+to_string(getpid())+" ] EWriting lemmas to LemmaServer: -> size::"<< toPush_lemma.second.size()<< std::endl;
+            } catch (net::SocketException &ex) {
+                this->lemma.lemma_mutex.unlock();
+                this->lemma.errors++;
+                this->error(std::string("lemma push failed: ") + ex.what());
+                return;
+            }
         }
-
-        this->lemma.errors = 0;
-        this->lemma.last_push = std::time(nullptr);
-        if (this->lemma.interval > 1)
-            this->lemma.interval--;
     }
 
     bool lemma_pull() {
+        int lemma_Size = 0;
         std::vector<net::Lemma> lemmas;
         std::unique_lock<std::mutex> _l(this->mtx_listener_solve);
-//        if (
-//                !is_sharing() ||
-//                std::time(nullptr) < this->lemma.last_pull + this->lemma.interval ||
-//                this->lemma.errors >= this->lemma.errors_max
-//                )
-//            return false;
+        if (!is_sharing())
+            return false;
 
-//        this->mtx_listener_solve.lock();
         net::Header header = this->header.copy({"name", "node"});
         header["lemmas"] = "-" + this->header["lemmas"];
         std::string payload;
 
         try {
-            std::cout << "[t push -> PID= "+to_string(getpid())+" ] SReading lemmas from LemmaServer from node -> "+header["node"]<< std::endl;
+            std::cout << "[t pull ]-> PID= "+to_string(getpid())+" ] SReading lemmas from LemmaServer for node -> "+header["node"]<< std::endl;
             _l.unlock();
+            this->lemma.lemma_mutex.lock();
             this->lemma.server->write(header, "");
             this->lemma.server->read(header, payload);
+            this->lemma.lemma_mutex.unlock();
             _l.lock();
         } catch (net::SocketException &ex) {
+            this->lemma.lemma_mutex.unlock();
             this->lemma.errors++;
             this->error(std::string("lemma pull failed: ") + ex.what());
             return false;
@@ -271,26 +285,28 @@ public:
         if (this->lemma.interval > 1)
             this->lemma.interval--;
 
-        if ( payload.empty() or header["name"] != this->header["name"]) return false;
-        currentLemmaPulledNodePath = header["node"];
+        if (payload.empty() or header["name"] != this->header["name"] ) return node_PulledLemmas.size();
+//        currentLemmaPulledNodePath = header["node"];
         std::istringstream is(payload);
         is >> lemmas;
-        std::cout << "[t push -> PID= "+to_string(getpid())+" ] EReading lemmas from LemmaServer: -> size::"<< lemmas.size()<< std::endl;
-        pulled_lemmas.insert(std::end(pulled_lemmas),
-                             std::begin(lemmas), std::end(lemmas));
+        std::cout << "[t pull -> PID= "+to_string(getpid())+" ] EReading lemmas from LemmaServer: -> size::"<< lemmas.size()<< std::endl;
+        node_PulledLemmas[header["node"]].insert(std::end(node_PulledLemmas[header["node"]]),
+                                                 std::begin(lemmas), std::end(lemmas));
+        lemma_Size = node_PulledLemmas.size();
         _l.unlock();
 //        cout << "\033[1;31m [t pull] pull and accumulate clauses -> Size::\033[0m" << lemmas.size()<< std::endl;
-        return true;
+        return lemma_Size;
     }
     inline bool isPrefix(std::string_view prefix, std::string_view full)
     {
         return prefix == full.substr(0, prefix.size());
     }
     static const char *solver;
-    void injectPulledClauses();
-    void clausePush() override;
-    void clausePull() override;
+    void injectPulledClauses(const std::string & nodePath);
+    void clausePush(const string & seed, const string & n1, const string & n2) ;
+    void clausePull(const string & seed, const string & n1, const string & n2) ;
     void checkForlearned_pushBeforIncrementality();
+
 };
 
 #endif

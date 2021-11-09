@@ -22,7 +22,7 @@ typedef uint8_t log_level;
 
 class Logger {
 private:
-    Logger() {}
+    Logger() { }
 
 public:
     static void writeIntoFile(bool parent,string type,string description,pid_t processId) {
@@ -48,24 +48,7 @@ public:
         }
         mtx.unlock();
     }
-    static void writetofile1(string str,int client,pid_t processid) {
-        static std::mutex mtx;
-        mtx.lock();
-        string filename(to_string(processid)+".txt");
-        fstream file;
-        std::time_t time = std::time(nullptr);
-        struct tm tm = *std::localtime(&time);
 
-        file.open(filename, std::ios_base::app | std::ios_base::in);
-        if (file.is_open()) {
-            file <<""<< str << endl;
-            file <<" "<< client << endl;
-            file <<" ProcessId: "<< processid << endl;
-            file <<"  time: " <<std::put_time(&tm, "%Y-%m-%d %H:%M:%S") <<endl;
-            file << " Done !" << endl<<endl;
-        }
-        mtx.unlock();
-    }
     template<typename T>
     static void log(log_level level, const T &message) {
         static std::mutex mtx;
@@ -125,25 +108,4 @@ public:
 };
 
 
-namespace Color {
-    enum Code {
-        FG_RED      = 31,
-        FG_GREEN    = 32,
-        FG_BLUE     = 34,
-        FG_DEFAULT  = 39,
-        BG_RED      = 41,
-        BG_GREEN    = 42,
-        BG_BLUE     = 44,
-        BG_DEFAULT  = 49
-    };
-    class Modifier {
-        Code code;
-    public:
-        Modifier(Code pCode) : code(pCode) {}
-        friend std::ostream&
-        operator<<(std::ostream& os, const Modifier& mod) {
-            return os << "\033[" << mod.code << "m";
-        }
-    };
-}
 #endif

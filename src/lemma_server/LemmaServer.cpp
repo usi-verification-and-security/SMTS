@@ -12,7 +12,7 @@
 #include "lib/Logger.h"
 #include "lib/Exception.h"
 #include "LemmaServer.h"
-
+//#include "../../build/_deps/partition-channel-src/PartitionChannelLibrary.h"
 
 LemmaServer::LemmaServer(uint16_t port, const std::string &server, const std::string &db_filename, bool send_again) :
         Server(port),
@@ -60,13 +60,13 @@ void LemmaServer::handle_close(net::Socket &client) {
             this->stop();
             return;
         }
-        solvers_mutex.lock();
+//        solvers_mutex.lock();
         for (auto &pair:this->solvers) {
             if (this->solvers[pair.first].count(&client)) {
                 this->solvers[pair.first].erase(&client);
             }
         }
-        solvers_mutex.unlock();
+//        solvers_mutex.unlock();
     }
 }
 
@@ -78,7 +78,6 @@ void LemmaServer::handle_message(net::Socket &client,
                                  net::Header &header,
                                  std::string &payload) {
     //pprint(header);
-//    std::this_thread::sleep_for(std::chrono::milliseconds (2000));
     if (header.count("name") == 0 || header.count("node") == 0 || header.count("lemmas") == 0)
         return;
     if (this->lemmas.count(header["name"]) != 1) {
@@ -88,7 +87,9 @@ void LemmaServer::handle_message(net::Socket &client,
     if (header["node"].size() < 2)
         return;
 
-
+#ifdef ENABLE_DEBUGING
+    std::cout << "[LemmServer] Start Only LemmaOperation for node -> "+header["node"]<< std::endl;
+#endif
     uint32_t clauses_request = 0;
     if (header["lemmas"] != "0")
         clauses_request = (uint32_t) stoi(header["lemmas"].substr(1));
@@ -140,7 +141,6 @@ void LemmaServer::handle_message(net::Socket &client,
     if (push) {
         //std::list<Lemma *> *lemmas = &node_path.back()->lemmas;
 //        solvers_mutex.lock();
-        std::cout << "[LemmServer] SPush_OnlyLemmaOperation for node -> "+header["node"]<< std::endl;
         std::map<Lemma *, bool> &lemmas_solver = this->solvers[header["name"]][&client];
 //        solvers_mutex.unlock();
         uint32_t pushed = 0;
@@ -198,15 +198,17 @@ void LemmaServer::handle_message(net::Socket &client,
             }
             n++;
         }
+#ifdef ENABLE_DEBUGING
         std::cout << "[LemmServer] EPush_OnlyLemmaOperation for node -> "+header["node"]<< std::endl;
         Logger::log(Logger::PUSH,
                     header["name"] + header["node"] + " " + to_string(client.get_remote()) +
                     " push [" + std::to_string(clauses_request) + "]\t" +
                     std::to_string(n) +
                     "\t(" + std::to_string(pushed) + "\tfresh, " + std::to_string(n - pushed) + "\tpresent)");
+#endif
 
     } else { // pull
-        std::cout << "[LemmServer] SPull_OnlyLemmaSelection for node -> "+header["node"]<< std::endl;
+//        std::cout << "[LemmServer] SPull_OnlyLemmaSelection for node -> "+header["node"]<< std::endl;
         std::list<Lemma *> lemmas;
 //        solvers_mutex.lock();
         std::map<Lemma *, bool> &lemmas_solver = this->solvers[header["name"]][&client];
@@ -231,15 +233,21 @@ void LemmaServer::handle_message(net::Socket &client,
             n++;
         }
         header["lemmas"] = std::to_string(n);
+#ifdef ENABLE_DEBUGING
         std::cout << "[LemmServer] EPull_OnlyLemmaSelection for node -> "+header["node"]<< std::endl;
-        std::cout << "[LemmServer] SWriting lemmas to node -> "+header["node"]<< std::endl;
+#endif
+
         client.write(header, ::to_string(lemmas_send));
+
+#ifdef ENABLE_DEBUGING
         std::cout << "[LemmServer] EWriting lemmas to node -> "+header["node"]<< std::endl;
         if (n > 0)
             Logger::log(Logger::PULL,
                         header["name"] + header["node"] + " " + to_string(client.get_remote()) +
                         " pull [" + std::to_string(clauses_request) + "]\t" +
                         std::to_string(n));
+#endif
+
     }
 }
 

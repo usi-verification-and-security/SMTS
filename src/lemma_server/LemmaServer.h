@@ -22,7 +22,7 @@ private:
     std::shared_ptr<SQLite3::Connection> db;
     std::map<std::string, Node> lemmas;                            // name -> lemmas
     std::map<std::string, std::map<net::Socket *, std::map<Lemma *, bool>>> solvers;  // name -> solver -> lemma -> t/f
-    mutable std::mutex solvers_mutex;
+//    mutable std::mutex solvers_mutex;
 
 protected:
     void handle_accept(net::Socket &);

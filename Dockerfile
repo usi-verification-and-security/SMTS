@@ -1,4 +1,5 @@
 FROM ubuntu:20.04 AS smts_base
+# sudo apt-get install graphviz
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt install -y openssh-server iproute2 openmpi-bin openmpi-common iputils-ping \
     && mkdir /var/run/sshd \

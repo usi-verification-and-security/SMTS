@@ -29,7 +29,10 @@ void Server::run_forever() {
 //    thread_pool pool(poolSize);
     while (true) {
         do {
-            std::cout << "[LemmServer] SSelect "<< std::endl;
+#ifdef ENABLE_DEBUGING
+            std::cout << "[LemmServer] SSelect Sockets"<< std::endl;
+#endif
+
             FD_ZERO(&readset);
             int max = 0;
             for (auto &socket : this->sockets) {
@@ -41,7 +44,10 @@ void Server::run_forever() {
             if (max == 0)
                 return;
             result = ::select(max + 1, &readset, nullptr, nullptr, nullptr);
-            std::cout << "[LemmServer] ESelect "<< std::endl;
+#ifdef ENABLE_DEBUGING
+            std::cout << "[LemmServer] ESelect Sockets "<< std::endl;
+#endif
+
         } while (result == -1 && errno == EINTR);
 
         auto socket = this->sockets.begin();
@@ -71,13 +77,16 @@ void Server::run_forever() {
                             try {
                                 net::Header header;
                                 std::string payload;
+#ifdef ENABLE_DEBUGING
                                 std::cout << "[LemmServer] SRead "<< std::endl;
+#endif
                                 (*socket)->read(header, payload);
+#ifdef ENABLE_DEBUGING
                                 std::cout << "[LemmServer] ERead for node -> "+header["node"]<< std::endl;
+#endif
                                 this->handle_message(**socket, header, payload);
                             }
                             catch (net::SocketClosedException &ex) {
-//                            pool.reset();
                             std::shared_ptr<net::Socket> s = *socket;
                             this->sockets.erase(socket);
                             this->handle_close(*s);

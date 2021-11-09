@@ -42,29 +42,30 @@ class Socket(object):
         return self.__class__(sock=sock)
 
     def read(self):
-        content = b''
-        length = self._sock.recv(4)
-        if len(length) == 4:
-            length = struct.unpack('!I', length)[0]
-            while len(content) < length:
-                buffer = self._sock.recv(length - len(content))
-                if len(buffer) == 0:
-                    raise ConnectionAbortedError
-                content += buffer
-        else:
-            raise ConnectionAbortedError
-        header = {}
-        i = 0
-        while content[i:i + 1] != b'\x00':
-            pair = []
-            for _ in range(2):
-                length = struct.unpack('!B', content[i:i + 1])[0]
-                i += 1
-                pair.append(content[i:i + length])
-                i += length
-            header[pair[0].decode()] = pair[1].decode()
-        i += 1
-        return header, content[i:]
+        if self._sock:
+            content = b''
+            length = self._sock.recv(4)
+            if len(length) == 4:
+                length = struct.unpack('!I', length)[0]
+                while len(content) < length:
+                    buffer = self._sock.recv(length - len(content))
+                    if len(buffer) == 0:
+                        raise ConnectionAbortedError
+                    content += buffer
+            else:
+                raise ConnectionAbortedError
+            header = {}
+            i = 0
+            while content[i:i + 1] != b'\x00':
+                pair = []
+                for _ in range(2):
+                    length = struct.unpack('!B', content[i:i + 1])[0]
+                    i += 1
+                    pair.append(content[i:i + length])
+                    i += length
+                header[pair[0].decode()] = pair[1].decode()
+            i += 1
+            return header, content[i:]
 
     def write(self, header, payload):
         dump = b''
@@ -152,7 +153,7 @@ class Server(object):
                 try:
                     # print("Server: Start to read -> time =", datetime.now().strftime("%H:%M:%S"))
                     header, message = sock.read()
-                    # print("Finished Reading -> time =", datetime.now().strftime("%H:%M:%S"),header,message)
+                    # print("     Finished Reading -> Header",header)
                 except ConnectionAbortedError:
                     self.handle_close(sock)
                     sock.close()

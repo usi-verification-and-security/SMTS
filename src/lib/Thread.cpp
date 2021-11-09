@@ -1,56 +1,156 @@
+//
+// Author: Matteo Marescotti
+//
 
 #include "Thread.h"
 
+extern "C" {
+#include <errno.h>
+}
 
-Thread::Thread(){}
+
+#ifdef __APPLE__
+// from http://codereview.stackexchange.com/questions/88269/implementing-pthread-barrier-for-mac-os-x
+
+#define __unused __attribute__((unused))
+
+int
+pthread_barrierattr_init(pthread_barrierattr_t *attr __unused) {
+    return 0;
+}
+
+int
+pthread_barrierattr_destroy(pthread_barrierattr_t *attr __unused) {
+    return 0;
+}
+
+int
+pthread_barrierattr_getpshared(const pthread_barrierattr_t *attr __unused,
+                               int *pshared) {
+    *pshared = PTHREAD_PROCESS_PRIVATE;
+    return 0;
+}
+
+int
+pthread_barrierattr_setpshared(pthread_barrierattr_t *attr __unused,
+                               int pshared) {
+    if (pshared != PTHREAD_PROCESS_PRIVATE) {
+        errno = EINVAL;
+        return -1;
+    }
+    return 0;
+}
+
+int
+pthread_barrier_init(pthread_barrier_t *barrier,
+                     const pthread_barrierattr_t *attr __unused,
+                     unsigned count) {
+    if (count == 0) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    if (pthread_mutex_init(&barrier->mutex, 0) < 0) {
+        return -1;
+    }
+    if (pthread_cond_init(&barrier->cond, 0) < 0) {
+        int errno_save = errno;
+        pthread_mutex_destroy(&barrier->mutex);
+        errno = errno_save;
+        return -1;
+    }
+
+    barrier->limit = count;
+    barrier->count = 0;
+    barrier->phase = 0;
+
+    return 0;
+}
+
+int
+pthread_barrier_destroy(pthread_barrier_t *barrier) {
+    pthread_mutex_destroy(&barrier->mutex);
+    pthread_cond_destroy(&barrier->cond);
+    return 0;
+}
+
+int
+pthread_barrier_wait(pthread_barrier_t *barrier) {
+    pthread_mutex_lock(&barrier->mutex);
+    barrier->count++;
+    if (barrier->count >= barrier->limit) {
+        barrier->phase++;
+        barrier->count = 0;
+        pthread_cond_broadcast(&barrier->cond);
+        pthread_mutex_unlock(&barrier->mutex);
+        return PTHREAD_BARRIER_SERIAL_THREAD;
+    } else {
+        unsigned phase = barrier->phase;
+        do
+            pthread_cond_wait(&barrier->cond, &barrier->mutex);
+        while (phase == barrier->phase);
+        pthread_mutex_unlock(&barrier->mutex);
+        return 0;
+    }
+}
+
+#endif /* __APPLE__ */
+
+Thread::Thread() :
+        thread(nullptr), piper(net::Pipe()), pipew(net::Pipe()), stop_requested(false) {}
 
 Thread::~Thread() {
-//    stop();
-    for (int i = vecOfThreads.size() - 1; i >= 0; --i) {
-        if (vecOfThreads[i].joinable())
-            vecOfThreads[i].join();
+    this->stop();
+    this->join();
+    delete this->thread;
+    this->thread = nullptr;
+}
+
+void Thread::thread_wrapper() {
+    try {
+        pthread_barrier_wait(&this->barrier);
+        this->main();
     }
-//    for (std::thread & th : vecOfThreads)
-//    {
-//        std::cout << "thread solver is joining" << std::endl;
-//        // If thread Object is Joinable then Join that thread.
-//        if (th.joinable())
-//            th.join();
-//    }
-//    stop_thread("solver");
-//    stop_thread("clauseShare");
-////    stop_thread("solver");
-//    stop_thread("clausePull");
-    std::cout << "All threads are jointed!!" << std::endl;
-//    stop();
-//    std::cout << "after thread stop" << std::endl;
-//    for (auto& th: tm_)
-//    {
-//        std::cout << "join thread stop" << std::endl;
-//        th.second->join();
-//        free(th.second);
-//    }
-
-//    ThreadMap::const_iterator it = tm_.find("solver");
-//    if (it != tm_.end()) {
-//
-//    }
-//    stop_thread("clauseShare");
-//    stop_thread("solve");
-//    stop_thread("solver");
-//    this->stop();
-//    this->join();
-//    delete this->thread;
-//    this->thread = nullptr;
+    catch (const std::exception &e) {
+        std::cout << "Unhandled exception on thread " << pthread_self() << ": " << e.what() << "\n";
+    }
+    catch (...) {
+        std::cout << "Unhandled unknown exception on thread " << pthread_self() << "\n";
+    }
+    this->stop();
 }
 
-
-net::Socket* Thread::reader() const {
-    return  this->smtsServer ;
-//    return (pthread_self() == findThread("solver")) ? this->piper.reader() : this->pipew.reader();
+void Thread::start() {
+    if (this->thread != nullptr)
+        return;
+    pthread_barrier_init(&this->barrier, nullptr, 2);
+    this->thread = new std::thread(&Thread::thread_wrapper, this);
+    pthread_barrier_wait(&this->barrier);
 }
 
-net::Socket* Thread::writer() const {
-    return this->smtsServer;
-//    return (pthread_self() != findThread("solver")) ? this->pipew.writer() : this->piper.writer();
+void Thread::stop() {
+    std::lock_guard<std::mutex> _l(this->mtx);
+    if (!this->joinable() || this->stop_requested)
+        return;
+    this->stop_requested = true;
+    pthread_cancel(this->thread->native_handle());
+}
+
+void Thread::join() {
+    if (this->joinable()) {
+        this->thread->join();
+        pthread_barrier_destroy(&this->barrier);
+    }
+}
+
+bool Thread::joinable() const {
+    return this->thread != nullptr && this->thread->joinable();
+}
+
+net::Socket *Thread::reader() const {
+    return (pthread_self() == this->thread->native_handle()) ? this->piper.reader() : this->pipew.reader();
+}
+
+net::Socket *Thread::writer() const {
+    return (pthread_self() == this->thread->native_handle()) ? this->pipew.writer() : this->piper.writer();
 }

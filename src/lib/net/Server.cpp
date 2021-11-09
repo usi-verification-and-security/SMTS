@@ -65,10 +65,6 @@ namespace net {
                         try {
                             (*socket)->read(header, payload);
 #ifdef ENABLE_DEBUGING
-       if(header["command"].size()!=0){
-        Logger::writeIntoFile(true,payload,"Recieved command: "+header["command"],getpid());
-
-    }
 #endif
                             this->handle_message(**socket, header, payload);
                         }

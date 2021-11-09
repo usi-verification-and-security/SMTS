@@ -15,6 +15,8 @@ private:
     std::set<std::shared_ptr<net::Socket>> sockets;
 
 protected:
+//    thread_pool pool;
+//    mutable std::mutex solvers_mutex;
     virtual void handle_accept(net::Socket &) {}
 
     virtual void handle_close(net::Socket &) {}

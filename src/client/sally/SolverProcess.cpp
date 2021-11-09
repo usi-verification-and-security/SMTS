@@ -3,7 +3,11 @@
 //
 
 #include "lib/Logger.h"
-#include "lib/lib.h"
+#include "lib/Process.h"
+#include "lib/Thread.h"
+#include "lib/sqlite3.h"
+#include "lib/net.h"
+#include "lib/memory.h"
 #include "client/SolverProcess.h"
 #include <sally_api.h>
 

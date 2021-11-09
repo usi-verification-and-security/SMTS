@@ -135,7 +135,7 @@ if __name__ == '__main__':
 
     try:
         for _ in range(args.n):
-            p = multiprocessing.Process(target=solver_process)
+            p = multiprocessing.Process(target=solver_process())
             p.start()
         signal.pause()
     except KeyboardInterrupt:

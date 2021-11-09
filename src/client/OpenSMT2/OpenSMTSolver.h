@@ -7,10 +7,10 @@
 
 #include <vector>
 #include <functional>
-#include "PreInterpret.h"
 #include "client/SolverProcess.h"
 #include "client/Settings.h"
 #include "lib/net/Lemma.h"
+#include "PreInterpret.h"
 
 
 namespace opensmt {
@@ -22,31 +22,30 @@ class OpenSMTSolver  {
     friend class SolverProcess;
 
 private:
-    net::Header &header;
-//    PreInterpret* preInterpret;
-    std::unique_ptr<PreInterpret> interpret;
+    std::unique_ptr<PreInterpret> preInterpret;
     bool learned_push;
     sstat result;
+
 public:
-    OpenSMTSolver(net::Header &header, SMTConfig &config, string & instance, Channel& ch) :
-    header(header),
+    OpenSMTSolver(SMTConfig &config, string & instance, Channel& channel) :
     learned_push(false),
-    result(Status::unknown)
+    result(PartitionChannel::Status::unknown)
     {
-        interpret.reset(new PreInterpret(config , ch));
-        interpret->interpFile((char *)instance.c_str());
+        preInterpret.reset(new PreInterpret(config , channel));
+        if (not channel.shouldTerminate()) {
+            preInterpret->interpFile((char *)instance.c_str());
+        }
 //        interpret.reset( std::move(preInterpret));
 //        interpret.reset( new Interpret(config, std::move(std::shared_ptr<MainSolver>(&preInterpret->getMainSolver())),
 //                                       std::move(std::shared_ptr<Logic>(&preInterpret->getLogic()))));
     }
 
     void search();
-    sstat getResult() const { return result; }
+    sstat getResult() const    { return result; }
+    void setResult(sstat res)  {  result = res; }
 
-
-
-    MainSplitter& getMainSplitter() const {
-        return (MainSplitter&) interpret->getMainSolver();
+    inline MainSplitter& getMainSplitter() const {
+        return (MainSplitter&) preInterpret->getMainSolver();
     };
 };
 

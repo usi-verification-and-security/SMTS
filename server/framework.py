@@ -74,7 +74,17 @@ class Node:
             if selfp[i] != nodep[i]:
                 return False
         return True
-
+    def is_only_ancestor(self, node):
+        if self.root != node.root:
+            raise ValueError('provided node from a different tree')
+        selfp = self.path()
+        nodep = node.path()
+        if len(selfp) == len(nodep):
+            return False
+        for i in range(len(selfp)):
+            if selfp[i] != nodep[i]:
+                return False
+        return True
     def all(self):
         nodes = [self]
         for node in self:

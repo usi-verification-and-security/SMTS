@@ -15,18 +15,23 @@ echo main node: ${AWS_BATCH_JOB_MAIN_NODE_INDEX}
 echo this node: ${AWS_BATCH_JOB_NODE_INDEX}
 # Set child by default switch to main if on main node container
 NODE_TYPE="child"
+
 if [ "${AWS_BATCH_JOB_MAIN_NODE_INDEX}" == "${AWS_BATCH_JOB_NODE_INDEX}" ]; then
   log "Running synchronize as the main node"
   NODE_TYPE="main"
 fi
 
-if  [ "${LemmaServer}" == "ON" ]
+
+if [ "$((AWS_BATCH_JOB_MAIN_NODE_INDEX + 1))" == "${AWS_BATCH_JOB_NODE_INDEX}" ];
   then
-    if [ "$((AWS_BATCH_JOB_MAIN_NODE_INDEX + 1))" == "${AWS_BATCH_JOB_NODE_INDEX}" ];
-    then
-      log "Running synchronize as the LemmaServer node"
-      NODE_TYPE="lemma"
-    fi
+    if  [ "${LemmaServer}" == "ON" ]
+      then
+        if  [ "${LemmaServer_onServerNode}" == "N" ]
+          then
+            log "Running synchronize as the LemmaServer node"
+            NODE_TYPE="lemma"
+          fi
+      fi
 fi
 
 # wait for all nodes to report
@@ -40,9 +45,11 @@ wait_for_nodes () {
   log "main details (ip:cores) -> $ip:$availablecores"
   log "main IP: $ip"
   echo "$ip" >> $HOST_FILE_PATH
-  if  [ "${DownloadFromS3}" == "ON" ]
-    then
-        echo Downloading problem from S3: ${COMP_S3_PROBLEM_PATH}
+  if  [ "${DownloadFromS3}" == "N" ]
+      then
+      echo Distributing problem from DockerImage: SMTS/${COMP_S3_PROBLEM_PATH}
+    else
+      echo Downloading problem from S3: ${COMP_S3_PROBLEM_PATH}
         if [[ "${COMP_S3_PROBLEM_PATH}" == *".xz" ]];
           then
             aws s3 cp s3://${S3_BKT}/${COMP_S3_PROBLEM_PATH} test.smt2.xz
@@ -50,18 +57,17 @@ wait_for_nodes () {
           else
             aws s3 cp s3://${S3_BKT}/${COMP_S3_PROBLEM_PATH} test.smt2
         fi
-    else
-      echo Distributing problem from DockerImage: SMTS/${COMP_S3_PROBLEM_PATH}
   fi
+  if  [ "${LemmaServer}" == "ON" ]
+      then
+      if  [ "${LemmaServer_onServerNode}" == "Y" ]
+        then
+          python3 SMTS/server/smts.py -l &
+      fi
 
-  python3 SMTS/server/smts.py  &
-#  if  [ "${LemmaServer}" == "ON" ]
-#    then
-#      python3 SMTS/server/smts.py -l &
-#    else
-#      python3 SMTS/server/smts.py  &
-#    fi
-
+   else
+       python3 SMTS/server/smts.py  &
+  fi
   sleep 1
   #echo "$ip" >> $HOST_FILE_PATH
   lines=$(ls -dq /tmp/hostfile* | wc -l)
@@ -91,12 +97,12 @@ wait_for_nodes () {
    #   sleep 1
    # fi
   #done
-  echo "Send .smt2 Instance"
-    if  [ "${DownloadFromS3}" == "ON" ]
+  echo "SEND SMT2 Instance ..."
+    if  [ "${DownloadFromS3}" == "N" ]
     then
-      SMTS/server/client.py 3000 test.smt2
-    else
       SMTS/server/client.py 3000 SMTS/${COMP_S3_PROBLEM_PATH}
+    else
+      SMTS/server/client.py 3000 test.smt2
     fi
   wait
 }

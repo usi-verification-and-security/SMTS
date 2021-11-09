@@ -18,10 +18,10 @@ private:
 
     void log(uint8_t, std::string);
 
-    net::Socket server;
-    std::string lemmas_address;
+    net::Socket SMTSServer;
+    std::string lemmaServerAddress;
     SolverProcess* solver;
-
+    Channel channel;
 
 protected:
     void handle_close(net::Socket &);

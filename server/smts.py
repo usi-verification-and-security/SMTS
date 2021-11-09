@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from version import version
-import server
+import server as server
 import utils
 import argparse
 import logging
@@ -62,7 +62,6 @@ if __name__ == '__main__':
         sys.exit(0)
 
     ps = server.ParallelizationServer(logging.getLogger('server'))
-
     if server.config.gui:
         if not server.config.db_path:
             logging.error('GUI requires a database. please specify one with -d')

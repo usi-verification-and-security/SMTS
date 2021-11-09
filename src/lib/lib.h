@@ -63,12 +63,45 @@ const std::string to_string(const T &obj) {
     ss << obj;
     return ss.str();
 }
+namespace PartitionChannel {
 
+    struct pair {
+        std::string clause;
+        int level;
+    };
 
+    static struct {
+        const std::string Partition = "partition";
+        const std::string Stop = "stop";
+        const std::string ClauseInjection = "inject";
+        const std::string Incremental = "incremental";
+        const std::string CnfClauses = "cnf-clauses";
+        const std::string Cnflearnts = "cnf-learnts";
+        const std::string Solve = "solve";
+        const std::string Lemmas = "lemmas";
+    } Command;
+
+    struct Task {
+        const enum {
+            incremental, resume, partition
+        } command;
+        std::string smtlib;
+    };
+
+    enum ThreadName {
+        Comunication, ClausePull, ClausePush
+    };
+    enum Status {
+        unknown, sat, unsat
+    };
+//    namespace SMTS {
+//        extern bool colorMode;
+//    }
+}
 #include "Exception.h"
 #include "Logger.h"
 #include "Process.h"
-#include "Thread.h"
+#include "SMTSThread.h"
 #include "sqlite3.h"
 #include "net.h"
 #include "memory.h"

@@ -1,5 +1,5 @@
+message("OpenSMT2 is downloading, please wait..." )
 include(FetchContent)
-
 FetchContent_Declare(
         opensmt
         GIT_REPOSITORY https://github.com/MasoudAsadzade/OpenSMT2.git
@@ -42,6 +42,7 @@ include_directories(${opensmt_SOURCE_DIR}/src/pterms)
 include_directories(${opensmt_SOURCE_DIR}/src/logics)
 include_directories(${opensmt_SOURCE_DIR}/src/symbols)
 include_directories(${opensmt_SOURCE_DIR}/src/sorts)
+message("OpenSMT2 files have been written to: : ${opensmt_SOURCE_DIR}")
 
 add_executable(solver_opensmt ../main.cpp SolverProcess.cpp)
 
@@ -50,4 +51,4 @@ set(solver_opensmt_flags "-w")
 set_target_properties(solver_opensmt PROPERTIES
         COMPILE_FLAGS ${solver_opensmt_flags}
         )
-target_link_libraries(solver_opensmt client OpenSMT-static ${GMP_LIBRARY} ${GMPXX_LIBRARY} z)
+target_link_libraries(solver_opensmt client OpenSMT-static ${GMP_LIBRARY} ${GMPXX_LIBRARY})
