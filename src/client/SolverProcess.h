@@ -13,7 +13,6 @@
 #include "../../build/_deps/partition-channel-src/src/Channel.h"
 #include "../../build/_deps/opensmt-src/src/common/Printer.h"
 #include "lib/lib.h"
-//#include "lib/Thread_pool.hpp"
 
 
 class SolverProcess  : public SMTSThread {
@@ -31,16 +30,19 @@ private:
 //    bool colorMode;
     std::deque<net::Header> header_Temp;
     mutable std::mutex mtx_listener_solve;
-
+    pid_t child_pid;
 
     // async interrupt the solver
     void interrupt(const string& command);
-
+    void kill_child(int sig);
 
     void main()  {
 //        try {
         getChannel().getMutex().lock();
-        this->header["lemmas"] = this->header["lemma_amount"];
+        if (!this->header.count("lemmas")) {
+            this->header["lemmas"] = std::to_string(1000);
+        }
+
         if (!this->header.count("max_memory")) {
             this->header["max_memory"] = std::to_string(0);
         }
@@ -76,7 +78,7 @@ private:
                 header["report"] = report;
             header.insert(this->header.begin(), this->header.end());
         }
-
+        std::cout<<"write to server from "<<header["node"]<<"\t"<<payload<<endl;
         this->writer()->write(header, payload);
     }
 
@@ -100,7 +102,6 @@ private:
         net::Header header;
         if (error != nullptr)
             return this->error(error);
-        std::cout<<endl<<::to_string(partitions)<<endl;
         this->report(header, "partitions", ::to_string(partitions));
     }
 
@@ -141,6 +142,7 @@ private:
                 this->header["node"] = header_Temp[index]["node_"];
                 this->header["query"] = header_Temp[index]["query"];
                 this->info("incremental solving step from " + header_Temp[index]["node"]);
+                std::cout<<"incremental solving step from: "<<header_Temp[index]["node"]<<endl;
 //                header_Temp.erase(header_Temp.begin()+index,header_Temp.begin() + index + 1);
 //                instance_Temp.erase(instance_Temp.begin()+index,instance_Temp.begin() + index + 1);
                 return PartitionChannel::Task {
@@ -200,7 +202,7 @@ public:
     {
         std::string seed = this->header.get(net::Header::parameter, "seed");
         int interval= atoi(this->header["lemma_push_min"].c_str()) + ( atoi(seed.substr(1, seed.size() - 1).c_str())
-                                                                       % ( atoi(this->header["lemma_push_max"].c_str())- atoi(this->header["lemma_push_min"].c_str()) + 1 ) );
+                                                  % ( atoi(this->header["lemma_push_max"].c_str())- atoi(this->header["lemma_push_min"].c_str()) + 1 ) );
         getChannel().setClauseShareMode();
 
         getChannel().setClauseLearnInterval(interval/2);

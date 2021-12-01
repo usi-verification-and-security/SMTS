@@ -26,6 +26,10 @@ class Node:
         self.smt = smt
         self._children = []
         self._status = SolveStatus.unknown
+        self._started = None
+        self._assumed_timout = False
+        self.assumed_timout_r = False
+        self._partitioning = False
 
     def __repr__(self):
         return '<{}:{}>'.format(
@@ -52,6 +56,7 @@ class Node:
         return self._children.__iter__()
 
     def __len__(self):
+        # print(self.path())
         return self._children.__len__()
 
     def path(self, nodes=False):
@@ -74,17 +79,7 @@ class Node:
             if selfp[i] != nodep[i]:
                 return False
         return True
-    def is_only_ancestor(self, node):
-        if self.root != node.root:
-            raise ValueError('provided node from a different tree')
-        selfp = self.path()
-        nodep = node.path()
-        if len(selfp) == len(nodep):
-            return False
-        for i in range(len(selfp)):
-            if selfp[i] != nodep[i]:
-                return False
-        return True
+
     def all(self):
         nodes = [self]
         for node in self:
@@ -117,12 +112,47 @@ class Node:
     def _set_status(self, status: SolveStatus):
         raise NotImplementedError
 
+    @property
+    def started(self):
+        return self._started
+
+    @started.setter
+    def started(self, time):
+        self._started = time
+
+    @property
+    def assumed_timout(self):
+        return self._assumed_timout
+
+    @assumed_timout.setter
+    def assumed_timout(self, asked):
+        self._assumed_timout = asked
+
+    @property
+    def assumed_timout_r(self):
+        return self._assumed_timout_r
+
+    @assumed_timout_r.setter
+    def assumed_timout_r(self, asked):
+        self._assumed_timout_r = asked
+
+    @property
+    def partitioning(self):
+        return self._partitioning
+
+    @partitioning.setter
+    def partitioning(self, asked):
+        self._partitioning = asked
 
 class AndNode(Node):
-    def __init__(self, parent, smt):
+    def __init__(self, parent, smt, expected_time_point=0):
         if not isinstance(parent, (OrNode, type(None))):
             raise TypeError
         super().__init__(parent, smt)
+        self._processed = False
+        self._is_timeout = False
+        self._expected_timeout_point = expected_time_point
+        # print("_expected_timeout_point", expected_time_point)
 
     def _set_status(self, status: SolveStatus):
         self._status = status
@@ -130,6 +160,35 @@ class AndNode(Node):
             if status == SolveStatus.sat or all([node.status == status for node in self.parent]):
                 self.parent.status = status
 
+    def childeren(self):
+        childs = []
+        for ch in (self._children[0])._children:
+            childs.append(ch)
+        return childs
+
+    @property
+    def processed(self):
+        return self._processed
+
+    @processed.setter
+    def processed(self, p):
+        self._processed = p
+
+    @property
+    def is_timeout(self):
+        return self._is_timeout
+
+    @is_timeout.setter
+    def is_timeout(self, it):
+        self._is_timeout = it
+
+    @property
+    def expected_timeout_point(self):
+        return self._expected_timeout_point
+
+    @expected_timeout_point.setter
+    def expected_timeout_point(self, etp):
+        self._expected_timeout_point = etp
 
 class OrNode(Node):
     def __init__(self, parent, smt: str = ''):
@@ -144,7 +203,7 @@ class OrNode(Node):
 
 class Root(AndNode):
     def __init__(self, name: str, smt: str):
-        super().__init__(None, smt)
+        super().__init__(None, smt, config.node_timeout)
         self.name = name
 
     def __repr__(self):

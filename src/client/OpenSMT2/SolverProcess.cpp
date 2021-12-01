@@ -10,6 +10,7 @@
 #include <mutex>
 #include "client/SolverProcess.h"
 #include "OpenSMTSolver.h"
+#include <stdint.h>
 
 using namespace opensmt;
 
@@ -24,33 +25,34 @@ void SolverProcess::init() {
 //    dup2(fileno(file), fileno(stderr));
 //    fclose(file);
 
-    static const char *default_split = spts_scatter;
+    static const char *default_split = spts_none;
     static const char *default_seed = "0";
 
     if (this->header.get(net::Header::parameter, "seed").size() == 0) {
         this->header.set(net::Header::parameter, "seed", default_seed);
     }
 
-    if (this->header.get(net::Header::parameter, "split").size() > 0 &&
-        this->header.get(net::Header::parameter, "split") != spts_lookahead &&
-        this->header.get(net::Header::parameter, "split") != spts_scatter) {
+    if (this->header.get(net::Header::parameter, "split-type").size() > 0 &&
+        this->header.get(net::Header::parameter, "split-type") != spts_lookahead &&
+        this->header.get(net::Header::parameter, "split-type") != spts_scatter) {
         this->warning(
-                "bad parameter.split: '" + this->header.get(net::Header::parameter, "seed") + "'. using default (" +
+                "bad parameter.split-type: '" + this->header.get(net::Header::parameter, "seed") + "'. using default (" +
                 default_split +
                 ")");
         this->header.remove(net::Header::parameter, "split");
     }
-    if (this->header.get(net::Header::parameter, "split").size() == 0) {
+    if (this->header.get(net::Header::parameter, "split-type").size() == 0) {
         this->header.set(net::Header::parameter, "split", default_split);
     }
 }
 
 void SolverProcess::solve() {
-
+    const char *msg;
     SMTConfig config;
-
     config.setRandomSeed(atoi(this->header.get(net::Header::parameter, "seed").c_str()));
-
+    config.setOption(SMTConfig::o_sat_split_type,
+                     SMTOption(this->header.get(net::Header::parameter, "split-type")
+                                       .c_str()), msg) ;
     openSMTSolver.reset( new OpenSMTSolver(config,  this->instance, getChannel()));
 
     search();
@@ -59,8 +61,7 @@ void SolverProcess::solve() {
 void SolverProcess::clausePull(const string & seed, const string & n1, const string & n2)
 {
     try {
-//        time_t start;
-//        time_t finish;
+        timer.start();
         int counter = 0;
 //        srand(getpid() + time(NULL));
         //channel.getMutex().lock();
@@ -74,8 +75,9 @@ void SolverProcess::clausePull(const string & seed, const string & n1, const str
         while (true) {
             if (getChannel().shouldTerminate()) break;
             std::unique_lock<std::mutex> lk(getChannel().getMutex());
-
-            if (not getChannel().waitFor_pull(lk, wakeupAt))
+            opensmt::PrintStopWatch timer1("[t pull wait for pull red]",synced_stream,
+                                           true ? Color::Code::FG_RED : Color::Code::FG_DEFAULT );
+            if (not getChannel().waitFor(lk, wakeupAt))
             {
 //                std::cout << def<<"[t pull] after waitFor_pull " <<endl<<def1;
                 lk.unlock();
@@ -96,6 +98,8 @@ void SolverProcess::clausePull(const string & seed, const string & n1, const str
 //                std::cerr << "Break pull : " << std::endl;
                 break;
             }
+            synced_stream.println(true ? Color::Code::FG_BLUE : Color::Code::FG_DEFAULT, "pull time: ",
+                                  timer.elapsed_time_milliseconds());
         }
 //        std::unique_lock<std::mutex> lk(getChannel().getStopMutex());
 //        getChannel().setPullTerminate();
@@ -129,7 +133,7 @@ void SolverProcess::clausePush(const string & seed, const string & n1, const str
             if (getChannel().shouldTerminate()) break;
             std::unique_lock<std::mutex> lk(getChannel().getMutex());
 
-            if (not getChannel().waitFor_push(lk, wakeupAt))
+            if (not getChannel().waitFor(lk, wakeupAt))
             {
 
 
@@ -137,7 +141,7 @@ void SolverProcess::clausePush(const string & seed, const string & n1, const str
                 synced_stream.println(true ? Color::FG_BLUE : Color::FG_DEFAULT, "time of sync: ",timer.elapsed_time_milliseconds());
 #endif
 
-                synced_stream.println(true ? Color::Code::FG_BLUE : Color::Code::FG_DEFAULT, "time: ",
+                synced_stream.println(true ? Color::Code::FG_BLUE : Color::Code::FG_DEFAULT, "push time: ",
                                       timer.elapsed_time_milliseconds());
                 if (getChannel().shouldTerminate()) break;
                 else if (not getChannel().empty())
@@ -205,12 +209,17 @@ void SolverProcess::search()
 //            }
 
 #ifdef ENABLE_DEBUGING
-            std::cout << "[t comunication -> PID= "+to_string(getpid())+" ] befor interpFile: "<< std::endl
+            std::cout << "[t comunication -> PID= "+to_string(getpid())+" ] Before interpFile: "<< std::endl
                 <<(char *) (smtlib+ this->header["query"]).c_str()<<endl;
 #endif
+
             getChannel().setWorkingNode(this->header["node"]);
             getChannel().getMutex().unlock();
             openSMTSolver->preInterpret->interpFile((char *) (smtlib + this->header["query"]).c_str());
+            std::cout<<"node: "<<this->header["node"]<<endl;
+            for (int i = 0; i <getChannel().size_query(); ++i) {
+                std::cout<<"query "<<i<<": "<<getChannel().get_queris()[i]<<endl;
+            }
             if (getChannel().shouldTerminate()) {
                 break;
             }
@@ -239,7 +248,6 @@ void SolverProcess::search()
                     break;
                 }
 
-
                 std::unique_lock<std::mutex> lock(mtx_listener_solve);
                 PartitionChannel::Task task = this->wait(0);
 //                std::cout <<defred<< "[t comunication -> PID= "+to_string(getpid())+" ]  after reading incremental params ... ]"<<def1<<endl ;
@@ -256,7 +264,7 @@ void SolverProcess::search()
             else //(not getChannel().isEmpty_query())
             {
                 std::unique_lock<std::mutex> lock(mtx_listener_solve);
-                if (getChannel().isInjection())
+                if (getChannel().shouldInjectClause())
                 {
                     std::cout <<"Current Node -> "<< this->header["node"] << std::endl;
                     for ( const auto &lemmaPulled : node_PulledLemmas )
@@ -271,7 +279,7 @@ void SolverProcess::search()
                     }
 
                     node_PulledLemmas.clear();
-                    getChannel().clearClauseInjection();
+                    getChannel().clearInjectClause();
                 }
 
                 if (not getChannel().isEmpty_query())
@@ -336,26 +344,28 @@ void SolverProcess::interrupt(const std::string& command) {
     }
     std::scoped_lock<std::mutex> lk(getChannel().getMutex());
     if (command == PartitionChannel::Command.ClauseInjection) {
-        getChannel().setClauseInjection();
+        getChannel().setInjectClause();
     }
     else {
         getChannel().push_back_query(command);
     }
     getChannel().setShouldStop();
 }
+void SolverProcess::kill_child(int sig)
+{
+//    kill(child_pid,SIGKILL);
+}
 
 void SolverProcess::partition(uint8_t n) {
+//    signal(SIGALRM,(void (*)(int))kill_child);
     pid_t pid = getpid();
     //fork() returns -1 if it fails, and if it succeeds, it returns the forked child's pid in the parent, and 0 in the child.
     // So if (fork() != 0) tests whether it's the parent process.
-    if (fork() != 0) {
+    child_pid = fork();
+    if (child_pid != 0)
+    {
         return;
     }
-    std::thread _t([&] {
-        while (getppid() == pid)
-            sleep(1);
-        exit(0);
-    });
 
 //    FILE *file = fopen("/dev/null", "w");
 //    dup2(fileno(file), fileno(stdout));
@@ -364,18 +374,12 @@ void SolverProcess::partition(uint8_t n) {
 //    std::cout << "\033[1;51m [t partition] Inside partition after fork -> size::\033[0m" << endl;
     getChannel().clearClauseShareMode();
     std::vector<std::string> partitions;
+//    conf = ( (ScatterSplitter &) openSMTSolver->getMainSplitter().getSMTSolver() ).conflicts + 2;
     const char *msg;
     if ( not(
-            openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_num,
-                                                                   SMTOption(int(n)),
-                                                                   msg) and
-            openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_type,
-                                                                   SMTOption(this->header.get(net::Header::parameter, "split")
-                                                                                     .c_str()),
-                                                                   msg) and
-            openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_smt_split_format_length,
-                                                                   SMTOption("brief"),
-                                                                   msg) and
+            openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_num, SMTOption(int(n)),msg) and
+            openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_sat_solver_limit,SMTOption(INT_MAX),msg) and
+            openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_smt_split_format_length,SMTOption("brief"),msg) and
             openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_units, SMTOption(spts_time), msg) and
             openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_inittune, SMTOption(double(2)), msg) and
             openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_midtune, SMTOption(double(2)), msg) and
@@ -384,19 +388,21 @@ void SolverProcess::partition(uint8_t n) {
         this->report(partitions, msg);
     }
     else {
-        label:
-        sstat status = openSMTSolver->getMainSplitter().solve();
-        if (status == s_Undef) {
-            partitions = openSMTSolver->getMainSplitter().getSolverPartitions();
-#ifdef ENABLE_DEBUGING
-            std::cout <<"Recieved PN from SMTS Server-> "<<int(n)<<"\tSplits constructed by solver: "<<partitions.size()<<endl;
-#endif
 
-//            if (partitions.size() <= 1) {
-//                partitions.clear();
-//                goto label;
-//            }
-//            else
+        ( (ScatterSplitter &) openSMTSolver->getMainSplitter().getSMTSolver() ).setSplitConfig_split_on();
+
+        sstat status = openSMTSolver->getMainSplitter().solve();
+//        if (this->header["node"]== "[0, 0]") {
+//            std::cout<<"test"<<endl;
+//            this->report(PartitionChannel::Status::unsat);
+//            exit(0);
+//        }
+        if (status == s_Undef) {
+            partitions = openSMTSolver->getMainSplitter().getPartitionSplits();
+#ifdef ENABLE_DEBUGING
+            std::cout <<"Recieved PN from SMTS Server-> "<<int(n)<<"\tSplits constructed by solver: "<<partitions.size()<<this->header["node"]<<endl;
+#endif
+//            partitions.erase(partitions.begin());
             this->report(partitions);
         } else if (status == s_True) {
 #ifdef ENABLE_DEBUGING
@@ -408,7 +414,7 @@ void SolverProcess::partition(uint8_t n) {
 #ifdef ENABLE_DEBUGING
             std::cout<<"PartitionProcess - Result is UNSAT"<<endl;
 #endif
-            Logger::writeIntoFile(false, this->header["node"] ,"Result is UNSAT ",getpid());
+//            Logger::writeIntoFile(false, this->header["node"] ,"Result is UNSAT ",getpid());
             this->report(PartitionChannel::Status::unsat);
         }
         else {
@@ -474,7 +480,6 @@ void SolverProcess::injectPulledClauses(const std::string& nodePath) {
             {
 
 #ifdef ENABLE_DEBUGING
-                //                if  (lemma.smtlib.size() % 100 == 0)
 //                    cout << (char *) ("(assert " + lemma.smtlib + ")").c_str()<<std::endl;
 #endif
                 openSMTSolver->preInterpret->interpFile((char *) ("(assert " + lemma.smtlib + ")").c_str());

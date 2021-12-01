@@ -119,6 +119,7 @@ class Server(object):
             self._sock.listen(('0.0.0.0', self.port))
             self._rlist.add(self._sock)
         self._timeout = None if timeout is None else float(timeout)
+        print(self._timeout)
         self._logger = logging.getLogger() if logger is None else logger
 
     def handle_accept(self, sock):
@@ -160,9 +161,9 @@ class Server(object):
                     self._rlist.remove(sock)
                 else:
                     self.handle_message(sock, header, message)
-        except KeyboardInterrupt:
-            raise
-        except BaseException as exp:
+        # except KeyboardInterrupt:
+        #     raise
+        except Exception as exp:
             self.log(logging.ERROR, '{}\n{}'.format(
                 type(exp).__name__,
                 '\n'.join(('   {}'.format(line) for line in traceback.format_exc().split('\n')))
@@ -171,15 +172,20 @@ class Server(object):
 
     def run_forever(self):
         last = time.time()
-        while True:
-            if not self._rlist:
-                return
-            lts = self.run_until_timeout(
-                max(0, self._timeout - (time.time() - last)) if self._timeout else None
-            )
-            if lts:
-                last = lts
-
+        try:
+            while True:
+                if not self._rlist:
+                    return
+                lts = self.run_until_timeout(
+                    max(0, self._timeout - (time.time() - last)) if self._timeout else None
+                )
+                if lts:
+                    last = lts
+        except Exception as exp:
+            self.log(logging.ERROR, '{}\n{}'.format(
+            type(exp).__name__,
+            '\n'.join(('   {}'.format(line) for line in traceback.format_exc().split('\n')))
+        ))
     def close(self):
         while self._rlist:
             socket = self._rlist.pop()

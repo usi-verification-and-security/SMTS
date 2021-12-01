@@ -19,6 +19,7 @@ SolverServer::SolverServer(const net::Address &server) :
 }
 
 SolverServer::~SolverServer() {
+    free(solver);
 }
 
 void SolverServer::log(log_level level, std::string message) {
@@ -102,7 +103,7 @@ void SolverServer::handle_message(net::Socket &socket, net::Header &header, std:
 //            SMTS::colorMode = static_cast<bool>(atoi(header["colorMode"].c_str()));
             this->stop_solver();
             header.erase("command");
-            channel.clearChannel();
+            channel.resetChannel();
             this->solver = new SolverProcess(header, payload, &this->SMTSServer, channel,
                                              this->lemmaServerAddress.empty() ? false : true);
 

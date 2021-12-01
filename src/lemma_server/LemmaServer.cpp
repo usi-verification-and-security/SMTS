@@ -91,6 +91,7 @@ void LemmaServer::handle_message(net::Socket &client,
     std::cout << "[LemmServer] Start Only LemmaOperation for node -> "+header["node"]<< std::endl;
 #endif
     uint32_t clauses_request = 0;
+    std::cout<<header["lemmas"]<<endl;
     if (header["lemmas"] != "0")
         clauses_request = (uint32_t) stoi(header["lemmas"].substr(1));
 

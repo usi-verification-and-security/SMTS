@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from version import version
-import server as server
+import schedular as schedular
 import utils
 import argparse
 import logging
@@ -15,7 +15,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='=== SMTS version {} ==='.format(version))
 
     parser.add_argument('--version', action='version', version=str(version))
-    parser.add_argument('-c', dest='config_path', nargs='+', type=lambda value: server.config.extend(value),
+    parser.add_argument('-c', dest='config_path', nargs='+', type=lambda value: schedular.config.extend(value),
                         help='config files path. following files update previous ones')
     parser.add_argument('-L', dest='list', action='store_true', help='list config parameters and exit')
     parser.add_argument('-d', dest='db_path', help='sqlite3 database file path')
@@ -32,69 +32,90 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.db_path:
-        server.config.db_path = args.db_path
-    server.config.db()
+        schedular.config.db_path = args.db_path
+    schedular.config.db()
 
     if args.gui:
-        server.config.gui = args.gui
+        schedular.config.gui = args.gui
     if args.lemma_sharing:
-        server.config.lemma_sharing = args.lemma_sharing
+        schedular.config.lemma_sharing = args.lemma_sharing
     if args.lemma_db:
-        server.config.lemma_db_path = args.lemma_db
+        schedular.config.lemma_db_path = args.lemma_db
     if args.lemma_resend:
-        server.config.lemma_resend = args.lemma_resend
+        schedular.config.lemma_resend = args.lemma_resend
     if args.opensmt:
-        server.config.opensmt = args.opensmt
+        schedular.config.opensmt = args.opensmt
     if args.z3spacer:
-        server.config.z3spacer = args.z3spacer
+        schedular.config.z3spacer = args.z3spacer
     if args.sally:
-        server.config.sally = args.sally
+        schedular.config.sally = args.sally
 
     if args.list:
-        for attr_name in dir(server.config):
+        for attr_name in dir(schedular.config):
             if attr_name.startswith('_'):
                 continue
-            attr = getattr(server.config, attr_name)
+            attr = getattr(schedular.config, attr_name)
             if type(attr) not in [list, dict, str, int, bool, type(None)]:
                 continue
-            if server.config.enableLog:
-                print('{} = {}'.format(attr_name, repr(getattr(server.config, attr_name))))
+            if schedular.config.enableLog:
+                print('{} = {}'.format(attr_name, repr(getattr(schedular.config, attr_name))))
         sys.exit(0)
 
-    ps = server.ParallelizationServer(logging.getLogger('server'))
-    if server.config.gui:
-        if not server.config.db_path:
+    ps = schedular.ParallelizationServer(logging.getLogger('server'))
+    if schedular.config.gui:
+        if not schedular.config.db_path:
             logging.error('GUI requires a database. please specify one with -d')
             sys.exit(-1)
         utils.gui_install()
-        gui_thread = threading.Thread(target=utils.gui_start, args=(['-s', str(server.config.port)],))
+        gui_thread = threading.Thread(target=utils.gui_start, args=(['-s', str(schedular.config.port)],))
         gui_thread.daemon = True
         gui_thread.start()
 
-    if server.config.files_path:
+    if schedular.config.files_path:
         files_thread = threading.Thread(target=utils.send_files,
-                                        args=(server.config.files_path, ('127.0.0.1', server.config.port)))
+                                        args=(schedular.config.files_path, ('127.0.0.1', schedular.config.port)))
         files_thread.daemon = True
         files_thread.start()
 
-    if server.config.lemma_sharing:
+    if schedular.config.lemma_sharing:
         # done in separate thread because gethostbyname could take time
         lemma_thread = threading.Thread(target=utils.run_lemma_server, args=(
-            server.config.build_path + '/lemma_server',
-            server.config.db_path if server.config.lemma_db_path else None,
-            server.config.lemma_resend
+            schedular.config.build_path + '/lemma_server',
+            schedular.config.db_path if schedular.config.lemma_db_path else None,
+            schedular.config.lemma_resend
         ))
         lemma_thread.daemon = True
         lemma_thread.start()
 
-    if server.config.opensmt or server.config.z3spacer or server.config.sally:
+    if schedular.config.opensmt or schedular.config.z3spacer or schedular.config.sally:
         utils.run_solvers(
-            (server.config.build_path + '/solver_opensmt', server.config.opensmt),
-            (server.config.build_path + '/solver_z3spacer', server.config.z3spacer),
-            (server.config.build_path + '/solver_sally', server.config.sally)
+            (schedular.config.build_path + '/solver_opensmt', schedular.config.opensmt),
+            (schedular.config.build_path + '/solver_z3spacer', schedular.config.z3spacer),
+            (schedular.config.build_path + '/solver_sally', schedular.config.sally)
         )
 
-    try:
-        ps.run_forever()
-    except KeyboardInterrupt:
-        sys.exit(0)
+    # try:
+    # movable=[]
+    # idle_solvers=list()
+    # idle_solvers.append('1')
+    # idle_solvers.append('2')
+    # idle_solvers.append('3')
+    # idle_solvers.append('4')
+    # solvers=list()
+    # solvers.append('1')
+    # solvers.append('2')
+    # solvers.append('6')
+    # solvers.append('7')
+    # for i in range(1,2):
+    #     for solver in idle_solvers:
+    #         print('    timeout solvers -> ',solver )
+    #         if solver in idle_solvers:
+    #             idle_solvers.remove(solver)
+    #             movable.append(solver)
+    #             print('    timeout solvers - done partition -> ',solver )
+    # for x in movable:
+    #     print(x)
+    # exit()
+    ps.run_forever()
+    # except KeyboardInterrupt:
+    #     sys.exit(0)
