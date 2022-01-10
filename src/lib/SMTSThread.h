@@ -21,7 +21,7 @@ protected:
     virtual void main() = 0;
     virtual void clausePush(const string & seed, const string & n1, const string & n2) = 0;
     virtual void clausePull(const string & seed, const string & n1, const string & n2) = 0;
-
+    virtual void memoryCheck() = 0;
 public:
 
     void wait_ForThreads()
@@ -35,21 +35,42 @@ public:
 
         switch (tname) {
             case PartitionChannel::ThreadName::Comunication:
+#ifdef ENABLE_DEBUGING
                 std::cout << "[t Listener] -> PID= "+std::to_string(getpid())+" ] Comunication Thread Started" << std::endl;
+#endif
                 main();
+#ifdef ENABLE_DEBUGING
                 std::cout << "[t Listener] -> PID= "+std::to_string(getpid())+" ] Comunication Thread Terminated" << std::endl;
+#endif
                 break;
 
             case PartitionChannel::ThreadName::ClausePush:
+#ifdef ENABLE_DEBUGING
                 std::cout << "[t Listener] -> PID= "+std::to_string(getpid())+" ] Push Thread Started" << std::endl;
+#endif
                 clausePush(seed, td_min, td_max);
+#ifdef ENABLE_DEBUGING
                 std::cout << "[t Listener] -> PID= "+std::to_string(getpid())+" ] Push Thread Terminated" << std::endl;
+#endif
                 break;
 
             case PartitionChannel::ThreadName::ClausePull:
+#ifdef ENABLE_DEBUGING
                 std::cout << "[t Listener] -> PID= "+std::to_string(getpid())+" ] Pull Thread Started" << std::endl;
+#endif
                 clausePull(seed, td_min, td_max);
+#ifdef ENABLE_DEBUGING
                 std::cout << "[t Listener] -> PID= "+std::to_string(getpid())+" ] Pull thread Terminated" << std::endl;
+#endif
+                break;
+            case PartitionChannel::ThreadName::MemCheck:
+#ifdef ENABLE_DEBUGING
+                std::cout << "[t Listener] -> PID= "+std::to_string(getpid())+" ] MemCheck Thread Started" << std::endl;
+#endif
+                memoryCheck();
+#ifdef ENABLE_DEBUGING
+                std::cout << "[t Listener] -> PID= "+std::to_string(getpid())+" ] MemCheck thread Terminated" << std::endl;
+#endif
                 break;
         }
 

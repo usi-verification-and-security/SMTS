@@ -23,18 +23,20 @@ SolverServer::~SolverServer() {
 }
 
 void SolverServer::log(log_level level, std::string message) {
+#ifdef ENABLE_DEBUGING
     if (message.find("\n") != std::string::npos) {
         ::replace(message, "\n", "\n    ");
         message = "\n" + message;
     }
     Logger::log(level, message);
+#endif
 }
 
 void SolverServer::handle_close(net::Socket &socket) {
     if (&socket == &this->SMTSServer) {
         this->log(Logger::INFO, "server closed the connection");
-//        exit(0);
-        this->stop_solver();
+        exit(0);
+//        this->stop_solver();
     } else if (this->solver && &socket == this->solver->reader()) {
         this->log(Logger::ERROR, "unexpected solver quit");
         net::Header header;

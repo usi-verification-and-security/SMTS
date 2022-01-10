@@ -12,7 +12,16 @@ class SolveStatus(enum.Enum):
     sat = 1
     unsat = -1
 
-
+class SplitPreference(enum.Enum):
+    sppref_tterm = 'tterm'
+    sppref_blind = 'blind'
+    sppref_bterm = 'bterm'
+    # sppref_rand = 3
+    # sppref_undef = 4
+    sppref_noteq = 'noteq'
+    sppref_eq = 'eq'
+    sppref_tterm_neq = 'tterm_neq'
+    portfolio = 'portfolio'
 class Node:
     def __init__(self, parent, smt):
         if parent and not isinstance(parent, Node):

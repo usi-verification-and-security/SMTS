@@ -77,15 +77,15 @@ if __name__ == '__main__':
         files_thread.daemon = True
         files_thread.start()
 
-    if schedular.config.lemma_sharing:
-        # done in separate thread because gethostbyname could take time
-        lemma_thread = threading.Thread(target=utils.run_lemma_server, args=(
-            schedular.config.build_path + '/lemma_server',
-            schedular.config.db_path if schedular.config.lemma_db_path else None,
-            schedular.config.lemma_resend
-        ))
-        lemma_thread.daemon = True
-        lemma_thread.start()
+    # if schedular.config.lemma_sharing:
+    #     # done in separate thread because gethostbyname could take time
+    #     lemma_thread = threading.Thread(target=utils.run_lemma_server, args=(
+    #         schedular.config.build_path + '/lemma_server',
+    #         schedular.config.db_path if schedular.config.lemma_db_path else None,
+    #         schedular.config.lemma_resend
+    #     ))
+    #     lemma_thread.daemon = True
+    #     lemma_thread.start()
 
     if schedular.config.opensmt or schedular.config.z3spacer or schedular.config.sally:
         utils.run_solvers(

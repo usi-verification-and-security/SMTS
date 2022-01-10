@@ -119,7 +119,6 @@ class Server(object):
             self._sock.listen(('0.0.0.0', self.port))
             self._rlist.add(self._sock)
         self._timeout = None if timeout is None else float(timeout)
-        print(self._timeout)
         self._logger = logging.getLogger() if logger is None else logger
 
     def handle_accept(self, sock):

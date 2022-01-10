@@ -89,7 +89,7 @@ namespace PartitionChannel {
     };
 
     enum ThreadName {
-        Comunication, ClausePull, ClausePush
+        Comunication, ClausePull, ClausePush, MemCheck
     };
     enum Status {
         unknown, sat, unsat

@@ -10,7 +10,7 @@
 #include <ctime>
 #include <chrono>
 #include "deque"
-#include "../../build/_deps/partition-channel-src/src/Channel.h"
+#include "../../build/_deps/opensmt-src/src/api/Channel.h"
 #include "../../build/_deps/opensmt-src/src/common/Printer.h"
 #include "lib/lib.h"
 
@@ -78,7 +78,6 @@ private:
                 header["report"] = report;
             header.insert(this->header.begin(), this->header.end());
         }
-        std::cout<<"write to server from "<<header["node"]<<"\t"<<payload<<endl;
         this->writer()->write(header, payload);
     }
 
@@ -86,9 +85,11 @@ private:
         this->report(this->header, "", "");
     }
 
-    void report(PartitionChannel::Status status, net::Header header = net::Header()) {
+    void report(PartitionChannel::Status status, const std::string& status_inf, const std::string& conflict="" , net::Header header = net::Header()) {
         if (header.size() == 0)
             header = this->header.copy(this->header.keys(net::Header::statistic));
+        header["conflict"] = conflict;
+        header["statusinf"] = status_inf;
         if (status == PartitionChannel::Status::sat)
             this->report(header, "sat", "");
         else if (status == PartitionChannel::Status::unsat)
@@ -98,8 +99,10 @@ private:
 
     }
 
-    void report(const std::vector<std::string> &partitions, const char *error = nullptr) {
+    void report(const std::vector<std::string> &partitions, const std::string& conflict, const std::string& status, const char *error = nullptr) {
         net::Header header;
+        header["conflict"] = conflict;
+        header["statusinf"] = status;
         if (error != nullptr)
             return this->error(error);
         this->report(header, "partitions", ::to_string(partitions));
@@ -119,9 +122,7 @@ private:
     inline Channel& getChannel()  {  return channel; };
 
     PartitionChannel::Task wait(int index) {
-#ifdef ENABLE_DEBUGING
 
-#endif
 //        if (tryWait)
 //        std::scoped_lock<std::mutex> _l(this->mtx_listener_solve);
         if (header_Temp[index]["name"] != this->header_Temp[index]["name"] || header_Temp[index]["node"] != this->header_Temp[index]["node"]) {
@@ -141,10 +142,8 @@ private:
 //                string temp =instance_Temp[index];
                 this->header["node"] = header_Temp[index]["node_"];
                 this->header["query"] = header_Temp[index]["query"];
-                this->info("incremental solving step from " + header_Temp[index]["node"]);
-                std::cout<<"incremental solving step from: "<<header_Temp[index]["node"]<<endl;
-//                header_Temp.erase(header_Temp.begin()+index,header_Temp.begin() + index + 1);
-//                instance_Temp.erase(instance_Temp.begin()+index,instance_Temp.begin() + index + 1);
+                if (this->header["enableLog"] == "1")
+                    this->info("incremental solving step from " + header_Temp[index]["node"]);
                 return PartitionChannel::Task {
                         .command = PartitionChannel::Task::incremental,
                         .smtlib = instance_Temp[index]
@@ -164,8 +163,6 @@ private:
         if (header_Temp[index]["command"] == PartitionChannel::Command.Cnflearnts) {
             this->getCnfLearnts(header_Temp[index]);
         }
-//        header_Temp.erase(header_Temp.begin()+index,header_Temp.begin() + index + 1);
-//        instance_Temp.erase(instance_Temp.begin()+index,instance_Temp.begin() + index + 1);
         return PartitionChannel::Task{
                 .command=PartitionChannel::Task::resume
         };
@@ -194,9 +191,26 @@ public:
             throw Exception(__FILE__, __LINE__, "missing mandatory key in header");
 
         start_Thread(PartitionChannel::ThreadName::Comunication);
-
+        start_Thread(PartitionChannel::ThreadName::MemCheck);
         if (lemma_server)
             start_lemma_threads();
+    }
+    void memoryCheck()
+    {
+        size_t limit = atoll(header["max_memory"].c_str());
+        if (limit == 0)
+            return;
+
+        while (true) {
+            size_t cmem = current_memory();
+            if (cmem > limit * 1024 * 1024) {
+                this->error(std::string("max memory reached: ") + std::to_string(cmem));
+                exit(-1);
+            }
+            std::unique_lock<std::mutex> lk(channel.getMutex());
+            if (channel.waitFor(lk, std::chrono::seconds (3)))
+                break;
+        }
     }
     void start_lemma_threads()
     {
@@ -238,18 +252,23 @@ public:
             header["lemmas"] = "+" + std::to_string(toPush_lemma.second.size());
 
             try {
+#ifdef ENABLE_DEBUGING
                 std::cout << "[t push ]-> PID= "+to_string(getpid())+" ] SWriting lemmas to LemmaServer: -> size::"<< toPush_lemma.second.size()
                           <<"   from node -> "+header["node"]<< std::endl;
+#endif
                 _l.unlock();
                 this->lemma.lemma_mutex.lock();
                 this->lemma.server->write(header, ::to_string(toPush_lemma.second));
 //            std::cout<<::to_string(lemmas);
 //            exit(0);
                 this->lemma.lemma_mutex.unlock();
+#ifdef ENABLE_DEBUGING
                 std::cout << "[t push ]-> PID= "+to_string(getpid())+" ] EWriting lemmas to LemmaServer: -> size::"<< toPush_lemma.second.size()<< std::endl;
+#endif
             } catch (net::SocketException &ex) {
                 this->lemma.lemma_mutex.unlock();
                 this->lemma.errors++;
+                std::this_thread::sleep_for(std::chrono::milliseconds(2000));
                 this->error(std::string("lemma push failed: ") + ex.what());
                 return;
             }
@@ -268,7 +287,9 @@ public:
         std::string payload;
 
         try {
+#ifdef ENABLE_DEBUGING
             std::cout << "[t pull ]-> PID= "+to_string(getpid())+" ] SReading lemmas from LemmaServer for node -> "+header["node"]<< std::endl;
+#endif
             _l.unlock();
             this->lemma.lemma_mutex.lock();
             this->lemma.server->write(header, "");
@@ -279,6 +300,7 @@ public:
             this->lemma.lemma_mutex.unlock();
             this->lemma.errors++;
             this->error(std::string("lemma pull failed: ") + ex.what());
+            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
             return false;
         }
 
@@ -291,12 +313,13 @@ public:
 //        currentLemmaPulledNodePath = header["node"];
         std::istringstream is(payload);
         is >> lemmas;
+#ifdef ENABLE_DEBUGING
         std::cout << "[t pull -> PID= "+to_string(getpid())+" ] EReading lemmas from LemmaServer: -> size::"<< lemmas.size()<< std::endl;
+#endif
         node_PulledLemmas[header["node"]].insert(std::end(node_PulledLemmas[header["node"]]),
                                                  std::begin(lemmas), std::end(lemmas));
         lemma_Size = node_PulledLemmas.size();
         _l.unlock();
-//        cout << "\033[1;31m [t pull] pull and accumulate clauses -> Size::\033[0m" << lemmas.size()<< std::endl;
         return lemma_Size;
     }
     inline bool isPrefix(std::string_view prefix, std::string_view full)

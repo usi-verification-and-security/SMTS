@@ -3,7 +3,7 @@ include(FetchContent)
 FetchContent_Declare(
         opensmt
         GIT_REPOSITORY https://github.com/MasoudAsadzade/OpenSMT2.git
-        GIT_TAG parallel-infra2
+        GIT_TAG parallel-infra4
 )
 FetchContent_GetProperties(opensmt)
 
