@@ -205,7 +205,7 @@ public:
             size_t cmem = current_memory();
             if (cmem > limit * 1024 * 1024) {
                 this->error(std::string("max memory reached: ") + std::to_string(cmem));
-                exit(-1);
+//                exit(-1);
             }
             std::unique_lock<std::mutex> lk(channel.getMutex());
             if (channel.waitFor(lk, std::chrono::seconds (3)))

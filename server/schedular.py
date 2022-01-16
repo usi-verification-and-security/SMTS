@@ -531,8 +531,6 @@ class ParallelizationServer(net.Server):
                         self.current.started = time.time()
                     self.log(logging.INFO, '{}'.format(self.current.root.status.name),
                              self.current.root.name, round(time.time() - self.current.started, 3), config.conflict, self.current.sp)
-                    config.conflict = 0
-                    config.status_info = None
                     # if self.current.root.status == framework.SolveStatus.unknown:
                     #     if not self.current.root.childeren():
                     #         self.close()
@@ -1082,11 +1080,14 @@ class ParallelizationServer(net.Server):
                 res = 'Failed'
                 if message == 'unknown':
                     res = 'Timout'
-                elif config.status_info == message:
+                elif config.status_info == message or config.status_info == 'unknown':
                     res = 'Passed'
-                if conflict=='':
-                    conflict=None
+                if conflict == '':
+                    conflict = None
                 print(data, message, time, conflict, sp, config.status_info, res, config.level_info)
+                config.level_info = None
+                config.status_info = None
+                config.conflict = None
             else:
                 print(data, message, time)
         if not config.db() or level < self.config.log_level:
