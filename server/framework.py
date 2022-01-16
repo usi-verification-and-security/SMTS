@@ -13,8 +13,8 @@ class SolveStatus(enum.Enum):
     unsat = -1
 
 class SplitPreference(enum.Enum):
-    sppref_tterm = 'tterm'
     sppref_blind = 'blind'
+    sppref_tterm = 'tterm'
     sppref_bterm = 'bterm'
     # sppref_rand = 3
     # sppref_undef = 4

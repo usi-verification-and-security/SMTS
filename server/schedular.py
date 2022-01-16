@@ -349,7 +349,7 @@ class ParallelizationServer(net.Server):
     def __init__(self, logger: logging.Logger = None):
         super().__init__(port=config.port, timeout=0.1, logger=logger)
         self.config = config
-        self.trees = []
+        self.trees = dict()
         self.current = None
         self.idle_solvers = set()
         self.total_solvers = 0
@@ -429,7 +429,7 @@ class ParallelizationServer(net.Server):
                             instance = Instance(header["name"], payload.decode())
                             instance.timeout = config.solving_timeout
                             instance.sp = sp.value
-                            self.trees.append(instance)
+                            self.trees[header["name"]+sp.value] = instance
                             # print("instance ..... ",instance,instance.sp)
                     else:
                         instance = Instance(header["name"], payload.decode())
@@ -531,9 +531,13 @@ class ParallelizationServer(net.Server):
                         self.current.started = time.time()
                     self.log(logging.INFO, '{}'.format(self.current.root.status.name),
                              self.current.root.name, round(time.time() - self.current.started, 3), config.conflict, self.current.sp)
-                    # if self.current.root.status == framework.SolveStatus.unknown:
-                    #     if not self.current.root.childeren():
-                    #         self.close()
+                    if self.current.root.status == framework.SolveStatus.unknown:
+                        if not self.current.root.childeren():
+                            self.close()
+                        for sp in framework.SplitPreference.__members__.values():
+                            del self.trees[self.current.root.name + sp.value]
+                    else:
+                        del self.trees[self.current.root.name + self.current.sp]
                 else:
                     self.log(
                         logging.INFO,
@@ -543,13 +547,12 @@ class ParallelizationServer(net.Server):
                             time.time() - self.current.started))
                 for solver in {solver for solver in self.solvers(True) if solver.node.root == self.current.root}:
                     solver.stop()
-                # del self.current.root.smt
                 self.current = None
                 self.counter = 0
                 self.idles = 0
                 self.idle_solvers.clear()
         if self.current is None:
-            schedulables = [instance for instance in self.trees if
+            schedulables = [instance for instance in self.trees.values() if
                             instance.root.status == framework.SolveStatus.unknown and instance.when_timeout > 0]
             if schedulables:
                 self.current = schedulables[0]
@@ -988,7 +991,7 @@ class ParallelizationServer(net.Server):
             # if need partition: ask partitions
 
             for leaf in attempted_notPartitioned:
-                if self.current.sp == framework.SplitPreference.portfolio:
+                if self.current.sp == framework.SplitPreference.portfolio.value:
                     return
                 if len(leaf.path()) >= 2:
                     return

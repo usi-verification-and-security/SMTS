@@ -12,11 +12,12 @@ sleep 2
     for file in "$1"/*.smt2; do
 #      echo  $file
       ../../server/client.py  3000 $file
+      sleep 1
       ((total=total+1))
-      if  [ ${total} == 5 ]
+      if  [ ${total} == 10 ]
         then
 #          echo "wait for result............." ${total}
-        sleep 2
+        sleep 5
       fi
     done
 #sleep 100
