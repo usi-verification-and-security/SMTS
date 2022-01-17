@@ -532,12 +532,15 @@ class ParallelizationServer(net.Server):
                     self.log(logging.INFO, '{}'.format(self.current.root.status.name),
                              self.current.root.name, round(time.time() - self.current.started, 3), config.conflict, self.current.sp)
                     if self.current.root.status == framework.SolveStatus.unknown:
-                        if not self.current.root.childeren():
+                        if not self.current.root._children:
+                            print('stuck')
                             self.close()
+                            return
                         for sp in framework.SplitPreference.__members__.values():
                             del self.trees[self.current.root.name + sp.value]
-                    else:
-                        del self.trees[self.current.root.name + self.current.sp]
+                    if self.current.sp == framework.SplitPreference.portfolio.value:
+                        for sp in framework.SplitPreference.__members__.values():
+                            del self.trees[self.current.root.name + sp.value]
                 else:
                     self.log(
                         logging.INFO,
