@@ -1,15 +1,15 @@
 import random
 import logging
 
-port = 3000  # listen port
+port = 3000  # Default listen port
 db_path = None  # sqlite3 event db path absolute or relative to the config file
 table_prefix = ''  # db table prefix
 portfolio_max = 0  # 0 if no limit
 portfolio_min = 1  # 0 if no limit
-partition_timeout = 5   # None if no partitioning
+partition_timeout = None   # None if no partitioning
 node_timeout = 6000  # None for no timeout
 partition_policy = [1, 2]  #
-solving_timeout = 600  # None for no timeout
+solving_timeout = 300  # None for no timeout
 max_memory = 3000  # max memory for each solver process in MB
 build_path = "../../build"  # build path absolute or relative to the config file
 lemma_sharing = False  # enabling lemma sharing
@@ -24,7 +24,7 @@ gui = False  # enable GUI
 opensmt = 0  # number of opensmt2 processes
 z3spacer = 0  # number of z3spacer processes
 sally = 0  # number of sally processes
-idle_quit = False  # quit smts after solving the last instance
+idle_quit = True  # quit smts after solving the last instance
 enableLog = False
 visualize_tree = False
 lemmaPush_timeoutMin = 1000

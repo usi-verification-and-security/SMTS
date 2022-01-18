@@ -61,7 +61,7 @@ def gui_start(args):
     run_log(['npm', 'start', '--silent', '--'] + args, cwd=gui_path())
 
 
-def run_lemma_server(lemma_server, database, send_again):
+def run_lemma_server(lemma_server, database, send_again, port):
     # searching for a better IP here because
     # this IP will be sent to the solvers
     # that perhaps are on another host, this 127.0.0.1 would not work
@@ -71,7 +71,7 @@ def run_lemma_server(lemma_server, database, send_again):
     except:
         pass
 
-    args = [lemma_server, '-s', ip + ':' + str(config.port)]
+    args = [lemma_server, '-s', ip + ':' + str(port)]
     if database:
         database = pathlib.Path(database)
         args += ['-d', str(database.parent / (database.stem + '.lemma.db'))]
@@ -85,11 +85,11 @@ def run_lemma_server(lemma_server, database, send_again):
 
 def run_solvers(*solvers):
     ps = []
-    for path, n in solvers:
+    for path, n, port in solvers:
         if n:
             for _ in range(n):
                 try:
-                    ps.append(subprocess.Popen([path, '-s127.0.0.1:' + str(config.port)],
+                    ps.append(subprocess.Popen([path, '-s127.0.0.1:' + str(port)],
                                                stdout=subprocess.DEVNULL,
                                                stderr=subprocess.DEVNULL))
                 except BaseException as ex:
@@ -100,7 +100,7 @@ def run_solvers(*solvers):
 def send_files(files, address):
     socket = net.Socket()
     socket.connect(address)
-    for path in files:
+    for path in files.split(','):
         try:
             send_file(path, socket)
         except:
