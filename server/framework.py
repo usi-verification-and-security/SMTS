@@ -21,7 +21,7 @@ class SplitPreference(enum.Enum):
     sppref_noteq = 'noteq'
     sppref_eq = 'eq'
     sppref_tterm_neq = 'tterm_neq'
-    
+
 class Node:
     def __init__(self, parent, smt):
         if parent and not isinstance(parent, Node):

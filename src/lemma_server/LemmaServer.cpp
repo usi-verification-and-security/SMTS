@@ -24,6 +24,8 @@ LemmaServer::LemmaServer(uint16_t port, const std::string &server, const std::st
         this->server->write(header, "");
         this->add_socket(this->server);
     }
+
+#ifdef SQLITE_IS_ON
     if (db_filename.size()) {
         this->db.reset(new SQLite3::Connection(db_filename));
         this->db->exec("CREATE TABLE IF NOT EXISTS Push("
@@ -41,6 +43,7 @@ LemmaServer::LemmaServer(uint16_t port, const std::string &server, const std::st
                                "smtlib TEXT"
                                ");");
     }
+#endif
 };
 
 void LemmaServer::handle_accept(net::Socket &client) {
@@ -162,6 +165,7 @@ void LemmaServer::handle_message(net::Socket &client,
                     l->increase();
                     if (!lemmas_solver[l]) {
                         lemmas_solver[l] = true;
+#ifdef SQLITE_IS_ON
                         if (this->db) {
                             SQLite3::Statement stmt = *this->db->prepare(
                                     "UPDATE Lemma SET score=? WHERE smtlib=?;");
@@ -169,12 +173,14 @@ void LemmaServer::handle_message(net::Socket &client,
                             stmt.bind(2, l->smtlib);
                             stmt.exec();
                         }
+#endif
                     }
                     break;
                 } else if (level == lemma.level) {
                     pushed++;
                     l = node_path[level]->add_lemma(lemma);
                     lemmas_solver[l] = true;
+#ifdef SQLITE_IS_ON
                     if (this->db) {
                         if (push_rowid < 0) {
                             SQLite3::Statement stmt = *this->db->prepare(
@@ -195,6 +201,7 @@ void LemmaServer::handle_message(net::Socket &client,
                         stmt.exec();
                         l->id = (uint32_t) this->db->last_rowid();
                     }
+#endif
                 }
             }
             n++;

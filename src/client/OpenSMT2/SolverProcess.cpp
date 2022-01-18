@@ -354,7 +354,7 @@ void SolverProcess::interrupt(const std::string& command) {
 #ifdef ENABLE_DEBUGING
     std::cout <<"[t Listener , Pull -> PID= "+to_string(getpid())+" ] OpenSMT2 Should  -> "+command<<endl;
 #endif
-
+    if (getChannel().shouldTerminate()) return;
     if (command == PartitionChannel::Command.Stop) {
         getChannel().setTerminate();
         getChannel().setShouldStop();
@@ -404,7 +404,7 @@ void SolverProcess::partition(uint8_t n) {
             openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_units, SMTOption(spts_time), msg) and
             openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_inittune, SMTOption(double(2)), msg) and
             openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_midtune, SMTOption(double(2)), msg) and
-            openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_asap, SMTOption(1), msg)))
+            openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_asap, SMTOption(0), msg)))
     {
         this->report(partitions, conflict, statusInfo, msg);
     }

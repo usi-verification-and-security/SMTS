@@ -1,7 +1,6 @@
 //
 // Author: Matteo Marescotti
 //
-
 #include <sqlite3.h>
 #include "Exception.h"
 #include "Connection.h"

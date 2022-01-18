@@ -205,7 +205,7 @@ public:
             size_t cmem = current_memory();
             if (cmem > limit * 1024 * 1024) {
                 this->error(std::string("max memory reached: ") + std::to_string(cmem));
-//                exit(-1);
+                exit(-1);
             }
             std::unique_lock<std::mutex> lk(channel.getMutex());
             if (channel.waitFor(lk, std::chrono::seconds (3)))
@@ -308,8 +308,13 @@ public:
         this->lemma.last_pull = std::time(nullptr);
         if (this->lemma.interval > 1)
             this->lemma.interval--;
+//        std::cout<<"header: "<<header["name"]<<endl;
+//        std::cout<<"this->header[\"name\"]: "<<this->header["name"]<<endl;
 
-        if (payload.empty() or header["name"] != this->header["name"] ) return node_PulledLemmas.size();
+        if (header["name"] != this->header["name"])
+            return false;
+        if (payload.empty())
+           return node_PulledLemmas.size();
 //        currentLemmaPulledNodePath = header["node"];
         std::istringstream is(payload);
         is >> lemmas;
