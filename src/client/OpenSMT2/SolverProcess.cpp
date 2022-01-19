@@ -65,7 +65,7 @@ void SolverProcess::solve() {
     search();
     try
     {
-        if (fork_done)
+        if (child_pid)
             kill_child();
     }
     catch (...) {}
@@ -416,7 +416,6 @@ void SolverProcess::partition(uint8_t n) {
     }
     if (child_pid > 0)
     {
-        fork_done = true;
         return;
     }
     printf("printed from child process - %d\n", getpid());

@@ -7,19 +7,17 @@ fi
 
 total=0
 
-../../server/smts.py -o6 &
+../../server/smts.py -o10 &
 sleep 2
     for file in "$1"/*.smt2; do
-#      echo  $file
-      ../../server/client.py  3000 $file
       sleep 1
+      ../../server/client.py  3000 $file
       ((total=total+1))
-      if  [ ${total} == 5 ]
+      if  [ ${total} == 10 ]
         then
-#          echo "wait for result............." ${total}
-        wait
+          sleep 5
+          total=0
       fi
     done
-#sleep 100
-
+wait
 
