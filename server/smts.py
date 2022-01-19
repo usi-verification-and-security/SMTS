@@ -36,6 +36,7 @@ if __name__ == '__main__':
     port = schedular.config.port
     if args.port:
         port = args.port
+    print('port: ',port)
     if args.db_path:
         schedular.config.db_path = args.db_path
     schedular.config.db()
@@ -95,7 +96,7 @@ if __name__ == '__main__':
             (schedular.config.build_path + '/solver_z3spacer', schedular.config.z3spacer, port),
             (schedular.config.build_path + '/solver_sally', schedular.config.sally, port)
         )
-        sleep(0.5)
+        sleep(2)
     if args.file_paths:
         files_thread = threading.Thread(target=utils.send_files,
                                         args=(args.file_paths, ('127.0.0.1', port)))

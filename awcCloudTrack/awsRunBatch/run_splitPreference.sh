@@ -14,12 +14,12 @@ sleep 2
       ../../server/client.py  3000 $file
       sleep 1
       ((total=total+1))
-      if  [ ${total} == 10 ]
+      if  [ ${total} == 5 ]
         then
 #          echo "wait for result............." ${total}
-        sleep 5
+        wait
       fi
     done
 #sleep 100
-wait
+
 

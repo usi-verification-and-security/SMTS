@@ -1,7 +1,12 @@
 //
 // Author: Matteo Marescotti
 //
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <signal.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string>
@@ -58,6 +63,12 @@ void SolverProcess::solve() {
     openSMTSolver.reset( new OpenSMTSolver(config,  this->instance, getChannel()));
 
     search();
+    try
+    {
+        if (fork_done)
+            kill_child();
+    }
+    catch (...) {}
 }
 
 void SolverProcess::clausePull(const string & seed, const string & n1, const string & n2)
@@ -369,22 +380,75 @@ void SolverProcess::interrupt(const std::string& command) {
     }
     getChannel().setShouldStop();
 }
-void SolverProcess::kill_child(int sig)
+void SolverProcess::kill_child()
 {
-//    kill(child_pid,SIGKILL);
-}
+    int wstatus;
+    printf("printed from parent process - %d\n", getpid());
+    std::cout<<"child is killed: "<<child_pid<<endl;
+    int ret;
 
+    ret = kill(child_pid, SIGKILL);
+    if (ret == -1) {
+        perror("kill");
+        exit(EXIT_FAILURE);
+    }
+
+    if (waitpid(child_pid, &wstatus, WUNTRACED | WCONTINUED) == -1) {
+        perror("waitpid");
+        exit(EXIT_FAILURE);
+    }
+}
+volatile sig_atomic_t shutdown_flag = 1;
+
+void cleanupRoutine(int signal_number)
+{
+    shutdown_flag = 0;
+}
 void SolverProcess::partition(uint8_t n) {
-//    signal(SIGALRM,(void (*)(int))kill_child);
+
     pid_t pid = getpid();
     //fork() returns -1 if it fails, and if it succeeds, it returns the forked child's pid in the parent, and 0 in the child.
     // So if (fork() != 0) tests whether it's the parent process.
     child_pid = fork();
-    if (child_pid != 0)
+    if (child_pid == -1) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    }
+    if (child_pid > 0)
     {
+        fork_done = true;
         return;
     }
+    printf("printed from child process - %d\n", getpid());
 
+//    int count = 0;
+
+    struct sigaction sigterm_action;
+    memset(&sigterm_action, 0, sizeof(sigterm_action));
+    sigterm_action.sa_handler = &cleanupRoutine;
+    sigterm_action.sa_flags = 0;
+
+    // Mask other signals from interrupting SIGTERM handler
+    if (sigfillset(&sigterm_action.sa_mask) != 0)
+    {
+        perror("sigfillset");
+        exit(EXIT_FAILURE);
+    }
+    // Register SIGTERM handler
+    if (sigaction(SIGTERM, &sigterm_action, NULL) != 0)
+    {
+        perror("sigaction SIGTERM");
+        exit(EXIT_FAILURE);
+    }
+
+//    while (shutdown_flag1) {
+//        count += 1;
+//        sleep(1);
+//        std::cout<<"from child..."<<"\n";
+//    }
+//    printf("count = %d\n", count);
+//
+//    exit(EXIT_SUCCESS);
 //    FILE *file = fopen("/dev/null", "w");
 //    dup2(fileno(file), fileno(stdout));
 //    dup2(fileno(file), fileno(stderr));
@@ -443,7 +507,7 @@ void SolverProcess::partition(uint8_t n) {
         }
     }
 //    std::cout <<"PartitionProcess - Main Thread: End to partition process"<<endl;
-    exit(0);
+    exit(EXIT_SUCCESS);
 }
 
 void SolverProcess::getCnfClauses(net::Header &header, const std::string &payload) {

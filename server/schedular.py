@@ -179,6 +179,8 @@ class Solver(net.Socket):
         totalN_partitions += n
         if self.node is None:
             raise ValueError('not solving anything')
+        if config.enableLog:
+            print("             Partition emited from ",node,self)
         self.write({
             'command': 'partition',
             'name': self.node.root.name,
@@ -189,8 +191,6 @@ class Solver(net.Socket):
             estimate_partition_time = time.time()
         if not node:
             node = framework.OrNode(self.node)
-        if config.enableLog:
-            print("             Partition emited from ",node,self)
 
         self.node.partitioning = True
         self.or_waiting.append(node)
@@ -387,11 +387,14 @@ class ParallelizationServer(net.Server):
                     # if not p_str:
                     #     sock.partitioning = False
                     if level == logging.ERROR: # if a solver sends an error then the instance is skipped
-                        self.counter += 1
-                        if self.counter == self.total_solvers:
-                            self.current.timeout = 0
-                            print('solver sends an error!', self.current.root.name)
-                            self.close()
+                        self.current.timeout = 0
+                        print(':error,solver memory',self.current.root.name, len(self.trees))
+                        self.close()
+                        # self.counter += 1
+                        # if self.counter == self.total_solvers:
+                        #     self.current.timeout = 0
+                        #     print('solver sends an error!', self.current.root.name)
+                        #     self.close()
                 except:
                     level = logging.INFO
                     message = header['report']
@@ -413,7 +416,7 @@ class ParallelizationServer(net.Server):
             if header['command'] == 'terminate':
                 if self.config.visualize_tree:
                     self.render_vTree(0)
-                self.log(logging.INFO, 'Termination command is received!')
+                # self.log(logging.INFO, 'Termination command is received!')
                 self.close()
             elif header['command'] == 'solve':
                 # print(header)
@@ -537,7 +540,7 @@ class ParallelizationServer(net.Server):
                              self.current.root.name, round(time.time() - self.current.started, 3), config.conflict, self.current.sp)
                     if self.current.root.status == framework.SolveStatus.unknown:
                         if not self.current.root._children:
-                            print('stuck')
+                            print(':error,stuck',self.current.root.name, len(self.trees))
                             self.close()
                             return
                         del self.trees[self.current.root.name + 'portfolio']
@@ -565,11 +568,8 @@ class ParallelizationServer(net.Server):
                             instance.root.status == framework.SolveStatus.unknown and instance.when_timeout > 0]
             if schedulables:
                 self.current = schedulables[0]
-                if self.current.sp == 'portfolio':
-                    config.partition_timeout = None
-                else:
-                    config.partition_timeout = 5
                 if self.config.enableLog:
+                    print()
                     self.log(logging.INFO, 'solving instance "{}"'.format(self.current.root.name))
                 self.total_solvers = len(self.solvers(False))
                 for solver in self.solvers(None):
@@ -1004,7 +1004,7 @@ class ParallelizationServer(net.Server):
             # if need partition: ask partitions
 
             for leaf in attempted_notPartitioned:
-                if len(leaf.path()) >= 2:
+                if len(leaf.path()) >= 2 or self.current.sp == 'portfolio':
                     return
                 if self.total_solvers > totalN_partitions - config.partition_policy[1]  :
                     self.partition(leaf)

@@ -31,10 +31,11 @@ private:
     std::deque<net::Header> header_Temp;
     mutable std::mutex mtx_listener_solve;
     pid_t child_pid;
-
+    bool fork_done = false;
+    volatile sig_atomic_t shutdown_flag = 1;
     // async interrupt the solver
     void interrupt(const string& command);
-    void kill_child(int sig);
+    void kill_child();
 
     void main()  {
 //        try {
@@ -205,7 +206,7 @@ public:
             size_t cmem = current_memory();
             if (cmem > limit * 1024 * 1024) {
                 this->error(std::string("max memory reached: ") + std::to_string(cmem));
-                exit(-1);
+//                exit(-1);
             }
             std::unique_lock<std::mutex> lk(channel.getMutex());
             if (channel.waitFor(lk, std::chrono::seconds (3)))
