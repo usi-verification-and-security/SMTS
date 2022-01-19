@@ -32,7 +32,6 @@ private:
     mutable std::mutex mtx_listener_solve;
     pid_t child_pid;
     bool fork_done = false;
-    volatile sig_atomic_t shutdown_flag = 1;
     // async interrupt the solver
     void interrupt(const string& command);
     void kill_child();
