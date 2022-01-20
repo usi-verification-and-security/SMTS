@@ -36,7 +36,7 @@ if __name__ == '__main__':
     port = schedular.config.port
     if args.port:
         port = args.port
-    print('port: ',port)
+    # print('port: ',port)
     if args.db_path:
         schedular.config.db_path = args.db_path
     schedular.config.db()

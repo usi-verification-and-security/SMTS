@@ -31,6 +31,7 @@ private:
     std::deque<net::Header> header_Temp;
     mutable std::mutex mtx_listener_solve;
     pid_t child_pid;
+    bool forked=false;
     // async interrupt the solver
     void interrupt(const string& command);
     void kill_child();

@@ -65,7 +65,9 @@ void SolverProcess::solve() {
     search();
     try
     {
-        if (child_pid)
+        std::cout<<"search: child: "<<child_pid<<endl;
+        std::cout<<"search: pid: "<<getpid<<endl;
+        if (forked)
             kill_child();
     }
     catch (...) {}
@@ -386,14 +388,15 @@ void SolverProcess::kill_child()
     printf("printed from parent process - %d\n", getpid());
     std::cout<<"child is killed: "<<child_pid<<endl;
     int ret;
-
     ret = kill(child_pid, SIGKILL);
     if (ret == -1) {
+        std::cout<<"ret == -1: "<<child_pid<<endl;
         perror("kill");
         exit(EXIT_FAILURE);
     }
 
     if (waitpid(child_pid, &wstatus, WUNTRACED | WCONTINUED) == -1) {
+        std::cout<<"waitpid: "<<child_pid<<endl;
         perror("waitpid");
         exit(EXIT_FAILURE);
     }
@@ -416,9 +419,16 @@ void SolverProcess::partition(uint8_t n) {
     }
     if (child_pid > 0)
     {
+        forked=true;
         return;
     }
-    printf("printed from child process - %d\n", getpid());
+    std::thread _t([&] {
+        while (getppid() == pid)
+            sleep(1);
+        exit(0);
+    });
+    printf("printed from child process - %d\n", pid);
+    printf("printed from child_pid - %d\n", child_pid);
 
 //    int count = 0;
 
@@ -430,12 +440,14 @@ void SolverProcess::partition(uint8_t n) {
     // Mask other signals from interrupting SIGTERM handler
     if (sigfillset(&sigterm_action.sa_mask) != 0)
     {
+        std::cout<<";sigfillset: "<<endl;
         perror("sigfillset");
         exit(EXIT_FAILURE);
     }
     // Register SIGTERM handler
     if (sigaction(SIGTERM, &sigterm_action, NULL) != 0)
     {
+        std::cout<<";sigaction SIGTERM: "<<endl;
         perror("sigaction SIGTERM");
         exit(EXIT_FAILURE);
     }

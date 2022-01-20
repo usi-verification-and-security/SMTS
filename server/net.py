@@ -160,8 +160,8 @@ class Server(object):
                     self._rlist.remove(sock)
                 else:
                     self.handle_message(sock, header, message)
-        # except KeyboardInterrupt:
-        #     raise
+        except KeyboardInterrupt:
+            raise
         except Exception as exp:
             self.log(logging.ERROR, '{}\n{}'.format(
                 type(exp).__name__,
