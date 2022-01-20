@@ -14,20 +14,32 @@ bashstr=''
 
 
 name=$(basename $1)
-echo $name
+#echo $name
 
 port=3000
-i=0
+
 gname=$name-$(date +'%F')
-scriptdir=$SCRIPT_ROOT'/packed/'
-outd=$SCRIPT_ROOT'/result/'
+scriptdir=$SCRIPT_ROOT'/packed/'$name'/'
+outd=$SCRIPT_ROOT'/result/'$name'/'
 mkdir -p ${scriptdir}
 
+n_benchmarks=$(ls ${1}/*.bz2 |wc -l)
+echo "Benchmark set (total ${n_benchmarks}):"
+rm $outd$name-'remained'
+((n_node=((n_benchmarks/($2*3)))))
+echo "N Benchmark: ${n_benchmarks}"  "- N Node:  ${n_node}" - 'N bench per server:' $2 >> $outd$name-'remained'
+
+echo "Number of Nodes (total ${n_node}):"
+#n_remained=n_node-1
 find $1 -name '*.bz2' |
 while read -r file;
   do
-#    echo $file
+
     ((total=total+1))
+#    if  [ ${total} -gt $((n_benchmarks-n_remained)) ]
+#          then
+#            echo $file >> $outd$name-'remained'
+#    fi
     if  [ ${total} == $2 ]
         then
           filepaths+="'$file'"
@@ -41,16 +53,10 @@ while read -r file;
         if  [ ${port} == 3003 ]
           then
             port=3000
-            i=$((i+1))
-            echo $SCRIPT_ROOT'/packed/'$gname''-$i'.sh'
-            echo "Send for Node" ${i}
-            echo ''
-            sleep 1
-        fi
-
-        if  [ ${i} == 6 ]
-          then
-            break
+            n_node=$((n_node-1))
+            echo $SCRIPT_ROOT'/packed/'$gname''-$n_node'.sh'
+#            echo "Send for Node" ${n_node}
+            sleep 0.3
         fi
 
         command=$3'smts.py -o3 -p '$port' -fp '
@@ -61,7 +67,7 @@ while read -r file;
 #              echo $bashstr
             ex=$1;
             bname=`basename $ex`
-            scrname=$SCRIPT_ROOT'/packed/'$gname''-$i'.sh'
+            scrname=$SCRIPT_ROOT'/packed/'$name'/'$gname''-$n_node'.sh'
 #            echo $scrname
             cat << _EOF_ > $scrname
 #!/bin/bash
@@ -72,8 +78,8 @@ while read -r file;
 #SBATCH --nodes=1
 #SBATCH --mem=0
 #SBATCH --partition=slim
-#SBATCH --output=$outd/${gname}-$i.out
-#SBATCH --error=$outd/${gname}-$i.err
+#SBATCH --output=$outd/${gname}-$n_node.out
+#SBATCH --error=$outd/${gname}-$n_node.err
 
 output=$outd
 
@@ -84,7 +90,7 @@ _EOF_
  (
     chmod +x $scrname
     $bashstr
- ) > \$output/${gname}-$i.out 2> \$output/${gname}-$i.err &
+ ) > \$output/${gname}-$n_node.out &
 _EOF_
 
         #    echo "wait" >> $packedscrd/$scrname
@@ -116,8 +122,8 @@ mkdir -p $outd
 
 for script in ${scriptdir}/*.sh; do
     echo ${script};
-    sh ${script};
-#    sbatch ${script};
+#    sh ${script};
+    sbatch ${script};
     sleep 1;
 done
 
