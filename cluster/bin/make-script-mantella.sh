@@ -23,7 +23,7 @@ scriptdir=$SCRIPT_ROOT'/packed/'$name'/'
 outd=$SCRIPT_ROOT'/result/'$name'/'
 mkdir -p ${scriptdir}
 
-n_benchmarks=$(ls ${1}/*.smt2.bz2 |wc -l)
+n_benchmarks=$(ls ${1}/*.smt2 |wc -l)
 echo "Benchmark set (total ${n_benchmarks}):"
 rm $outd$name-'remained'
 ((n_node=((n_benchmarks/($2*3)))))
@@ -31,7 +31,7 @@ echo "N Benchmark: ${n_benchmarks}"  "- N Node:  ${n_node}" - 'N bench per serve
 
 echo "Number of Nodes (total ${n_node}):"
 #n_remained=n_node-1
-find $1 -name '*.smt2.bz2' |
+find $1 -name '*.smt2' |
 while read -r file;
   do
 
