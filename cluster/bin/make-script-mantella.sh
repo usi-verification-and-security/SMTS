@@ -23,15 +23,15 @@ scriptdir=$SCRIPT_ROOT'/packed/'$name'/'
 outd=$SCRIPT_ROOT'/result/'$name'/'
 mkdir -p ${scriptdir}
 
-n_benchmarks=$(ls ${1}/*.smt2 |wc -l)
+n_benchmarks=$(ls ${1}/*.smt2.bz2 |wc -l)
 echo "Benchmark set (total ${n_benchmarks}):"
 rm $outd$name-'remained'
-((n_node=((n_benchmarks/($2*3)))))
+((n_node=((n_benchmarks/($2*4)))))
 echo "N Benchmark: ${n_benchmarks}"  "- N Node:  ${n_node}" - 'N bench per server:' $2 >> $outd$name-'remained'
 
 echo "Number of Nodes (total ${n_node}):"
 #n_remained=n_node-1
-find $1 -name '*.smt2' |
+find $1 -name '*.smt2.bz2' |
 while read -r file;
   do
 
@@ -53,9 +53,10 @@ while read -r file;
         if  [ ${port} == 3004 ]
           then
             port=3000
-            n_node=$((n_node-1))
+
             echo $SCRIPT_ROOT'/packed/'$gname''-$n_node'.sh'
 #            echo "Send for Node" ${n_node}
+            n_node=$((n_node-1))
             sleep 0.3
         fi
 
@@ -63,7 +64,7 @@ while read -r file;
         if  [ ${port} == 3003 ]
           then
             bashstr+="$command""$filepaths" ;
-            bashstr+=""
+            bashstr+=" & wait "
 #              echo $bashstr
             ex=$1;
             bname=`basename $ex`
