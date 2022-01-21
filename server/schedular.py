@@ -239,8 +239,8 @@ class Solver(net.Socket):
         # print(header)
         # if header['node'][1:len(header['node'])-1] != ', '.join(map(str, self.node.path())):
         #     print("   Solver has left . . ..........", header['node'])
-        if self.node.root.status != framework.SolveStatus.unknown:
-            return {}, b''
+        # if self.node.root.status != framework.SolveStatus.unknown:
+        #     return {}, b''
         if header['report'] == 'partitions' and self.or_waiting:
             # print(header)
             global estimate_partition_time
@@ -354,6 +354,7 @@ class ParallelizationServer(net.Server):
         self.total_solvers = 0
         self.idles = 0
         self.counter = 0
+        self.tcounter = 0
         if self.config.enableLog:
             self.log(logging.INFO, 'server start. version {}'.format(version))
         if self.config.visualize_tree:
@@ -389,6 +390,7 @@ class ParallelizationServer(net.Server):
                         self.current.timeout = 0
                         print(':error,solver memory',self.current.root.name, len(self.trees))
                         self.close()
+                        exit(0)
                         # self.counter += 1
                         # if self.counter == self.total_solvers:
                         #     self.current.timeout = 0
@@ -544,7 +546,15 @@ class ParallelizationServer(net.Server):
                             if not self.current.root.childeren():
                                 print(':error,stuck',self.current.root.name, len(self.trees))
                                 self.close()
-                                return
+                                exit(0)
+                        self.tcounter += 1
+                        if self.tcounter == 3:
+                            self.close()
+                            exit(0)
+                        # for key in self.trees:
+                        #     if key.startswith(self.current.root.name):
+                        #         self.tcounter += 1
+
                         # del self.trees[self.current.root.name + 'portfolio']
                         # for sp in framework.SplitPreference.__members__.values():
                         #     del self.trees[self.current.root.name + sp.value]
@@ -563,6 +573,7 @@ class ParallelizationServer(net.Server):
                     solver.stop()
                 self.current = None
                 self.counter = 0
+                self.tcounter = 0
                 self.idles = 0
                 self.idle_solvers.clear()
                 sleep(1)
@@ -572,7 +583,6 @@ class ParallelizationServer(net.Server):
             if schedulables:
                 self.current = schedulables[0]
                 if self.config.enableLog:
-                    print()
                     self.log(logging.INFO, 'solving instance "{}"'.format(self.current.root.name))
                 # self.total_solvers = len(self.solvers(False))
                 for solver in self.solvers(None):

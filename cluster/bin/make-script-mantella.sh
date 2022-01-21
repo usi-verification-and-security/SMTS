@@ -7,6 +7,7 @@ fi
 function get_abs_path {
   echo $(cd $(dirname $1); pwd)/$(basename $1)
 }
+
 SCRIPT_ROOT=$(get_abs_path $(dirname $0))
 #echo $SCRIPT_ROOT
 total=0
@@ -14,16 +15,15 @@ bashstr=''
 
 
 name=$(basename $1)
-#echo $name
+n_benchmarks=$(find $1 -name '*.smt2' | wc -l)
 
 port=3000
-
+echo $n_benchmarks
 gname=$name-$(date +'%F')
 scriptdir=$SCRIPT_ROOT'/packed/'$name'/'
 outd=$SCRIPT_ROOT'/result/'$name'/'
 mkdir -p ${scriptdir}
 
-n_benchmarks=$(ls ${1}/*.smt2.bz2 |wc -l)
 echo "Benchmark set (total ${n_benchmarks}):"
 rm $outd$name-'remained'
 ((n_node=((n_benchmarks/($2*4)))))
@@ -31,8 +31,7 @@ echo "N Benchmark: ${n_benchmarks}"  "- N Node:  ${n_node}" - 'N bench per serve
 
 echo "Number of Nodes (total ${n_node}):"
 #n_remained=n_node-1
-find $1 -name '*.smt2.bz2' |
-while read -r file;
+find $1 -name '*.smt2' | while read -r file;
   do
 
     ((total=total+1))
@@ -57,7 +56,7 @@ while read -r file;
             echo $SCRIPT_ROOT'/packed/'$gname''-$n_node'.sh'
 #            echo "Send for Node" ${n_node}
             n_node=$((n_node-1))
-            sleep 0.3
+#            sleep 0.3
         fi
 
         command=$3'smts.py -o3 -p '$port' -fp '
@@ -113,7 +112,7 @@ mkdir -p $outd
 for script in ${scriptdir}/*.sh; do
     echo ${script};
     sh ${script};
-    sleep 2;
+    sleep 1;
 done
 
 
