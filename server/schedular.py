@@ -197,7 +197,6 @@ class Solver(net.Socket):
         self._db_log('OR', {'node': str(node.path()), 'solver': str(self.remote_address)})
 
     def read(self):
-
         global totalN_partitions
         header, payload = super().read()
         if 'report' not in header:
@@ -456,7 +455,7 @@ class ParallelizationServer(net.Server):
                 ), {'header': header, 'payload': payload.decode()})
             self._rlist.remove(sock)
             self._rlist.add(solver)
-            # print("self._rlist..... ", self._rlist)
+            self.total_solvers += 1
             lemma_server = self.lemma_server
             if lemma_server:
                 solver.set_lemma_server(lemma_server)
@@ -513,6 +512,8 @@ class ParallelizationServer(net.Server):
         return self.config.partition_policy[level % len(self.config.partition_policy)]
 
     def entrust(self):
+        if self.total_solvers == 0:
+            return
         global totalN_partitions
         # print(self.current)
         solving = self.current
@@ -573,7 +574,7 @@ class ParallelizationServer(net.Server):
                 if self.config.enableLog:
                     print()
                     self.log(logging.INFO, 'solving instance "{}"'.format(self.current.root.name))
-                self.total_solvers = len(self.solvers(False))
+                # self.total_solvers = len(self.solvers(False))
                 for solver in self.solvers(None):
                     # print(" Start - > ",solver)
                     assert isinstance(solver, Solver)
@@ -587,6 +588,7 @@ class ParallelizationServer(net.Server):
                         self.current.started = time.time()
                 return
                 # print(schedulables)
+
         if solving is not None and solving != self.current and self.lemma_server:
             self.lemma_server.reset(solving.root)
         if self.current is None:
