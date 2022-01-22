@@ -208,10 +208,11 @@ class Solver(net.Socket):
         if 'name' not in header or 'node' not in header:
             return header, payload
 
-        if self.node.root.name != header['name'] or (str(self.node.path()) != header['node'] and header['report'] != 'partitions'):
-            # print("                 event ... ",header['node'],self.node.root.name,header['name'],str(self.node.path()))
+        # if self.node.root.name != header['name'] or (str(self.node.path()) != header['node'] and header['report'] != 'partitions'):
+        #     # print("                 event ... ",header['node'],self.node.root.name,header['name'],str(self.node.path()))
+        #     return {}, b''
+        if self.node.root.name != header['name'] or str(self.node.path()) != header['node']:
             return {}, b''
-
         # Handle CNF request
         if header['report'].startswith('cnf'):
 
@@ -235,7 +236,7 @@ class Solver(net.Socket):
                 self.stop()
 
         del header['name']
-        # del header['node']
+        del header['node']
         # print(header)
         # if header['node'][1:len(header['node'])-1] != ', '.join(map(str, self.node.path())):
         #     print("   Solver has left . . ..........", header['node'])
@@ -278,40 +279,40 @@ class Solver(net.Socket):
 
         if header['report'] in framework.SolveStatus.__members__:
             status = framework.SolveStatus.__members__[header['report']]
-            if self.node.status == framework.SolveStatus.unknown:
-                if not config.conflict:
-                    config.conflict = header['conflict']
-                config.status_info = header['statusinf']
-                self._db_log('STATUS', header)
-                path = self.node.path(True)
-                self.node.status = status
-                path.reverse()
-                # print("path . . ..........", path)
-                if status == framework.SolveStatus.unsat:
-                    # totalN_partitions -= 1
-                    # if self.node.assumed_timout:
-                    #     totalN_partitions += 1
-                    for child in self.node.all():
-                        # print('solved node - > ',child.path())
-                        if child.status == framework.SolveStatus.unknown:
-                            if isinstance(child, framework.AndNode):
-                                child.status = framework.SolveStatus.unsat
-                                # totalN_partitions -= 1
+            # if self.node.status == framework.SolveStatus.unknown:
+            if not config.conflict:
+                config.conflict = header['conflict']
+            config.status_info = header['statusinf']
+            self._db_log('STATUS', header)
+            path = self.node.path(True)
+            self.node.status = status
+            path.reverse()
+            # print("path . . ..........", path)
+            if status == framework.SolveStatus.unsat:
+                # totalN_partitions -= 1
+                # if self.node.assumed_timout:
+                #     totalN_partitions += 1
+                for child in self.node.all():
+                    # print('solved node - > ',child.path())
+                    if child.status == framework.SolveStatus.unknown:
+                        if isinstance(child, framework.AndNode):
+                            child.status = framework.SolveStatus.unsat
+                            # totalN_partitions -= 1
 
-                for node in path:
-                    # print("node . . ..........", node)
-                    if node.status != framework.SolveStatus.unknown:
-                        if isinstance(node, framework.AndNode):
-                            self._db_log('SOLVED', {'status': node.status.name, 'node': str(node.path())})
-                    else:
-                        break
-                if status != framework.SolveStatus.unknown:
-                    if self.node == self.node.root:
-                        config.level_info = 'root'
-                    else:
-                        config.level_info = 'child'
+            for node in path:
+                # print("node . . ..........", node)
+                if node.status != framework.SolveStatus.unknown:
+                    if isinstance(node, framework.AndNode):
+                        self._db_log('SOLVED', {'status': node.status.name, 'node': str(node.path())})
                 else:
-                    self.stop()
+                    break
+            if status != framework.SolveStatus.unknown:
+                if self.node == self.node.root:
+                    config.level_info = 'root'
+                else:
+                    config.level_info = 'child'
+            else:
+                self.stop()
 
         return header, payload
 
@@ -457,7 +458,7 @@ class ParallelizationServer(net.Server):
                 ), {'header': header, 'payload': payload.decode()})
             self._rlist.remove(sock)
             self._rlist.add(solver)
-            self.total_solvers += 1
+            # self.total_solvers += 1
             lemma_server = self.lemma_server
             if lemma_server:
                 solver.set_lemma_server(lemma_server)
@@ -514,8 +515,8 @@ class ParallelizationServer(net.Server):
         return self.config.partition_policy[level % len(self.config.partition_policy)]
 
     def entrust(self):
-        if self.total_solvers == 0:
-            return
+        # if self.total_solvers == 0:
+        #     return
         global totalN_partitions
         # print(self.current)
         solving = self.current
@@ -584,7 +585,7 @@ class ParallelizationServer(net.Server):
                 self.current = schedulables[0]
                 if self.config.enableLog:
                     self.log(logging.INFO, 'solving instance "{}"'.format(self.current.root.name))
-                # self.total_solvers = len(self.solvers(False))
+                self.total_solvers = len(self.solvers(False))
                 for solver in self.solvers(None):
                     # print(" Start - > ",solver)
                     assert isinstance(solver, Solver)
