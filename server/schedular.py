@@ -389,7 +389,7 @@ class ParallelizationServer(net.Server):
                     #     sock.partitioning = False
                     if level == logging.ERROR: # if a solver sends an error then the instance is skipped
                         self.current.timeout = 0
-                        print(':error,solver memory',self.current.root.name, len(self.trees))
+                        print(':error,solver memory',self.current.root.name, self.current.sp)
                         self.close()
                         exit(0)
                         # self.counter += 1
@@ -541,13 +541,13 @@ class ParallelizationServer(net.Server):
                     # print(len(self._rlist)-1,self.total_solvers)
 
                     if len(self._rlist)-1 != self.total_solvers:
-                        print(':error,solvers are lost',self.current.root.name)
+                        print(':error,solvers are lost',self.current.root.name,self.current.sp)
                         self.close()
                         exit(0)
                     if self.current.root.status == framework.SolveStatus.unknown:
                         if self.current.root.partitioning:
                             if not self.current.root.childeren():
-                                print(':error,stuck',self.current.root.name, len(self.trees))
+                                print(':error,stuck',self.current.root.name, self.current.sp)
                                 if not any([type(socket) == net.Socket and socket is not self._sock for socket in self._rlist]):
                                     self.close()
                                     exit(0)
