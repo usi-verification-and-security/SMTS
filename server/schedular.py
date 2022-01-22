@@ -538,20 +538,25 @@ class ParallelizationServer(net.Server):
                         print("The file does not exist")
                     # self.v_tree.clear()
                 if not self.config.enableLog and self.config.spit_preference:
-                    # if not self.current.started:
-                    #     self.current.started = time.time()
-                    self.log(logging.INFO, '{}'.format(self.current.root.status.name),
-                             self.current.root.name, round(time.time() - self.current.started, 3), config.conflict, self.current.sp)
+                    # print(len(self._rlist)-1,self.total_solvers)
+
+                    if len(self._rlist)-1 != self.total_solvers:
+                        print(':error,solvers are lost',self.current.root.name)
+                        self.close()
+                        exit(0)
                     if self.current.root.status == framework.SolveStatus.unknown:
                         if self.current.root.partitioning:
                             if not self.current.root.childeren():
                                 print(':error,stuck',self.current.root.name, len(self.trees))
-                                self.close()
-                                exit(0)
-                        self.tcounter += 1
-                        if self.tcounter == 3:
-                            self.close()
-                            exit(0)
+                                if not any([type(socket) == net.Socket and socket is not self._sock for socket in self._rlist]):
+                                    self.close()
+                                    exit(0)
+                        # self.tcounter += 1
+
+                        # if self.tcounter == 3:
+                        #     if not any([type(socket) == net.Socket and socket is not self._sock for socket in self._rlist]):
+                        #         self.close()
+                        #         exit(0)
                         # for key in self.trees:
                         #     if key.startswith(self.current.root.name):
                         #         self.tcounter += 1
@@ -559,7 +564,8 @@ class ParallelizationServer(net.Server):
                         # del self.trees[self.current.root.name + 'portfolio']
                         # for sp in framework.SplitPreference.__members__.values():
                         #     del self.trees[self.current.root.name + sp.value]
-
+                    self.log(logging.INFO, '{}'.format(self.current.root.status.name),
+                             self.current.root.name, round(time.time() - self.current.started, 3), config.conflict, self.current.sp)
                     del self.trees[self.current.root.name + self.current.sp]
                 else:
                     del self.trees[self.current.root.name]
@@ -574,7 +580,7 @@ class ParallelizationServer(net.Server):
                     solver.stop()
                 self.current = None
                 self.counter = 0
-                self.tcounter = 0
+                # self.tcounter = 0
                 self.idles = 0
                 self.idle_solvers.clear()
                 sleep(1)
@@ -1116,7 +1122,7 @@ class ParallelizationServer(net.Server):
                     res = 'Passed'
                 if conflict == '':
                     conflict = None
-                print(data, message, time, conflict, sp, config.status_info, res, config.level_info)
+                print(data, message, time, conflict, sp, config.status_info, res, config.level_info,'masoud:sp-done')
                 config.level_info = None
                 config.status_info = None
                 config.conflict = None

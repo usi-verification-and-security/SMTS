@@ -18,8 +18,8 @@ class SplitPreference(enum.Enum):
     sppref_eq = 'eq'
     sppref_noteq = 'noteq'
     sppref_tterm = 'tterm'
-    sppref_bterm = 'bterm'
     sppref_blind = 'blind'
+    sppref_bterm = 'bterm'
 
 class Node:
     def __init__(self, parent, smt):
