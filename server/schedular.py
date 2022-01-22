@@ -259,8 +259,8 @@ class Solver(net.Socket):
             except BaseException as ex:
                 header['report'] = 'error:(server) error reading partitions: {}'.format(traceback.format_exc())
                 node.clear()
-                self.ask_partitions(config.partition_policy[self.node.level % len(config.partition_policy)])
-                self.partitioning = True
+                # self.ask_partitions(config.partition_policy[self.node.level % len(config.partition_policy)])
+                # self.partitioning = True
             else:
                 header['report'] = 'info:(server) received {} partitions'.format(len(node))
                 if not config.conflict:
@@ -517,6 +517,8 @@ class ParallelizationServer(net.Server):
     def entrust(self):
         # if self.total_solvers == 0:
         #     return
+        if len(self.trees) == 1 and self.current.when_timeout < 0:
+            self.close()
         global totalN_partitions
         # print(self.current)
         solving = self.current
@@ -583,7 +585,7 @@ class ParallelizationServer(net.Server):
                 # self.tcounter = 0
                 self.idles = 0
                 self.idle_solvers.clear()
-                sleep(1)
+                # sleep(1)
         if self.current is None:
             schedulables = [instance for instance in self.trees.values() if
                             instance.root.status == framework.SolveStatus.unknown and instance.when_timeout > 0]
