@@ -16,10 +16,10 @@ class SolveStatus(enum.Enum):
 class SplitPreference(enum.Enum):
     sppref_eq = 'eq'
     sppref_noteq = 'noteq'
-    sppref_tterm = 'tterm'
-    sppref_blind = 'blind'
     sppref_tterm_neq = 'tterm_neq'
     sppref_bterm = 'bterm'
+    sppref_tterm = 'tterm'
+    sppref_blind = 'blind'
 
 class Node:
     def __init__(self, parent, smt):

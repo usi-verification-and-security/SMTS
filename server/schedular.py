@@ -548,12 +548,12 @@ class ParallelizationServer(net.Server):
                                 # if not any([type(socket) == net.Socket and socket is not self._sock for socket in self._rlist]):
                                 self.close()
                                 exit(0)
-                        # self.tcounter += 1
-
-                        # if self.tcounter == 3:
-                        #     if not any([type(socket) == net.Socket and socket is not self._sock for socket in self._rlist]):
-                        #         self.close()
-                        #         exit(0)
+                        self.tcounter += 1
+                        if self.tcounter == 3:
+                            self.log(logging.INFO, '{}'.format(self.current.root.status.name),
+                                     self.current.root.name, round(time.time() - self.current.started, 3), config.conflict, self.current.sp)
+                            self.close()
+                            exit(0)
                         # for key in self.trees:
                         #     if key.startswith(self.current.root.name):
                         #         self.tcounter += 1
@@ -580,7 +580,7 @@ class ParallelizationServer(net.Server):
                 # self.tcounter = 0
                 self.idles = 0
                 self.idle_solvers.clear()
-                sleep(0.1)
+                sleep(0.5)
         if self.current is None:
             schedulables = [instance for instance in self.trees.values() if
                             instance.root.status == framework.SolveStatus.unknown and instance.when_timeout > 0]
