@@ -515,13 +515,15 @@ class ParallelizationServer(net.Server):
         return self.config.partition_policy[level % len(self.config.partition_policy)]
 
     def entrust(self):
-        # if self.total_solvers == 0:
-        #     return
         global totalN_partitions
         # print(self.current)
         solving = self.current
         # if the current tree is already solved or timed out: stop it
         if isinstance(self.current, Instance):
+            if len(self._rlist)-1 != self.total_solvers:
+                print(':error,solvers are lost',self.current.root.name,self.current.sp)
+                self.close()
+                exit(0)
             if self.current.root.status != framework.SolveStatus.unknown or self.current.when_timeout < 0:
                 if self.config.visualize_tree:
                     self.render_vTree(time.time() - self.current.started)
@@ -539,11 +541,6 @@ class ParallelizationServer(net.Server):
                     # self.v_tree.clear()
                 if not self.config.enableLog and self.config.spit_preference:
                     # print(len(self._rlist)-1,self.total_solvers)
-
-                    if len(self._rlist)-1 != self.total_solvers:
-                        print(':error,solvers are lost',self.current.root.name,self.current.sp)
-                        self.close()
-                        exit(0)
                     if self.current.root.status == framework.SolveStatus.unknown:
                         if self.current.root.partitioning:
                             if not self.current.root.childeren():
