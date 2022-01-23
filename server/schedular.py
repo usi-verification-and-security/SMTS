@@ -517,8 +517,6 @@ class ParallelizationServer(net.Server):
     def entrust(self):
         # if self.total_solvers == 0:
         #     return
-        if len(self.trees) == 1 and self.current.when_timeout < 0:
-            self.close()
         global totalN_partitions
         # print(self.current)
         solving = self.current
@@ -550,9 +548,9 @@ class ParallelizationServer(net.Server):
                         if self.current.root.partitioning:
                             if not self.current.root.childeren():
                                 print(':error,stuck',self.current.root.name, self.current.sp)
-                                if not any([type(socket) == net.Socket and socket is not self._sock for socket in self._rlist]):
-                                    self.close()
-                                    exit(0)
+                                # if not any([type(socket) == net.Socket and socket is not self._sock for socket in self._rlist]):
+                                self.close()
+                                exit(0)
                         # self.tcounter += 1
 
                         # if self.tcounter == 3:
@@ -585,7 +583,7 @@ class ParallelizationServer(net.Server):
                 # self.tcounter = 0
                 self.idles = 0
                 self.idle_solvers.clear()
-                # sleep(1)
+                sleep(0.1)
         if self.current is None:
             schedulables = [instance for instance in self.trees.values() if
                             instance.root.status == framework.SolveStatus.unknown and instance.when_timeout > 0]
@@ -615,9 +613,9 @@ class ParallelizationServer(net.Server):
                 if self.config.enableLog:
                     self.log(logging.INFO, 'all done.')
                 if self.config.idle_quit:
-                    if not any([type(socket) == net.Socket and socket is not self._sock for socket in self._rlist]):
-                        self.close()
-                        exit(0)
+                    # if not any([type(socket) == net.Socket and socket is not self._sock for socket in self._rlist]):
+                    self.close()
+                    exit(0)
             return
 
         assert isinstance(self.current, Instance)
