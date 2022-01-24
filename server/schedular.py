@@ -11,8 +11,8 @@ import traceback
 import random
 import time
 import re
-import graphviz
-from graphviz import nohtml
+# import graphviz
+# from graphviz import nohtml
 import math
 from time import sleep
 
@@ -250,8 +250,7 @@ class Solver(net.Socket):
             # self.partitioning = False
             try:
                 if isinstance(self.node, framework.SMT):
-                    estimate_partition_time = round(time.time() - estimate_partition_time)
-                    # print("   estimate_partition_time . . ..........", self.node,estimate_partition_time)
+                    config.node_timeout += round(time.time() - estimate_partition_time)
                 for partition in payload.decode().split('\0'):
                     if len(partition) == 0:
                         continue
@@ -640,6 +639,7 @@ class ParallelizationServer(net.Server):
             def all_active_internals():
                 return (node for node in nodes if (len(node) > 0 and node.status == framework.SolveStatus.unknown and isinstance(node, framework.AndNode)
                                                    and not node.processed) or (isinstance(node, framework.SMT) and not node.processed))
+            # or (node.assumed_timout and not node.is_timeout and len(node) == 0 )
 
             def all_current_active_nodes():
                 return (node for node in nodes if (node.status == framework.SolveStatus.unknown and not isinstance(node, framework.OrNode) and
@@ -675,7 +675,6 @@ class ParallelizationServer(net.Server):
                 if isinstance(node, framework.AndNode) and node.started is not None and not node.processed:
                     if node.status == framework.SolveStatus.unsat:
                         if node.parent:
-
                             if node.parent.parent.status == framework.SolveStatus.unknown:
                                 # print('       solved solver has unknown parent -> ')
                                 node.parent.parent.processed = True
@@ -728,7 +727,7 @@ class ParallelizationServer(net.Server):
 
                             # self.idles += 1
                             for solver in self.solvers(node):
-                                print('    Timeout solvers n-p ',len(self.idle_solvers) ,solver)
+                                # print('    Timeout solvers n-p ',len(self.idle_solvers) ,solver)
                                 self.idles += 1
                                 self.idle_solvers.add(solver)
                                 # print('    Timeout solvers n-p ATO ',self.idles,node.path())
@@ -1040,9 +1039,9 @@ class ParallelizationServer(net.Server):
             # if need partition: ask partitions
 
             for leaf in attempted_notPartitioned:
-                if len(leaf.path()) >= 2 or self.current.sp == 'portfolio':
+                if self.current.sp == 'portfolio':
                     return
-                if self.total_solvers > totalN_partitions - config.partition_policy[1] :
+                if self.total_solvers > totalN_partitions + 1:
                     # print("     partition leave -> " , self.idles, leaf)
                     self.partition(leaf)
                     break

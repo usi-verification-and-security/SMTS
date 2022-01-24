@@ -103,7 +103,7 @@ if __name__ == '__main__':
                                         args=(args.file_paths, ('127.0.0.1', port)))
         files_thread.daemon = True
         files_thread.start()
-    # try:
-    ps.run_forever()
-    # except KeyboardInterrupt:
-    #     sys.exit(0)
+    try:
+        ps.run_forever()
+    except KeyboardInterrupt:
+        sys.exit(0)
