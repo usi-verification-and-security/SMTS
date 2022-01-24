@@ -96,13 +96,14 @@ if __name__ == '__main__':
             (schedular.config.build_path + '/solver_z3spacer', schedular.config.z3spacer, port),
             (schedular.config.build_path + '/solver_sally', schedular.config.sally, port)
         )
-        sleep(2)
+
     if args.file_paths:
+        sleep(2)
         files_thread = threading.Thread(target=utils.send_files,
                                         args=(args.file_paths, ('127.0.0.1', port)))
         files_thread.daemon = True
         files_thread.start()
-    try:
-        ps.run_forever()
-    except KeyboardInterrupt:
-        sys.exit(0)
+    # try:
+    ps.run_forever()
+    # except KeyboardInterrupt:
+    #     sys.exit(0)
