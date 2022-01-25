@@ -271,8 +271,8 @@ class Solver(net.Socket):
                     partition_recieved = False
                     node.clear()
                 # partition_recieved = True
-                if len(node) != config.partition_policy[1]:
-                    totalN_partitions = totalN_partitions - config.partition_policy[1] + len(node)
+                # if len(node) != config.partition_policy[1]:
+                #     totalN_partitions = totalN_partitions - config.partition_policy[1] + len(node)
                     # if len(node) == 1:
                     # print("   partition . . ..........", config.partition_policy[1], len(node))
 
@@ -546,12 +546,12 @@ class ParallelizationServer(net.Server):
                                 # if not any([type(socket) == net.Socket and socket is not self._sock for socket in self._rlist]):
                                 self.close()
                                 exit(0)
-                        self.tcounter += 1
-                        if self.tcounter == 3:
-                            self.log(logging.INFO, '{}'.format(self.current.root.status.name),
-                                     self.current.root.name, round(time.time() - self.current.started, 3), config.conflict, self.current.sp)
-                            self.close()
-                            exit(0)
+                        # self.tcounter += 1
+                        # if self.tcounter == 4:
+                        #     self.log(logging.INFO, '{}'.format(self.current.root.status.name),
+                        #              self.current.root.name, round(time.time() - self.current.started, 3), config.conflict, self.current.sp)
+                        #     self.close()
+                        #     exit(0)
                         # for key in self.trees:
                         #     if key.startswith(self.current.root.name):
                         #         self.tcounter += 1
@@ -639,7 +639,6 @@ class ParallelizationServer(net.Server):
             def all_active_internals():
                 return (node for node in nodes if (len(node) > 0 and node.status == framework.SolveStatus.unknown and isinstance(node, framework.AndNode)
                                                    and not node.processed) or (isinstance(node, framework.SMT) and not node.processed))
-            # or (node.assumed_timout and not node.is_timeout and len(node) == 0 )
 
             def all_current_active_nodes():
                 return (node for node in nodes if (node.status == framework.SolveStatus.unknown and not isinstance(node, framework.OrNode) and
@@ -652,7 +651,7 @@ class ParallelizationServer(net.Server):
             #     return False;
 
             def assumed_timout_leaves():
-                return (node for node in nodes if node.status == framework.SolveStatus.unknown and not self.solvers(node) and
+                return (node for node in nodes if len(node) == 0 and node.status == framework.SolveStatus.unknown and not self.solvers(node) and
                         isinstance(node, framework.AndNode) and node.assumed_timout and not node.processed)
 
             def un_attempted_active_leaves():
@@ -715,7 +714,7 @@ class ParallelizationServer(net.Server):
                                 for solver in self.solvers(node):
                                     # print('              Timeout solver - has partition -> ',self.idles,node.path() )
                                     self.idle_solvers.add(solver)
-                                    self.idles += 1
+                                    totalN_partitions -= 1
                                 # config.node_timeout += estimate_partition_time+1
                                 # if self.idles >= config.partition_policy[1]:
                                 #     print('    now partition TO ',self.idles)
@@ -728,7 +727,7 @@ class ParallelizationServer(net.Server):
                             # self.idles += 1
                             for solver in self.solvers(node):
                                 # print('    Timeout solvers n-p ',len(self.idle_solvers) ,solver)
-                                self.idles += 1
+                                totalN_partitions -= 1
                                 self.idle_solvers.add(solver)
                                 # print('    Timeout solvers n-p ATO ',self.idles,node.path())
                                 node.assumed_timout = True
@@ -862,7 +861,7 @@ class ParallelizationServer(net.Server):
                             break
                         # should_continue = False
                         if self.solvers(node):
-                            continue
+                            break
 
                         if isinstance(self.current.root, framework.SMT):
                             if self.config.incremental > 0:
@@ -1042,24 +1041,27 @@ class ParallelizationServer(net.Server):
                 if self.current.sp == 'portfolio':
                     return
                 if self.total_solvers > totalN_partitions + 1:
-                    # print("     partition leave -> " , self.idles, leaf)
-                    self.partition(leaf)
-                    break
-
-                elif self.idles >= config.partition_policy[1]:
-                    # print("     partition leave -> " , self.idles, leaf)
                     if not self.solvers(leaf):
                         # print("     Time to fill the nodes for partitioning -> " , self.idles, leaf)
                         config.solver_partition = True
                         break
-                    if self.partition(leaf):
-                        self.idles -= config.partition_policy[1]
-
-                        # print(" partition done with idles ... ",self.idles)
-                    else:
-                        break
-                else:
+                    self.partition(leaf)
                     break
+
+                # elif self.idles >= config.partition_policy[1]:
+                #     # print("     partition leave -> " , self.idles, leaf)
+                #     if not self.solvers(leaf):
+                #         # print("     Time to fill the nodes for partitioning -> " , self.idles, leaf)
+                #         config.solver_partition = True
+                #         break
+                #     if self.partition(leaf):
+                #         self.idles -= config.partition_policy[1]
+                #
+                #         # print(" partition done with idles ... ",self.idles)
+                #     else:
+                #         break
+                # else:
+                #     break
 
 
     def partition(self, node: framework.AndNode, force=False):
@@ -1133,11 +1135,12 @@ class ParallelizationServer(net.Server):
                     res = None
                 elif message == 'unknown':
                     res = 'Timout'
+                    config.level_info = None
                 elif config.status_info == message or config.status_info == 'unknown':
                     res = 'Passed'
                 if conflict == '':
                     conflict = None
-                print(data, message, time, conflict, sp, config.status_info, res, config.level_info,'masoud:sp-done')
+                print(data, message, time, conflict, sp, config.status_info, res, config.level_info)
                 config.level_info = None
                 config.status_info = None
                 config.conflict = None
