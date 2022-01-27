@@ -215,10 +215,11 @@ public:
     void start_lemma_threads()
     {
         std::string seed = this->header.get(net::Header::parameter, "seed");
-        int interval= atoi(this->header["lemma_push_min"].c_str()) + ( atoi(seed.substr(1, seed.size() - 1).c_str())
+//        std::cout<<"lemma_push_min: "<<this->header["lemma_push_min"].c_str()<<endl;
+//        std::cout<<"lemma_pull_min: "<<this->header["lemma_pull_min"].c_str()<<endl;
+        int interval = atoi(this->header["lemma_push_min"].c_str()) + ( atoi(seed.substr(1, seed.size() - 1).c_str())
                                                   % ( atoi(this->header["lemma_push_max"].c_str())- atoi(this->header["lemma_push_min"].c_str()) + 1 ) );
         getChannel().setClauseShareMode();
-
         getChannel().setClauseLearnInterval(interval/2);
 
         start_Thread(PartitionChannel::ThreadName::ClausePush, seed,this->header["lemma_push_min"],this->header["lemma_push_max"]);

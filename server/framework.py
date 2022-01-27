@@ -14,11 +14,11 @@ class SolveStatus(enum.Enum):
     unsat = -1
 
 class SplitPreference(enum.Enum):
-    sppref_eq = 'eq'
-    sppref_tterm = 'tterm'
-    sppref_noteq = 'noteq'
-    sppref_bterm = 'bterm'
-    sppref_tterm_neq = 'tterm_neq'
+    # sppref_eq = 'eq'
+    # sppref_tterm = 'tterm'
+    # sppref_noteq = 'noteq'
+    # sppref_bterm = 'bterm'
+    # sppref_tterm_neq = 'tterm_neq'
     sppref_blind = 'blind'
 
 class Node:

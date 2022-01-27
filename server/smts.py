@@ -36,15 +36,14 @@ if __name__ == '__main__':
     port = schedular.config.port
     if args.port:
         port = args.port
-    # print('port: ',port)
     if args.db_path:
         schedular.config.db_path = args.db_path
     schedular.config.db()
 
     if args.gui:
         schedular.config.gui = args.gui
-    if args.lemma_sharing:
-        schedular.config.lemma_sharing = args.lemma_sharing
+    # if args.lemma_sharing:
+    #     schedular.config.lemma_sharing = args.lemma_sharing
     if args.lemma_db:
         schedular.config.lemma_db_path = args.lemma_db
     if args.lemma_resend:
@@ -67,7 +66,7 @@ if __name__ == '__main__':
                 print('{} = {}'.format(attr_name, repr(getattr(schedular.config, attr_name))))
         sys.exit(0)
 
-    ps = schedular.ParallelizationServer(logging.getLogger('server'), port)
+    ps = schedular.ParallelizationServer(logging.getLogger('server'),port)
     if schedular.config.gui:
         if not schedular.config.db_path:
             logging.error('GUI requires a database. please specify one with -d')
@@ -79,16 +78,16 @@ if __name__ == '__main__':
 
 
 
-    # if schedular.config.lemma_sharing:
-    #     # done in separate thread because gethostbyname could take time
-    #     lemma_thread = threading.Thread(target=utils.run_lemma_server, args=(
-    #         schedular.config.build_path + '/lemma_server',
-    #         schedular.config.db_path if schedular.config.lemma_db_path else None,
-    #         schedular.config.lemma_resend,
-    #         port
-    #     ))
-    #     lemma_thread.daemon = True
-    #     lemma_thread.start()
+    if args.lemma_sharing:
+        # done in separate thread because gethostbyname could take time
+        lemma_thread = threading.Thread(target=utils.run_lemma_server, args=(
+            schedular.config.build_path + '/lemma_server',
+            schedular.config.db_path if schedular.config.lemma_db_path else None,
+            schedular.config.lemma_resend,
+            port
+        ))
+        lemma_thread.daemon = True
+        lemma_thread.start()
 
     if schedular.config.opensmt or schedular.config.z3spacer or schedular.config.sally:
         utils.run_solvers(
@@ -98,7 +97,7 @@ if __name__ == '__main__':
         )
 
     if args.file_paths:
-        sleep(2)
+        sleep(1)
         files_thread = threading.Thread(target=utils.send_files,
                                         args=(args.file_paths, ('127.0.0.1', port)))
         files_thread.daemon = True

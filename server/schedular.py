@@ -11,8 +11,8 @@ import traceback
 import random
 import time
 import re
-# import graphviz
-# from graphviz import nohtml
+import graphviz
+from graphviz import nohtml
 import math
 from time import sleep
 
@@ -387,7 +387,7 @@ class ParallelizationServer(net.Server):
                     #     sock.partitioning = False
                     if level == logging.ERROR: # if a solver sends an error then the instance is skipped
                         self.current.timeout = 0
-                        print(':error,solver memory',self.current.root.name, self.current.sp)
+                        print(message,self.current.root.name, self.current.sp)
                         self.close()
                         exit(0)
                         # self.counter += 1
@@ -433,10 +433,10 @@ class ParallelizationServer(net.Server):
                             instance.timeout = config.solving_timeout
                             instance.sp = sp.value
                             self.trees[header["name"]+sp.value] = instance
-                        instance = Instance(header["name"], payload.decode())
-                        instance.timeout = config.solving_timeout
-                        instance.sp = 'portfolio'
-                        self.trees[header["name"]+instance.sp] = instance
+                        # instance = Instance(header["name"], payload.decode())
+                        # instance.timeout = config.solving_timeout
+                        # instance.sp = 'portfolio'
+                        # self.trees[header["name"]+instance.sp] = instance
 
                     else:
                         instance = Instance(header["name"], payload.decode())
