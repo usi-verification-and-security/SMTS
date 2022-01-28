@@ -2,7 +2,7 @@
 #ifndef SMTS_LIB_SMTSTHREAD_H
 #define SMTS_LIB_SMTSTHREAD_H
 
-#include <thread>
+//#include <thread>
 #include <unordered_map>
 #include "lib/lib.h"
 #include "Stoppable.hpp"
