@@ -1,8 +1,3 @@
-//==============================================================================
-// HackingSTL : thread
-//
-// https://github.com/metarutaiga/HackingSTL
-//==============================================================================
 #pragma once
 
 #include <cstddef>
@@ -32,9 +27,9 @@ _LIBCPP_BEGIN_NAMESPACE_STD
             return __r;
         }
 _LIBCPP_END_NAMESPACE_STD
-#   if defined(_LIBCPP_THREAD)
-
-#   endif
+//#   if defined(_LIBCPP_THREAD)
+//#       error #include <thread> is already included.
+//#   endif
 #   define __libcpp_thread_create __libcpp_thread_create_ex
 #   include <thread>
 #   undef __libcpp_thread_create
