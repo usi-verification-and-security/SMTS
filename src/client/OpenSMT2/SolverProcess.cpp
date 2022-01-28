@@ -52,6 +52,7 @@ void SolverProcess::solve() {
     const char *msg;
     SMTConfig config;
     config.setRandomSeed(atoi(this->header.get(net::Header::parameter, "seed").c_str()));
+    std::cout<<"seed:"<<this->header.get(net::Header::parameter, "seed")<<endl;
     config.setOption(SMTConfig::o_sat_split_type,
                      SMTOption(this->header.get(net::Header::parameter, "split-type").c_str()), msg) ;
 #ifdef ENABLE_DEBUGING
@@ -271,6 +272,8 @@ void SolverProcess::search()
             }
 
             if (openSMTSolver->getResult() != s_Undef) {
+                synced_stream.println(true ? Color::FG_Red : Color::FG_DEFAULT, "[t comunication -> result: " + openSMTSolver->getResult().getValue()
+                ," from Node " + this->header["node"]);
                 openSMTSolver->setResult (s_Undef);
 
 #ifdef ENABLE_DEBUGING
@@ -321,7 +324,8 @@ void SolverProcess::search()
                                                       "[t comunication -> PID= " + to_string(getpid()) +
                                                       " ] Node is prefix of the current -> " + lemmaPulled.first);
 #endif
-
+                                std::string conflict = std::to_string(( (ScatterSplitter &) openSMTSolver->getMainSplitter().getSMTSolver() ).conflicts );
+                                std::cout<<";conflict before splitting: "<< conflict<<endl;
                                 injectPulledClauses(lemmaPulled.first);
                             }
                         }
