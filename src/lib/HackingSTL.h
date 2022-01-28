@@ -27,9 +27,9 @@ _LIBCPP_BEGIN_NAMESPACE_STD
             return __r;
         }
 _LIBCPP_END_NAMESPACE_STD
-//#   if defined(_LIBCPP_THREAD)
+#   if defined(_LIBCPP_THREAD)
 //#       error #include <thread> is already included.
-//#   endif
+#   endif
 #   define __libcpp_thread_create __libcpp_thread_create_ex
 #   include <thread>
 #   undef __libcpp_thread_create
@@ -47,9 +47,9 @@ _LIBCPP_END_NAMESPACE_STD
 #if __GLIBCXX__
 #   include <limits.h>
 #   include <pthread.h>
-//#   if defined(_GLIBCXX_THREAD)
+#   if defined(_GLIBCXX_THREAD)
 //#       error #include <thread> is already included.
-//#   endif
+#   endif
 #   define _M_start_thread _M_start_thread_ex
 #   include <thread>
 #   undef _M_start_thread
@@ -109,7 +109,7 @@ _LIBCPP_END_NAMESPACE_STD
     }
     _STD_END
 #   if defined(_THREAD_)
-#       error #include <thread> is already included.
+//#       error #include <thread> is already included.
 #   endif
 #   define _beginthreadex(a,b,c,d,e,f) _beginthreadex(a,_thread_setstacksize(),c,d,e,f)
 #   include <thread>
