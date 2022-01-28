@@ -47,9 +47,9 @@ _LIBCPP_END_NAMESPACE_STD
 #if __GLIBCXX__
 #   include <limits.h>
 #   include <pthread.h>
-#   if defined(_GLIBCXX_THREAD)
-#       error #include <thread> is already included.
-#   endif
+//#   if defined(_GLIBCXX_THREAD)
+//#       error #include <thread> is already included.
+//#   endif
 #   define _M_start_thread _M_start_thread_ex
 #   include <thread>
 #   undef _M_start_thread
