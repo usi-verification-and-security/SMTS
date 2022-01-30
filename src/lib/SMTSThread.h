@@ -2,11 +2,11 @@
 #ifndef SMTS_LIB_SMTSTHREAD_H
 #define SMTS_LIB_SMTSTHREAD_H
 
-//#include <thread>
+#include <thread>
 #include <unordered_map>
 #include "lib/lib.h"
 #include "Stoppable.hpp"
-#include "lib/HackingSTL.h"
+//#include "lib/HackingSTL.h"
 
 class SMTSThread {
 private:
@@ -78,9 +78,9 @@ public:
     void start_Thread(PartitionChannel::ThreadName tname, const string& seed = std::string(), const string& td_min = std::string(),
                       const string& td_max = std::string())
     {
-        std::thread thread = std::stacking_thread(8*1024*1024, &SMTSThread::worker, this, tname, seed, td_min, td_max);
-//        std::thread th( &SMTSThread::worker, this, tname, seed, td_min, td_max);
-        vecOfThreads.push_back( std::move(thread) );
+//        std::thread thread = std::stacking_thread(8*1024*1024, &SMTSThread::worker, this, tname, seed, td_min, td_max);
+        std::thread th( &SMTSThread::worker, this, tname, seed, td_min, td_max);
+        vecOfThreads.push_back( std::move(th) );
     }
 //    void forceStop_Thread(const std::string &tname)
 //    {

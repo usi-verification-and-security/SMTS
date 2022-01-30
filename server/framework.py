@@ -64,7 +64,6 @@ class Node:
         return self._children.__iter__()
 
     def __len__(self):
-        # print(self.path())
         return self._children.__len__()
 
     def path(self, nodes=False):

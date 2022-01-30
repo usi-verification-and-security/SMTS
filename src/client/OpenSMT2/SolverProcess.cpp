@@ -281,21 +281,20 @@ void SolverProcess::search()
 #endif
                 getChannel().waitForQueryOrTemination(lock_channel);
 //                std::cout <<defred<< "[t comunication -> PID= "+to_string(getpid())+" ]  after waiting to receive command ... ]"<<def1<<endl ;
-//                cv.wait(lock, [&] { return (getChannel().shouldTerminate() or not header_Temp.empty());});
                 if (getChannel().shouldTerminate())
-                {
                     break;
-                }
-
                 std::unique_lock<std::mutex> lock(mtx_listener_solve);
-                PartitionChannel::Task task = this->wait(0);
+                if ( getChannel().get_queris()[0] != PartitionChannel::Command.Partition)
+                {
+                    PartitionChannel::Task task = this->wait(0);
 //                std::cout <<defred<< "[t comunication -> PID= "+to_string(getpid())+" ]  after reading incremental params ... ]"<<def1<<endl ;
 //                    getChannel().getMutex().lock();
-                smtlib = task.smtlib;
-                header_Temp.clear();
-                instance_Temp.clear();
-                getChannel().clear_query();
-                getChannel().clearShouldStop();
+                    smtlib = task.smtlib;
+                }
+                getChannel().pop_front_query();
+                header_Temp.pop_front();
+                instance_Temp.pop_front();
+
 //                checkForlearned_pushBeforIncrementality();
 //                std::cout << "\033[1;51m [t solver is incremental mode after checkForlearned_pushBeforIncrementality]: \033[0m\t" ;
 
