@@ -523,12 +523,19 @@ class ParallelizationServer(net.Server):
                 solved_moved_node = header['node']
                 del header['solved-moved']
         solving = self.current
+
+        def active_solvers():
+            s_counter = 0
+            for s in self._rlist:
+                if isinstance(s, Solver):
+                    s_counter += 1
+            return s_counter
         # if the current tree is already solved or timed out: stop it
         if isinstance(self.current, Instance):
-            # if len(self._rlist)-1 != self.total_solvers:
-            #     print(':error,solvers are lost',self.current.root.name,self.current.sp)
-            #     self.close()
-            #     exit(0)
+            if active_solvers() != self.total_solvers:
+                print(':error,solvers are lost',self.current.root.name,self.current.sp)
+                self.close()
+                exit(0)
             if self.current.root.status != framework.SolveStatus.unknown or self.current.when_timeout < 0:
                 if self.config.visualize_tree:
                     self.render_vTree(time.time() - self.current.started)
@@ -948,9 +955,10 @@ class ParallelizationServer(net.Server):
             # if need partition: ask partitions
 
             # for leaf in attempted_notPartitioned:
-            #     if self.current.sp == 'portfolio':
-            #         return
+
             if to_partition_node is not None:
+                # if len(to_partition_node.path()) == 2:
+                #     return
                 if self.total_solvers > totalN_partitions + 1:
                     self.partition(to_partition_node)
                         # config.solver_partition = True
