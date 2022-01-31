@@ -291,12 +291,12 @@ public:
 #ifdef ENABLE_DEBUGING
             std::cout << "[t pull ]-> PID= "+to_string(getpid())+" ] SReading lemmas from LemmaServer for node -> "+header["node"]<< std::endl;
 #endif
-            _l.unlock();
+//            _l.unlock();
             this->lemma.lemma_mutex.lock();
             this->lemma.server->write(header, "");
             this->lemma.server->read(header, payload);
             this->lemma.lemma_mutex.unlock();
-            _l.lock();
+//            _l.lock();
         } catch (net::SocketException &ex) {
             this->lemma.lemma_mutex.unlock();
             this->lemma.errors++;
