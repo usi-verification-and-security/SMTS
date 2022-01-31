@@ -284,7 +284,6 @@ void SolverProcess::search()
                 if (getChannel().shouldTerminate())
                     break;
                 std::unique_lock<std::mutex> lock(mtx_listener_solve);
-                this->header["node"] = header_Temp[0]["node_"];
                 if ( getChannel().get_queris()[0] != PartitionChannel::Command.Partition)
                 {
                     PartitionChannel::Task task = this->wait(0);
@@ -296,6 +295,7 @@ void SolverProcess::search()
                 header_Temp.pop_front();
                 instance_Temp.pop_front();
                 node_PulledLemmas.clear();
+                getChannel().clearInjectClause();
 //                checkForlearned_pushBeforIncrementality();
 //                std::cout << "\033[1;51m [t solver is incremental mode after checkForlearned_pushBeforIncrementality]: \033[0m\t" ;
 

@@ -35,8 +35,8 @@ void SolverServer::log(log_level level, std::string message) {
 void SolverServer::handle_close(net::Socket &socket) {
     if (&socket == &this->SMTSServer) {
         this->log(Logger::INFO, "server closed the connection");
-//        exit(0);
-        this->stop_solver();
+        exit(0);
+//        this->stop_solver();
     } else if (this->solver && &socket == this->solver->reader()) {
         this->log(Logger::ERROR, "unexpected solver quit");
         net::Header header;
