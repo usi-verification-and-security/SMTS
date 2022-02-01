@@ -47,7 +47,12 @@ void SolverProcess::init() {
         this->header.set(net::Header::parameter, "split", default_split);
     }
 }
-
+void static segfault_sigaction(int signal, siginfo_t *si, void *arg)
+{
+//    this->error(std::string("Caught segfault at address " + std::to_string(si->si_errno)) +" "+ std::to_string(signal));
+    printf("Caught segfault at address %p\n", si->si_errno);
+    exit(0);
+}
 void SolverProcess::solve() {
     const char *msg;
     SMTConfig config;
@@ -176,8 +181,8 @@ void SolverProcess::clausePush(const string & seed, const string & n1, const str
                     {
                         for (auto clause = toPushClause.second.cbegin(); clause != toPushClause.second.cend(); ++clause) {
 
-                            if (clause->first.find(".frame") != string::npos) {
-                                this->error(std::string("frame found: ") + clause->first);
+                            if (clause->first.find(".frame") != string::npos or clause->first.find(".ite") != string::npos) {
+                                this->error(std::string("unusual clause found: "));
 //                                synced_stream.println(true ? Color::FG_Red : Color::FG_DEFAULT, "[t push frame caught: "+clause->first);
 //                                continue;
                             }
@@ -582,7 +587,12 @@ void SolverProcess::injectPulledClauses(const std::string& nodePath) {
 //    if (pulled_lemmas[nodePath].empty()) return;
 //    if (openSMTSolver->learned_push)
 //        openSMTSolver->getMainSplitter().pop();
-
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(struct sigaction));
+    sigemptyset(&sa.sa_mask);
+    sa.sa_sigaction = segfault_sigaction;
+    sa.sa_flags   = SA_SIGINFO;
+    sigaction(SIGBUS, &sa, NULL);
 #ifdef ENABLE_DEBUGING
     synced_stream.println(true ? opensmt::Color::FG_Green : opensmt::Color::FG_DEFAULT,
                           "[t comunication -> PID= "+to_string(getpid())+" ] inject accumulated clauses -> Size:" + to_string(node_PulledLemmas[nodePath].size()));

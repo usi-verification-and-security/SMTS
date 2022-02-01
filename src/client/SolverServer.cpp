@@ -6,6 +6,7 @@
 #include "lib/Logger.h"
 #include "SolverServer.h"
 #include <iostream>
+#include <signal.h>
 
 SolverServer::SolverServer(const net::Address &server) :
         net::Server(),
@@ -31,8 +32,18 @@ void SolverServer::log(log_level level, std::string message) {
     Logger::log(level, message);
 #endif
 }
-
+static void segfault_sigaction(int signal, siginfo_t *si, void *arg)
+{
+    printf("Caught segfault at address %p\n", si->si_addr);
+    exit(0);
+}
 void SolverServer::handle_close(net::Socket &socket) {
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(struct sigaction));
+    sigemptyset(&sa.sa_mask);
+    sa.sa_sigaction = segfault_sigaction;
+    sa.sa_flags   = SA_SIGINFO;
+    sigaction(SIGSEGV, &sa, NULL);
     if (&socket == &this->SMTSServer) {
         this->log(Logger::INFO, "server closed the connection");
         exit(0);
