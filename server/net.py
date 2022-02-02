@@ -65,7 +65,7 @@ class Socket(object):
                     i += length
                 header[pair[0].decode()] = pair[1].decode()
             i += 1
-            return header, content[i:], False
+            return header, content[i:]
 
     def write(self, header, payload):
         dump = b''
@@ -152,14 +152,14 @@ class Server(object):
                     continue
                 try:
                     # print("Server: Start to read -> time =", datetime.now().strftime("%H:%M:%S"))
-                    header, message, partition_recieved = sock.read()
+                    header, message = sock.read()
                     # print("     Finished Reading -> Header",header)
                 except ConnectionAbortedError:
                     self.handle_close(sock)
                     sock.close()
                     self._rlist.remove(sock)
                 else:
-                    self.handle_message(sock, header, message, partition_recieved)
+                    self.handle_message(sock, header, message)
         except KeyboardInterrupt:
             raise
         except Exception as exp:

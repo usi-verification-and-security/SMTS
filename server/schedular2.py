@@ -11,9 +11,8 @@ import traceback
 import random
 import time
 import re
-# import graphviz
-# from graphviz import nohtml
-import math
+import graphviz
+from graphviz import nohtml
 from time import sleep
 
 __author__ = 'Matteo Marescotti'
@@ -102,7 +101,7 @@ class Solver(net.Socket):
                   }
         self.write(header, smt)
         self._db_log('-')
-        self.or_waiting = []
+        # self.or_waiting = []
         self.started = time.time()
         if node.started is None:
             node.started = time.time()
@@ -197,23 +196,22 @@ class Solver(net.Socket):
         self._db_log('OR', {'node': str(node.path()), 'solver': str(self.remote_address)})
 
     def read(self):
-        partition_recieved = False
         global totalN_partitions
-        header, payload, partition_recieved = super().read()
+        header, payload = super().read()
         if 'report' not in header:
-            return {}, b'', partition_recieved
+            return {}, b''
 
         if self.node is None:
-            return header, payload, partition_recieved
+            return header, payload
 
         if 'name' not in header or 'node' not in header:
-            return header, payload, partition_recieved
+            return header, payload
 
         if self.node.root.name != header['name']:
             # print("                 event ... ",header['node'],self.node.root.name,header['name'],str(self.node.path()))
              return {}, b'', False
         # if self.node.root.name != header['name'] or str(self.node.path()) != header['node']:
-        #     return {}, b'', partition_recieved
+        #     return {}, b''
             # Handle CNF request
         if header['report'].startswith('cnf'):
 
@@ -253,14 +251,14 @@ class Solver(net.Socket):
                 for partition in payload.decode().split('\0'):
                     if len(partition) == 0:
                         continue
-                    partition_recieved = True
                     child = framework.AndNode(node, '(assert {})'.format(partition),  config.node_timeout)
                     self._db_log('AND', {'node': str(child.path()), 'smt': child.smt})
+                header['partition_recieved'] = True
             except BaseException as ex:
                 header['report'] = 'error:(server) error reading partitions: {}'.format(traceback.format_exc())
                 node.clear()
-                self.ask_partitions(config.partition_policy[self.node.level % len(config.partition_policy)])
-                self.partitioning = True
+                # self.ask_partitions(config.partition_policy[self.node.level % len(config.partition_policy)])
+                # self.partitioning = True
             else:
                 header['report'] = 'info:(server) received {} partitions'.format(len(node))
                 if not config.conflict:
@@ -268,50 +266,56 @@ class Solver(net.Socket):
                 if not config.status_info:
                     config.status_info = header['statusinf']
                 if node.parent.status != framework.SolveStatus.unknown:
-                    partition_recieved = False
                     node.clear()
                 if len(node) != config.partition_policy[1]:
                     totalN_partitions = totalN_partitions - config.partition_policy[1] + len(node)
-            return header, payload, partition_recieved
+            return header, payload
 
         if header['report'] in framework.SolveStatus.__members__:
             status = framework.SolveStatus.__members__[header['report']]
             if header['node'] != str(self.node.path()):
-                header['solved-moved'] = True
-                return header, payload, partition_recieved
-            if self.node.status == framework.SolveStatus.unknown:
-                if not config.conflict:
-                    config.conflict = header['conflict']
-                if not config.status_info:
-                    config.status_info = header['statusinf']
-                self._db_log('STATUS', header)
-                path = self.node.path(True)
-                self.node.status = status
-                path.reverse()
-                # print("path . . ..........", path)
-                if status == framework.SolveStatus.unsat:
-                    for child in self.node.all():
-                        # print('solved node - > ',child.path())
-                        if child.status == framework.SolveStatus.unknown:
-                            if isinstance(child, framework.AndNode):
-                                child.status = framework.SolveStatus.unsat
+                if self.or_waiting:
+                    node = self.or_waiting.pop()
+                    node.parent.status = status
+                    if status == framework.SolveStatus.unsat:
+                        for child in node.all():
+                            if child.status == framework.SolveStatus.unknown:
+                                if isinstance(child, framework.AndNode):
+                                    child.status = framework.SolveStatus.unsat
+            if self.node.status != framework.SolveStatus.unknown:
+                return header, payload
+            if not config.conflict:
+                config.conflict = header['conflict']
+            if not config.status_info:
+                config.status_info = header['statusinf']
+            self._db_log('STATUS', header)
+            path = self.node.path(True)
+            self.node.status = status
+            path.reverse()
+            # print("path . . ..........", path)
+            if status == framework.SolveStatus.unsat:
+                for child in self.node.all():
+                    # print('solved node - > ',child.path())
+                    if child.status == framework.SolveStatus.unknown:
+                        if isinstance(child, framework.AndNode):
+                            child.status = framework.SolveStatus.unsat
 
-                for node in path:
-                    # print("node . . ..........", node)
-                    if node.status != framework.SolveStatus.unknown:
-                        if isinstance(node, framework.AndNode):
-                            self._db_log('SOLVED', {'status': node.status.name, 'node': str(node.path())})
-                    else:
-                        break
-                if status != framework.SolveStatus.unknown:
-                    if self.node == self.node.root:
-                        config.level_info = 'root'
-                    else:
-                        config.level_info = 'child'
+            for node in path:
+                # print("node . . ..........", node)
+                if node.status != framework.SolveStatus.unknown:
+                    if isinstance(node, framework.AndNode):
+                        self._db_log('SOLVED', {'status': node.status.name, 'node': str(node.path())})
                 else:
-                    self.stop()
+                    break
+            if status != framework.SolveStatus.unknown:
+                if self.node == self.node.root:
+                    config.level_info = 'root'
+                else:
+                    config.level_info = 'child'
+            else:
+                self.stop()
 
-        return header, payload, partition_recieved
+        return header, payload
 
     def _db_log(self, event: str, data: dict = None):
         if not config.db():
@@ -349,7 +353,7 @@ class ParallelizationServer(net.Server):
         self.trees = dict()
         self.current = None
         self.idle_solvers = set()
-        self.solved_solvers = set()
+        # self.solved_solvers = set()
         self.total_solvers = 0
         self.idles = 0
         self.seed_counter = config.lemmaPull_timeoutMax
@@ -360,7 +364,7 @@ class ParallelizationServer(net.Server):
             global comment
             comment = 'Lemma Server OFF'
             self.v_tree = graphviz.Digraph('f',
-                                           node_attr={'shape': 'record','width': '.8%', 'height': '1.2%', 'fillcolor':'white'})
+                                           node_attr={'shape': 'record','width': '1%', 'height': '1%', 'fillcolor':'white'})
             # self.v_tree.graph_attr.setdefault('height', '1300px');
             self.node_dict = dict()
             self.node_alias = dict()
@@ -371,7 +375,7 @@ class ParallelizationServer(net.Server):
         if self.config.enableLog:
             self.log(logging.DEBUG, 'new connection from {}'.format(sock.remote_address))
 
-    def handle_message(self, sock, header, payload, partition_recieved):
+    def handle_message(self, sock, header, payload):
         if self.config.enableLog:
             self.log(logging.DEBUG, 'message from {}'.format(sock.remote_address),
                      {'header': header, 'payload': payload.decode()})
@@ -404,12 +408,12 @@ class ParallelizationServer(net.Server):
                 if self.config.visualize_tree:
                     self.collectData_vTree(sock, message, header)
                 if self.config.enableLog:
-                    # p_str = re.search(r"received [0-9]+ partitions", header['report'])
-                    # if p_str:
-                    #     self.log(level, '{}: {}'.format(header['node'], message), {'header': header, 'payload': payload.decode()})
-                    # else:
-                    self.log(level, '{}: {}'.format(sock, message), {'header': header, 'payload': payload.decode()})
-            self.entrust(partition_recieved, header)
+                    p_str = re.search(r"received [0-9]+ partitions", header['report'])
+                    if p_str:
+                        self.log(level, '{}: {}'.format(header['node'], message), {'header': header, 'payload': payload.decode()})
+                    else:
+                        self.log(level, '{}: {}'.format(sock, message), {'header': header, 'payload': payload.decode()})
+            self.entrust(header)
             return
         if 'command' in header:
             # if terminate command is found, close the server
@@ -433,10 +437,10 @@ class ParallelizationServer(net.Server):
                             instance.timeout = config.solving_timeout
                             instance.sp = sp.value
                             self.trees[header["name"]+sp.value] = instance
-                        # instance = Instance(header["name"], payload.decode())
-                        # instance.timeout = config.solving_timeout
-                        # instance.sp = 'portfolio'
-                        # self.trees[header["name"]+instance.sp] = instance
+                        instance = Instance(header["name"], payload.decode())
+                        instance.timeout = config.solving_timeout
+                        instance.sp = 'portfolio'
+                        self.trees[header["name"]+instance.sp] = instance
 
                     else:
                         instance = Instance(header["name"], payload.decode())
@@ -512,27 +516,30 @@ class ParallelizationServer(net.Server):
     def level_children(self, level):
         return self.config.partition_policy[level % len(self.config.partition_policy)]
 
-    def entrust(self, partition_recieved=None, header=None):
+    def entrust(self, header=None):
         global totalN_partitions
         p_node = None
-        solved_moved_node = None
-        if partition_recieved:
-            p_node = header['node']
+        # solved_moved_node = None
+        partition_recieved = False
         if header:
-            if 'solved-moved' in header:
-                solved_moved_node = header['node']
-                del header['solved-moved']
+            if 'partition_recieved' in header:
+                p_node = header['node']
+                partition_recieved = True
+                del header['partition_recieved']
+            # elif 'solved-moved' in header:
+            #     solved_moved_node = header['node']
+            #     del header['solved-moved']
         solving = self.current
 
-        def active_solvers():
-            s_counter = 0
-            for s in self._rlist:
-                if isinstance(s, Solver):
-                    s_counter += 1
-            return s_counter
+        # def active_solvers():
+        #     s_counter = 0
+        #     for s in self._rlist:
+        #         if isinstance(s, Solver):
+        #             s_counter += 1
+        #     return s_counter
         # if the current tree is already solved or timed out: stop it
         if isinstance(self.current, Instance):
-            if active_solvers() != self.total_solvers:
+            if sum(map(lambda s : isinstance(s, Solver), self._rlist)) != self.total_solvers:
                 print(':error,solvers are lost',self.current.root.name,self.current.sp)
                 self.close()
                 exit(0)
@@ -591,7 +598,6 @@ class ParallelizationServer(net.Server):
                 self.counter = 0
                 self.idles = 0
                 self.idle_solvers.clear()
-                sleep(0.5)
         if self.current is None:
             schedulables = [instance for instance in self.trees.values() if
                             instance.root.status == framework.SolveStatus.unknown and instance.when_timeout > 0]
@@ -641,8 +647,8 @@ class ParallelizationServer(net.Server):
             # nodes.sort(reverse=True)
             nodes.sort(reverse=False)
 
-            def all_active_nodes():
-                return (node for node in nodes if (node.status == framework.SolveStatus.unknown and
+            def all_active_nodes(sub_tree):
+                return (node for node in sub_tree if (node.status == framework.SolveStatus.unknown and
                                                    isinstance(node, framework.AndNode) and not node.processed))
 
             def all_active_leaves():
@@ -654,7 +660,7 @@ class ParallelizationServer(net.Server):
                                                    and not node.processed) or (isinstance(node, framework.SMT) and not node.processed))
 
             def all_current_active_nodes():
-                return (node for node in nodes if (node.status == framework.SolveStatus.unknown and not isinstance(node, framework.OrNode) and
+                return (node for node in nodes if (node.status  == framework.SolveStatus.unknown and not isinstance(node, framework.OrNode) and
                                                    not node.processed and node._started is not None))
             def getPartitionedNode(p_node):
                 for node in nodes:
@@ -677,6 +683,7 @@ class ParallelizationServer(net.Server):
             movable_solvers = []
             solved_solvers = set()
             to_partition_node = None
+            solver_partition = False
             # for node in nodes:
             #     if isinstance(node, framework.AndNode) and node.started is not None and not node.processed:
             #         if node.status == framework.SolveStatus.unknown and not node.is_timeout and (node.started + config.node_timeout <= time.time()):
@@ -693,9 +700,10 @@ class ParallelizationServer(net.Server):
                 if isinstance(node, framework.AndNode) and not node.processed:
                     if p_node and str(node.path()) == p_node and node.status == framework.SolveStatus.unknown:
                         p_node = node
-                    elif solved_moved_node and str(node.path()) == solved_moved_node:
-                        node.status = framework.SolveStatus.__members__[header['report']]
-                        return
+                    # elif solved_moved_node and str(node.path()) == solved_moved_node:
+                    #     node.status = framework.SolveStatus.__members__[header['report']]
+                    #     print('       solved solver in forked -> ', solver)
+                    #     return
                     if node.status == framework.SolveStatus.unsat:
                         if node.parent:
                             if node.parent.parent.status == framework.SolveStatus.unknown:
@@ -708,9 +716,9 @@ class ParallelizationServer(net.Server):
                                         #     solver.incremental(self.current.root)
                                     else:
                                         totalN_partitions -= 1
-                                    self.solved_solvers.add(solver)
+                                    # self.solved_solvers.add(solver)
                                     solved_solvers.add(solver)
-                                # node.parent.parent.processed = True
+                                node.parent.parent.processed = True
                                         # print('       solved solver was in idle -> ', solver)
                                     # else:
                                     #     # print('       solved solver parent-> ', solver)
@@ -729,30 +737,34 @@ class ParallelizationServer(net.Server):
                                 # print('       solved solver was in idle -> ', solver)
                             else:
                                 totalN_partitions -= 1
-                            self.solved_solvers.add(solver)
+                            # self.solved_solvers.add(solver)
                             solved_solvers.add(solver)
                                 # if solver.node is not self.current.root:
                                 #     solver.incremental(self.current.root)
                                 # print('       solved solver -> ', solver)
                     elif config.node_timeout and not node.is_timeout and (node.started and node.started + config.node_timeout <= time.time()):
-                        if node.partitioning and node.childeren():
+                        if node.partitioning and (node._children[0])._children:
                             # print("               timout node has partition . . . ",node)
-                            node.processed = True
-                            node.is_timeout = True
                             global estimate_partition_time
                             # for ch in node.childeren():
                             if node.assumed_timout:
                                 # node.assumed_timout = False
                                 for solver in self.solvers(node):
+                                    # if solver.or_waiting:
+                                    #     return
                                     # print('              node has been assumed_timout - done partition -> ',self.idles,node.path() )
                                     self.idle_solvers.add(solver)
                                     # print("     idle .. ",self.idle_solvers)
                                     # config.node_timeout += estimate_partition_time+1
                             else:
                                 for solver in self.solvers(node):
+                                    # if solver.or_waiting:
+                                    #     return
                                     # print('              Timeout solver - has partition -> ',self.idles,node.path() )
                                     self.idle_solvers.add(solver)
                                     totalN_partitions -= 1
+                            node.processed = True
+                            node.is_timeout = True
                                 # config.node_timeout += estimate_partition_time+1
                                 # if self.idles >= config.partition_policy[1]:
                                 #     print('    now partition TO ',self.idles)
@@ -763,6 +775,8 @@ class ParallelizationServer(net.Server):
                             # self.idles += 1
                             for solver in self.solvers(node):
                                 # print('    Timeout solvers n-p ',len(self.idle_solvers) ,solver)
+                                # if solver.or_waiting:
+                                #     return
                                 totalN_partitions -= 1
                                 self.idle_solvers.add(solver)
                                 # print('    Timeout solvers n-p ATO ',node.path())
@@ -774,13 +788,27 @@ class ParallelizationServer(net.Server):
                         if to_partition_node is None:
                             to_partition_node = node
                             if not self.solvers(node) and node.assumed_timout:
-                                config.solver_partition = True
-            while 0 != len(solved_solvers):
-                for ch in self.current.root.childeren():
-                    if len(solved_solvers) != 0 and ch.status == framework.SolveStatus.unknown:
-                        s_solver = solved_solvers.pop()
-                        if s_solver.node is not ch:
-                            s_solver.incremental(ch)
+                                solver_partition = True
+            if solved_solvers:
+                childs = self.current.root.childeren()
+                while 0 != len(solved_solvers):
+                    for child in childs:
+                        try:
+                            all_active_node = list(all_active_nodes(child.all()))
+                            for ch in sorted(all_active_node, key=lambda leave: len(self.solvers(leave)), reverse=False):
+                                if len(solved_solvers) != 0:
+                                    s_solver = solved_solvers.pop()
+                                    print(" Solved -> Move from: ",s_solver, " to : ",ch.path())
+                                    s_solver.incremental(ch)
+                                    raise StopIteration
+
+                        except StopIteration:
+                            continue
+                # for ch in childs:
+                #     if len(solved_solvers) != 0 and ch.status == framework.SolveStatus.unknown:
+                #         s_solver = solved_solvers.pop()
+                #         if s_solver.node is not ch:
+                #             s_solver.incremental(ch)
             if partition_recieved:
                 if config.portfolio_min:
                     # if totalN_partitions > 0:
@@ -800,18 +828,24 @@ class ParallelizationServer(net.Server):
                     # print("     len of the solvers", self.total_solvers ,totalN_partitions,len(solvers), self.config.portfolio_min)
                     for solver in solvers:
                         if 0 <= self.config.portfolio_min < counter:
-                            if not solver.or_waiting and not solver in self.solved_solvers:
+                            if solver not in self.idle_solvers:
                                 counter -= 1
                                 # print("             Redundent_Solver",solver)
                                 movable_solvers.append(solver)
                 else:
                     movable_solvers = list(self.solvers(True))
-                if self.solved_solvers:
-                    for node in p_node.childeren():
-                        if len(self.solved_solvers) == 0:
-                            break
-                        solved_solver = self.solved_solvers.pop()
-                        solved_solver.incremental(node)
+            # if self.solved_solvers:
+            #     for node in un_attempted_active_leaves():
+            #         try:
+            #             for solver in self.solved_solvers:
+            #                 if solver.node.is_ancestor(node):
+            #                     self.solved_solvers.remove(solver)
+            #                     solver.incremental(node)
+            #                     raise StopIteration
+            #         except StopIteration:
+            #             continue
+            #             # solved_solver = self.solved_solvers.pop()
+            #             # solved_solver.incremental(node)
                 while 0 != len(movable_solvers):
                     for node in p_node.childeren():
                         if len(movable_solvers) == 0:
@@ -828,6 +862,8 @@ class ParallelizationServer(net.Server):
                             continue
 
             # if solved_solvers:
+            #     sorted(map(lambda n : isinstance(n, framework.AndNode) and n.status == framework.SolveStatus.unknown
+            #     and not n.processed, nodes), key=lambda leave: leave.level, reverse=True)
             #     all_active_leaves_l = list(all_active_leaves())
             #     all_active_leaves_l = sorted(all_active_leaves_l,  key=lambda leave: len(self.solvers(leave)), reverse=False)
             #     all_active_leaves_l =  sorted(all_active_leaves_l,  key=lambda leave: leave.level, reverse=True)
@@ -866,34 +902,34 @@ class ParallelizationServer(net.Server):
                         break
                     # should_continue = False
                     # print("     idle_solvers , Dest_Node - >" ,len(self.idle_solvers),node)
+                    try:
+                        for solver in self.idle_solvers:
+                            if solver.node.is_ancestor(node):
+                                self.idle_solvers.remove(solver)
+                                # print("                  > 0 ...     go ansetor -> " ,solver.node.path(), node.path())
+                                solver.incremental(node)
 
-                    if isinstance(self.current.root, framework.SMT):
-                        try:
-                            for solver in self.idle_solvers:
-                                if solver.node.is_ancestor(node):
-                                    self.idle_solvers.remove(solver)
-                                    # print("                  > 0 ...     go ansetor -> " ,solver.node.path(), node.path())
-                                    solver.incremental(node)
+                                raise StopIteration
+                            elif len(solver.node) == 0 and solver.node.assumed_timout and not node.is_timeout and\
+                                   not self.solvers(node) and solver.node is not node:
+                                self.idle_solvers.remove(solver)
+                                # print("                  > 0 ...     backtrack -> " ,solver.node.path(), node.path())
+                                solver.incremental(node)
 
-                                    raise StopIteration
-                                elif len(solver.node) == 0 and solver.node.assumed_timout and solver.node is not node:
-                                    self.idle_solvers.remove(solver)
-                                    # print("                  > 0 ...     backtrack -> " ,solver.node.path(), node.path())
-                                    solver.incremental(node)
+                                raise StopIteration
 
-                                    raise StopIteration
-
-                        except StopIteration:
-                            continue
+                    except StopIteration:
+                        continue
                 # assumed_timout_leaves_l = list(assumed_timout_leaves())
                 # assumed_timout_leaves_l = sorted(assumed_timout_leaves_l, key = lambda leave: leave, reverse=True)
                 # print("")
-                if config.solver_partition:
-                    config.solver_partition = False
+                if solver_partition:
                     # print("   go to_partition_node", to_partition_node)
                     if self.idle_solvers:
-                        # print("   stuck in partitioning", to_partition_node)
-                        solver = self.idle_solvers.pop()
+                        idles = sorted(self.idle_solvers,  key = lambda s:
+                        str(to_partition_node.path())[1:len(str(s.node.path()))-1] == str(s.node.path())[1:len(str(s.node.path()))-1], reverse=True)
+                        solver = idles.pop()
+                        print("   stuck in partitioning", solver.node.path(), to_partition_node.path())
                         solver.incremental(to_partition_node)
                     # for node in attempted_notPartitioned_leaves():
                     #     if len(self.idle_solvers) == 0:

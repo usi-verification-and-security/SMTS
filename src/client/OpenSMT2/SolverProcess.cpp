@@ -71,8 +71,6 @@ void SolverProcess::solve() {
 
     try
     {
-//        std::cout<<"search: child: "<<child_pid<<endl;
-//        std::cout<<"search: pid: "<<getpid<<endl;
         if (forked)
             kill_child();
     }
@@ -180,13 +178,13 @@ void SolverProcess::clausePush(const string & seed, const string & n1, const str
                     for ( const auto &toPushClause : clauses )
                     {
                         for (auto clause = toPushClause.second.cbegin(); clause != toPushClause.second.cend(); ++clause) {
-
-                            if (clause->first.find(".frame") != string::npos or clause->first.find(".ite") != string::npos) {
+#ifdef ENABLE_DEBUGING
+                            if (clause->first.find(".frame") != string::npos) {
                                 this->error(std::string("unusual clause found: "));
 //                                synced_stream.println(true ? Color::FG_Red : Color::FG_DEFAULT, "[t push frame caught: "+clause->first);
 //                                continue;
                             }
-
+#endif
                             toPush_lemmas[toPushClause.first].push_back(net::Lemma(clause->first, clause->second));
                         }
 #ifdef ENABLE_DEBUGING
@@ -249,8 +247,8 @@ void SolverProcess::search()
 
             getChannel().setWorkingNode(this->header["node"]);
             getChannel().getMutex().unlock();
-            if (smtlib.find(".frame") != string::npos)
-                this->error(std::string("frame found: ") + smtlib);
+//            if (smtlib.find(".ite") != string::npos)
+//                this->error(std::string("ite found: ") + smtlib);
 //                synced_stream.println(true ? Color::FG_Red : Color::FG_DEFAULT, "[t comunication frame caught in partition: "+ smtlib);
             openSMTSolver->preInterpret->interpFile((char *) (smtlib + this->header["query"]).c_str());
 
@@ -455,7 +453,7 @@ void SolverProcess::partition(uint8_t n) {
             sleep(1);
         exit(0);
     });
-    printf("printed from child process - %d\n", pid);
+    printf("printed from child process - %d\n", getpid());
 
     struct sigaction sigterm_action;
     memset(&sigterm_action, 0, sizeof(sigterm_action));

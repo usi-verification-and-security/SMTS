@@ -40,6 +40,7 @@ class Node:
         self._partitioning = False
 
     def __repr__(self):
+        path = self.path()
         return '<{}:{}>'.format(
             self.path(),
             self.status.name
@@ -170,7 +171,8 @@ class AndNode(Node):
     def childeren(self):
         childs = []
         for ch in (self._children[0])._children:
-            childs.append(ch)
+            if ch.status == SolveStatus.unknown:
+                childs.append(ch)
         return childs
 
     @property

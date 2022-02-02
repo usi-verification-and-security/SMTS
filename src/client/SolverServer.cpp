@@ -38,12 +38,12 @@ static void segfault_sigaction(int signal, siginfo_t *si, void *arg)
     exit(0);
 }
 void SolverServer::handle_close(net::Socket &socket) {
-    struct sigaction sa;
-    memset(&sa, 0, sizeof(struct sigaction));
-    sigemptyset(&sa.sa_mask);
-    sa.sa_sigaction = segfault_sigaction;
-    sa.sa_flags   = SA_SIGINFO;
-    sigaction(SIGSEGV, &sa, NULL);
+//    struct sigaction sa;
+//    memset(&sa, 0, sizeof(struct sigaction));
+//    sigemptyset(&sa.sa_mask);
+//    sa.sa_sigaction = segfault_sigaction;
+//    sa.sa_flags   = SA_SIGINFO;
+//    sigaction(SIGSEGV, &sa, NULL);
     if (&socket == &this->SMTSServer) {
         this->log(Logger::INFO, "server closed the connection");
         exit(0);
