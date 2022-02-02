@@ -11,9 +11,9 @@ import traceback
 import random
 import time
 import re
-import graphviz
-from graphviz import nohtml
-from time import sleep
+if config.visualize_tree:
+    import graphviz
+    from graphviz import nohtml
 
 __author__ = 'Matteo Marescotti'
 
@@ -261,10 +261,10 @@ class Solver(net.Socket):
                 # self.partitioning = True
             else:
                 header['report'] = 'info:(server) received {} partitions'.format(len(node))
-                if not config.conflict:
-                    config.conflict = header['conflict']
-                if not config.status_info:
-                    config.status_info = header['statusinf']
+                # if not config.conflict:
+                #     config.conflict = header['conflict']
+                # if not config.status_info:
+                #     config.status_info = header['statusinf']
                 if node.parent.status != framework.SolveStatus.unknown:
                     node.clear()
                 if len(node) != config.partition_policy[1]:
@@ -284,10 +284,10 @@ class Solver(net.Socket):
                                     child.status = framework.SolveStatus.unsat
             if self.node.status != framework.SolveStatus.unknown:
                 return header, payload
-            if not config.conflict:
-                config.conflict = header['conflict']
-            if not config.status_info:
-                config.status_info = header['statusinf']
+            # if not config.conflict:
+            #     config.conflict = header['conflict']
+            # if not config.status_info:
+            #     config.status_info = header['statusinf']
             self._db_log('STATUS', header)
             path = self.node.path(True)
             self.node.status = status
@@ -307,11 +307,11 @@ class Solver(net.Socket):
                         self._db_log('SOLVED', {'status': node.status.name, 'node': str(node.path())})
                 else:
                     break
-            if status != framework.SolveStatus.unknown:
-                if self.node == self.node.root:
-                    config.level_info = 'root'
-                else:
-                    config.level_info = 'child'
+            # if status != framework.SolveStatus.unknown:
+            #     if self.node == self.node.root:
+            #         header['level'] = 'root'
+            #     else:
+            #         header['level'] = 'child'
             else:
                 self.stop()
 
@@ -437,10 +437,10 @@ class ParallelizationServer(net.Server):
                             instance.timeout = config.solving_timeout
                             instance.sp = sp.value
                             self.trees[header["name"]+sp.value] = instance
-                        instance = Instance(header["name"], payload.decode())
-                        instance.timeout = config.solving_timeout
-                        instance.sp = 'portfolio'
-                        self.trees[header["name"]+instance.sp] = instance
+                        # instance = Instance(header["name"], payload.decode())
+                        # instance.timeout = config.solving_timeout
+                        # instance.sp = 'portfolio'
+                        # self.trees[header["name"]+instance.sp] = instance
 
                     else:
                         instance = Instance(header["name"], payload.decode())
@@ -581,10 +581,10 @@ class ParallelizationServer(net.Server):
                         # for sp in framework.SplitPreference.__members__.values():
                         #     del self.trees[self.current.root.name + sp.value]
                     self.log(logging.INFO, '{}'.format(self.current.root.status.name),
-                             self.current.root.name, round(time.time() - self.current.started, 3), config.conflict, self.current.sp)
+                             self.current.root.name, round(time.time() - self.current.started, 2), header, self.current.sp)
                     del self.trees[self.current.root.name + self.current.sp]
                 else:
-                    del self.trees[self.current.root.name]
+                    del self.trees[self.current.root.name + self.current.sp]
                     self.log(
                         logging.INFO,
                         '{} instance "{}" after {:.2f} seconds'.format(
@@ -1063,26 +1063,22 @@ class ParallelizationServer(net.Server):
         if lemmas:
             return lemmas[0]
 
-    def log(self, level, message, data=None, time=None, conflict=None, sp=None):
+    def log(self, level, message, data=None, time=None, header=None, sp=None):
         if config.enableLog:
             super().log(level, message)
         else:
-            if config.spit_preference:
+            level_info = 'None'
+            if message == 'unknown':
+                print(data, message, time, 'None', sp, 'None', 'Timout', level_info )
+            elif config.spit_preference:
                 res = 'Failed'
-                if config.status_info == '':
-                    config.status_info = None
-                    res = None
-                elif message == 'unknown':
-                    res = 'Timout'
-                    config.level_info = None
-                elif config.status_info == message or config.status_info == 'unknown':
+                if header is not None and header['statusinf'] == message or header['statusinf'] == 'unknown':
                     res = 'Passed'
-                if conflict == '':
-                    conflict = None
-                print(data, message, time, conflict, sp, config.status_info, res, config.level_info)
-                config.level_info = None
-                config.status_info = None
-                config.conflict = None
+                if header['node'] == '[]':
+                    level_info = 'root'
+                else:
+                    level_info = 'child'
+                print(data, message, time, header['conflict'], sp, header['statusinf'], res, level_info )
             else:
                 print(data, message, time)
         if not config.db() or level < self.config.log_level:

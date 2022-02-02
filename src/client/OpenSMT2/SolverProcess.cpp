@@ -7,15 +7,12 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <signal.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include <string>
 #include <iostream>
 #include <random>
 #include <mutex>
 #include "client/SolverProcess.h"
 #include "OpenSMTSolver.h"
-#include <stdint.h>
 
 using namespace opensmt;
 

@@ -7,12 +7,12 @@ table_prefix = ''  # db table prefix
 portfolio_max = 0  # 0 if no limit
 portfolio_min = 1  # 0 if no limit
 partition_timeout = 5   # None if no partitioning
-node_timeout = 60  # None for no timeout
+node_timeout = None  # None for no timeout
 partition_policy = [1, 2]  #
 solving_timeout = 300  # None for no timeout
 max_memory = 3000  # max memory for each solver process in MB
 build_path = "../../build"  # build path absolute or relative to the config file
-lemma_sharing = False  # enabling lemma sharing
+lemma_sharing = True  # enabling lemma sharing
 lemma_amount = None  # None for auto
 lemma_db_path = None  # sqlite3 lemmas db path absolute or relative to the config file
 lemma_resend = False  # send same lemmas multiple times to solver
@@ -27,16 +27,13 @@ sally = 0  # number of sally processes
 idle_quit = True  # quit smts after solving the last instance
 enableLog = False
 visualize_tree = False
-lemmaPush_timeoutMin = 1000
+lemmaPush_timeoutMin = 2000
 lemmaPush_timeoutMax = 2000
 lemmaPull_timeoutMin = 3000
-lemmaPull_timeoutMax = 4000
+lemmaPull_timeoutMax = 3000
 clientLogColorMode = False
 spit_preference = True
-solver_partition = False
-conflict = None
-status_info = None
-level_info = None
+
 # parameters is a dictionary solver_name.solver_parameter -> value:(int, str, callable)  where:
 # solver_parameter is a valid parameter for the solver solver_name and
 # value is either the parameter value or
