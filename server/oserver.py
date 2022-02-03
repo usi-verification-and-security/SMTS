@@ -192,7 +192,7 @@ class Solver(net.Socket):
                 self.stop()
 
         del header['name']
-        del header['node']
+        # del header['node']
 
         if header['report'] == 'partitions' and self.or_waiting:
             node = self.or_waiting.pop()
@@ -208,8 +208,8 @@ class Solver(net.Socket):
                 # ask them again?
             else:
                 header['report'] = 'info:(server) received {} partitions'.format(len(node))
-                if len(node) == 1:
-                    node.clear()
+                # if len(node) == 1:
+                #     node.clear()
             return header, payload
 
         if header['report'] in framework.SolveStatus.__members__:
@@ -284,7 +284,7 @@ class ParallelizationServer(net.Server):
                     level = logging.INFO
                     message = header['report']
                 self.log(level, '{}: {}'.format(sock, message), {'header': header, 'payload': payload.decode()})
-            self.entrust()
+            self.entrust(header)
             return
         if 'command' in header:
             # if terminate command is found, close the server
@@ -366,19 +366,26 @@ class ParallelizationServer(net.Server):
     def level_children(self, level):
         return self.config.partition_policy[level % len(self.config.partition_policy)]
 
-    def entrust(self):
+    def entrust(self, header=None):
         solving = self.current
         # if the current tree is already solved or timed out: stop it
         if isinstance(self.current, Instance):
+            if sum(map(lambda s : isinstance(s, Solver), self._rlist)) != len(self.solvers(False)):
+                print(':error,solvers are lost',self.current.root.name)
+                self.close()
+                exit(0)
             if self.current.root.status != framework.SolveStatus.unknown or self.current.when_timeout < 0:
-                self.log(
-                    logging.INFO,
-                    '{} instance "{}" after {:.2f} seconds'.format(
-                        'solved' if self.current.root.status != framework.SolveStatus.unknown else 'timeout',
-                        self.current.root.name,
-                        time.time() - self.current.started
-                    )
-                )
+                if not self.config.enableLog and self.config.spit_preference:
+                    # print(len(self._rlist)-1,self.total_solvers)
+                    self.log(logging.INFO, '{}'.format(self.current.root.status.name),
+                             self.current.root.name, round(time.time() - self.current.started, 2), header)
+                else:
+                    self.log(
+                        logging.INFO,
+                        '{} instance "{}" after {:.2f} seconds'.format(
+                            'solved' if self.current.root.status != framework.SolveStatus.unknown else 'timeout',
+                            self.current.root.name,
+                            time.time() - self.current.started))
                 for solver in {solver for solver in self.solvers(True) if solver.node.root == self.current.root}:
                     solver.stop()
                 self.current = None
@@ -570,9 +577,28 @@ class ParallelizationServer(net.Server):
         lemmas = [sock for sock in self._rlist if isinstance(sock, LemmaServer)]
         if lemmas:
             return lemmas[0]
-
-    def log(self, level, message, data=None):
-        super().log(level, message)
+    # def log(self, level, message, data=None):
+    #     return
+    def log(self, level, message, data=None, time=None, header=None):
+        if not header:
+            return
+        if config.enableLog:
+            super().log(level, message)
+        else:
+            level_info = 'None'
+            if message == 'unknown':
+                print(data, message, time, 'None', 'None', 'Timout', level_info )
+            elif config.spit_preference:
+                res = 'Failed'
+                if header is not None and header['statusinf'] == message or header['statusinf'] == 'unknown':
+                    res = 'Passed'
+                if header['node'] == '[]':
+                    level_info = 'root'
+                else:
+                    level_info = 'child'
+                print(data, message, time, header['conflict'], header['statusinf'], res, level_info )
+            else:
+                print(data, message, time)
         if not config.db() or level < self.config.log_level:
             return
         config.db().cursor().execute("INSERT INTO {}ServerLog (level, message, data) "
