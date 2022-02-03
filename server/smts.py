@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from version import version
-import schedular2 as schedular
+import oserver as schedular
 import utils
 import argparse
 import logging

@@ -150,10 +150,8 @@ class Solver(net.Socket):
             'node': self.node.path(),
             'partitions': n
         }, '')
-
         if not node:
             node = framework.OrNode(self.node)
-        print("             Partition emited from ",node,self)
         self.or_waiting.append(node)
         self._db_log('OR', {'node': str(node.path()), 'solver': str(self.remote_address)})
 
@@ -260,8 +258,8 @@ class Instance(object):
 
 
 class ParallelizationServer(net.Server):
-    def __init__(self, logger: logging.Logger = None):
-        super().__init__(port=config.port, timeout=0.1, logger=logger)
+    def __init__(self, logger: logging.Logger = None, port=None):
+        super().__init__(port=port, timeout=0.1, logger=logger)
         self.config = config
         self.trees = []
         self.current = None
@@ -446,10 +444,8 @@ class ParallelizationServer(net.Server):
                             # here I check that every or-node child has some partitions, that is
                             # every child is completed. if not then I'll not use any solver working on that node.
                             try:
-                                # print("     node ", node)
                                 for child in _node:
                                     if len(child) == 0:
-                                        # print("     child ", child)
                                         raise StopIteration
                             except StopIteration:
                                 continue
@@ -487,7 +483,7 @@ class ParallelizationServer(net.Server):
                             try:
                                 # try to use incremental on another already solving solver
                                 for solver in idle_solvers:
-                                    if solver.node and solver.node is not node:
+                                    if solver.node is not None and solver.node is not node:
                                         idle_solvers.remove(solver)
                                         solver.incremental(node)
                                         raise StopIteration

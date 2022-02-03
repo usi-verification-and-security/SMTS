@@ -142,8 +142,8 @@ private:
 //                string temp =instance_Temp[index];
                 this->header["node"] = header_Temp[index]["node_"];
                 this->header["query"] = header_Temp[index]["query"];
-                if (this->header["enableLog"] == "1")
-                    this->info("incremental solving step from " + header_Temp[index]["node"]);
+//                if (this->header["enableLog"] == "1")
+                this->info("incremental solving step from " + header_Temp[index]["node"]);
                 return PartitionChannel::Task {
                         .command = PartitionChannel::Task::incremental,
                         .smtlib = instance_Temp[index]
