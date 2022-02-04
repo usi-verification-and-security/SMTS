@@ -783,13 +783,13 @@ class ParallelizationServer(net.Server):
                             # self.idles += 1
                             for solver in self.solvers(node):
                                 # print('    Timeout solvers n-p ',len(self.idle_solvers) ,solver)
-                                if not solver.or_waiting:
+                                # if not solver.or_waiting:
                                     totalN_partitions -= 1
                                     self.idle_solvers.append(solver)
                                 # print('    Timeout solvers n-p ATO ',node.path())
                             node.assumed_timout = True
                     elif not config.node_timeout and len(node) == 0 and len(self.solvers(node)) == 1:
-                        config.node_timeout = time.time() - self.current.root.started + 40
+                        config.node_timeout = time.time() - self.current.root.started + 25
                         print("             node_timeout is set", config.node_timeout)
                     if not node.partitioning and not node.processed and len(node) == 0:
                         if to_partition_node is None:
@@ -805,7 +805,7 @@ class ParallelizationServer(net.Server):
                             for ch in sorted(all_active_node, key=lambda leave: len(self.solvers(leave)), reverse=False):
                                 if len(solved_solvers) != 0:
                                     s_solver = solved_solvers.pop()
-                                    print(" Solved -> Move from: ",s_solver, " to : ",ch.path())
+                                    # print(" Solved -> Move from: ",s_solver, " to : ",ch.path())
                                     s_solver.incremental(ch)
                                     raise StopIteration
 

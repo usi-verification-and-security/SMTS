@@ -248,7 +248,8 @@ void SolverProcess::search()
 //                this->error(std::string("ite found: ") + smtlib);
 //                synced_stream.println(true ? Color::FG_Red : Color::FG_DEFAULT, "[t comunication frame caught in partition: "+ smtlib);
             openSMTSolver->preInterpret->interpFile((char *) (smtlib + this->header["query"]).c_str());
-
+            if (getChannel().isFrameApeared())
+                this->error(std::string("assertion returns an unknown sort "));
 #ifdef ENABLE_DEBUGING
 //            std::cout<<"node: "<<this->header["node"]<<endl;
 //            for (int i = 0; i <getChannel().size_query(); ++i) {
