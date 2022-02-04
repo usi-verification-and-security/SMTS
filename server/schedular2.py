@@ -320,8 +320,8 @@ class Solver(net.Socket):
             #         header['level'] = 'root'
             #     else:
             #         header['level'] = 'child'
-            else:
-                self.stop()
+            # else:
+            #     self.stop()
 
         return header, payload
 
@@ -792,7 +792,7 @@ class ParallelizationServer(net.Server):
                                 # print('    Timeout solvers n-p ATO ',node.path())
                             node.assumed_timout = True
                     elif not config.node_timeout and len(node) == 0 and len(self.solvers(node)) == 1:
-                        config.node_timeout = time.time() - self.current.root.started + 40
+                        config.node_timeout = time.time() - self.current.root.started + 30
                         print("             node_timeout is set", config.node_timeout)
                     if not node.partitioning and not node.processed and len(node) == 0:
                         if to_partition_node is None:
@@ -932,11 +932,11 @@ class ParallelizationServer(net.Server):
                         continue
                 # assumed_timout_leaves_l = list(assumed_timout_leaves())
                 # assumed_timout_leaves_l = sorted(assumed_timout_leaves_l, key = lambda leave: leave, reverse=True)
-                # print("")
+                assert len(self.idle_solvers) <= self.total_solvers
                 if solver_partition:
                     # print("   go to_partition_node", to_partition_node)
                     if self.idle_solvers:
-                        self.idle_solvers.sort( key = lambda s:
+                        self.idle_solvers.sort(key=lambda s:
                         str(to_partition_node.path())[1:len(str(s.node.path()))-1] == str(s.node.path())[1:len(str(s.node.path()))-1], reverse=True)
                         solver = self.idle_solvers[0]
                         print("   stuck in partitioning", solver.node.path(), to_partition_node.path())

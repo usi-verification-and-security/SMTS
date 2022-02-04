@@ -76,7 +76,13 @@ void LemmaServer::handle_close(net::Socket &client) {
 void LemmaServer::handle_exception(net::Socket &client, const std::exception &ex) {
     Logger::log(Logger::WARNING, "Exception from: " + to_string(client.get_remote()) + ": " + ex.what());
 }
-
+inline int callculateNodeLevel(std::string node)
+{
+    string s(node);
+    size_t count = std::count_if( s.begin(), s.end(),
+                                  []( char c ) { return std::isdigit( c ); } );
+    return count/2;
+}
 void LemmaServer::handle_message(net::Socket &client,
                                  net::Header &header,
                                  std::string &payload) {
@@ -150,6 +156,8 @@ void LemmaServer::handle_message(net::Socket &client,
         uint32_t pushed = 0;
         uint32_t n = 0;
         int64_t push_rowid = -1;
+//        std::cout<<"payload:"<<endl;
+//        std::cout<<payload<<endl;
         std::vector<net::Lemma> lemmas;
         std::istringstream is(payload);
         is >> lemmas;
@@ -215,14 +223,15 @@ void LemmaServer::handle_message(net::Socket &client,
                     "\t(" + std::to_string(pushed) + "\tfresh, " + std::to_string(n - pushed) + "\tpresent)");
 #endif
 
-    } else { // pull
+    }
+    else { // pull
 //        std::cout << "[LemmServer] SPull_OnlyLemmaSelection for node -> "+header["node"]<< std::endl;
         std::list<Lemma *> lemmas;
 //        solvers_mutex.lock();
         std::map<Lemma *, bool> &lemmas_solver = this->solvers[header["name"]][&client];
-
+        int nodeLevel = callculateNodeLevel(header["node"]);
         for (auto node:node_path) {
-            node->fill(lemmas);
+            node->fill(lemmas, nodeLevel);
         }
         lemmas.sort(Lemma::compare);
 
@@ -237,6 +246,16 @@ void LemmaServer::handle_message(net::Socket &client,
 
             if (!this->send_again)
                 lemmas_solver[*lemma] = true;
+//            if ((*lemma)->smtlib.length() > 100000)
+//                continue;
+//            if ( (*lemma)->level >= nodeLevel ) {
+//                Logger::log(Logger::PULL,
+//                            header["name"] + header["node"] + " " + to_string(client.get_remote()) +
+//                            " ASSERT [" + std::to_string((*lemma)->level) + "]\t" +
+//                            std::to_string(n));
+//                continue;
+//            }
+
             lemmas_send.push_back(net::Lemma((*lemma)->smtlib, 0));
             n++;
         }
@@ -248,12 +267,12 @@ void LemmaServer::handle_message(net::Socket &client,
         client.write(header, ::to_string(lemmas_send));
 
 #ifdef ENABLE_DEBUGING
-        std::cout << "[LemmServer] EWriting lemmas to node -> "+header["node"]<< std::endl;
-        if (n > 0)
-            Logger::log(Logger::PULL,
-                        header["name"] + header["node"] + " " + to_string(client.get_remote()) +
-                        " pull [" + std::to_string(clauses_request) + "]\t" +
-                        std::to_string(n));
+//        std::cout << "[LemmServer] EWriting lemmas to node -> "+header["node"]<< std::endl;
+//        if (n > 0)
+//            Logger::log(Logger::PULL,
+//                        header["name"] + header["node"] + " " + to_string(client.get_remote()) +
+//                        " pull [" + std::to_string(clauses_request) + "]\t" +
+//                        std::to_string(n));
 #endif
 
     }

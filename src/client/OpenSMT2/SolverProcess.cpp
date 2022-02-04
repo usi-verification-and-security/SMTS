@@ -590,7 +590,7 @@ void SolverProcess::injectPulledClauses(const std::string& nodePath) {
     sigemptyset(&sa.sa_mask);
     sa.sa_sigaction = segfault_sigaction;
     sa.sa_flags   = SA_SIGINFO;
-    sigaction(SIGBUS, &sa, NULL);
+    sigaction(SIGILL, &sa, NULL);
 #ifdef ENABLE_DEBUGING
     synced_stream.println(true ? opensmt::Color::FG_Green : opensmt::Color::FG_DEFAULT,
                           "[t comunication -> PID= "+to_string(getpid())+" ] inject accumulated clauses -> Size:" + to_string(node_PulledLemmas[nodePath].size()));
@@ -605,7 +605,16 @@ void SolverProcess::injectPulledClauses(const std::string& nodePath) {
             {
 
 #ifdef ENABLE_DEBUGING
-//                    cout << (char *) ("(assert " + lemma.smtlib + ")").c_str()<<std::endl;
+
+
+                    if (lemma.smtlib.length() > 100000) {
+                        cout <<" clause length more than: "<< lemma.smtlib.length()<<std::endl;
+                        continue;
+                    }
+                    else
+                        cout <<" clause length: "<< lemma.smtlib.length()<<std::endl;
+//                cout <<" clause: "<<endl<< (char *) ("(assert " + lemma.smtlib + ")").c_str()<<std::endl;
+
 #endif
                 openSMTSolver->preInterpret->interpFile((char *) ("(assert " + lemma.smtlib + ")").c_str());
 

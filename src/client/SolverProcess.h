@@ -325,7 +325,7 @@ public:
         node_PulledLemmas[header["node"]].insert(std::end(node_PulledLemmas[header["node"]]),
                                                  std::begin(lemmas), std::end(lemmas));
         lemma_Size = node_PulledLemmas.size();
-        _l.unlock();
+//        _l.unlock();
         return lemma_Size;
     }
     inline bool isPrefix(std::string_view prefix, std::string_view full)

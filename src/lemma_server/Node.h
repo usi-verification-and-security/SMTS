@@ -43,9 +43,10 @@ public:
         return r;
     }
 
-    void fill(std::list<Lemma *> &lemmas) {
+    void fill(std::list<Lemma *> &lemmas, int nodeLevel) {
         for (auto &pair:this->index) {
-            lemmas.push_back(this->index[pair.first]);
+            if (this->index[pair.first]->level < nodeLevel and this->index[pair.first]->smtlib.length() < 100000)
+                lemmas.push_back(this->index[pair.first]);
         }
     }
 
