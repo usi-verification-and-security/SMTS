@@ -750,7 +750,7 @@ class ParallelizationServer(net.Server):
                                 # if solver.node is not self.current.root:
                                 #     solver.incremental(self.current.root)
                                 # print('       solved solver -> ', solver)
-                    elif config.node_timeout and not node.is_timeout and (node.started and node.started + config.node_timeout <= time.time()):
+                    elif config.node_timeout and (node.started and node.started + config.node_timeout <= time.time()):
                         if node.partitioning and (node._children[0])._children:
                             # print("               timout node has partition . . . ",node)
                             global estimate_partition_time
@@ -761,7 +761,8 @@ class ParallelizationServer(net.Server):
                                     # if solver.or_waiting:
                                     #     return
                                     # print('              node has been assumed_timout - done partition -> ',self.idles,node.path() )
-                                    self.idle_solvers.append(solver)
+                                    if solver not in self.idle_solvers:
+                                        self.idle_solvers.append(solver)
                                     # print("     idle .. ",self.idle_solvers)
                                     # config.node_timeout += estimate_partition_time+1
                             else:
@@ -769,8 +770,9 @@ class ParallelizationServer(net.Server):
                                     # if solver.or_waiting:
                                     #     return
                                     # print('              Timeout solver - has partition -> ',self.idles,node.path() )
-                                    self.idle_solvers.append(solver)
-                                    totalN_partitions -= 1
+                                    if solver not in self.idle_solvers:
+                                        self.idle_solvers.append(solver)
+                                        totalN_partitions -= 1
                             node.processed = True
                             node.is_timeout = True
                                 # config.node_timeout += estimate_partition_time+1
@@ -784,12 +786,13 @@ class ParallelizationServer(net.Server):
                             for solver in self.solvers(node):
                                 # print('    Timeout solvers n-p ',len(self.idle_solvers) ,solver)
                                 # if not solver.or_waiting:
-                                    totalN_partitions -= 1
+                                if solver not in self.idle_solvers:
                                     self.idle_solvers.append(solver)
+                                    totalN_partitions -= 1
                                 # print('    Timeout solvers n-p ATO ',node.path())
                             node.assumed_timout = True
                     elif not config.node_timeout and len(node) == 0 and len(self.solvers(node)) == 1:
-                        config.node_timeout = time.time() - self.current.root.started + 25
+                        config.node_timeout = time.time() - self.current.root.started + 40
                         print("             node_timeout is set", config.node_timeout)
                     if not node.partitioning and not node.processed and len(node) == 0:
                         if to_partition_node is None:
