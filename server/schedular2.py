@@ -210,10 +210,15 @@ class Solver(net.Socket):
         # if self.node.root.name != header['name']:
         #     # print("                 event ... ",header['node'],self.node.root.name,header['name'],str(self.node.path()))
         #      return {}, b'', False
-        if str(self.node.path()) != header['node'] and header['report'] == 'partitions':
-            print("moved...",self, header['node'])
-            exit(0)
+        if str(self.node.path()) != header['node']:
+            for n in self.node.root.all():
+                if str(n.path()) == header['node']:
+                    if n.status == framework.SolveStatus.unknown and header['report'] == 'partitions':
+                        print("illegal move...",self, header)
+                        exit(0)
             # Handle CNF request
+        if self.node.root.name != header['name'] or str(self.node.path()) != header['node']:
+            return {}, b''
         if header['report'].startswith('cnf'):
 
             # Thread to avoid blocking main process while waiting for pipe read
@@ -784,7 +789,7 @@ class ParallelizationServer(net.Server):
                                 # print('    Timeout solvers n-p ATO ',node.path())
                             node.assumed_timout = True
                     elif not config.node_timeout and len(node) == 0 and len(self.solvers(node)) == 1:
-                        config.node_timeout = time.time() - self.current.root.started + 1
+                        config.node_timeout = time.time() - self.current.root.started + 40
                         print("             node_timeout is set", config.node_timeout)
                     if not node.partitioning and not node.processed and len(node) == 0:
                         if to_partition_node is None:
@@ -819,21 +824,21 @@ class ParallelizationServer(net.Server):
                     # if self.config.portfolio_min <= 1 and not config.node_timeout:
                     #     print("             node_timeout is set")
                     #     config.node_timeout = 30
-                    # for _node in all_current_active_nodes():
-                    solvers = self.solvers(p_node)
-                    # solvers = sorted(solvers,key = lambda s: s.node, reverse=True)
-                    # self.config.portfolio_min = (len(self.solvers(False))) / round((totalN_partitions + 1))
-                    # print(" self.config.portfolio_min...",self.config.portfolio_min)
-                    # try:
-                    # print(" internal", _node,len(solvers))
-                    counter = len(solvers)
-                    # print("     len of the solvers", self.total_solvers ,totalN_partitions,len(solvers), self.config.portfolio_min)
-                    for solver in solvers:
-                        if 0 <= self.config.portfolio_min < counter:
-                            if solver not in self.idle_solvers:
-                                counter -= 1
-                                # print("             Redundent_Solver",solver)
-                                movable_solvers.append(solver)
+                    for _node in p_node.path_to_node():
+                        solvers = self.solvers(_node)
+                        # solvers = sorted(solvers,key = lambda s: s.node, reverse=True)
+                        # self.config.portfolio_min = (len(self.solvers(False))) / round((totalN_partitions + 1))
+                        # print(" self.config.portfolio_min...",self.config.portfolio_min)
+                        # try:
+                        # print(" internal", _node,len(solvers))
+                        counter = len(solvers)
+                        # print("     len of the solvers", self.total_solvers ,totalN_partitions,len(solvers), self.config.portfolio_min)
+                        for solver in solvers:
+                            if 0 <= self.config.portfolio_min < counter:
+                                if solver not in self.idle_solvers:
+                                    counter -= 1
+                                    # print("             Redundent_Solver",solver)
+                                    movable_solvers.append(solver)
                 else:
                     movable_solvers = list(self.solvers(True))
             # if self.solved_solvers:

@@ -76,6 +76,16 @@ class Node:
         path.reverse()
         return path
 
+    def path_to_node(self):
+        node = self
+        path = [node]
+        while node.parent:
+            if isinstance(node.parent, AndNode):
+                path.append(node.parent)
+            node = node.parent
+        path.reverse()
+        return path
+
     def is_ancestor(self, node):
         if self.root != node.root:
             raise ValueError('provided node from a different tree')
