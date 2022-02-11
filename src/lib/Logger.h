@@ -91,6 +91,13 @@ public:
                 }
                 stream << "PULL\t";
                 break;
+            case ASSERT:
+                if (getenv("TERM")) {
+                    r += system("tput setaf 3");
+                    r += system("tput bold");
+                }
+                stream << "PULL\t";
+                break;
             default:
                 stream << "UNKNOWN\t";
         }
@@ -107,6 +114,7 @@ public:
     static const log_level ERROR = 3;
     static const log_level PUSH = 4;
     static const log_level PULL = 5;
+    static const log_level ASSERT = 6;
 };
 
 

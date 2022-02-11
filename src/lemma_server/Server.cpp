@@ -30,7 +30,7 @@ void Server::run_forever() {
     while (true) {
         do {
 #ifdef ENABLE_DEBUGING
-            std::cout << "[LemmServer] SSelect Sockets"<< std::endl;
+//            std::cout << "[LemmServer] SSelect Sockets"<< std::endl;
 #endif
 
             FD_ZERO(&readset);
@@ -45,7 +45,7 @@ void Server::run_forever() {
                 return;
             result = ::select(max + 1, &readset, nullptr, nullptr, nullptr);
 #ifdef ENABLE_DEBUGING
-            std::cout << "[LemmServer] ESelect Sockets "<< std::endl;
+//            std::cout << "[LemmServer] ESelect Sockets "<< std::endl;
 #endif
 
         } while (result == -1 && errno == EINTR);
@@ -78,11 +78,11 @@ void Server::run_forever() {
                                 net::Header header;
                                 std::string payload;
 #ifdef ENABLE_DEBUGING
-                                std::cout << "[LemmServer] SRead "<< std::endl;
+//                                std::cout << "[LemmServer] SRead "<< std::endl;
 #endif
                                 (*socket)->read(header, payload);
 #ifdef ENABLE_DEBUGING
-                                std::cout << "[LemmServer] ERead for node -> "+header["node"]<< std::endl;
+//                                std::cout << "[LemmServer] ERead for node -> "+header["node"]<< std::endl;
 #endif
                                 this->handle_message(**socket, header, payload);
                             }

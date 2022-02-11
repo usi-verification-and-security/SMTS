@@ -27,7 +27,7 @@ namespace net {
         Lemma() : Lemma("", 0) {}
 
         std::string smtlib;
-        uint16_t level;
+        int level;
     };
 }
 

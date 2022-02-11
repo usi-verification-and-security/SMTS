@@ -208,7 +208,7 @@ public:
 //                exit(-1);
             }
             std::unique_lock<std::mutex> lk(channel.getMutex());
-            if (channel.waitFor(lk, std::chrono::seconds (3)))
+            if (channel.waitFor(lk, std::chrono::seconds (5)))
                 break;
         }
     }
@@ -241,14 +241,14 @@ public:
         return this->lemma.server != nullptr;
     }
 
-    void lemma_push(const std::map<std::string, std::vector<net::Lemma>> &lemmas) {
+    void lemma_push(const std::map<std::string, std::vector<net::Lemma>> &lemmas, net::Header &header) {
         if (lemmas.empty()) return;
+        std::scoped_lock<std::mutex> _l(this->lemma.lemma_mutex);
         for ( const auto &toPush_lemma : lemmas )
         {
-            std::unique_lock<std::mutex> _l(this->mtx_listener_solve);
+//            std::unique_lock<std::mutex> _l(this->mtx_listener_solve);
             if (!is_sharing())
                 return;
-            net::Header header = this->header.copy({"name", "node"});
             header["node"] = toPush_lemma.first;
             header["lemmas"] = "+" + std::to_string(toPush_lemma.second.size());
 
@@ -257,17 +257,17 @@ public:
                 std::cout << "[t push ]-> PID= "+to_string(getpid())+" ] SWriting lemmas to LemmaServer: -> size::"<< toPush_lemma.second.size()
                           <<"   from node -> "+header["node"]<< std::endl;
 #endif
-                _l.unlock();
-                this->lemma.lemma_mutex.lock();
+//                _l.unlock();
+//                this->lemma.lemma_mutex.lock();
                 this->lemma.server->write(header, ::to_string(toPush_lemma.second));
 //            std::cout<<::to_string(lemmas);
 //            exit(0);
-                this->lemma.lemma_mutex.unlock();
+//                this->lemma.lemma_mutex.unlock();
 #ifdef ENABLE_DEBUGING
-                std::cout << "[t push ]-> PID= "+to_string(getpid())+" ] EWriting lemmas to LemmaServer: -> size::"<< toPush_lemma.second.size()<< std::endl;
+//                std::cout << "[t push ]-> PID= "+to_string(getpid())+" ] EWriting lemmas to LemmaServer: -> size::"<< toPush_lemma.second.size()<< std::endl;
 #endif
             } catch (net::SocketException &ex) {
-                this->lemma.lemma_mutex.unlock();
+//                this->lemma.lemma_mutex.unlock();
                 this->lemma.errors++;
                 std::this_thread::sleep_for(std::chrono::milliseconds(2000));
                 this->error(std::string("lemma push failed: ") + ex.what());
@@ -276,29 +276,24 @@ public:
         }
     }
 
-    bool lemma_pull() {
-        int lemma_Size = 0;
-        std::vector<net::Lemma> lemmas;
-        std::unique_lock<std::mutex> _l(this->mtx_listener_solve);
+    bool lemma_pull(std::vector<net::Lemma> &lemmas, net::Header &header) {
+//        int lemma_Size = 0;
+        std::scoped_lock<std::mutex> _l(this->lemma.lemma_mutex);
         if (!is_sharing())
             return false;
 
-        net::Header header = this->header.copy({"name", "node"});
-        header["lemmas"] = "-" + this->header["lemmas"];
+
         std::string payload;
 
         try {
 #ifdef ENABLE_DEBUGING
-            std::cout << "[t pull ]-> PID= "+to_string(getpid())+" ] SReading lemmas from LemmaServer for node -> "+header["node"]<< std::endl;
+//            std::cout << "[t pull ]-> PID= "+to_string(getpid())+" ] SReading lemmas from LemmaServer for node -> "+header["node"]<< std::endl;
 #endif
-            _l.unlock();
-            this->lemma.lemma_mutex.lock();
+//            _l.unlock();
             this->lemma.server->write(header, "");
             this->lemma.server->read(header, payload);
-            this->lemma.lemma_mutex.unlock();
-            _l.lock();
+//            _l.lock();
         } catch (net::SocketException &ex) {
-            this->lemma.lemma_mutex.unlock();
             this->lemma.errors++;
             this->error(std::string("lemma pull failed: ") + ex.what());
             std::this_thread::sleep_for(std::chrono::milliseconds(2000));
@@ -315,18 +310,18 @@ public:
         if (header["name"] != this->header["name"])
             return false;
         if (payload.empty())
-           return node_PulledLemmas.size();
+           return false;
 //        currentLemmaPulledNodePath = header["node"];
         std::istringstream is(payload);
         is >> lemmas;
 #ifdef ENABLE_DEBUGING
         std::cout << "[t pull -> PID= "+to_string(getpid())+" ] EReading lemmas from LemmaServer: -> size::"<< lemmas.size()<< std::endl;
 #endif
-        node_PulledLemmas[header["node"]].insert(std::end(node_PulledLemmas[header["node"]]),
-                                                 std::begin(lemmas), std::end(lemmas));
-        lemma_Size = node_PulledLemmas.size();
+//        node_PulledLemmas[header["node"]].insert(std::end(node_PulledLemmas[header["node"]]),
+//                                                 std::begin(lemmas), std::end(lemmas));
+//        lemma_Size = node_PulledLemmas.size();
 //        _l.unlock();
-        return lemma_Size;
+        return lemmas.size();
     }
     inline bool isPrefix(std::string_view prefix, std::string_view full)
     {

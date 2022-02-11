@@ -81,7 +81,7 @@ void SolverServer::update_lemmas() {
 //    header["command"] = "local";
 //    header["local"] = "lemma_server";
     header["lemma_server"] = this->lemmaServerAddress;
-    std::scoped_lock<std::mutex> _l(this->solver->mtx_listener_solve);
+//    std::scoped_lock<std::mutex> _l(this->solver->mtx_listener_solve);
     if (this->lemmaServerAddress.empty()) {
         this->solver->lemma.server.reset();
     }
@@ -129,12 +129,12 @@ void SolverServer::handle_message(net::Socket &socket, net::Header &header, std:
             this->stop_solver();
         }
         else {
-            this->solver->interrupt(header["command"]);
-
-            std::unique_lock<std::mutex> lock(this->solver->mtx_listener_solve);
+            std::unique_lock<std::mutex> lk(this->solver->getChannel().getMutex());
+//            std::unique_lock<std::mutex> lock(this->solver->mtx_listener_solve);
             this->solver->instance_Temp.push_back(payload);
             this->solver->header_Temp.push_back(header);
-            lock.unlock();
+            this->solver->interrupt(header["command"]);
+            lk.unlock();
             this->solver->getChannel().notify_all();
         }
     } else if (this->solver && &socket == this->solver->reader()) {

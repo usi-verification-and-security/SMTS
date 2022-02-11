@@ -216,9 +216,11 @@ class Solver(net.Socket):
                     if n.status == framework.SolveStatus.unknown and header['report'] == 'partitions':
                         print("illegal move...",self, header)
                         exit(0)
+                    else:
+                        return {}, b''
             # Handle CNF request
         if self.node.root.name != header['name'] or str(self.node.path()) != header['node']:
-            return {}, b''
+            return header, b''
         if header['report'].startswith('cnf'):
 
             # Thread to avoid blocking main process while waiting for pipe read
@@ -592,7 +594,7 @@ class ParallelizationServer(net.Server):
                              self.current.root.name, round(time.time() - self.current.started, 2), header, self.current.sp)
                     del self.trees[self.current.root.name + self.current.sp]
                 else:
-                    del self.trees[self.current.root.name + self.current.sp]
+                    # del self.trees[self.current.root.name + self.current.sp]
                     self.log(
                         logging.INFO,
                         '{} instance "{}" after {:.2f} seconds'.format(
@@ -632,6 +634,7 @@ class ParallelizationServer(net.Server):
                     solver.solve(self.current.root, parameters, self.current.sp)
                     if self.current.started is None:
                         self.current.started = time.time()
+                        # self.lemma_server.reset(solving.root)
                 return
                 # print(schedulables)
 
@@ -792,7 +795,7 @@ class ParallelizationServer(net.Server):
                                 # print('    Timeout solvers n-p ATO ',node.path())
                             node.assumed_timout = True
                     elif not config.node_timeout and len(node) == 0 and len(self.solvers(node)) == 1:
-                        config.node_timeout = time.time() - self.current.root.started + 30
+                        config.node_timeout = time.time() - self.current.root.started + 10
                         print("             node_timeout is set", config.node_timeout)
                     if not node.partitioning and not node.processed and len(node) == 0:
                         if to_partition_node is None:
@@ -939,13 +942,13 @@ class ParallelizationServer(net.Server):
                         self.idle_solvers.sort(key=lambda s:
                         str(to_partition_node.path())[1:len(str(s.node.path()))-1] == str(s.node.path())[1:len(str(s.node.path()))-1], reverse=True)
                         solver = self.idle_solvers[0]
-                        print("   stuck in partitioning", solver.node.path(), to_partition_node.path())
+                        # print("   stuck in partitioning", solver.node.path(), to_partition_node.path())
                         if not solver.or_waiting:
                             # exit(0)
                             solver.incremental(to_partition_node)
                             self.idle_solvers.remove(solver)
-                        else:
-                            print("   Solver has or wait", solver.node.path(), to_partition_node.path())
+                        # else:
+                        #     print("   Solver has or wait", solver.node.path(), to_partition_node.path())
                     # for node in attempted_notPartitioned_leaves():
                     #     if len(self.idle_solvers) == 0:
                     #         break
