@@ -72,27 +72,25 @@ void LemmaServer::handle_close(net::Socket &client) {
 //        solvers_mutex.unlock();
     }
 }
-std::string first_numberstring(std::string const & str)
-{
-    char const* digits = "0123456789";
-    std::size_t const n = str.find_first_of(digits);
-    if (n != std::string::npos)
-    {
-        std::size_t const m = str.find_first_not_of(digits, n);
-        return str.substr(n, m != std::string::npos ? m-n : m);
-    }
-    return std::string();
-}
+
 void LemmaServer::handle_exception(net::Socket &client, const std::exception &ex) {
     Logger::log(Logger::WARNING, "Exception from: " + to_string(client.get_remote()) + ": " + ex.what());
 }
 inline int callculateNodeLevel(std::string node)
 {
     string s(node);
-    size_t count = std::count_if( s.begin(), s.end(),
-                                  []( char c ) { return std::isdigit( c ); } );
-    return count/2;
+    return std::count_if( s.begin(), s.end(),
+                                  []( char c ) { return std::isdigit( c ); } ) / 2;
 }
+
+std::list<Lemma *> slice(std::list<Lemma *> const &v, std::list<Lemma *>::iterator m, int n)
+{
+    auto first = m;
+    std::advance(m, n);
+    std::list<Lemma *> list(first, m);
+    return list;
+}
+
 void LemmaServer::handle_message(net::Socket &client,
                                  net::Header &header,
                                  std::string &payload) {
@@ -119,15 +117,15 @@ void LemmaServer::handle_message(net::Socket &client,
      std::string node_code = header["node"].substr(1, header["node"].size() - 2);
      node_code.erase(std::remove(node_code.begin(), node_code.end(), ' '), node_code.end());
 
-    std::string const delims{ "," };
+    std::string const delimiter{ "," };
     size_t beg, pos = 0;
     int counter =0;
-    while ((beg = node_code.find_first_not_of(delims, pos)) != std::string::npos)
+    while ((beg = node_code.find_first_not_of(delimiter, pos)) != std::string::npos)
     {
-        pos = node_code.find_first_of(delims, beg + 1);
+        pos = node_code.find_first_of(delimiter, beg + 1);
         if (counter % 2 == 1) {
             int index = stoi(node_code.substr(beg, pos - beg));
-            while (index >= node_path.back()->children.size()) {
+            while ((int)index >= node_path.back()->children.size()) {
                 node_path.back()->children.push_back(new Node);
             }
             node_path.push_back(node_path.back()->children[index]);
@@ -159,8 +157,8 @@ void LemmaServer::handle_message(net::Socket &client,
         push = false;
     else
         return;
+
     if (push) {
-        //std::list<Lemma *> *lemmas = &node_path.back()->lemmas;
         std::map<Lemma *, bool> &lemmas_solver = this->solvers[header["name"]][&client];
         uint32_t pushed = 0;
         uint32_t n = 0;
@@ -172,50 +170,48 @@ void LemmaServer::handle_message(net::Socket &client,
 //            lemma.smtlib = header["node"]+lemma.smtlib;
             if (lemma.smtlib.size() == 0)
             continue;
-            for (int level = 0; level <= lemma.level; level++) {
-                Lemma *l = node_path[level]->get(lemma);
-                if (l) {
-                    l->increase();
-                    if (!lemmas_solver[l]) {
-                        lemmas_solver[l] = true;
-#ifdef SQLITE_IS_ON
-                        if (this->db) {
-                            SQLite3::Statement stmt = *this->db->prepare(
-                                    "UPDATE Lemma SET score=? WHERE smtlib=?;");
-                            stmt.bind(1, l->get_score());
-                            stmt.bind(2, l->smtlib);
-                            stmt.exec();
-                        }
-#endif
-                    }
-                    break;
-                } else if (level == lemma.level) {
-                    pushed++;
-                    l = node_path[level]->add_lemma(lemma);
+//            for (int level = 0; level <= lemma.level; level++) {
+            Lemma *l = node_path[lemma.level]->get(lemma);
+            if (l) {
+                l->increase();
+                if (!lemmas_solver[l]) {
                     lemmas_solver[l] = true;
 #ifdef SQLITE_IS_ON
                     if (this->db) {
-                        if (push_rowid < 0) {
-                            SQLite3::Statement stmt = *this->db->prepare(
-                                    "INSERT INTO Push (ts,name,node,data) VALUES(?,?,?,?);");
-                            stmt.bind(1, std::time(nullptr));
-                            stmt.bind(2, header["name"]);
-                            stmt.bind(3, header["node"]);
-                            stmt.bind(4, to_string(header));
-                            stmt.exec();
-                            push_rowid = this->db->last_rowid();
-                        }
                         SQLite3::Statement stmt = *this->db->prepare(
-                                "INSERT INTO Lemma (pid,level,score,smtlib) VALUES(?,?,?,?);");
-                        stmt.bind(1, push_rowid);
-                        stmt.bind(2, lemma.level);
-                        stmt.bind(3, l->get_score());
-                        stmt.bind(4, l->smtlib);
+                                "UPDATE Lemma SET score=? WHERE smtlib=?;");
+                        stmt.bind(1, l->get_score());
+                        stmt.bind(2, l->smtlib);
                         stmt.exec();
-                        l->id = (uint32_t) this->db->last_rowid();
                     }
 #endif
                 }
+            } else {
+                pushed++;
+                l = node_path[lemma.level]->add_lemma(lemma);
+                lemmas_solver[l] = true;
+#ifdef SQLITE_IS_ON
+                if (this->db) {
+                    if (push_rowid < 0) {
+                        SQLite3::Statement stmt = *this->db->prepare(
+                                "INSERT INTO Push (ts,name,node,data) VALUES(?,?,?,?);");
+                        stmt.bind(1, std::time(nullptr));
+                        stmt.bind(2, header["name"]);
+                        stmt.bind(3, header["node"]);
+                        stmt.bind(4, to_string(header));
+                        stmt.exec();
+                        push_rowid = this->db->last_rowid();
+                    }
+                    SQLite3::Statement stmt = *this->db->prepare(
+                            "INSERT INTO Lemma (pid,level,score,smtlib) VALUES(?,?,?,?);");
+                    stmt.bind(1, push_rowid);
+                    stmt.bind(2, lemma.level);
+                    stmt.bind(3, l->get_score());
+                    stmt.bind(4, l->smtlib);
+                    stmt.exec();
+                    l->id = (uint32_t) this->db->last_rowid();
+                }
+#endif
             }
             n++;
         }
@@ -232,26 +228,37 @@ void LemmaServer::handle_message(net::Socket &client,
     else {
         std::list<Lemma *> lemmas;
         std::map<Lemma *, bool> &lemmas_solver = this->solvers[header["name"]][&client];
-        std::reverse(node_path.begin(),node_path.end());
+
         for (auto node:node_path) {
             node->fill(lemmas,lemmas_solver);
         }
-        lemmas.sort(Lemma::compare);
+//        if (lemmas.size() > clauses_request)
+//        {
+            lemmas.sort(Lemma::score_compare);
+            std::list<Lemma *> sub_list = slice(lemmas, lemmas.begin(), clauses_request * 2);
+            sub_list.sort(Lemma::level_compare);
+#ifdef ENABLE_DEBUGING
+             Logger::log(Logger::ASSERT,
+                            header["name"] + header["node"] + " " + to_string(client.get_remote()) +
+                            " ASSERT [" + std::to_string(sub_list.size()) + "]\t" +
+                            std::to_string(lemmas.size()));
+#endif
+//        }
 
         std::vector<net::Lemma> lemmas_send;
         uint32_t n = 0;
-        for (auto lemma = lemmas.rbegin(); lemma != lemmas.rend(); ++lemma) {
+        for (auto lemma = sub_list.rbegin(); lemma != sub_list.rend(); ++lemma) {
             if (n >= clauses_request)
                 break;
 
             if (!this->send_again)
                 lemmas_solver[*lemma] = true;
-//            if ( (*lemma)->level >= nodeLevel ) {
+//            if ( (*lemma)->level == nodeLevel ) {
 //                Logger::log(Logger::ASSERT,
 //                            header["name"] + header["node"] + " " + to_string(client.get_remote()) +
 //                            " ASSERT [" + std::to_string((*lemma)->level) + "]\t" +
 //                            std::to_string(nodeLevel));
-//                continue;
+//                exit(-1);
 //            }
 
             lemmas_send.push_back(net::Lemma((*lemma)->smtlib, (*lemma)->level));
@@ -261,7 +268,7 @@ void LemmaServer::handle_message(net::Socket &client,
 #ifdef ENABLE_DEBUGING
         std::cout << "[LemmServer] EPull_OnlyLemmaSelection for node -> "+header["node"]<< std::endl;
 #endif
-//lemmas_send.clear();
+
         client.write(header, ::to_string(lemmas_send));
 
 #ifdef ENABLE_DEBUGING

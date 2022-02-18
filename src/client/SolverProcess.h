@@ -12,6 +12,7 @@
 #include "deque"
 #include "../../build/_deps/opensmt-src/src/api/Channel.h"
 #include "../../build/_deps/opensmt-src/src/common/Printer.h"
+#include "../../build/_deps/opensmt-src/src/common/OsmtInternalException.h"
 #include "lib/lib.h"
 
 
@@ -323,15 +324,42 @@ public:
 //        _l.unlock();
         return lemmas.size();
     }
-    inline bool isPrefix(std::string_view prefix, std::string_view full)
-    {
-        return prefix == full.substr(0, prefix.size());
-    }
+
     static const char *solver;
     void injectPulledClauses(const std::string & nodePath);
     void clausePush(const string & seed, const string & n1, const string & n2) ;
     void clausePull(const string & seed, const string & n1, const string & n2) ;
     void checkForlearned_pushBeforIncrementality();
+
+    inline bool isPrefix(std::string_view prefix, std::string_view full)
+    {
+        return prefix == full.substr(0, prefix.size());
+    }
+
+    inline int calc_solver_add_length(const std::string & n)
+    {
+        string s(n);
+        return std::count_if( s.begin(), s.end(),
+                                      []( char c ) { return std::isdigit( c ); } ) / 2;
+    }
+
+    int count_Occurrences(char *str, string word)
+    {
+        char *p;
+        vector<string> a;
+        p = strtok(str, "\n");
+        while (p != NULL)
+        {
+            a.push_back(p);
+            p = strtok(NULL, "\n");
+        }
+        int c = 0;
+        for (int i = 0; i < a.size(); i++)
+
+            if (word == a[i])
+                c++;
+        return c;
+    }
 
 };
 

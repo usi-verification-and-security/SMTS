@@ -96,7 +96,7 @@ public:
                     r += system("tput setaf 3");
                     r += system("tput bold");
                 }
-                stream << "PULL\t";
+                stream << "ASSERT\t";
                 break;
             default:
                 stream << "UNKNOWN\t";

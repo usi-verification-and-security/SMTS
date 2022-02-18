@@ -42,6 +42,7 @@ include_directories(${opensmt_SOURCE_DIR}/src/pterms)
 include_directories(${opensmt_SOURCE_DIR}/src/logics)
 include_directories(${opensmt_SOURCE_DIR}/src/symbols)
 include_directories(${opensmt_SOURCE_DIR}/src/sorts)
+include_directories(${opensmt_SOURCE_DIR}/src/interpolation)
 message("OpenSMT2 files have been written to: : ${opensmt_SOURCE_DIR}")
 
 add_executable(solver_opensmt ../main.cpp SolverProcess.cpp)

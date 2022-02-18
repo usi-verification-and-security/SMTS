@@ -19,8 +19,12 @@ public:
             score(0),
             id(0) {}
 
-    static bool compare(const Lemma *const &a, Lemma *const &b) {
+    static bool score_compare(const Lemma *const &a, Lemma *const &b) {
         return a->score < b->score;
+    }
+
+    static bool level_compare(const Lemma *const &a, Lemma *const &b) {
+        return a->level < b->level;
     }
 
     void increase() { //this->score = (this->score + 1) - this->score == 1 ? this->score + 1 : this->score;

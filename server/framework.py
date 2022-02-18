@@ -209,6 +209,7 @@ class AndNode(Node):
     def expected_timeout_point(self, etp):
         self._expected_timeout_point = etp
 
+
 class OrNode(Node):
     def __init__(self, parent, smt: str = ''):
         if not isinstance(parent, AndNode):

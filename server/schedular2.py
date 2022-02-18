@@ -261,7 +261,7 @@ class Solver(net.Socket):
                         continue
                     child = framework.AndNode(node, '(assert {})'.format(partition),  config.node_timeout)
                     self._db_log('AND', {'node': str(child.path()), 'smt': child.smt})
-                header['partition_recieved'] = True
+                header['partition_recieved'] = node.parent
             except BaseException as ex:
                 header['report'] = 'error:(server) error reading partitions: {}'.format(traceback.format_exc())
                 node.clear()
@@ -401,7 +401,7 @@ class ParallelizationServer(net.Server):
                     #     sock.partitioning = False
                     if level == logging.ERROR: # if a solver sends an error then the instance is skipped
                         self.current.timeout = 0
-                        print(message,self.current.root.name, self.current.sp)
+                        print(message, self.current.root.name, self.current.sp)
                         self.close()
                         exit(0)
                         # self.counter += 1
@@ -533,7 +533,7 @@ class ParallelizationServer(net.Server):
         partition_recieved = False
         if header:
             if 'partition_recieved' in header:
-                p_node = header['node']
+                p_node = header['partition_recieved']
                 partition_recieved = True
                 del header['partition_recieved']
             # elif 'solved-moved' in header:
@@ -595,12 +595,12 @@ class ParallelizationServer(net.Server):
                     del self.trees[self.current.root.name + self.current.sp]
                 else:
                     # del self.trees[self.current.root.name + self.current.sp]
-                    self.log(
-                        logging.INFO,
-                        '{} instance "{}" after {:.2f} seconds'.format(
-                            'solved' if self.current.root.status != framework.SolveStatus.unknown else 'timeout',
-                            self.current.root.name,
-                            time.time() - self.current.started))
+                    self.log(logging.INFO, self.current.root.status.name , self.current.root.name, time.time() - self.current.started)
+                        # logging.INFO,
+                        # '{} instance "{}" after {:.2f} seconds'.format(
+                        #     'solved' if self.current.root.status != framework.SolveStatus.unknown else 'timeout',
+                        #     self.current.root.name,
+                        #     time.time() - self.current.started))
 
                 for solver in {solver for solver in self.solvers(True) if solver.node.root == self.current.root}:
                     solver.stop()
@@ -613,6 +613,8 @@ class ParallelizationServer(net.Server):
                             instance.root.status == framework.SolveStatus.unknown and instance.when_timeout > 0]
             if schedulables:
                 self.current = schedulables[0]
+                if self.lemma_server:
+                    self.lemma_server.reset(self.current.root)
                 if self.config.enableLog:
                     self.log(logging.INFO, 'solving instance "{}"'.format(self.current.root.name))
                 self.total_solvers = len(self.solvers(False))
@@ -634,12 +636,11 @@ class ParallelizationServer(net.Server):
                     solver.solve(self.current.root, parameters, self.current.sp)
                     if self.current.started is None:
                         self.current.started = time.time()
-                        # self.lemma_server.reset(solving.root)
                 return
                 # print(schedulables)
 
-        if solving is not None and solving != self.current and self.lemma_server:
-            self.lemma_server.reset(solving.root)
+        # if solving is not None and solving != self.current and self.lemma_server:
+        #     self.lemma_server.reset(solving.root)
         if self.current is None:
             if solving is not None:
                 if self.config.enableLog:
@@ -709,8 +710,8 @@ class ParallelizationServer(net.Server):
 
             for node in nodes:
                 if isinstance(node, framework.AndNode) and not node.processed:
-                    if p_node and str(node.path()) == p_node and node.status == framework.SolveStatus.unknown:
-                        p_node = node
+                    # if p_node and str(node.path()) == p_node and node.status == framework.SolveStatus.unknown:
+                    #     p_node = node
                     # elif solved_moved_node and str(node.path()) == solved_moved_node:
                     #     node.status = framework.SolveStatus.__members__[header['report']]
                     #     print('       solved solver in forked -> ', solver)
@@ -795,7 +796,7 @@ class ParallelizationServer(net.Server):
                                 # print('    Timeout solvers n-p ATO ',node.path())
                             node.assumed_timout = True
                     elif not config.node_timeout and len(node) == 0 and len(self.solvers(node)) == 1:
-                        config.node_timeout = time.time() - self.current.root.started + 10
+                        config.node_timeout = round(time.time() - self.current.root.started + 15)
                         print("             node_timeout is set", config.node_timeout)
                     if not node.partitioning and not node.processed and len(node) == 0:
                         if to_partition_node is None:
@@ -1085,18 +1086,19 @@ class ParallelizationServer(net.Server):
         if config.enableLog:
             super().log(level, message)
         else:
-            level_info = 'None'
-            if message == 'unknown':
-                print(data, message, time, 'None', sp, 'None', 'Timout', level_info )
-            elif config.spit_preference:
-                res = 'Failed'
-                if header is not None and header['statusinf'] == message or header['statusinf'] == 'unknown':
-                    res = 'Passed'
-                if header['node'] == '[]':
-                    level_info = 'root'
-                else:
-                    level_info = 'child'
-                print(data, message, time, header['conflict'], sp, header['statusinf'], res, level_info )
+            if config.spit_preference:
+                level_info = 'None'
+                if message == 'unknown':
+                    print(data, message, time, 'None', sp, 'None', 'Timout', level_info )
+                elif config.spit_preference:
+                    res = 'Failed'
+                    if header is not None and header['statusinf'] == message or header['statusinf'] == 'unknown':
+                        res = 'Passed'
+                    if header['node'] == '[]':
+                        level_info = 'root'
+                    else:
+                        level_info = 'child'
+                    print(data, message, time, header['conflict'], sp, header['statusinf'], res, level_info )
             else:
                 print(data, message, time)
         if not config.db() or level < self.config.log_level:
