@@ -28,7 +28,7 @@ RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt install -y apt-utils make cmake \
      build-essential libgmp-dev bison flex libubsan0 \
      zlib1g-dev libopenmpi-dev git python3 awscli mpi
-RUN git clone https://github.com/MasoudAsadzade/SMTS.git --branch cube-and-conquer --single-branch
+RUN git clone https://github.com/usi-verification-and-security/SMTS.git --branch cube-and-conquer --single-branch
 RUN cd SMTS && sh awcCloudTrack/awsRunBatch/make_smts.sh
 # RUN cd SMTS && rm -rf hpcClusterBenchs-timedout
 # RUN cd SMTS && rm -rf hpcClusterBenchs
