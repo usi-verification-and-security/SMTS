@@ -55,29 +55,29 @@ void SolverProcess::solve() {
     const char *msg;
     SMTConfig config;
     config.setRandomSeed(atoi(this->header.get(net::Header::parameter, "seed").c_str()));
-    std::cout<<"seed:"<<this->header.get(net::Header::parameter, "seed")<<endl;
+
     config.setOption(SMTConfig::o_sat_split_type,
                      SMTOption(this->header.get(net::Header::parameter, "split-type").c_str()), msg) ;
 #ifdef ENABLE_DEBUGING
-    synced_stream.println(true ? Color::FG_BrightCyan : Color::FG_DEFAULT, "split-preference:: "+this->header["split-preference"]);
+    synced_stream.println(true ? Color::FG_BrightCyan : Color::FG_DEFAULT,
+                          "split-preference:: "+this->header["split-preference"]+" seed:",this->header.get(net::Header::parameter, "seed"));
 #endif
-    config.setOption(SMTConfig::o_sat_split_preference,SMTOption(this->header["split-preference"].c_str()), msg) ;
-    this->header.erase("split-preference");
+    if (not this->header["split-preference"].empty()) {
+        config.setOption(SMTConfig::o_sat_split_preference, SMTOption(this->header["split-preference"].c_str()), msg);
+        this->header.erase("split-preference");
+    }
     openSMTSolver.reset( new OpenSMTSolver(config,  this->instance, getChannel()));
 
     try
     {
         search();
+
+        if (forked)
+            kill_child();
     }
     catch (OsmtInternalException& ex)
     {
         this->error(std::string(ex.what()));
-    }
-
-    try
-    {
-        if (forked)
-            kill_child();
     }
     catch (...) {}
 }
@@ -85,14 +85,13 @@ void SolverProcess::solve() {
 void SolverProcess::clausePull(const string & seed, const string & n1, const string & n2)
 {
     try {
-        timer.start();
+//        timer.start();
 //        int counter = 0;
 //        srand(getpid() + time(NULL));
         //channel.getMutex().lock();
-        int interval = atoi(n1.c_str()) + ( atoi(seed.substr(1, seed.size() - 1).c_str()) % ( atoi(n2.c_str())
-                                                                                              - atoi(n1.c_str()) + 1 ) );
-        //channel.getMutex().unlock();
-//        std::cout << defred<<"[t pull]  " <<interval<<endl<<def1;
+        int interval = atoi(n1.c_str()) + ( atoi(seed.c_str()) % ( atoi(n2.c_str())- atoi(n1.c_str()) + 1 ) );
+        synced_stream.println(true ? Color::Code::FG_BrightRed : Color::Code::FG_DEFAULT, "pull time: ",
+                              interval);
 //        std::chrono::time_point wakeupAt(std::chrono::system_clock::now() + std::chrono::milliseconds (interval));
         int counter = 0;
         std::chrono::duration<double> wakeupAt = std::chrono::milliseconds (interval);
@@ -135,17 +134,10 @@ void SolverProcess::clausePull(const string & seed, const string & n1, const str
                 break;
             }
 #ifdef ENABLE_DEBUGING
-//            synced_stream.println(true ? Color::Code::FG_BrightRed : Color::Code::FG_DEFAULT, "pull time: ",
-//                                  timer.elapsed_time_milliseconds());
+            synced_stream.println(true ? Color::Code::FG_BrightRed : Color::Code::FG_DEFAULT, "pull time: ",
+                                  timer.elapsed_time_milliseconds());
 #endif
         }
-//        std::unique_lock<std::mutex> lk(getChannel().getStopMutex());
-//        getChannel().setPullTerminate();
-//        if (getChannel().shouldPushTerminate())
-//        {
-//            lk.unlock();
-//            getChannel().notify_one_t();
-//        }
     }
     catch (std::exception& e)
     {
@@ -156,10 +148,10 @@ void SolverProcess::clausePull(const string & seed, const string & n1, const str
 void SolverProcess::clausePush(const string & seed, const string & n1, const string & n2)
 {
     try {
-        timer.start();
-        int interval = atoi(n1.c_str()) + ( atoi(seed.substr(1, seed.size() - 1).c_str()) % ( atoi(n2.c_str())
-                                                                                              - atoi(n1.c_str()) + 1 ) );
-
+//        timer.start();
+        int interval = atoi(n1.c_str()) + ( atoi(seed.c_str()) % ( atoi(n2.c_str())- atoi(n1.c_str()) + 1 ) );
+        synced_stream.println(true ? Color::Code::FG_BrightRed : Color::Code::FG_DEFAULT, "push time: ",
+                              interval);
 //        std::chrono::time_point wakeupAt(std::chrono::system_clock::now() + std::chrono::milliseconds (interval));
         std::chrono::duration<double> wakeupAt = std::chrono::milliseconds (interval);
         std::map<std::string, std::vector<net::Lemma>> toPush_lemmas;
@@ -260,7 +252,7 @@ void SolverProcess::clausePush(const string & seed, const string & n1, const str
 //                } else std::cout << "\033[1;51m [t comunication] No shared clauses to copy -> size::\033[0m" << endl;
 //                    wakeupAt = std::chrono::system_clock::now() + std::chrono::milliseconds (interval);
                 }
-                else std::cout << "[t push] Channel empty! " <<endl;
+//                else std::cout << "[t push] Channel empty! " <<endl;
 
             }
             else { break; }
@@ -298,15 +290,14 @@ void SolverProcess::search()
 
 #ifdef ENABLE_DEBUGING
         std::cout << "[t comunication -> PID= "+to_string(getpid())+" ] Before interpFile: "<< std::endl
-                  <<(char *) (smtlib+ this->header["query"]).c_str()<<endl;
-        if (getChannel().isFrameApeared())
-            this->error(std::string("assertion failed for calculated level "));
-#endif
-        getChannel().setWorkingNode(this->header["node"]);
+                  <<(char *) ( this->header["query"]).c_str()<<endl;
         synced_stream.println(true
                               ? opensmt::Color::FG_Blue : opensmt::Color::FG_DEFAULT,this->header["node"].substr(1, this->header["node"].size() - 2));
-        openSMTSolver->getMainSplitter().set_solver_address_length(calc_solver_add_length(this->header["node"]));
-        ( (ScatterSplitter &) openSMTSolver->getMainSplitter().getSMTSolver() ).set_solver_address(this->header["node"].substr(1, this->header["node"].size() - 2));
+#endif
+        getChannel().setWorkingNode(this->header["node"]);
+
+//        openSMTSolver->getMainSplitter().set_solver_address_length(calc_solver_add_length(this->header["node"]));
+//        ( (ScatterSplitter &) openSMTSolver->getMainSplitter().getSMTSolver() ).set_solver_address(this->header["node"].substr(1, this->header["node"].size() - 2));
 //        openSMTSolver->getMainSplitter().set_num_of_pushes(count_Occurrences((char *) (smtlib).c_str(), "(push 1)"));
         getChannel().getMutex().unlock();
 
@@ -335,11 +326,11 @@ void SolverProcess::search()
         }
 
         if (openSMTSolver->getResult() != s_Undef) {
-            synced_stream.println(true ? Color::FG_Red : Color::FG_DEFAULT, "[t comunication -> result: " + openSMTSolver->getResult().getValue()
-                    ," from Node " + this->header["node"]);
             openSMTSolver->setResult (s_Undef);
 
 #ifdef ENABLE_DEBUGING
+            synced_stream.println(true ? Color::FG_Red : Color::FG_DEFAULT, "[t comunication -> result: " + openSMTSolver->getResult().getValue()
+                    ," from Node " + this->header["node"]);
 #endif
             getChannel().waitForQueryOrTemination(lock_channel);
 //                std::cout <<defred<< "[t comunication -> PID= "+to_string(getpid())+" ]  after waiting to receive command ... ]"<<def1<<endl ;
@@ -418,9 +409,10 @@ void SolverProcess::search()
                             synced_stream.println(true ? opensmt::Color::FG_Cyan : opensmt::Color::FG_DEFAULT,
                                                   "[t comunication -> PID= " + to_string(getpid()) +
                                                   " ] Node is prefix of the current -> " + lemmaPulled.first);
-#endif
                             std::string conflict = std::to_string(( (ScatterSplitter &) openSMTSolver->getMainSplitter().getSMTSolver() ).conflicts );
                             std::cout<<";conflict before Clause Injection: "<< conflict << endl;
+#endif
+
                             injectPulledClauses(lemmaPulled.first);
                         }
                     }
@@ -470,17 +462,15 @@ void SolverProcess::kill_child()
 {
     int wstatus;
 //    printf("printed from parent process - %d\n", getpid());
-    std::cout<<"send kill signall to forked process!: "<<child_pid<<endl;
+//    std::cout<<"send kill signall to forked process!: "<<child_pid<<endl;
     int ret;
     ret = kill(child_pid, SIGKILL);
     if (ret == -1) {
-        std::cout<<"ret == -1: "<<child_pid<<endl;
         perror("kill");
         exit(EXIT_FAILURE);
     }
 
     if (waitpid(child_pid, &wstatus, WUNTRACED | WCONTINUED) == -1) {
-        std::cout<<"waitpid: "<<child_pid<<endl;
         perror("waitpid");
         exit(EXIT_FAILURE);
     }
@@ -511,7 +501,7 @@ void SolverProcess::partition(uint8_t n) {
             sleep(1);
         exit(0);
     });
-    printf("printed from child process - %d\n", getpid());
+//    printf("printed from child process - %d\n", getpid());
 
     struct sigaction sigterm_action;
     memset(&sigterm_action, 0, sizeof(sigterm_action));
@@ -528,16 +518,10 @@ void SolverProcess::partition(uint8_t n) {
     // Register SIGTERM handler
     if (sigaction(SIGTERM, &sigterm_action, NULL) != 0)
     {
-        std::cout<<";sigaction SIGTERM: "<<endl;
         perror("sigaction SIGTERM");
         exit(EXIT_FAILURE);
     }
 
-//    while (shutdown_flag1) {
-//        count += 1;
-//        sleep(1);
-//        std::cout<<"from child..."<<"\n";
-//    }
 //    printf("count = %d\n", count);
 //
 //    exit(EXIT_SUCCESS);
@@ -550,8 +534,8 @@ void SolverProcess::partition(uint8_t n) {
     std::vector<std::string> partitions;
     std::string conflict = std::to_string(( (ScatterSplitter &) openSMTSolver->getMainSplitter().getSMTSolver() ).conflicts );
     std::string statusInfo = openSMTSolver->getMainSplitter().getConfig().getInfo(":status").toString();
-    std::cout<<";conflict before splitting: "<< conflict<<endl;
-    std::cout<<";statusInfo before splitting: "<< statusInfo<<endl;
+//    std::cout<<";conflict before splitting: "<< conflict<<endl;
+//    std::cout<<";statusInfo before splitting: "<< statusInfo<<endl;
     const char *msg;
     if ( not(
             openSMTSolver->getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_num, SMTOption(int(n)),msg) and
@@ -565,40 +549,48 @@ void SolverProcess::partition(uint8_t n) {
         this->report(partitions, conflict, statusInfo, msg);
     }
     else {
-        static_cast<ScatterSplitter &> (openSMTSolver->getMainSplitter().getSMTSolver() ).setSplitConfig_split_on();
+        try {
+            static_cast<ScatterSplitter &> (openSMTSolver->getMainSplitter().getSMTSolver()).setSplitConfig_split_on();
 
-        sstat status = openSMTSolver->getMainSplitter().solve();
+            sstat status = openSMTSolver->getMainSplitter().solve();
 //        if (this->header["node"]== "[0, 0]") {
 //            std::cout<<"test"<<endl;
 //            this->report(PartitionChannel::Status::unsat);
 //            exit(0);
 //        }
-        if (status == s_Undef) {
-            partitions = openSMTSolver->getMainSplitter().getPartitionSplits();
+            if (status == s_Undef) {
+                partitions = openSMTSolver->getMainSplitter().getPartitionSplits();
 #ifdef ENABLE_DEBUGING
-            std::cout <<"Recieved PN from SMTS Server-> "<<int(n)<<"\tSplits constructed by solver: "<<partitions.size()<<this->header["node"]<<endl;
+                std::cout <<"Recieved PN from SMTS Server-> "<<int(n)<<"\tSplits constructed by solver: "<<partitions.size()<<this->header["node"]<<endl;
 #endif
+//
+                this->report(partitions, conflict, statusInfo);
 
-            this->report(partitions, conflict, statusInfo);
-        } else if (status == s_True) {
+            } else if (status == s_True) {
 #ifdef ENABLE_DEBUGING
-            std::cout<<"PartitionProcess - Result is SAT"<<endl;
+                std::cout<<"PartitionProcess - Result is SAT"<<endl;
 #endif
-            this->report(PartitionChannel::Status::sat, statusInfo, conflict);
-        }
-        else if (status == s_False) {
+                this->report(PartitionChannel::Status::sat, statusInfo, conflict);
+            } else if (status == s_False) {
 #ifdef ENABLE_DEBUGING
-            std::cout<<"PartitionProcess - Result is UNSAT"<<endl;
+                std::cout<<"PartitionProcess - Result is UNSAT"<<endl;
 #endif
 //            Logger::writeIntoFile(false, this->header["node"] ,"Result is UNSAT ",getpid());
-            this->report(PartitionChannel::Status::unsat, statusInfo, conflict);
+                this->report(PartitionChannel::Status::unsat, statusInfo, conflict);
+            } else {
+                this->report(partitions, conflict, statusInfo, "error during partitioning");
+            }
         }
-        else {
-            this->report(partitions, conflict, statusInfo, "error during partitioning");
+        catch (OsmtInternalException& ex)
+        {
+//            this->error(std::string(ex.what()));
+            exit(EXIT_FAILURE);
         }
     }
+
 //    std::cout <<"PartitionProcess - Main Thread: End to partition process"<<endl;
     exit(EXIT_SUCCESS);
+
 }
 
 void SolverProcess::getCnfClauses(net::Header &header, const std::string &payload) {
@@ -639,13 +631,14 @@ void SolverProcess::injectPulledClauses(const std::string& nodePath) {
 //    if (pulled_lemmas[nodePath].empty()) return;
 //    if (openSMTSolver->learned_push)
 //    openSMTSolver->getMainSplitter().pop();
+
+#ifdef ENABLE_DEBUGING
     struct sigaction sa;
     memset(&sa, 0, sizeof(struct sigaction));
     sigemptyset(&sa.sa_mask);
     sa.sa_sigaction = segfault_sigaction;
     sa.sa_flags   = SA_SIGINFO;
     sigaction(SIGILL, &sa, NULL);
-#ifdef ENABLE_DEBUGING
     synced_stream.println(true ? opensmt::Color::FG_Green : opensmt::Color::FG_DEFAULT,
                           "[t comunication -> PID= "+to_string(getpid())+" ] inject accumulated clauses -> Size:" + to_string(node_PulledLemmas[nodePath].size()));
 #endif
@@ -660,15 +653,7 @@ void SolverProcess::injectPulledClauses(const std::string& nodePath) {
 
 #ifdef ENABLE_DEBUGING
 
-
-//                    if (lemma.smtlib.length() > 100000) {
-//                        cout <<" clause length more than: "<< lemma.smtlib.length()<<std::endl;
-//                        continue;
-//                    }
-//                    else
-//                        cout <<" clause length: "<< lemma.smtlib.length()<<std::endl;
-//                cout <<" clause: "<<endl<< (char *) ("(assert " + lemma.smtlib + ")").c_str()<<std::endl;
-
+            cout <<" clause: "<<endl<< (char *) ("(assert " + lemma.smtlib + ")").c_str()<<std::endl;
 #endif
             openSMTSolver->preInterpret->interpFile((char *) ("(assert " + lemma.smtlib + ")").c_str());
 

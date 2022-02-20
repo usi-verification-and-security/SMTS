@@ -84,7 +84,7 @@ class Solver(net.Socket):
             parameters.update({
                 'enableLog': '1',
             })
-        # print('     sp-param',parameters)
+        # print('     sp-param',sp_value)
         self.write(parameters, smt)
         self.started = time.time()
         if self.node.started is None:
@@ -209,15 +209,14 @@ class Solver(net.Socket):
 
         # if self.node.root.name != header['name']:
         #     # print("                 event ... ",header['node'],self.node.root.name,header['name'],str(self.node.path()))
-        #      return {}, b'', False
-        if str(self.node.path()) != header['node']:
-            for n in self.node.root.all():
-                if str(n.path()) == header['node']:
-                    if n.status == framework.SolveStatus.unknown and header['report'] == 'partitions':
-                        print("illegal move...",self, header)
-                        exit(0)
-                    else:
-                        return {}, b''
+        # if str(self.node.path()) != header['node']:
+        #     for n in self.node.root.all():
+        #         if str(n.path()) == header['node']:
+        #             if n.status == framework.SolveStatus.unknown and header['report'] == 'partitions':
+        #                 print("illegal move...",self, header)
+        #                 exit(0)
+        #             else:
+        #                 return {}, b''
             # Handle CNF request
         if self.node.root.name != header['name'] or str(self.node.path()) != header['node']:
             return header, b''
@@ -256,6 +255,9 @@ class Solver(net.Socket):
             try:
                 # if isinstance(self.node, framework.SMT):
                 #     config.node_timeout += round(time.time() - estimate_partition_time)
+                # if payload.decode() == '':
+                #     self.ask_partitions(config.partition_policy[1])
+                #     self.partitioning = True
                 for partition in payload.decode().split('\0'):
                     if len(partition) == 0:
                         continue
@@ -265,8 +267,6 @@ class Solver(net.Socket):
             except BaseException as ex:
                 header['report'] = 'error:(server) error reading partitions: {}'.format(traceback.format_exc())
                 node.clear()
-                # self.ask_partitions(config.partition_policy[self.node.level % len(config.partition_policy)])
-                # self.partitioning = True
             else:
                 header['report'] = 'info:(server) received {} partitions'.format(len(node))
                 # if not config.conflict:
@@ -549,8 +549,8 @@ class ParallelizationServer(net.Server):
         #     return s_counter
         # if the current tree is already solved or timed out: stop it
         if isinstance(self.current, Instance):
-            if sum(map(lambda s : isinstance(s, Solver), self._rlist)) != self.total_solvers:
-                print(':error,solvers are lost',self.current.root.name,self.current.sp)
+            if sum(map(lambda solver: isinstance(solver, Solver), self._rlist)) != self.total_solvers:
+                print(':error,solvers are lost',self.current.root.name, self.current.sp)
                 self.close()
                 exit(0)
             if self.current.root.status != framework.SolveStatus.unknown or self.current.when_timeout < 0:
@@ -595,7 +595,7 @@ class ParallelizationServer(net.Server):
                     del self.trees[self.current.root.name + self.current.sp]
                 else:
                     # del self.trees[self.current.root.name + self.current.sp]
-                    self.log(logging.INFO, self.current.root.status.name , self.current.root.name, time.time() - self.current.started)
+                    self.log(logging.INFO, self.current.root.status.name , self.current.root.name, round(time.time() - self.current.started, 2))
                         # logging.INFO,
                         # '{} instance "{}" after {:.2f} seconds'.format(
                         #     'solved' if self.current.root.status != framework.SolveStatus.unknown else 'timeout',
@@ -625,7 +625,7 @@ class ParallelizationServer(net.Server):
                     if self.config.lemma_amount:
                         parameters["lemmas"] = self.config.lemma_amount
                     self.config.entrust(self.current.root, parameters, solver.name, self.solvers(self.current.root))
-                    self.seed_counter += 1
+                    # self.seed_counter += 1
                     # if config.lemma_sharing:
                     #     parameters.update({
                     #         'lemma_push_min': self.seed_counter,
@@ -796,8 +796,8 @@ class ParallelizationServer(net.Server):
                                 # print('    Timeout solvers n-p ATO ',node.path())
                             node.assumed_timout = True
                     elif not config.node_timeout and len(node) == 0 and len(self.solvers(node)) == 1:
-                        config.node_timeout = round(time.time() - self.current.root.started + 15)
-                        print("             node_timeout is set", config.node_timeout)
+                        config.node_timeout = round(time.time() - self.current.root.started + 5)
+                        # print("             node_timeout is set", config.node_timeout)
                     if not node.partitioning and not node.processed and len(node) == 0:
                         if to_partition_node is None:
                             to_partition_node = node

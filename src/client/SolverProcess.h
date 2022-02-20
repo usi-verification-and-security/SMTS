@@ -209,7 +209,7 @@ public:
 //                exit(-1);
             }
             std::unique_lock<std::mutex> lk(channel.getMutex());
-            if (channel.waitFor(lk, std::chrono::seconds (5)))
+            if (channel.waitFor(lk, std::chrono::seconds (10)))
                 break;
         }
     }
@@ -258,14 +258,13 @@ public:
                 std::cout << "[t push ]-> PID= "+to_string(getpid())+" ] SWriting lemmas to LemmaServer: -> size::"<< toPush_lemma.second.size()
                           <<"   from node -> "+header["node"]<< std::endl;
 #endif
-//                _l.unlock();
-//                this->lemma.lemma_mutex.lock();
+                std::cout << "[t push ]-> PID= "+to_string(getpid())+" ] SWriting lemmas to LemmaServer: -> size::"<< toPush_lemma.second.size()
+                          <<"   from node -> "+header["node"]<< std::endl;
                 this->lemma.server->write(header, ::to_string(toPush_lemma.second));
-//            std::cout<<::to_string(lemmas);
-//            exit(0);
-//                this->lemma.lemma_mutex.unlock();
+                std::cout << "[t push ]-> PID= "+to_string(getpid())+" ] SWriting lemmas to LemmaServer: -> size::"<< toPush_lemma.second.size()
+                          <<"   from node -> "+header["node"]<< std::endl;
 #ifdef ENABLE_DEBUGING
-//                std::cout << "[t push ]-> PID= "+to_string(getpid())+" ] EWriting lemmas to LemmaServer: -> size::"<< toPush_lemma.second.size()<< std::endl;
+                std::cout << "[t push ]-> PID= "+to_string(getpid())+" ] EWriting lemmas to LemmaServer: -> size::"<< toPush_lemma.second.size()<< std::endl;
 #endif
             } catch (net::SocketException &ex) {
 //                this->lemma.lemma_mutex.unlock();
@@ -288,19 +287,20 @@ public:
 
         try {
 #ifdef ENABLE_DEBUGING
-//            std::cout << "[t pull ]-> PID= "+to_string(getpid())+" ] SReading lemmas from LemmaServer for node -> "+header["node"]<< std::endl;
+            std::cout << "[t pull ]-> PID= "+to_string(getpid())+" ] SReading lemmas from LemmaServer for node -> "+header["node"]<< std::endl;
 #endif
+            std::cout << "[t pull ]-> PID= "+to_string(getpid())+" ] SReading lemmas from LemmaServer for node -> "+header["node"]<< std::endl;
 //            _l.unlock();
             this->lemma.server->write(header, "");
             this->lemma.server->read(header, payload);
 //            _l.lock();
         } catch (net::SocketException &ex) {
             this->lemma.errors++;
-            this->error(std::string("lemma pull failed: ") + ex.what());
+//            this->error(std::string("lemma pull failed: ") + ex.what());
             std::this_thread::sleep_for(std::chrono::milliseconds(2000));
             return false;
         }
-
+        std::cout << "[t pull -> PID= "+to_string(getpid())+" ] EReading lemmas from LemmaServer: for node -> "+header["node"]+" size::"<< lemmas.size()<< std::endl;
         this->lemma.errors = 0;
         this->lemma.last_pull = std::time(nullptr);
         if (this->lemma.interval > 1)
@@ -315,6 +315,7 @@ public:
 //        currentLemmaPulledNodePath = header["node"];
         std::istringstream is(payload);
         is >> lemmas;
+
 #ifdef ENABLE_DEBUGING
         std::cout << "[t pull -> PID= "+to_string(getpid())+" ] EReading lemmas from LemmaServer: -> size::"<< lemmas.size()<< std::endl;
 #endif
@@ -330,7 +331,6 @@ public:
     void clausePush(const string & seed, const string & n1, const string & n2) ;
     void clausePull(const string & seed, const string & n1, const string & n2) ;
     void checkForlearned_pushBeforIncrementality();
-
     inline bool isPrefix(std::string_view prefix, std::string_view full)
     {
         return prefix == full.substr(0, prefix.size());

@@ -51,7 +51,6 @@ public:
 
     template<typename T>
     static void log(log_level level, const T &message) {
-#ifdef ENABLE_DEBUGING
         static std::mutex mtx;
         std::lock_guard<std::mutex> _l(mtx);
         int r = 0;
@@ -106,7 +105,6 @@ public:
         if (getenv("TERM")) {
             r = system("tput sgr0");
         }
-#endif
     }
 
     static const log_level INFO = 1;

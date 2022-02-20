@@ -7,10 +7,10 @@ table_prefix = ''  # db table prefix
 portfolio_max = 0  # 0 if no limit
 portfolio_min = 1  # 0 if no limit
 partition_timeout = 5   # None if no partitioning
-node_timeout = 60  # None for no timeout
+node_timeout = None  # None for no timeout
 partition_policy = [1, 2]  #
-solving_timeout = 300  # None for no timeout
-max_memory = 3000  # max memory for each solver process in MB
+solving_timeout = 1200  # None for no timeout
+max_memory = 6000  # max memory for each solver process in MB
 build_path = "../../build"  # build path absolute or relative to the config file
 lemma_sharing = True  # enabling lemma sharing
 lemma_amount = 1000  # None for auto
@@ -28,11 +28,11 @@ idle_quit = True  # quit smts after solving the last instance
 enableLog = False
 visualize_tree = False
 lemmaPush_timeoutMin = 5000
-lemmaPush_timeoutMax = 10000
-lemmaPull_timeoutMin = 15000
-lemmaPull_timeoutMax = 20000
+lemmaPush_timeoutMax = 20000
+lemmaPull_timeoutMin = 30000
+lemmaPull_timeoutMax = 60000
 clientLogColorMode = False
-spit_preference = True
+spit_preference = False
 
 # parameters is a dictionary solver_name.solver_parameter -> value:(int, str, callable)  where:
 # solver_parameter is a valid parameter for the solver solver_name and
