@@ -495,10 +495,12 @@ void SolverProcess::partition(uint8_t n) {
         return;
     }
     std::thread _t([&] {
-        while (getppid() == 1) {
+        while (true) {
             sleep(1);
+            if (getppid() == 1)
+                exit(0);
         }
-        exit(0);
+
     });
 //    printf("printed from child process - %d\n", getpid());
 
