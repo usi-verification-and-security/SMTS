@@ -145,6 +145,8 @@ private:
                 this->header["query"] = header_Temp[index]["query"];
                 if (this->header["enableLog"] == "1")
                     this->info("incremental solving step from " + header_Temp[index]["node"]);
+                if (forked)
+                    kill_child();
                 return PartitionChannel::Task {
                         .command = PartitionChannel::Task::incremental,
                         .smtlib = instance_Temp[index]

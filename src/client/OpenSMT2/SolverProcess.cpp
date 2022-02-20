@@ -72,8 +72,6 @@ void SolverProcess::solve() {
     {
         search();
 
-        if (forked)
-            kill_child();
     }
     catch (OsmtInternalException& ex)
     {
@@ -493,12 +491,13 @@ void SolverProcess::partition(uint8_t n) {
     }
     if (child_pid > 0)
     {
-        forked=true;
+        forked = true;
         return;
     }
     std::thread _t([&] {
-        while (getppid() == pid)
+        while (getppid() == 1) {
             sleep(1);
+        }
         exit(0);
     });
 //    printf("printed from child process - %d\n", getpid());
@@ -521,7 +520,6 @@ void SolverProcess::partition(uint8_t n) {
         perror("sigaction SIGTERM");
         exit(EXIT_FAILURE);
     }
-
 //    printf("count = %d\n", count);
 //
 //    exit(EXIT_SUCCESS);
