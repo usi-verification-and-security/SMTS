@@ -46,6 +46,8 @@ void SolverServer::handle_close(net::Socket &socket) {
 //    sigaction(SIGSEGV, &sa, NULL);
     if (&socket == &this->SMTSServer) {
         this->log(Logger::INFO, "server closed the connection");
+        if (this->solver->forked)
+            this->solver->kill_child();
         exit(0);
 //        this->stop_solver();
     } else if (this->solver && &socket == this->solver->reader()) {
