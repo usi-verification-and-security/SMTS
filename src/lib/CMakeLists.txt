@@ -14,8 +14,6 @@ add_library(Lib STATIC
         net/Pipe.cpp
         net/Server.cpp
         net/Socket.cpp
-        sqlite3/Connection.cpp
-        sqlite3/Statement.cpp
         )
 
 target_compile_definitions(Lib PRIVATE -DSMTS_VERSION=${SMTS_VERSION})
