@@ -653,7 +653,7 @@ void SolverProcess::injectPulledClauses(const std::string& nodePath) {
 
 #ifdef ENABLE_DEBUGING
 
-            cout <<" clause: "<<endl<< (char *) ("(assert " + lemma.smtlib + ")").c_str()<<std::endl;
+//            cout <<" clause: "<<endl<< (char *) ("(assert " + lemma.smtlib + ")").c_str()<<std::endl;
 #endif
             openSMTSolver->preInterpret->interpFile((char *) ("(assert " + lemma.smtlib + ")").c_str());
 

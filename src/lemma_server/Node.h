@@ -45,7 +45,7 @@ public:
 
     void fill(std::list<Lemma *> &lemmas, std::map<Lemma *, bool> &lemmas_solver) {
         for (auto &pair:this->index) {
-            if (this->index[pair.first]->smtlib.length() > 10000)
+            if (this->index[pair.first]->smtlib.length() > 5000)
                 continue;
             if (lemmas_solver[this->index[pair.first]])
                 continue;

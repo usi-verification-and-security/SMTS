@@ -107,7 +107,12 @@ void SolverServer::handle_message(net::Socket &socket, net::Header &header, std:
             this->log(Logger::WARNING, "unexpected message from server without command");
             return;
         }
-        if (header["command"] == PartitionChannel::Command.Lemmas && header.count(PartitionChannel::Command.Lemmas) == 1) {
+        if (header["command"] =="terminate")
+        {
+            this->log(Logger::WARNING, "unexpected message from server to terminate");
+            exit(0);
+        }
+        else if (header["command"] == PartitionChannel::Command.Lemmas && header.count(PartitionChannel::Command.Lemmas) == 1) {
             this->lemmaServerAddress = header[PartitionChannel::Command.Lemmas];
 
             this->update_lemmas();

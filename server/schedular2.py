@@ -121,6 +121,18 @@ class Solver(net.Socket):
             'node': path
         }, '')
 
+    def terminate(self):
+        if self.node is None:
+            raise ValueError('not solving anything')
+        name = self.node.root.name
+        path = self.node.path()
+        self._db_log('-')
+        self.write({
+            'command': 'terminate',
+            'name': name,
+            'node': path
+        }, '')
+
     def set_lemma_server(self, lemma_server: LemmaServer = None):
         self.write({
             'command': 'lemmas',
@@ -368,6 +380,7 @@ class ParallelizationServer(net.Server):
         self.idles = 0
         self.seed_counter = config.lemmaPull_timeoutMax
         self.tcounter = 0
+        self.terminate = False
         if self.config.enableLog:
             self.log(logging.INFO, 'server start. version {}'.format(version))
         if self.config.visualize_tree:
@@ -549,8 +562,14 @@ class ParallelizationServer(net.Server):
         #     return s_counter
         # if the current tree is already solved or timed out: stop it
         if isinstance(self.current, Instance):
-            if sum(map(lambda solver: isinstance(solver, Solver), self._rlist)) != self.total_solvers:
-                print(':error,solvers are lost',self.current.root.name, self.current.sp)
+            if not self.terminate:
+                if sum(map(lambda solver: isinstance(solver, Solver), self._rlist)) != self.total_solvers:
+                    print(':error,solvers are lost',self.current.root.name, self.current.sp)
+                    for solver in {solver for solver in self.solvers(False)}:
+                        solver.terminate()
+                    self.terminate = True
+                    return
+            elif sum(map(lambda solver: isinstance(solver, Solver), self._rlist)) == 0:
                 self.close()
                 exit(0)
             if self.current.root.status != framework.SolveStatus.unknown or self.current.when_timeout < 0:
@@ -568,28 +587,32 @@ class ParallelizationServer(net.Server):
                     else:
                         print("The file does not exist")
                     # self.v_tree.clear()
+                if self.current.root.status == framework.SolveStatus.unknown:
+                    if self.current.root.partitioning:
+                        if not self.current.root.childeren():
+                            if not self.terminate:
+                                print(':error,stuck',self.current.root.name, self.current.sp)
+                                for solver in {solver for solver in self.solvers(False)}:
+                                    solver.terminate()
+                                self.terminate = True
+                                return
+
+                    # self.tcounter += 1
+                    # if self.tcounter == 4:
+                    #     self.log(logging.INFO, '{}'.format(self.current.root.status.name),
+                    #              self.current.root.name, round(time.time() - self.current.started, 3), config.conflict, self.current.sp)
+                    #     self.close()
+                    #     exit(0)
+                    # for key in self.trees:
+                    #     if key.startswith(self.current.root.name):
+                    #         self.tcounter += 1
+
+                    # del self.trees[self.current.root.name + 'portfolio']
+                    # for sp in framework.SplitPreference.__members__.values():
+                    #     del self.trees[self.current.root.name + sp.value]
                 if not self.config.enableLog and self.config.spit_preference:
                     # print(len(self._rlist)-1,self.total_solvers)
-                    if self.current.root.status == framework.SolveStatus.unknown:
-                        if self.current.root.partitioning:
-                            if not self.current.root.childeren():
-                                print(':error,stuck',self.current.root.name, self.current.sp)
-                                # if not any([type(socket) == net.Socket and socket is not self._sock for socket in self._rlist]):
-                                self.close()
-                                exit(0)
-                        # self.tcounter += 1
-                        # if self.tcounter == 4:
-                        #     self.log(logging.INFO, '{}'.format(self.current.root.status.name),
-                        #              self.current.root.name, round(time.time() - self.current.started, 3), config.conflict, self.current.sp)
-                        #     self.close()
-                        #     exit(0)
-                        # for key in self.trees:
-                        #     if key.startswith(self.current.root.name):
-                        #         self.tcounter += 1
 
-                        # del self.trees[self.current.root.name + 'portfolio']
-                        # for sp in framework.SplitPreference.__members__.values():
-                        #     del self.trees[self.current.root.name + sp.value]
                     self.log(logging.INFO, '{}'.format(self.current.root.status.name),
                              self.current.root.name, round(time.time() - self.current.started, 2), header, self.current.sp)
                     del self.trees[self.current.root.name + self.current.sp]
@@ -602,8 +625,10 @@ class ParallelizationServer(net.Server):
                         #     self.current.root.name,
                         #     time.time() - self.current.started))
 
-                for solver in {solver for solver in self.solvers(True) if solver.node.root == self.current.root}:
+                for solver in {solver for solver in self.solvers(False) if solver.node.root == self.current.root}:
                     solver.stop()
+                if self.lemma_server:
+                    self.lemma_server.reset(self.current.root)
                 self.current = None
                 self.counter = 0
                 self.idles = 0
@@ -613,8 +638,7 @@ class ParallelizationServer(net.Server):
                             instance.root.status == framework.SolveStatus.unknown and instance.when_timeout > 0]
             if schedulables:
                 self.current = schedulables[0]
-                if self.lemma_server:
-                    self.lemma_server.reset(self.current.root)
+
                 if self.config.enableLog:
                     self.log(logging.INFO, 'solving instance "{}"'.format(self.current.root.name))
                 self.total_solvers = len(self.solvers(False))

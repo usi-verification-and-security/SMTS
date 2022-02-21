@@ -44,9 +44,9 @@ private:
             this->header["lemmas"] = std::to_string(1000);
         }
 
-        if (!this->header.count("max_memory")) {
-            this->header["max_memory"] = std::to_string(0);
-        }
+//        if (!this->header.count("max_memory")) {
+//            this->header["max_memory"] = std::to_string(0);
+//        }
         this->init();
         this->info("start");
 

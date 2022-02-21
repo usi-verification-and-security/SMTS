@@ -91,7 +91,7 @@ def run_solvers(*solvers):
             for _ in range(n):
                 try:
                     ps.append(subprocess.Popen([path, '-s127.0.0.1:' + str(port)],
-                                               stdout=subprocess.DEVNULL,
+                                               stdout=subprocess.DEVNULL, # processId.out
                                                stderr=subprocess.DEVNULL))
                 except BaseException as ex:
                     logging.log(logging.ERROR, 'error "{}" while running "{}"'.format(ex, path))
