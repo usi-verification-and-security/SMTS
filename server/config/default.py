@@ -28,11 +28,11 @@ idle_quit = True  # quit smts after solving the last instance
 enableLog = False
 visualize_tree = False
 lemmaPush_timeoutMin = 5000
-lemmaPush_timeoutMax = 20000
-lemmaPull_timeoutMin = 30000
+lemmaPush_timeoutMax = 25000
+lemmaPull_timeoutMin = 25000
 lemmaPull_timeoutMax = 60000
 clientLogColorMode = False
-spit_preference = False
+spit_preference = True
 
 # parameters is a dictionary solver_name.solver_parameter -> value:(int, str, callable)  where:
 # solver_parameter is a valid parameter for the solver solver_name and

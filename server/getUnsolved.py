@@ -159,8 +159,6 @@ def main():
                         if solver[0] == args.solver and solver[1] == args.result:
                             n_custom_instances += 1
                             print(benchmark)
-                        else:
-                            break
     print('Total number of instances: '+ str(n_all_instances))
     ptr = str(n_custom_instances)
     if args.solver is not None:

@@ -10,7 +10,7 @@ HOST_FILE_PATH="/tmp/hostfile"
 #aws s3 cp $S3_INPUT $SCRATCH_DIR
 #tar -xvf $SCRATCH_DIR/*.tar.gz -C $SCRATCH_DIR
 
-sleep 2
+sleep 1
 echo main node: ${AWS_BATCH_JOB_MAIN_NODE_INDEX}
 echo this node: ${AWS_BATCH_JOB_NODE_INDEX}
 # Set child by default switch to main if on main node container
@@ -76,8 +76,8 @@ wait_for_nodes () {
     do
       cat $HOST_FILE_PATH
       lines=$(ls -dq /tmp/hostfile* | wc -l)
-      log "$lines out of $AWS_BATCH_JOB_NUM_NODES nodes joined, check again in 1 second"
-      sleep 1
+      log "$lines out of $AWS_BATCH_JOB_NUM_NODES nodes joined, check again in 0.5 second"
+      sleep 0.5
     done
 
   python3 SMTS/awcCloudTrack/awsRunBatch/make_combined_hostfile.py ${ip}
@@ -98,12 +98,23 @@ wait_for_nodes () {
    # fi
   #done
   echo "SEND SMT2 Instance ..."
+  if  [ "${SendInChunk}" == "Y" ]
+   then
+       find SMTS/${COMP_S3_PROBLEM_PATH} -name '*.smt2.bz2' |
+        while read -r file;
+        do
+          echo $file
+          SMTS/server/client.py 3000 $file
+          sleep 2
+        done
+  else
     if  [ "${DownloadFromS3}" == "N" ]
     then
       SMTS/server/client.py 3000 SMTS/${COMP_S3_PROBLEM_PATH}
     else
       SMTS/server/client.py 3000 test.smt2
     fi
+  fi
   wait
 }
 
