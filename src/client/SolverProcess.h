@@ -145,8 +145,10 @@ private:
                 this->header["query"] = header_Temp[index]["query"];
                 if (this->header["enableLog"] == "1")
                     this->info("incremental solving step from " + header_Temp[index]["node"]);
-                if (forked)
+                if (forked) {
                     kill_child();
+                    forked = false;
+                }
                 return PartitionChannel::Task {
                         .command = PartitionChannel::Task::incremental,
                         .smtlib = instance_Temp[index]
@@ -263,7 +265,7 @@ public:
                 std::cout << "[t push ]-> PID= "+to_string(getpid())+" ] SWriting lemmas to LemmaServer: -> size::"<< toPush_lemma.second.size()
                           <<"   from node -> "+header["node"]<< std::endl;
                 this->lemma.server->write(header, ::to_string(toPush_lemma.second));
-                std::cout << "[t push ]-> PID= "+to_string(getpid())+" ] SWriting lemmas to LemmaServer: -> size::"<< toPush_lemma.second.size()
+                std::cout << "[t push ]-> PID= "+to_string(getpid())+" ] EWriting lemmas to LemmaServer: -> size::"<< toPush_lemma.second.size()
                           <<"   from node -> "+header["node"]<< std::endl;
 #ifdef ENABLE_DEBUGING
                 std::cout << "[t push ]-> PID= "+to_string(getpid())+" ] EWriting lemmas to LemmaServer: -> size::"<< toPush_lemma.second.size()<< std::endl;
@@ -298,11 +300,11 @@ public:
 //            _l.lock();
         } catch (net::SocketException &ex) {
             this->lemma.errors++;
-//            this->error(std::string("lemma pull failed: ") + ex.what());
+            this->error(std::string("lemma pull failed: ") + ex.what());
             std::this_thread::sleep_for(std::chrono::milliseconds(2000));
             return false;
         }
-        std::cout << "[t pull -> PID= "+to_string(getpid())+" ] EReading lemmas from LemmaServer: for node -> "+header["node"]+" size::"<< lemmas.size()<< std::endl;
+
         this->lemma.errors = 0;
         this->lemma.last_pull = std::time(nullptr);
         if (this->lemma.interval > 1)
@@ -317,7 +319,7 @@ public:
 //        currentLemmaPulledNodePath = header["node"];
         std::istringstream is(payload);
         is >> lemmas;
-
+        std::cout << "[t pull -> PID= "+to_string(getpid())+" ] EReading lemmas from LemmaServer: for node -> "+header["node"]+" size::"<< lemmas.size()<< std::endl;
 #ifdef ENABLE_DEBUGING
         std::cout << "[t pull -> PID= "+to_string(getpid())+" ] EReading lemmas from LemmaServer: -> size::"<< lemmas.size()<< std::endl;
 #endif
