@@ -77,7 +77,6 @@ void SolverProcess::solve() {
     {
         this->error(std::string(ex.what()));
     }
-    catch (...) {}
 }
 
 void SolverProcess::clausePull(const string & seed, const string & n1, const string & n2)
@@ -288,14 +287,14 @@ void SolverProcess::search()
 
 #ifdef ENABLE_DEBUGING
         std::cout << "[t comunication -> PID= "+to_string(getpid())+" ] Before interpFile: "<< std::endl
-                  <<(char *) ( this->header["query"]).c_str()<<endl;
+                  <<(char *) ( smtlib + this->header["query"]).c_str()<<endl;
         synced_stream.println(true
                               ? opensmt::Color::FG_Blue : opensmt::Color::FG_DEFAULT,this->header["node"].substr(1, this->header["node"].size() - 2));
 #endif
         getChannel().setWorkingNode(this->header["node"]);
 
-//        openSMTSolver->getMainSplitter().set_solver_address_length(calc_solver_add_length(this->header["node"]));
-//        ( (ScatterSplitter &) openSMTSolver->getMainSplitter().getSMTSolver() ).set_solver_address(this->header["node"].substr(1, this->header["node"].size() - 2));
+        openSMTSolver->getMainSplitter().set_solver_address_length(calc_solver_add_length(this->header["node"]));
+        ( (ScatterSplitter &) openSMTSolver->getMainSplitter().getSMTSolver() ).set_solver_address(this->header["node"].substr(1, this->header["node"].size() - 2));
 //        openSMTSolver->getMainSplitter().set_num_of_pushes(count_Occurrences((char *) (smtlib).c_str(), "(push 1)"));
         getChannel().getMutex().unlock();
 
@@ -653,7 +652,7 @@ void SolverProcess::injectPulledClauses(const std::string& nodePath) {
 
 #ifdef ENABLE_DEBUGING
 
-//            cout <<" clause: "<<endl<< (char *) ("(assert " + lemma.smtlib + ")").c_str()<<std::endl;
+            cout <<" clause: "<<endl<< (char *) ("(assert " + lemma.smtlib + ")").c_str()<<std::endl;
 #endif
             openSMTSolver->preInterpret->interpFile((char *) ("(assert " + lemma.smtlib + ")").c_str());
 

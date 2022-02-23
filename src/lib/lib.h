@@ -79,6 +79,7 @@ namespace PartitionChannel {
         const std::string Cnflearnts = "cnf-learnts";
         const std::string Solve = "solve";
         const std::string Lemmas = "lemmas";
+        const std::string Terminate = "terminate";
     } Command;
 
     struct Task {

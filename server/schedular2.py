@@ -670,9 +670,9 @@ class ParallelizationServer(net.Server):
                 if self.config.enableLog:
                     self.log(logging.INFO, 'all done.')
                 if self.config.idle_quit:
-                    # if not any([type(socket) == net.Socket and socket is not self._sock for socket in self._rlist]):
-                    self.close()
-                    exit(0)
+                    if not any([type(socket) == net.Socket and socket is not self._sock for socket in self._rlist]):
+                        self.close()
+                        exit(0)
             return
 
         assert isinstance(self.current, Instance)
@@ -1124,7 +1124,10 @@ class ParallelizationServer(net.Server):
                         level_info = 'child'
                     print(data, message, time, header['conflict'], sp, header['statusinf'], res, level_info )
             else:
-                print(data, message, time)
+                status = 'Timout'
+                if message == 'sat' or message == 'unsat':
+                    status = 'solved'
+                print(data, message, time, status)
         if not config.db() or level < self.config.log_level:
             return
         config.db().cursor().execute("INSERT INTO {}ServerLog (level, message, data) "

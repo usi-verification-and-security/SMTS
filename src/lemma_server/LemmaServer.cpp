@@ -126,10 +126,10 @@ void LemmaServer::handle_message(net::Socket &client,
 //                         new Node);
 //            delete node_remove;
 //        }
-
-        this->lemmas.erase(header["name"]);
-
-        return;
+        if (this->lemmas.count(header["name"]) == 1) {
+            this->lemmas.erase(header["name"]);
+            return;
+        }
     }
 
     std::vector<Node *> node_path;
