@@ -333,39 +333,50 @@ void SolverProcess::search()
 //                std::cout <<defred<< "[t comunication -> PID= "+to_string(getpid())+" ]  after waiting to receive command ... ]"<<def1<<endl ;
             if (getChannel().shouldTerminate())
                 break;
-//                std::unique_lock<std::mutex> lock(mtx_listener_solve);
-            if ( getChannel().get_queris()[0] != PartitionChannel::Command.Partition)
-            {
-                PartitionChannel::Task task = this->wait(0);
-//                std::cout <<defred<< "[t comunication -> PID= "+to_string(getpid())+" ]  after reading incremental params ... ]"<<def1<<endl ;
-//                    getChannel().getMutex().lock();
-                smtlib = task.smtlib;
-            }
-            getChannel().pop_front_query();
-            header_Temp.pop_front();
-            instance_Temp.pop_front();
-            node_PulledLemmas.clear();
-            getChannel().clearInjectClause();
-//                checkForlearned_pushBeforIncrementality();
-//                std::cout << "\033[1;51m [t solver is incremental mode after checkForlearned_pushBeforIncrementality]: \033[0m\t" ;
 
         }
-        else //(not getChannel().isEmpty_query())
+        if (getChannel().shouldInjectClause())
         {
-//                std::unique_lock<std::mutex> lock(mtx_listener_solve);
-
-            if (not getChannel().isEmpty_query())
-//                for (int index = 0; index < getChannel().size_query(); index++)
+#ifdef ENABLE_DEBUGING
+            synced_stream.println(true ? opensmt::Color::FG_Cyan : opensmt::Color::FG_DEFAULT,
+                                  "[t comunication -> PID= "+to_string(getpid())+" ] Current Node -> "+ this->header["node"] );
+#endif
+            for ( const auto &lemmaPulled : node_PulledLemmas )
             {
-                if (getChannel().shouldTerminate()) {
-                    break;
+#ifdef ENABLE_DEBUGING
+                synced_stream.println(true ? opensmt::Color::FG_Cyan : opensmt::Color::FG_DEFAULT,
+                                      "[t comunication -> PID= "+to_string(getpid())+" ] check for pulled Node -> "+ lemmaPulled.first);
+#endif
+                if (not node_PulledLemmas[lemmaPulled.first].empty())
+                {
+                    if (isPrefix(lemmaPulled.first.substr(1, lemmaPulled.first.size() - 2),
+                                 this->header["node"].substr(1, this->header["node"].size() - 2)))
+                    {
+#ifdef ENABLE_DEBUGING
+                        synced_stream.println(true ? opensmt::Color::FG_Cyan : opensmt::Color::FG_DEFAULT,
+                                              "[t comunication -> PID= " + to_string(getpid()) +
+                                              " ] Node is prefix of the current -> " + lemmaPulled.first);
+                        std::string conflict = std::to_string(( (ScatterSplitter &) openSMTSolver->getMainSplitter().getSMTSolver() ).conflicts );
+                        std::cout<<";conflict before Clause Injection: "<< conflict << endl;
+#endif
+
+                        injectPulledClauses(lemmaPulled.first);
+                    }
                 }
-                PartitionChannel::Task task = this->wait(0 );
-//                    std::cout<<index<<endl;
-//                    if(task.command==Task::stop) break;
-                switch (task.command) {
-                    case PartitionChannel::Task::incremental:
-                        smtlib = task.smtlib;
+            }
+
+            node_PulledLemmas.clear();
+            getChannel().clearInjectClause();
+        }
+        if (not getChannel().isEmpty_query())
+        {
+            if (getChannel().shouldTerminate()) {
+                break;
+            }
+            PartitionChannel::Task task = this->wait(0 );
+            switch (task.command) {
+                case PartitionChannel::Task::incremental:
+                    smtlib = task.smtlib;
 //                                checkForlearned_pushBeforIncrementality();
 //                                getChannel().setShouldStop();
 ////
@@ -373,52 +384,19 @@ void SolverProcess::search()
 //                                smtlib.clear();
 ////
 //                                getChannel().clearShouldStop();
-                        break;
-                    case PartitionChannel::Task::resume:
-                        break;
-                }
+                    break;
+                case PartitionChannel::Task::resume:
+                    break;
+            }
 //                        std::unique_lock<std::mutex> lk(getChannel().getStopMutex());
 //                        getChannel().clearShouldStop();
-                //getChannel().notify_one();
-                getChannel().pop_front_query();
+            //getChannel().notify_one();
+            getChannel().pop_front_query();
 //                    std::scoped_lock<std::mutex> _l(this->mtx_listener_solve);
-                header_Temp.pop_front();
-                instance_Temp.pop_front();
-            }
-            else if (getChannel().shouldInjectClause())
-            {
-#ifdef ENABLE_DEBUGING
-                synced_stream.println(true ? opensmt::Color::FG_Cyan : opensmt::Color::FG_DEFAULT,
-                                      "[t comunication -> PID= "+to_string(getpid())+" ] Current Node -> "+ this->header["node"] );
-#endif
-                for ( const auto &lemmaPulled : node_PulledLemmas )
-                {
-#ifdef ENABLE_DEBUGING
-                    synced_stream.println(true ? opensmt::Color::FG_Cyan : opensmt::Color::FG_DEFAULT,
-                                          "[t comunication -> PID= "+to_string(getpid())+" ] check for pulled Node -> "+ lemmaPulled.first);
-#endif
-                    if (not node_PulledLemmas[lemmaPulled.first].empty())
-                    {
-                        if (isPrefix(lemmaPulled.first.substr(1, lemmaPulled.first.size() - 2),
-                                     this->header["node"].substr(1, this->header["node"].size() - 2)))
-                        {
-#ifdef ENABLE_DEBUGING
-                            synced_stream.println(true ? opensmt::Color::FG_Cyan : opensmt::Color::FG_DEFAULT,
-                                                  "[t comunication -> PID= " + to_string(getpid()) +
-                                                  " ] Node is prefix of the current -> " + lemmaPulled.first);
-                            std::string conflict = std::to_string(( (ScatterSplitter &) openSMTSolver->getMainSplitter().getSMTSolver() ).conflicts );
-                            std::cout<<";conflict before Clause Injection: "<< conflict << endl;
-#endif
-
-                            injectPulledClauses(lemmaPulled.first);
-                        }
-                    }
-                }
-
-                node_PulledLemmas.clear();
-                getChannel().clearInjectClause();
-            }
+            header_Temp.pop_front();
+            instance_Temp.pop_front();
         }
+
         if (getChannel().size_query() > 0)
             getChannel().setShouldStop();
         else getChannel().clearShouldStop();
