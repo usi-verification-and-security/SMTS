@@ -61,6 +61,8 @@ public:
         switch (level) {
             case INFO:
                 stream << "INFO\t";
+                r += system("tput setaf 3");
+                r += system("tput bold");
                 break;
             case WARNING:
                 if (getenv("TERM")) {

@@ -38,16 +38,16 @@ void SolverProcess::init() {
     if (this->header.get(net::Header::parameter, "split-type").size() > 0 &&
         this->header.get(net::Header::parameter, "split-type") != spts_lookahead &&
         this->header.get(net::Header::parameter, "split-type") != spts_scatter) {
-        this->warning("bad parameter.split-type: '" + this->header.get(net::Header::parameter, "seed") + "'. using default (" +default_split +")");
-        this->header.remove(net::Header::parameter, "split");
+        this->warning("bad parameter.split-type: '" + this->header.get(net::Header::parameter, "seed") +
+            "'. using default (" +default_split +")");
+        this->header.remove(net::Header::parameter, "split-type");
     }
     if (this->header.get(net::Header::parameter, "split-type").size() == 0) {
-        this->header.set(net::Header::parameter, "split", default_split);
+        this->header.set(net::Header::parameter, "split-type", default_split);
     }
 }
 void static segfault_sigaction(int signal, siginfo_t *si, void *arg)
 {
-//    this->error(std::string("Caught segfault at address " + std::to_string(si->si_errno)) +" "+ std::to_string(signal));
     printf("Caught segfault at address %p\n", si->si_errno);
     exit(0);
 }
@@ -55,7 +55,6 @@ void SolverProcess::solve() {
     const char *msg;
     SMTConfig config;
     config.setRandomSeed(atoi(this->header.get(net::Header::parameter, "seed").c_str()));
-
     config.setOption(SMTConfig::o_sat_split_type,
                      SMTOption(this->header.get(net::Header::parameter, "split-type").c_str()), msg) ;
 #ifdef ENABLE_DEBUGING
@@ -293,18 +292,17 @@ void SolverProcess::search()
 #endif
         getChannel().setWorkingNode(this->header["node"]);
 
-        openSMTSolver->getMainSplitter().set_solver_address_length(calc_solver_add_length(this->header["node"]));
         ( (ScatterSplitter &) openSMTSolver->getMainSplitter().getSMTSolver() ).set_solver_address(this->header["node"].substr(1, this->header["node"].size() - 2));
 //        openSMTSolver->getMainSplitter().set_num_of_pushes(count_Occurrences((char *) (smtlib).c_str(), "(push 1)"));
+        std::string query = this->header["query"];
         getChannel().getMutex().unlock();
 
-        openSMTSolver->preInterpret->interpFile((char *) (smtlib + this->header["query"]).c_str());
+        openSMTSolver->preInterpret->interpFile((char *) (smtlib + query).c_str());
 
         if (getChannel().shouldTerminate()) {
             break;
         }
         smtlib.clear();
-        getChannel().clearShouldStop();
         std::unique_lock<std::mutex> lock_channel(getChannel().getMutex());
 #ifdef ENABLE_DEBUGING
         std::cout<<"node: "<<this->header["node"]<<endl;
@@ -368,7 +366,7 @@ void SolverProcess::search()
             node_PulledLemmas.clear();
             getChannel().clearInjectClause();
         }
-        if (not getChannel().isEmpty_query())
+        else if (not getChannel().isEmpty_query())
         {
             if (getChannel().shouldTerminate()) {
                 break;
@@ -417,7 +415,8 @@ void SolverProcess::search()
 void SolverProcess::interrupt(const std::string& command) {
 #ifdef ENABLE_DEBUGING
     synced_stream.println(true ? opensmt::Color::FG_Yellow : opensmt::Color::FG_DEFAULT,
-                          "[t Listener , Pull -> PID= "+to_string(getpid())+" ] OpenSMT2 Should  -> "+command +" on Node -> "+this->header["node"]);
+                          "[t Listener , Pull -> PID= "+to_string(getpid())+" ] OpenSMT2 Should  -> "
+                          + command +" on Node -> "+this->header["node"]+" "+this->header["name"]);
 #endif
 //    if (getChannel().shouldTerminate()) return;
     if (command == PartitionChannel::Command.Stop) {
@@ -471,7 +470,12 @@ void SolverProcess::partition(uint8_t n) {
         forked = true;
         return;
     }
-    std::thread _t([&] {
+//    std::thread _th([&] {
+//        while (getppid() == pid)
+//            sleep(1);
+//        exit(0);
+//    });
+    std::thread _ts([&] {
         while (true) {
             sleep(1);
             if (getppid() == 1)
@@ -610,12 +614,12 @@ void SolverProcess::injectPulledClauses(const std::string& nodePath) {
 //    openSMTSolver->getMainSplitter().pop();
 
 #ifdef ENABLE_DEBUGING
-    struct sigaction sa;
-    memset(&sa, 0, sizeof(struct sigaction));
-    sigemptyset(&sa.sa_mask);
-    sa.sa_sigaction = segfault_sigaction;
-    sa.sa_flags   = SA_SIGINFO;
-    sigaction(SIGILL, &sa, NULL);
+//    struct sigaction sa;
+//    memset(&sa, 0, sizeof(struct sigaction));
+//    sigemptyset(&sa.sa_mask);
+//    sa.sa_sigaction = segfault_sigaction;
+//    sa.sa_flags   = SA_SIGINFO;
+//    sigaction(SIGILL, &sa, NULL);
     synced_stream.println(true ? opensmt::Color::FG_Green : opensmt::Color::FG_DEFAULT,
                           "[t comunication -> PID= "+to_string(getpid())+" ] inject accumulated clauses -> Size:" + to_string(node_PulledLemmas[nodePath].size()));
 #endif

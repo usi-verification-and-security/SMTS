@@ -30,9 +30,8 @@ private:
     std::deque<std::string> instance_Temp;
 //    bool colorMode;
     std::deque<net::Header> header_Temp;
-    mutable std::mutex mtx_listener_solve;
     pid_t child_pid;
-    bool forked=false;
+    bool forked = false;
     // async interrupt the solver
     void interrupt(const string& command);
     void kill_child();
@@ -44,9 +43,9 @@ private:
             this->header["lemmas"] = std::to_string(1000);
         }
 
-//        if (!this->header.count("max_memory")) {
-//            this->header["max_memory"] = std::to_string(0);
-//        }
+        if (!this->header.count("max_memory")) {
+            this->header["max_memory"] = std::to_string(0);
+        }
         this->init();
         this->info("start");
 
@@ -222,10 +221,10 @@ public:
         std::string seed = this->header.get(net::Header::parameter, "seed");
 //        std::cout<<"lemma_push_min: "<<this->header["lemma_push_min"].c_str()<<endl;
 //        std::cout<<"lemma_pull_min: "<<this->header["lemma_pull_min"].c_str()<<endl;
-        int interval = atoi(this->header["lemma_push_min"].c_str()) + ( atoi(seed.substr(1, seed.size() - 1).c_str())
+        int interval = atoi(this->header["lemma_push_min"].c_str()) + ( atoi(seed.c_str())
                                                   % ( atoi(this->header["lemma_push_max"].c_str())- atoi(this->header["lemma_push_min"].c_str()) + 1 ) );
         getChannel().setClauseShareMode();
-        getChannel().setClauseLearnInterval(interval/2);
+        getChannel().setClauseLearnInterval(interval / 2);
 
         start_Thread(PartitionChannel::ThreadName::ClausePush, seed,this->header["lemma_push_min"],this->header["lemma_push_max"]);
 
@@ -239,6 +238,8 @@ public:
     }
     ~SolverProcess()
     {
+        if (forked)
+            kill_child();
         this->wait_ForThreads();
     }
 
@@ -246,14 +247,13 @@ public:
         return this->lemma.server != nullptr;
     }
 
-    void lemma_push(const std::map<std::string, std::vector<net::Lemma>> &lemmas, net::Header &header) {
+    void lemma_push(std::map<std::string, std::vector<net::Lemma>> const &lemmas, net::Header &header) {
         if (lemmas.empty()) return;
         std::scoped_lock<std::mutex> _l(this->lemma.lemma_mutex);
-        for ( const auto &toPush_lemma : lemmas )
+        if (!is_sharing())
+            return;
+        for (const auto &toPush_lemma : lemmas)
         {
-//            std::unique_lock<std::mutex> _l(this->mtx_listener_solve);
-            if (!is_sharing())
-                return;
             header["node"] = toPush_lemma.first;
             header["lemmas"] = "+" + std::to_string(toPush_lemma.second.size());
 
@@ -286,9 +286,7 @@ public:
         if (!is_sharing())
             return false;
 
-
         std::string payload;
-
         try {
 #ifdef ENABLE_DEBUGING
             std::cout << "[t pull ]-> PID= "+to_string(getpid())+" ] SReading lemmas from LemmaServer for node -> "+header["node"]<< std::endl;
@@ -338,13 +336,6 @@ public:
     inline bool isPrefix(std::string_view prefix, std::string_view full)
     {
         return prefix == full.substr(0, prefix.size());
-    }
-
-    inline int calc_solver_add_length(const std::string & n)
-    {
-        string s(n);
-        return std::count_if( s.begin(), s.end(),
-                                      []( char c ) { return std::isdigit( c ); } ) / 2;
     }
 
     int count_Occurrences(char *str, string word)

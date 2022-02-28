@@ -322,13 +322,13 @@ class Solver(net.Socket):
                         if isinstance(child, framework.AndNode):
                             child.status = framework.SolveStatus.unsat
 
-            for node in path:
-                # print("node . . ..........", node)
-                if node.status != framework.SolveStatus.unknown:
-                    if isinstance(node, framework.AndNode):
-                        self._db_log('SOLVED', {'status': node.status.name, 'node': str(node.path())})
-                else:
-                    break
+            # for node in path:
+            #     # print("node . . ..........", node)
+            #     if node.status != framework.SolveStatus.unknown:
+            #         if isinstance(node, framework.AndNode):
+            #             self._db_log('SOLVED', {'status': node.status.name, 'node': str(node.path())})
+            #     else:
+            #         break
             # if status != framework.SolveStatus.unknown:
             #     if self.node == self.node.root:
             #         header['level'] = 'root'

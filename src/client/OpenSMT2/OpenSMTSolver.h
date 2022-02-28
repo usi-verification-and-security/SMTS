@@ -32,11 +32,11 @@ public:
     result(PartitionChannel::Status::unknown)
     {
         preInterpret.reset(new Interpret(config , channel));
-        if (not channel.shouldTerminate()) {
-            channel.getMutex().unlock();
-            preInterpret->interpFile((char *) instance.c_str());
-            channel.getMutex().lock();
-        }
+
+        channel.getMutex().unlock();
+        preInterpret->interpFile((char *) instance.c_str());
+        channel.getMutex().lock();
+
 //        interpret.reset( std::move(preInterpret));
 //        interpret.reset( new Interpret(config, std::move(std::shared_ptr<MainSolver>(&preInterpret->getMainSolver())),
 //                                       std::move(std::shared_ptr<Logic>(&preInterpret->getLogic()))));

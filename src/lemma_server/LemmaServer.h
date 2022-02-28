@@ -26,7 +26,7 @@ private:
 #endif
     std::map<std::string, Node> lemmas;                            // name -> lemmas
     std::map<std::string, std::map<net::Socket *, std::map<Lemma *, bool>>> solvers;  // name -> solver -> lemma -> t/f
-//    mutable std::mutex solvers_mutex;
+    std::map<std::string, bool> Processed;
 
 protected:
     void handle_accept(net::Socket &);

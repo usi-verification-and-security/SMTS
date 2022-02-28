@@ -71,15 +71,18 @@ void SolverServer::stop_solver() {
     this->log(Logger::INFO, "solver killed");
     this->solver->interrupt(PartitionChannel::Command.Stop);
     this->solver->getChannel().notify_all();
-    //this->solver->getChannel().notify_one_();
     delete this->solver;
     this->solver = nullptr;
-//        free(channel);
+    std::scoped_lock<std::mutex> lk(channel.getMutex());
+    channel.resetChannel();
 }
 
 void SolverServer::update_lemmas() {
     if (not this->solver)
         return;
+//    if (not this->solver->lemma.server)
+//        this->solver->lemma.server.reset(new net::Socket(this->lemmaServerAddress));
+//    return;
     net::Header header;
 //    header["command"] = "local";
 //    header["local"] = "lemma_server";
@@ -97,7 +100,7 @@ void SolverServer::update_lemmas() {
         }
 //        this->solver->injectPulledClauses();
     }
-    this->solver->writer()->write(header, "");
+//    this->solver->writer()->write(header, "");
 }
 
 
@@ -127,7 +130,6 @@ void SolverServer::handle_message(net::Socket &socket, net::Header &header, std:
 //            SMTS::colorMode = static_cast<bool>(atoi(header["colorMode"].c_str()));
             this->stop_solver();
             header.erase("command");
-            channel.resetChannel();
             this->solver = new SolverProcess(header, payload, &this->SMTSServer, channel,
                                              this->lemmaServerAddress.empty() ? false : true);
 
