@@ -4,14 +4,10 @@ if (SQLITE3_Enabled)
     include_directories(${SQLITE3_INCLUDE_DIR})
 endif()
 add_library(Lib STATIC
-        lib.cpp
-        memory.cpp
         Thread.cpp
         Process.cpp
         Logger.h
         net/Address.cpp
-        net/Header.cpp
-        net/Pipe.cpp
         net/Server.cpp
         net/Socket.cpp
         )
