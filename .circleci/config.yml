@@ -9,8 +9,6 @@ jobs:
             environment:
                 CMAKE_BUILD_TYPE: Release
                 FLAGS: -Wall
-                #INSTALL: ~/externalRepo/opensmt
-                #EXTERNALREPODIR: externalRepo
                 USE_READLINE: OFF
         steps:
             - checkout
@@ -24,22 +22,17 @@ jobs:
             - run:
                 name: Install Sqllite
                 command: sudo apt-get install zlib1g-dev libsqlite3-dev      
-#            - run:
-#                name: Install external opensmt Tag V2.0.1
-#                command: sh ./ci/run_travis_opensmtCommands.sh
-#                environment:
-#                    CMAKE_BUILD_TYPE: Release
             - run:
                 name: Create the build directory
                 command: mkdir build
             - run:
                 name: Release build gcc
-                command: sh ./ci/run_travis_smtsCommands.sh
+                command: sh ./ci/make_smts.sh
                 environment:
                     CMAKE_BUILD_TYPE: Release
             - run:
                 name: Debug build gcc
-                command: sh ./ci/run_travis_smtsCommands.sh
+                command: sh ./ci/make_smts.sh
                 environment:
                     CMAKE_BUILD_TYPE: Debug
             - run:
@@ -54,12 +47,12 @@ jobs:
                     sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++ 60
             - run:
                 name: Release build llvm
-                command: sh ./ci/run_travis_smtsCommands.sh
+                command: sh ./ci/make_smts.sh
                 environment:
                     CMAKE_BUILD_TYPE: Release
             - run:
                 name: Debug build llvm
-                command: sh ./ci/run_travis_smtsCommands.sh
+                command: sh ./ci/make_smts.sh
                 environment:
                     CMAKE_BUILD_TYPE: Debug
                     FLAGS: -Wall -Werror=sign-compare -Wunused-lambda-capture -fsanitize=signed-integer-overflow
