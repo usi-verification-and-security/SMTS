@@ -1,32 +1,35 @@
-//
-// Author: Matteo Marescotti
-//
+/*
+ * Copyright (c) Matteo Marescotti <Matteo.marescotti@usi.ch>
+ * Copyright (c) 2022, Antti Hyvarinen <antti.hyvarinen@gmail.com>
+ * Copyright (c) 2022, Seyedmasoud Asadzadeh <seyedmasoud.asadzadeh@usi.ch>
+ *
+ * SPDX-License-Identifier: MIT
+ */
 
 #ifndef SMTS_LIB_NET_SOCKET_H
 #define SMTS_LIB_NET_SOCKET_H
 
+#include "Address.h"
+
+#include "PTPLib/common/Exception.hpp"
+#include "PTPLib/net/SMTSEvent.hpp"
+
 #include <map>
 #include <memory>
 #include <mutex>
-#include "lib/Exception.h"
-#include "Address.h"
-#include "Header.h"
-
 
 namespace net {
-    class SocketException : public Exception {
+    class SocketException : public PTPLib::common::Exception {
     public:
         explicit SocketException(const char *file, unsigned line, const std::string &message) :
                 Exception(file, line, "SocketException: " + message) {}
     };
-
 
     class SocketClosedException : public SocketException {
     public:
         explicit SocketClosedException(const char *file, unsigned line) :
                 SocketException(file, line, "file descriptor closed") {}
     };
-
 
     class Socket {
     private:
@@ -48,9 +51,9 @@ namespace net {
 
         std::shared_ptr<Socket> accept() const;
 
-        uint32_t read(net::Header &, std::string &) const;
+        PTPLib::net::SMTS_Event read(uint32_t & length) const;
 
-        uint32_t write(const net::Header &, const std::string &) const;
+        uint32_t write(const PTPLib::net::SMTS_Event &) const;
 
         void close();
 

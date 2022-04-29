@@ -1,13 +1,17 @@
-//
-// Author: Matteo Marescotti
-//
+/*
+ * Copyright (c) Matteo Marescotti <Matteo.marescotti@usi.ch>
+ * Copyright (c) 2022, Antti Hyvarinen <antti.hyvarinen@gmail.com>
+ * Copyright (c) 2022, Seyedmasoud Asadzadeh <seyedmasoud.asadzadeh@usi.ch>
+ *
+ * SPDX-License-Identifier: MIT
+ */
 
+#include "Socket.h"
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <algorithm>
 #include <string.h>
-#include "Socket.h"
 
 
 namespace net {
@@ -60,10 +64,7 @@ namespace net {
         new(this) Socket(sockfd);
     }
 
-    Socket::Socket(int fd) :
-            fd(fd) {
-
-    };
+    Socket::Socket(int fd) : fd(fd) {};
 
     Socket::~Socket() {
         this->close();
@@ -97,13 +98,13 @@ namespace net {
         return r;
     }
 
-    uint32_t Socket::read(net::Header &header, std::string &payload) const {
+    PTPLib::net::SMTS_Event Socket::read(uint32_t & length) const {
         std::scoped_lock<std::mutex> _l(this->read_mtx);
-
-        uint32_t length = 0;
+        PTPLib::net::Header header;
+        std::string payload;
         char buffer[4];
         if (this->readn(buffer, 4) != 4)
-            return 0;
+            return PTPLib::net::SMTS_Event();
         length = (uint32_t) ((uint8_t) buffer[0]) << 24 |
                  (uint32_t) ((uint8_t) buffer[1]) << 16 |
                  (uint32_t) ((uint8_t) buffer[2]) << 8 |
@@ -129,20 +130,18 @@ namespace net {
         }
         i++;
 
-        payload.clear();
         if (length > i)
             payload.append(std::string(&message.get()[i], length - i));
-
-        return length;
+        return PTPLib::net::SMTS_Event(std::move(header), std::move(payload));
     }
 
-    uint32_t Socket::write(const net::Header &header, const std::string &payload) const {
+    uint32_t Socket::write(const PTPLib::net::SMTS_Event & SMTS_Event) const {
         std::scoped_lock<std::mutex> _l(this->write_mtx);
-        if (header.count(""))
+        if (SMTS_Event.header.count(""))
             throw SocketException(__FILE__, __LINE__, "empty key is not allowed");
         std::string message;
         message += "\xFF\xFF\xFF\xFF";
-        for (auto &pair : header) {
+        for (auto &pair : SMTS_Event.header) {
             std::string keyval[2] = {pair.first, pair.second};
             for (uint8_t i = 0; i < 2; i++) {
                 if (keyval[i].length() > (uint8_t) -1)
@@ -153,7 +152,7 @@ namespace net {
         }
 
         message += '\x00';
-        message += payload;
+        message += SMTS_Event.body;
 
         if (message.length() > (uint32_t) -1)
             throw SocketException(__FILE__, __LINE__, "resulting message is too big");
