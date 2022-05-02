@@ -6,10 +6,10 @@ db_path = None  # sqlite3 event db path absolute or relative to the config file
 table_prefix = ''  # db table prefix
 portfolio_max = 0  # 0 if no limit
 portfolio_min = 1  # 0 if no limit
-partition_timeout = 5   # None if no partitioning
+partition_timeout = 20   # None if no partitioning
 node_timeout = None  # None for no timeout
-partition_policy = [1, 2]  #
-solving_timeout = 1200  # None for no timeout
+partition_policy = [1, 8]  #
+solving_timeout = 10000  # None for no timeout
 max_memory = 6000  # max memory for each solver process in MB
 build_path = "../../build"  # build path absolute or relative to the config file
 lemma_sharing = True  # enabling lemma sharing
@@ -24,15 +24,15 @@ gui = False  # enable GUI
 opensmt = 0  # number of opensmt2 processes
 z3spacer = 0  # number of z3spacer processes
 sally = 0  # number of sally processes
-idle_quit = True  # quit smts after solving the last instance
-enableLog = False
+idle_quit = False  # quit smts after solving the last instance
+enableLog = True
 visualize_tree = False
-lemmaPush_timeoutMin = 5000
-lemmaPush_timeoutMax = 25000
-lemmaPull_timeoutMin = 25000
-lemmaPull_timeoutMax = 60000
+lemmaPush_timeoutMin = 2000
+lemmaPush_timeoutMax = 3000
+lemmaPull_timeoutMin = 4000
+lemmaPull_timeoutMax = 5000
 clientLogColorMode = False
-spit_preference = True
+spit_preference = False
 
 # parameters is a dictionary solver_name.solver_parameter -> value:(int, str, callable)  where:
 # solver_parameter is a valid parameter for the solver solver_name and
@@ -43,7 +43,7 @@ spit_preference = True
 # a single key can be overridden without copying the entire object
 parameters = {
     "OpenSMT2.seed": lambda: random.randint(0, 0xFFFFFF),
-    "OpenSMT2.split-type": "scattering",
+    "OpenSMT2.scatter-split": "true",
     "Spacer.fp.spacer.random_seed": lambda: random.randint(0, 0xFFFFFF),
     "Spacer.fp.spacer.restarts": "false",
     "Spacer.fp.spacer.p3.share_lemmas": "true",
