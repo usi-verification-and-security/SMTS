@@ -1,23 +1,30 @@
-//
-// Author: Matteo Marescotti
-//
+/*
+ * Copyright (c) Matteo Marescotti <Matteo.marescotti@usi.ch>
+ * Copyright (c) 2022, Antti Hyvarinen <antti.hyvarinen@gmail.com>
+ * Copyright (c) 2022, Seyedmasoud Asadzadeh <seyedmasoud.asadzadeh@usi.ch>
+ *
+ * SPDX-License-Identifier: MIT
+ */
 
 #ifndef SMTS_LEMMASERVER_LEMMA_H
 #define SMTS_LEMMASERVER_LEMMA_H
 
+#include <PTPLib/net/Lemma.hpp>
+
 #include <string>
 #include <list>
-#include "lib/net/Lemma.h"
 
-
-class Lemma : public net::Lemma {
+class Lemma : public PTPLib::net::Lemma {
 private:
     int score;
+
 public:
-    Lemma(net::Lemma &lemma) :
-            net::Lemma(lemma),
-            score(0),
-            id(0) {}
+    Lemma(PTPLib::net::Lemma &lemma)
+    :
+        PTPLib::net::Lemma(lemma),
+        score(0),
+        id(0)
+    {}
 
     static bool score_compare(const Lemma *const &a, Lemma *const &b) {
         return a->score < b->score;
@@ -35,9 +42,9 @@ public:
 
     inline int get_score() { return this->score; }
 
-    bool operator==(Lemma const &b) const { return this->smtlib == b.smtlib; }
+    bool operator==(Lemma const &b) const { return this->clause == b.clause; }
 
-    bool operator!=(Lemma const &b) const { return this->smtlib != b.smtlib; }
+    bool operator!=(Lemma const &b) const { return this->clause != b.clause; }
 
     bool operator<(Lemma const &b) const { return this->score < b.score; }
 
