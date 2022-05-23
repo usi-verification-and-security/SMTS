@@ -28,9 +28,10 @@ else(OpenSMT_FOUND)
     set(PACKAGE_TESTS OFF CACHE INTERNAL "")
 
     message(STATUS "SMTS's Client is fetching OpenSMT from ${OpenSMT_repository}")
+    message(STATUS "OpenSMT Branch : ${OpenSMT_branch}")
     FetchContent_MakeAvailable(OpenSMT)
 
-    add_library(OpenSMT::OpenSMT ALIAS OpenSMT-static)
+    add_library(OpenSMT::OpenSMT ALIAS OpenSMT-splitter-static)
 endif(OpenSMT_FOUND)
 
 
