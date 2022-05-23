@@ -74,6 +74,7 @@ if (NOT OpenSMT_FOUND)
             ${opensmt_SOURCE_DIR}/src/models
             ${opensmt_SOURCE_DIR}/src/itehandler
             ${opensmt_SOURCE_DIR}/src/interpolation
+            ${opensmt_SOURCE_DIR}/src/parallel
             )
     message(STATUS "GMP dirs:${GMP_INCLUDE_DIR}")
 
