@@ -84,6 +84,6 @@ target_link_libraries(client PUBLIC PTPLib::PTPLib)
 
 target_compile_definitions(client PRIVATE -DSMTS_VERSION=${SMTS_VERSION})
 
-if (ACTIVELOG)
-    target_compile_definitions(client PUBLIC -DSMTS_ACTIVELOG)
+if (VERBOSE_THREAD)
+    target_compile_definitions(client PUBLIC -DVERBOSE_THREAD)
 endif()
