@@ -29,6 +29,9 @@ if (UNIX)
     SET(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES} ".so" ".a")
 endif ()
 
+if (VERBOSE_THREAD)
+    set(VERBOSE_THREAD ON CACHE INTERNAL "")
+endif(VERBOSE_THREAD)
 
 include_directories(${CMAKE_SOURCE_DIR})
 add_subdirectory(${CMAKE_SOURCE_DIR}/module)
