@@ -7,7 +7,6 @@ set_target_properties(solver_opensmt PROPERTIES COMPILE_FLAGS ${solver_opensmt_f
 
 target_link_libraries(solver_opensmt client ${GMP_LIBRARY} ${GMPXX_LIBRARY})
 
-if (ACTIVELOG)
-    target_compile_definitions(client PUBLIC -DSMTS_ACTIVELOG)
-#    target_compile_definitions(client PUBLIC -DSMTS_ACTIVELOG)
+if (VERBOSE_THREAD)
+    target_compile_definitions(solver_opensmt PUBLIC -DVERBOSE_THREAD)
 endif()
