@@ -93,5 +93,7 @@ public:
     void pull_clause_worker(int seed, int n_min, int n_max);
     bool read_lemma(std::vector<PTPLib::net::Lemma> & lemmas, PTPLib::net::Header & header);
     bool lemma_pull(std::vector<PTPLib::net::Lemma> &lemmas, PTPLib::net::Header &header);
+
+    void periodic_clauseLearning_worker(int wait_duration);
 };
 #endif

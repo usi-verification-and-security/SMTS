@@ -485,4 +485,26 @@ bool Schedular::lemma_pull(std::vector<PTPLib::net::Lemma> & lemmas, PTPLib::net
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
         return false;
     }
+}
+
+void Schedular::periodic_clauseLearning_worker(int wait_duration) {
+    if (getChannel().isClauseShareMode()) {
+        if (log_enabled)
+            synced_stream.println_bold(
+                    log_enabled ? PTPLib::common::Color::FG_BrightBlue : PTPLib::common::Color::FG_DEFAULT,
+                    "[ t ", __func__, "] -> ", " clause learn timout: ", getChannel().getClauseLearnDuration());
+        while (true) {
+            std::unique_lock<std::mutex> lk(channel.getMutex());
+            if (getChannel().wait_for_reset(lk, std::chrono::milliseconds(wait_duration)))
+                break;
+            assert([&]() {
+                if (not lk.owns_lock()) {
+                    throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) + " can't take the lock");
+                }
+                return true;
+            }());
+            getChannel().setShouldLearnClauses();
+            lk.unlock();
+        }
+    }
 };
