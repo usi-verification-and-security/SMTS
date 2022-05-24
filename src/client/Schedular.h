@@ -45,6 +45,17 @@ private:
 
     void worker(PTPLib::common::TASK tname, int seed, int td_min, int td_max);
 
+    bool execute_event(PTPLib::net::SMTS_Event & smts_event, bool & shouldUpdateSolverAddress);
+
+    bool request_solver_toStop(PTPLib::net::SMTS_Event const & SMTS_event);
+
+    void communicate_worker();
+
+    inline void delete_solver_process() {
+        delete this->solver_process;
+        this->solver_process = nullptr;
+    }
+
 public:
 
     Schedular (PTPLib::threads::ThreadPool           & th_pool,
