@@ -95,5 +95,7 @@ public:
     bool lemma_pull(std::vector<PTPLib::net::Lemma> &lemmas, PTPLib::net::Header &header);
 
     void periodic_clauseLearning_worker(int wait_duration);
+
+    void set_LemmaServer_socket(net::Socket * lemma_server_socket) { Lemma_server_socket = lemma_server_socket; }
 };
 #endif
