@@ -272,3 +272,77 @@ void Schedular::notify_reset() {
     channel.notify_all();
     _lk.unlock();
 }
+
+
+
+void Schedular::push_clause_worker(int seed, int min, int max) {
+#ifdef VERBOSE_THREAD
+    push_thread_id = std::this_thread::get_id();
+#endif
+    int push_duration = min + (seed % (max - min + 1));
+    if (log_enabled)
+        synced_stream.println_bold(log_enabled ? PTPLib::common::Color::FG_Blue : PTPLib::common::Color::FG_DEFAULT,
+                               "[ t ", __func__, "] -> ", " timout : ", push_duration, " ms");
+    PTPLib::net::time_duration wakeupAt = std::chrono::milliseconds(push_duration);
+    while (true) {
+        if (log_enabled)
+            PTPLib::common::PrintStopWatch psw("[t PUSH ] -> measured wait and write duration: ", synced_stream,
+                                           log_enabled ? PTPLib::common::Color::FG_Blue : PTPLib::common::Color::FG_DEFAULT);
+        std::unique_lock<std::mutex> lk(getChannel().getMutex());
+        bool reset = getChannel().wait_for_reset(lk, wakeupAt);
+#ifdef VERBOSE_THREAD
+        if (push_thread_id != std::this_thread::get_id())
+                throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) +" has inconsistent thread id");
+#endif
+
+        assert([&]() {
+            if (not lk.owns_lock()) {
+                throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) + " can't take the lock");
+            }
+            return true;
+        }());
+        if (not reset) {
+            if (not getChannel().empty_learned_clauses()) {
+                auto map_branch_clauses = getChannel().swap_learned_clauses();
+                getChannel().clear_learned_clauses();
+                auto header = channel.get_current_header({PTPLib::common::Param.NAME, PTPLib::common::Param.NODE, PTPLib::common::Param.QUERY});
+                lk.unlock();
+
+                assert([&]() {
+                    if (lk.owns_lock()) {
+                        throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) + " should not hold the lock");
+                    }
+                    return true;
+                }());
+                if (not header.empty()) {
+                    lemmas_publish(map_branch_clauses, header);
+                    map_branch_clauses->clear();
+                }
+            } else {
+                if (log_enabled)
+                    synced_stream.println(
+                            log_enabled ? PTPLib::common::Color::FG_Blue : PTPLib::common::Color::FG_DEFAULT,
+                            "[ t ", __func__, "] -> ", " Channel empty!");
+            }
+        } else if (getChannel().shouldReset())
+            break;
+
+        else {
+            synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Blue : PTPLib::common::Color::FG_DEFAULT,
+                                  "[ t ", __func__, "] -> ", "spurious wake up!");
+            assert(EXIT_FAILURE);
+        }
+    }
+}
+
+void Schedular::lemmas_publish(std::unique_ptr<PTPLib::net::map_solver_clause> const & map_branch_clause, PTPLib::net::Header & header) {
+    assert((not header.at(PTPLib::common::Param.NODE).empty()) and (not header.at(PTPLib::common::Param.NAME).empty()));
+    for (const auto & branch_clause : *map_branch_clause) {
+        header[PTPLib::common::Param.NODE] = branch_clause.first;
+        header[PTPLib::common::Command.LEMMAS] = "+" + std::to_string(branch_clause.second.size());
+        lemma_push(branch_clause.second, header);
+        if (log_enabled)
+            synced_stream.println_bold(log_enabled ? PTPLib::common::Color::FG_Blue : PTPLib::common::Color::FG_DEFAULT,
+                                       "[ t ", __func__, "] -> ", " push learned clauses to Cloud Clause Size: ", branch_clause.second.size());
+    }
+}

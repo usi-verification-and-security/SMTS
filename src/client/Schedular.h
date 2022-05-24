@@ -86,5 +86,7 @@ public:
 
     void notify_reset();
 
+    void push_clause_worker(int seed, int n_min, int n_max);
+    void lemmas_publish(std::unique_ptr<PTPLib::net::map_solver_clause> const & lemmas, PTPLib::net::Header & header);
 };
 #endif
