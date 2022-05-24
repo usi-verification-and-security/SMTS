@@ -89,5 +89,9 @@ public:
     void push_clause_worker(int seed, int n_min, int n_max);
     void lemmas_publish(std::unique_ptr<PTPLib::net::map_solver_clause> const & lemmas, PTPLib::net::Header & header);
     void lemma_push(std::vector<PTPLib::net::Lemma> const & toPush_lemma, PTPLib::net::Header & header);
+
+    void pull_clause_worker(int seed, int n_min, int n_max);
+    bool read_lemma(std::vector<PTPLib::net::Lemma> & lemmas, PTPLib::net::Header & header);
+    bool lemma_pull(std::vector<PTPLib::net::Lemma> &lemmas, PTPLib::net::Header &header);
 };
 #endif

@@ -365,3 +365,124 @@ void Schedular::lemma_push(std::vector<PTPLib::net::Lemma> const & toPush_lemma,
         return;
     }
 }
+
+void Schedular::pull_clause_worker(int seed, int min, int max) {
+    try {
+#ifdef VERBOSE_THREAD
+        pull_thread_id = std::this_thread::get_id();
+#endif
+        int pull_duration = min + (seed % (max - min + 1));
+        if (log_enabled)
+            synced_stream.println_bold(log_enabled ? PTPLib::common::Color::FG_Magenta : PTPLib::common::Color::FG_DEFAULT,
+                                   "[ t ", __func__, "] -> ", " timout : ", pull_duration, " ms");
+        PTPLib::net::time_duration wakeupAt = std::chrono::milliseconds(pull_duration);
+        while (true) {
+            if (log_enabled)
+                PTPLib::common::PrintStopWatch psw("[t PULL ] -> measured wait and read duration: ", synced_stream,
+                                               log_enabled ? PTPLib::common::Color::FG_Magenta : PTPLib::common::Color::FG_DEFAULT);
+            std::unique_lock<std::mutex> u_lk(getChannel().getMutex());
+            bool reset = getChannel().wait_for_reset(u_lk, wakeupAt);
+#ifdef VERBOSE_THREAD
+            if (pull_thread_id != std::this_thread::get_id())
+                throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) +" has inconsistent thread id");
+#endif
+
+            assert([&]() {
+                if (not u_lk.owns_lock()) {
+                    throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) + " can't take the lock");
+                }
+                return true;
+            }());
+            if (not reset) {
+                auto header = channel.get_current_header({PTPLib::common::Param.NAME, PTPLib::common::Param.NODE, PTPLib::common::Param.QUERY});
+                u_lk.unlock();
+                assert([&]() {
+                    if (u_lk.owns_lock()) {
+                               throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) + " should not hold the lock");
+                    }
+                    return true;
+                }());
+                if (not header.empty()) {
+                    std::vector<PTPLib::net::Lemma> lemmas;
+                    if (this->read_lemma(lemmas, header)) {
+                        if (log_enabled)
+                            synced_stream.println_bold(
+                                log_enabled ? PTPLib::common::Color::FG_Magenta : PTPLib::common::Color::FG_DEFAULT,
+                                "[ t ", __func__, "] -> ", " Pulled Learned Clauses Copied To Channel Buffer, Size: ", lemmas.size());
+                        {
+                            std::unique_lock<std::mutex> uniqueLock(getChannel().getMutex());
+                            assert([&]() {
+                                if (not uniqueLock.owns_lock()) {
+                                           throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) + " can't take the lock");
+                                }
+                                return true;
+                            }());
+                            if (getChannel().shouldReset())
+                                break;
+                            channel.insert_pulled_clause(std::move(lemmas));
+                            header[PTPLib::common::Param.COMMAND] = PTPLib::common::Command.CLAUSEINJECTION;
+                            queue_event(PTPLib::net::SMTS_Event(std::move(header)));
+                            uniqueLock.unlock();
+                        }
+                        if (log_enabled)
+                            synced_stream.println_bold(
+                                log_enabled ? PTPLib::common::Color::FG_Magenta : PTPLib::common::Color::FG_DEFAULT,
+                                "[ t ", __func__, "] ->  ", PTPLib::common::Command.CLAUSEINJECTION,
+                                " Is Queued and Notified To The Communicator");
+                    }
+                }
+            }
+            else if (getChannel().shouldReset())
+                break;
+
+            else {
+                synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Magenta : PTPLib::common::Color::FG_DEFAULT,
+                                      "[ t ", __func__, "] -> ", "spurious wake up!");
+                assert(false);
+            }
+        }
+    }
+    catch (PTPLib::common::Exception & ex)
+    {
+        std::cerr << __func__ << ex.what() << std::endl;
+    }
+}
+
+bool Schedular::read_lemma(std::vector<PTPLib::net::Lemma> & lemmas, PTPLib::net::Header & header) {
+    std::scoped_lock<std::mutex> _l(this->lemma_mutex);
+    assert((not header.at(PTPLib::common::Param.NODE).empty()) and (not header.at(PTPLib::common::Param.NAME).empty()));
+    assert(not lemma_amount.empty());
+    header[PTPLib::common::Command.LEMMAS] = "-" + lemma_amount;
+    lemma_pull(lemmas, header);
+    return not lemmas.empty();
+}
+
+bool Schedular::lemma_pull(std::vector<PTPLib::net::Lemma> & lemmas, PTPLib::net::Header & header) {
+    if (not is_lemmaServer_sharing())
+        return false;
+
+    try {
+        if (log_enabled)
+            PTPLib::common::PrintStopWatch psw("[t PULL(" + to_string(getpid()) + ") ] -> Lemma read time: ", synced_stream,
+                                               log_enabled ? PTPLib::common::Color::FG_Magenta : PTPLib::common::Color::FG_DEFAULT);
+        this->get_lemma_server().write(PTPLib::net::SMTS_Event(header));
+        uint32_t length = 0;
+
+        auto SMTS_Event = get_lemma_server().read(length);
+        if (SMTS_Event.header.at(PTPLib::common::Param.NAME) != header.at(PTPLib::common::Param.NAME))
+            return false;
+
+        if (SMTS_Event.body.empty())
+            return false;
+
+        std::istringstream is(SMTS_Event.body);
+        is >> lemmas;
+
+        return lemmas.size();
+
+    } catch (net::SocketException & ex) {
+        net::Report::error(get_SMTS_server(), header, std::string("lemma pull failed: ") + ex.what());
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        return false;
+    }
+};
