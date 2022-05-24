@@ -346,3 +346,22 @@ void Schedular::lemmas_publish(std::unique_ptr<PTPLib::net::map_solver_clause> c
                                        "[ t ", __func__, "] -> ", " push learned clauses to Cloud Clause Size: ", branch_clause.second.size());
     }
 }
+
+void Schedular::lemma_push(std::vector<PTPLib::net::Lemma> const & toPush_lemma, PTPLib::net::Header & header) {
+    if (toPush_lemma.empty()) return;
+    std::scoped_lock<std::mutex> _l(this->lemma_mutex);
+    if (not is_lemmaServer_sharing())
+        return;
+    try {
+        if (log_enabled)
+            PTPLib::common::PrintStopWatch psw("[t Push(" + to_string(getpid()) + ") ] -> Lemma write time: ", synced_stream,
+                                               log_enabled ? PTPLib::common::Color::FG_Blue : PTPLib::common::Color::FG_DEFAULT);
+
+        std::string temp = ::to_string(toPush_lemma);
+        this->get_lemma_server().write(PTPLib::net::SMTS_Event(std::move(header), std::move(temp)));
+    } catch (net::SocketException & ex) {
+        net::Report::error(get_SMTS_server(), header, std::string("lemma push failed: ") + ex.what());
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        return;
+    }
+}
