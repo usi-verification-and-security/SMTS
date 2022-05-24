@@ -1,6 +1,10 @@
-//
-// Author: Matteo Marescotti
-//
+/*
+ * Copyright (c) Matteo Marescotti <Matteo.marescotti@usi.ch>
+ * Copyright (c) 2022, Antti Hyvarinen <antti.hyvarinen@gmail.com>
+ * Copyright (c) 2022, Seyedmasoud Asadzadeh <seyedmasoud.asadzadeh@usi.ch>
+ *
+ * SPDX-License-Identifier: MIT
+ */
 
 #ifndef SMTS_CLIENT_FILETHREAD_H
 #define SMTS_CLIENT_FILETHREAD_H
@@ -21,6 +25,5 @@ public:
     FileThread(Settings &);
 
 };
-
 
 #endif
