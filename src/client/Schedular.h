@@ -63,5 +63,13 @@ public:
 
     void push_to_pool(PTPLib::common::TASK tname, int seed = 0, int td_min = 0, int td_max = 0);
 
+    inline void set_lemma_amount(std::string la)        { lemma_amount = la; }
+
+    inline void set_log_enabled(bool le)                { log_enabled = le; }
+
+    inline PTPLib::net::Channel & getChannel()          { return channel; }
+
+    inline PTPLib::threads::ThreadPool & getPool()      { return thread_pool; }
+
 };
 #endif
