@@ -84,5 +84,7 @@ public:
 
     void queue_event(PTPLib::net::SMTS_Event && header_payload);
 
+    void notify_reset();
+
 };
 #endif

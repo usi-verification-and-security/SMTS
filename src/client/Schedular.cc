@@ -262,3 +262,13 @@ void Schedular::queue_event(PTPLib::net::SMTS_Event && event) {
     getChannel().push_back_query(std::move(event));
     getChannel().notify_all();
 }
+
+void Schedular::notify_reset() {
+    std::unique_lock<std::mutex> _lk(getChannel().getMutex());
+    if (not _lk.owns_lock()) {
+        throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) + " can't take the lock");
+    };
+    channel.setReset();
+    channel.notify_all();
+    _lk.unlock();
+}
