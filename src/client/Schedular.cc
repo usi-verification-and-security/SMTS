@@ -53,3 +53,39 @@ void Schedular::memory_checker(int max_memory)
         }());
     }
 }
+
+void Schedular::push_to_pool(PTPLib::common::TASK t_name, int seed, int td_min, int td_max) {
+    thread_pool.push_task([this, t_name, seed, td_min, td_max] {
+        worker(t_name, seed, td_min, td_max);
+    }, ::get_task_name(t_name));
+}
+
+void Schedular::worker(PTPLib::common::TASK wname, int seed, int td_min, int td_max) {
+
+    switch (wname) {
+
+        case PTPLib::common::TASK::COMMUNICATION:
+            communicate_worker();
+            break;
+
+        case PTPLib::common::TASK::CLAUSEPUSH:
+            push_clause_worker(seed, td_min, td_max);
+            break;
+
+        case PTPLib::common::TASK::CLAUSEPULL:
+            pull_clause_worker(seed, td_min, td_max);
+            break;
+
+        case PTPLib::common::TASK::MEMORYCHECK:
+            memory_checker(seed);
+            break;
+
+        case PTPLib::common::TASK::CLAUSELEARN:
+            periodic_clauseLearning_worker(seed);
+            break;
+
+        default:
+            break;
+    }
+
+}

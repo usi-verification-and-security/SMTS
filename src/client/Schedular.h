@@ -43,6 +43,8 @@ private:
 
     void memory_checker(int max_memory);
 
+    void worker(PTPLib::common::TASK tname, int seed, int td_min, int td_max);
+
 public:
 
     Schedular (PTPLib::threads::ThreadPool           & th_pool,
@@ -58,6 +60,8 @@ public:
      {}
 
     ~Schedular() = default;
+
+    void push_to_pool(PTPLib::common::TASK tname, int seed = 0, int td_min = 0, int td_max = 0);
 
 };
 #endif
