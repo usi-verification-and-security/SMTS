@@ -1,30 +1,30 @@
-//
-// Author: Matteo Marescotti
-//
+/*
+ * Copyright (c) Matteo Marescotti <Matteo.marescotti@usi.ch>
+ * Copyright (c) 2022, Antti Hyvarinen <antti.hyvarinen@gmail.com>
+ * Copyright (c) 2022, Seyedmasoud Asadzadeh <seyedmasoud.asadzadeh@usi.ch>
+ *
+ * SPDX-License-Identifier: MIT
+ */
 
-#include <iostream>
+
 #include "lib/Logger.h"
 #include "Settings.h"
 #include "SolverServer.h"
 #include "FileThread.h"
 
+#include <PTPLib/common/Exception.hpp>
+
+#include <iostream>
 
 int main(int argc, char **argv) {
     Settings settings;
     try {
         settings.load(argc, argv);
     }
-    catch (Exception ex) {
-        std::cerr << "argument parsing error: " << ex.what() << "\n";
-        exit(1);
+    catch (PTPLib::common::Exception ex) {
+        std::cerr << "argument parsing error: " << ex.what() << std::endl;
+        exit(EXIT_FAILURE);
     }
-
-    std::unique_ptr<FileThread> ft;
-    if (!settings.server.size() && settings.files.size()) {
-        Logger::log(Logger::INFO, "FileThread Started!");
-        ft.reset(new FileThread(settings));
-    }
-
     if (settings.server.size()) {
         try {
             SolverServer(net::Address(settings.server)).run_forever();
