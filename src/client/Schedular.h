@@ -82,5 +82,7 @@ public:
 
     inline PTPLib::threads::ThreadPool & getPool()      { return thread_pool; }
 
+    void queue_event(PTPLib::net::SMTS_Event && header_payload);
+
 };
 #endif
