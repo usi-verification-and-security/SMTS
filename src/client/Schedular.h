@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) Matteo Marescotti <Matteo.marescotti@usi.ch>
  * Copyright (c) 2022, Antti Hyvarinen <antti.hyvarinen@gmail.com>
  * Copyright (c) 2022, Seyedmasoud Asadzadeh <seyedmasoud.asadzadeh@usi.ch>
  *
@@ -39,6 +40,8 @@ private:
     inline bool is_lemmaServer_sharing()        const       { return this->Lemma_server_socket != nullptr; }
     inline net::Socket & get_lemma_server()     const       { return  *Lemma_server_socket; }
     inline net::Socket & get_SMTS_server()      const       { return  *SMTS_server_socket; }
+
+    void memory_checker(int max_memory);
 
 public:
 
