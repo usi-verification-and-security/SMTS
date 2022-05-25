@@ -124,3 +124,90 @@ SolverProcess::Result SolverProcess::solve(PTPLib::net::SMTS_Event SMTS_event, b
     net::Report::error(get_SMTS_socket(), SMTS_event.header, "parser error");
 }
 
+void SolverProcess::partition(PTPLib::net::SMTS_Event & SMTS_Event, uint8_t n) {
+    if (not log_enabled) {
+        FILE * file = fopen("/dev/null", "w");
+        dup2(fileno(file), fileno(stdout));
+        dup2(fileno(file), fileno(stderr));
+        fclose(file);
+    }
+//    fork() returns -1 if it fails, and if it succeeds, it returns the forked child's pid in the parent, and 0 in the child.
+    forked_partitionId = fork();
+    if (forked_partitionId == -1) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    }
+    if (forked_partitionId > 0) {
+        forked = true;
+        return;
+    }
+    std::thread t_handle_orphant([&] {
+        while (true) {
+            sleep(1);
+            if (getppid() == 1)
+                exit(EXIT_SUCCESS);
+        }
+    });
+    getChannel().clearClauseShareMode();
+    std::vector<std::string> partitions;
+    int searchCounter = (((ScatterSplitter &) getMainSplitter().getSMTSolver()).getSearchCounter());
+    std::string statusInfo = getMainSplitter().getConfig().getInfo(":status").toString();
+
+    const char *msg;
+    if ( not (
+            getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_num, SMTOption(int(n)),msg)                   and
+            getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_units, SMTOption(spts_search_counter), msg)   and
+            getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_inittune, SMTOption(1), msg)         and
+            getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_midtune, SMTOption(1), msg)
+             )
+        )
+    {
+        net::Report::report(get_SMTS_socket(), partitions, to_string(searchCounter), statusInfo, SMTS_Event, msg);
+    }
+    else {
+        try {
+            getScatterSplitter().setSplitTypeScatter();
+            sstat status = getMainSplitter().solve();
+            if (status == s_Undef) {
+                partitions = getMainSplitter().getPartitionClauses();
+                net::Report::report(get_SMTS_socket(), partitions, to_string(searchCounter), statusInfo, SMTS_Event);
+            }
+            else if (status == s_True) {
+                synced_stream.println_bold(log_enabled ? PTPLib::common::Color::FG_Red : PTPLib::common::Color::FG_DEFAULT,
+                                           "[ t ", __func__, "] -> ", " Partition Report sat ", SMTS_Event.header.at(PTPLib::common::Param.NODE));
+                net::Report::report(get_SMTS_socket(), SMTS_Event.header, SolverProcess::resultToString( Result::SAT));
+            }
+            else if (status == s_False) {
+                synced_stream.println_bold(log_enabled ? PTPLib::common::Color::FG_Red : PTPLib::common::Color::FG_DEFAULT,
+                                           "[ t ", __func__, "] -> ", " Partition Report unsat ", SMTS_Event.header.at(PTPLib::common::Param.NODE));
+                net::Report::report(get_SMTS_socket(), SMTS_Event.header, SolverProcess::resultToString( Result::UNSAT));
+            }
+            else {
+                net::Report::report(get_SMTS_socket(), partitions, to_string(searchCounter), statusInfo, SMTS_Event, "error during partitioning");
+            }
+        }
+        catch (std::exception & ex)
+        {
+            net::Report::error(get_SMTS_socket(), SMTS_Event.header, std::string(ex.what()));
+            exit(EXIT_FAILURE);
+        }
+    }
+    if (log_enabled) {
+        fprintf(stdout,
+                "; ============================[ Partition Statistics ]=================================================\n");
+        fprintf(stdout,
+                "; | SearchCounter |          SplitType         |          Child Process ID    | Time     | MEM USAGE | \n");
+        fprintf(stdout,
+                "; |           |                            |                              |          |           | \n");
+        reportf("; %9d   | %8d                %8d           |           %8.3f s      | %6.3f MB\n", searchCounter,
+                getScatterSplitter().getSplitTypeValue(), getpid(), cpuTime(), memUsed() / 1048576.0);
+        fflush(stderr);
+        fprintf(stdout,
+                "; =====================================================================================================\n");
+    }
+    exit(EXIT_SUCCESS);
+}
+
+
+
+
