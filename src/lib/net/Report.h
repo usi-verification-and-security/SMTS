@@ -24,13 +24,13 @@ namespace net::Report {
     inline void report(net::Socket const & socket, PTPLib::net::Header & header, std::string const & report) {
         if (report.size())
             header[PTPLib::common::Param.REPORT] = report;
-        socket.write(PTPLib::net::SMTS_Event(std::move(header), std::string()));
+        socket.write(PTPLib::net::SMTS_Event(header));
     }
 
     inline void report(net::Socket const & socket, PTPLib::net::Header & header, std::string const & report, std::string & payload) {
        if (report.size())
            header[PTPLib::common::Param.REPORT] = report;
-        socket.write(PTPLib::net::SMTS_Event(std::move(header), std::move(payload)));
+        socket.write(PTPLib::net::SMTS_Event(header, std::move(payload)));
     }
 
     inline void error(net::Socket const & socket, PTPLib::net::Header & header, std::string const & error) {
@@ -53,8 +53,8 @@ namespace net::Report {
         report(socket, SMTS_Event, "info:" + info);
     }
 
-    inline void warning(net::Socket const & socket,  PTPLib::net::SMTS_Event & SMTS_Event, std::string const & warning) {
-        report(socket, SMTS_Event, "warning:" + warning);
+    inline void warning(net::Socket const & socket,  PTPLib::net::Header & header, std::string const & warning) {
+        report(socket, header, "warning:" + warning);
     }
 };
 
