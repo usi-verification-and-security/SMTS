@@ -220,7 +220,7 @@ bool Schedular::execute_event(PTPLib::net::SMTS_Event & smts_event, bool & shoul
     }
     else if (smts_event.header.at(PTPLib::common::Param.COMMAND) == PTPLib::common::Command.CLAUSEINJECTION) {
             auto pulled_clauses = channel.swap_pulled_clauses();
-            solver_process->injectPulledClauses(pulled_clauses, smts_event.header.at(PTPLib::common::Param.NODE));
+        solver_process->add_constraint(pulled_clauses, smts_event.header.at(PTPLib::common::Param.NODE));
     }
     else if (smts_event.header.at(PTPLib::common::Param.COMMAND) == PTPLib::common::Command.INCREMENTAL) {
         if (smts_event.header.count(PTPLib::common::Param.NODE_) and smts_event.header.count(PTPLib::common::Param.QUERY)) {
@@ -228,7 +228,7 @@ bool Schedular::execute_event(PTPLib::net::SMTS_Event & smts_event, bool & shoul
                 net::Report::info(get_SMTS_server(), smts_event,
                              "incremental solving step from " + smts_event.header[PTPLib::common::Param.NODE]);
             if (solver_process->forked) {
-                solver_process->kill_partition();
+                solver_process->kill_partition_process();
                 solver_process->forked = false;
             }
             shouldUpdateSolverAddress = true;
@@ -357,8 +357,7 @@ void Schedular::lemma_push(std::vector<PTPLib::net::Lemma> const & toPush_lemma,
             PTPLib::common::PrintStopWatch psw("[t Push(" + to_string(getpid()) + ") ] -> Lemma write time: ", synced_stream,
                                                log_enabled ? PTPLib::common::Color::FG_Blue : PTPLib::common::Color::FG_DEFAULT);
 
-        std::string temp = ::to_string(toPush_lemma);
-        this->get_lemma_server().write(PTPLib::net::SMTS_Event(std::move(header), std::move(temp)));
+        this->get_lemma_server().write(PTPLib::net::SMTS_Event(std::move(header), std::move(::to_string(toPush_lemma))));
     } catch (net::SocketException & ex) {
         net::Report::error(get_SMTS_server(), header, std::string("lemma push failed: ") + ex.what());
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
