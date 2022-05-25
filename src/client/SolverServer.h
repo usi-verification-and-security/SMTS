@@ -1,50 +1,59 @@
-//
-// Author: Matteo Marescotti
-//
+/*
+ * Copyright (c) Matteo Marescotti <Matteo.marescotti@usi.ch>
+ * Copyright (c) 2022, Antti Hyvarinen <antti.hyvarinen@gmail.com>
+ * Copyright (c) 2022, Seyedmasoud Asadzadeh <seyedmasoud.asadzadeh@usi.ch>
+ *
+ * SPDX-License-Identifier: MIT
+ */
 
 #ifndef SMTS_CLIENT_SOLVERSERVER_H
 #define SMTS_CLIENT_SOLVERSERVER_H
 
-//#include <ctime>
 #include "lib/net.h"
 #include "SolverProcess.h"
+#include "Schedular.h"
 
+#include <PTPLib/threads/ThreadPool.hpp>
 
 class SolverServer : public net::Server {
+
 private:
-    void stop_solver();
+    bool log_enabled = false;
 
-    void update_lemmas();
+    net::Socket SMTSServer_socket;
 
-    void log(uint8_t, std::string);
+    PTPLib::threads::ThreadPool thread_pool;
 
-    net::Socket SMTSServer;
-//    net::Socket lemmaServer;
-    std::string lemmaServerAddress;
-    SolverProcess* solver;
-    Channel channel;
+    Schedular schedular;
+
+    std::shared_ptr<net::Socket> lemmaServer_socket = nullptr;
+
+    std::string lemmaServer_address;
+
+    PTPLib::net::Channel channel;
+
+    PTPLib::common::synced_stream synced_stream;
+
+    void stop_schedular();
+
+    void initiate_lemma_server(PTPLib::net::SMTS_Event & SMTS_Event);
+
+    void push_lemma_workers(PTPLib::net::SMTS_Event & SMTS_Event);
 
 protected:
-    void handle_close(net::Socket &);
+    void handle_close(net::Socket const & SMTSServer_socket);
 
-    void handle_exception(net::Socket &, const std::exception &);
+    void handle_exception(net::Socket const & SMTSServer_socket, const std::exception &);
 
-    void handle_message(net::Socket &, net::Header &, std::string &);
+    void handle_event(net::Socket const & SMTSServer_socket, PTPLib::net::SMTS_Event && SMTS_event);
 
 public:
+    PTPLib::net::Channel & getChannel()             { return channel; };
+    net::Socket const & get_SMTS_server_socket()    { return  this->SMTSServer_socket; };
 
-//    struct {
-//        const uint8_t errors_max = 3;
-//        std::unique_ptr<net::Socket> server;
-//        uint8_t errors = 0;
-//        uint8_t interval = 3;
-//        std::time_t last_push = 0;
-//        std::time_t last_pull = 0;
-//        mutable std::mutex lemma_mutex;
-//    } lemma;
-    SolverServer(const net::Address &);
+    SolverServer(net::Address const & server);
 
-    ~SolverServer();
+    ~SolverServer() = default;
 };
 
 
