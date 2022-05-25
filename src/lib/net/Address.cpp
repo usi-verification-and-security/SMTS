@@ -1,27 +1,34 @@
-//
-// Author: Matteo Marescotti
-//
+/*
+ * Copyright (c) Matteo Marescotti <Matteo.marescotti@usi.ch>
+ * Copyright (c) 2022, Antti Hyvarinen <antti.hyvarinen@gmail.com>
+ * Copyright (c) 2022, Seyedmasoud Asadzadeh <seyedmasoud.asadzadeh@usi.ch>
+ *
+ * SPDX-License-Identifier: MIT
+ */
 
-#include <arpa/inet.h>
-#include "lib/Exception.h"
 #include "Address.h"
 
+#include <PTPLib/common/Exception.hpp>
+
+#include <arpa/inet.h>
 
 namespace net {
-    Address::Address(std::string address) {
+
+    Address::Address(std::string const & address) {
         uint8_t i;
-        for (i = 0; address[i] != ':' && i < address.size() && i < (uint8_t) -1; i++) {
+        for (i = 0; address[i] != ':' and i < address.size() && i < (uint8_t) -1; i++) {
         }
         if (address[i] != ':')
-            throw Exception(__FILE__, __LINE__, "invalid host:port");
+            throw PTPLib::common::Exception(__FILE__, __LINE__, "invalid host:port");
         new(this) Address(address.substr(0, i), (uint16_t) ::atoi(address.substr(i + 1).c_str()));
     }
 
-    Address::Address(std::string hostname, uint16_t port) :
-            hostname(hostname),
-            port(port) {}
+    Address::Address(std::string const & hostname, uint16_t port)
+        : hostname(hostname)
+        , port(port)
+    {}
 
-    Address::Address(struct sockaddr_storage *address) {
+    Address::Address(struct sockaddr_storage * address) {
         char ipstr[INET6_ADDRSTRLEN];
         uint16_t port = 0;
 
