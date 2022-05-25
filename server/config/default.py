@@ -1,37 +1,38 @@
 import random
 import logging
 
-port = 3000  # Default listen port
-db_path = None  # sqlite3 event db path absolute or relative to the config file
-table_prefix = ''  # db table prefix
-portfolio_max = 0  # 0 if no limit
-portfolio_min = 1  # 0 if no limit
-partition_timeout = 20   # None if no partitioning
-node_timeout = None  # None for no timeout
-partition_policy = [1, 8]  #
-solving_timeout = 10000  # None for no timeout
-max_memory = 6000  # max memory for each solver process in MB
-build_path = "../../build"  # build path absolute or relative to the config file
-lemma_sharing = True  # enabling lemma sharing
-lemma_amount = 1000  # None for auto
-lemma_db_path = None  # sqlite3 lemmas db path absolute or relative to the config file
-lemma_resend = False  # send same lemmas multiple times to solver
-log_level = logging.INFO  # logging.DEBUG
-incremental = 2  # 0: always restart. 1: only push. 2: always incremental
-fixedpoint_partition = False  # automatic partition for fixedpoint instances
-files_path = []  # list of files path absolute or relative to the config file, to be loaded at server startup
-gui = False  # enable GUI
-opensmt = 0  # number of opensmt2 processes
-z3spacer = 0  # number of z3spacer processes
-sally = 0  # number of sally processes
-idle_quit = False  # quit smts after solving the last instance
-enableLog = True
-visualize_tree = False
-lemmaPush_timeoutMin = 2000
+port = 3000                     # Default listening port
+db_path = None                  # sqlite3 event db path absolute or relative to the config file
+table_prefix = ''               # db table prefix
+portfolio_max = 0               # 0 if no limit
+portfolio_min = 1               # 0 if no limit
+partition_timeout = 5           # None if no partitioning
+node_timeout = None             # None for no timeout
+partition_policy = [1, 2]       # [number of solvers, number of partition per solver]
+solving_timeout = 1000          # None for no timeout
+max_memory = 6000               # max memory for each solver process in MB
+build_path = "../../build"      # build path absolute or relative to the config file
+lemma_sharing = True            # enabling lemma sharing
+lemma_amount = 1000             # None for auto
+lemma_db_path = None            # sqlite3 lemmas db path absolute or relative to the config file
+lemma_resend = False            # send same lemmas multiple times to solver
+log_level = logging.INFO        # logging.DEBUG
+incremental = 2                 # 0: always restart. 1: only push. 2: always incremental
+fixedpoint_partition = False    # automatic partition for fixedpoint instances
+files_path = []                 # list of files path absolute or relative to the config file, to be loaded at server startup
+gui = False                     # enable GUI
+opensmt = 0                     # number of opensmt2 processes
+z3spacer = 0                    # number of z3spacer processes
+sally = 0                       # number of sally processes
+idle_quit = False               # quit smts after solving the last instance
+enableLog = False                # enable logging system-widely
+visualize_tree = False          # draw a partition tree when timout reached based on incoming event from solvers
+lemmaPush_timeoutMin = 2000     # a timespan to distribute solvers "push operation" to the lemma server
 lemmaPush_timeoutMax = 3000
-lemmaPull_timeoutMin = 4000
+lemmaPull_timeoutMin = 4000     # a timespan to distribute solvers "pull operation" to the lemma server
 lemmaPull_timeoutMax = 5000
-clientLogColorMode = False
+clientLogColorMode = False      # to enable color at logging
+partition_count = 0             # total number of valid partition SMTS would receive per instance
 spit_preference = False
 
 # parameters is a dictionary solver_name.solver_parameter -> value:(int, str, callable)  where:
@@ -43,7 +44,7 @@ spit_preference = False
 # a single key can be overridden without copying the entire object
 parameters = {
     "OpenSMT2.seed": lambda: random.randint(0, 0xFFFFFF),
-    "OpenSMT2.scatter-split": "true",
+    "OpenSMT2.split-type": ":scatter-split",
     "Spacer.fp.spacer.random_seed": lambda: random.randint(0, 0xFFFFFF),
     "Spacer.fp.spacer.restarts": "false",
     "Spacer.fp.spacer.p3.share_lemmas": "true",
