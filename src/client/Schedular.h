@@ -24,7 +24,6 @@ private:
     net::Socket *                       SMTS_server_socket  = nullptr;
     net::Socket *                       Lemma_server_socket = nullptr;
     PTPLib::common::synced_stream &     synced_stream;
-    PTPLib::common::StoppableWatch      timer;
 
     mutable std::mutex                  lemma_mutex;
     bool                                log_enabled;
@@ -37,9 +36,9 @@ private:
     std::atomic<std::thread::id>        communicator_thread_id;
 #endif
 
-    inline bool is_lemmaServer_sharing()        const       { return this->Lemma_server_socket != nullptr; }
-    inline net::Socket & get_lemma_server()     const       { return  *Lemma_server_socket; }
-    inline net::Socket & get_SMTS_server()      const       { return  *SMTS_server_socket; }
+    bool is_lemmaServer_sharing()        const       { return this->Lemma_server_socket != nullptr; }
+    net::Socket & get_lemma_server()     const       { return  *Lemma_server_socket; }
+    net::Socket & get_SMTS_server()      const       { return  *SMTS_server_socket; }
 
     void memory_checker(int max_memory);
 
@@ -55,6 +54,16 @@ private:
         delete this->solver_process;
         this->solver_process = nullptr;
     }
+
+    void push_clause_worker(int seed, int n_min, int n_max);
+    void lemmas_publish(std::unique_ptr<PTPLib::net::map_solver_clause> const & lemmas, PTPLib::net::Header & header);
+    void lemma_push(std::vector<PTPLib::net::Lemma> const & toPush_lemma, PTPLib::net::Header & header);
+
+    void pull_clause_worker(int seed, int n_min, int n_max);
+    bool read_lemma(std::vector<PTPLib::net::Lemma> & lemmas, PTPLib::net::Header & header);
+    bool lemma_pull(std::vector<PTPLib::net::Lemma> &lemmas, PTPLib::net::Header &header);
+
+    void periodic_clauseLearning_worker(int wait_duration);
 
 public:
 
@@ -78,23 +87,13 @@ public:
 
     inline void set_log_enabled(bool le)                { log_enabled = le; }
 
-    inline PTPLib::net::Channel & getChannel()          { return channel; }
+    PTPLib::net::Channel & getChannel()          { return channel; }
 
-    inline PTPLib::threads::ThreadPool & getPool()      { return thread_pool; }
+    PTPLib::threads::ThreadPool & getPool()      { return thread_pool; }
 
     void queue_event(PTPLib::net::SMTS_Event && header_payload);
 
     void notify_reset();
-
-    void push_clause_worker(int seed, int n_min, int n_max);
-    void lemmas_publish(std::unique_ptr<PTPLib::net::map_solver_clause> const & lemmas, PTPLib::net::Header & header);
-    void lemma_push(std::vector<PTPLib::net::Lemma> const & toPush_lemma, PTPLib::net::Header & header);
-
-    void pull_clause_worker(int seed, int n_min, int n_max);
-    bool read_lemma(std::vector<PTPLib::net::Lemma> & lemmas, PTPLib::net::Header & header);
-    bool lemma_pull(std::vector<PTPLib::net::Lemma> &lemmas, PTPLib::net::Header &header);
-
-    void periodic_clauseLearning_worker(int wait_duration);
 
     void set_LemmaServer_socket(net::Socket * lemma_server_socket) { Lemma_server_socket = lemma_server_socket; }
 };
