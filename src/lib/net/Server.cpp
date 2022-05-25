@@ -1,29 +1,35 @@
-//
-// Author: Matteo Marescotti
-//
+/*
+ * Copyright (c) Matteo Marescotti <Matteo.marescotti@usi.ch>
+ * Copyright (c) 2022, Antti Hyvarinen <antti.hyvarinen@gmail.com>
+ * Copyright (c) 2022, Seyedmasoud Asadzadeh <seyedmasoud.asadzadeh@usi.ch>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#include "Server.h"
 
 #include <unistd.h>
 #include <algorithm>
-#include "Server.h"
-#include <thread>
-#include "lib/Logger.h"
+
 namespace net {
-    Server::Server(std::shared_ptr<Socket> socket) :
-            socket(socket) {
+
+    Server::Server(std::shared_ptr<Socket> socket)
+    : socket(socket) {
         if (socket)
             this->sockets.insert(socket);
     }
 
-    Server::Server() : Server(nullptr) {}
+    Server::Server()
+    : Server(nullptr)
+    {}
 
-    Server::Server(uint16_t port) :
-            Server(std::shared_ptr<Socket>(new Socket(port))) {}
+    Server::Server(uint16_t port)
+    : Server(std::shared_ptr<Socket>(new Socket(port)))
+    {}
 
     void Server::run_forever() {
         fd_set readset;
         int result;
-        net::Header header;
-        std::string payload;
 
         while (true) {
             do {
@@ -63,10 +69,8 @@ namespace net {
                     }
                     else {
                         try {
-                            (*socket)->read(header, payload);
-#ifdef ENABLE_DEBUGING
-#endif
-                            this->handle_message(**socket, header, payload);
+                            uint32_t length = 0;
+                            this->handle_event(**socket, (*socket)->read(length));
                         }
                         catch (SocketClosedException &ex) {
                             std::shared_ptr<net::Socket> s = *socket;

@@ -1,29 +1,34 @@
-//
-// Author: Matteo Marescotti
-//
+/*
+ * Copyright (c) Matteo Marescotti <Matteo.marescotti@usi.ch>
+ * Copyright (c) 2022, Antti Hyvarinen <antti.hyvarinen@gmail.com>
+ * Copyright (c) 2022, Seyedmasoud Asadzadeh <seyedmasoud.asadzadeh@usi.ch>
+ *
+ * SPDX-License-Identifier: MIT
+ */
 
 #ifndef SMTS_LIB_NET_SERVER_H
 #define SMTS_LIB_NET_SERVER_H
 
-#include <list>
-#include <set>
 #include "Socket.h"
 
+#include <list>
+#include <set>
 
 namespace net {
+
     class Server {
     private:
         std::shared_ptr<Socket> socket;
         std::set<std::shared_ptr<Socket>> sockets;
 
     protected:
-        virtual void handle_accept(Socket &) {}
+        virtual void handle_accept(Socket const &) {}
 
-        virtual void handle_close(Socket &) {}
+        virtual void handle_close(Socket const &)  {}
 
-        virtual void handle_message(Socket &, net::Header &, std::string &) {}
+        virtual void handle_event(Socket const &, PTPLib::net::SMTS_Event &&) {}
 
-        virtual void handle_exception(Socket &, const std::exception &) {}
+        virtual void handle_exception(Socket const &, const std::exception &) {}
 
     public:
         Server();
