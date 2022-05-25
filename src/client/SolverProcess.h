@@ -32,7 +32,24 @@ public:
     static std::string solver;
 
     enum class Result { SAT, UNSAT, UNKNOWN, ERROR };
-    
+
+    // here the module can edit class fields
+    void init(PTPLib::net::SMTS_Event & SMTS_Event);
+
+    void partition(PTPLib::net::SMTS_Event & SMTS_Event, uint8_t);
+
+    Result solve(PTPLib::net::SMTS_Event SMTS_event, bool shouldUpdateSolverAddress);
+
+    void add_constraint(std::unique_ptr<PTPLib::net::map_solver_clause> const & clauses, std::string & branch);
+
+    net::Socket & get_SMTS_socket() const   { return *SMTS_server_socket; }
+
+    ~SolverProcess() {
+        if (forked)
+            kill_partition_process();
+        cleanSolverState();
+    }
+
 private:
     PTPLib::common::synced_stream & synced_stream;
     PTPLib::net::Channel & channel;
@@ -64,8 +81,7 @@ private:
         else return "undefined";
     };
 
-    bool isPrefix(std::string_view prefix, std::string_view full)
-    {
+    bool isPrefix(std::string_view prefix, std::string_view full) {
         if (prefix.size() > full.size())
             return false;
         return prefix == full.substr(0, prefix.size());
