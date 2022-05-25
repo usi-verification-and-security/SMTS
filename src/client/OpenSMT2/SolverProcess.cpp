@@ -124,6 +124,11 @@ SolverProcess::Result SolverProcess::solve(PTPLib::net::SMTS_Event SMTS_event, b
     net::Report::error(get_SMTS_socket(), SMTS_event.header, "parser error");
 }
 
+volatile sig_atomic_t shutdown_flag = 1;
+void cleanupRoutine(int signal_number) {
+    shutdown_flag = 0;
+}
+
 void SolverProcess::partition(PTPLib::net::SMTS_Event & SMTS_Event, uint8_t n) {
     if (not log_enabled) {
         FILE * file = fopen("/dev/null", "w");
@@ -148,6 +153,22 @@ void SolverProcess::partition(PTPLib::net::SMTS_Event & SMTS_Event, uint8_t n) {
                 exit(EXIT_SUCCESS);
         }
     });
+
+    struct sigaction sigterm_action;
+    memset(&sigterm_action, 0, sizeof(sigterm_action));
+    sigterm_action.sa_handler = &cleanupRoutine;
+    sigterm_action.sa_flags = 0;
+
+    if (sigfillset(&sigterm_action.sa_mask) != 0)
+    {
+        perror("sigfillset");
+        exit(EXIT_FAILURE);
+    }
+    if (sigaction(SIGTERM, &sigterm_action, NULL) != 0)
+    {
+        perror("sigaction SIGTERM");
+        exit(EXIT_FAILURE);
+    }
     getChannel().clearClauseShareMode();
     std::vector<std::string> partitions;
     int searchCounter = (((ScatterSplitter &) getMainSplitter().getSMTSolver()).getSearchCounter());
@@ -207,7 +228,5 @@ void SolverProcess::partition(PTPLib::net::SMTS_Event & SMTS_Event, uint8_t n) {
     }
     exit(EXIT_SUCCESS);
 }
-
-
 
 
