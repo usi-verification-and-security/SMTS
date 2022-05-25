@@ -269,3 +269,41 @@ void SolverProcess::add_constraint(std::unique_ptr<PTPLib::net::map_solver_claus
     }
 }
 
+void SolverProcess::getCnfClauses(PTPLib::net::SMTS_Event & smtsEvent) {
+    if (smtsEvent.header.count(PTPLib::common::Param.QUERY)) {
+
+        pid_t pid = getpid();
+        if (fork() != 0) {
+            return;
+        }
+
+        std::thread _t([&] {
+            while (getppid() == pid) {
+                sleep(1);
+            }
+            exit(0);
+        });
+
+        SMTConfig config;
+        config.set_dryrun(true);
+        if (not (splitterInterpret = new SplitterInterpret(config, getChannel())))
+            throw PTPLib::common::Exception(__FILE__, __LINE__, ";SplitterInterpret: out of memory");
+        splitterInterpret->interpFile((char *) (smtsEvent.body + smtsEvent.header[PTPLib::common::Param.QUERY]).c_str());
+
+        std::string cnf = getMainSplitter().getSMTSolver().printCnfClauses();
+        net::Report::report(get_SMTS_socket(), smtsEvent.header, smtsEvent.header[PTPLib::common::Param.COMMAND], cnf);
+        exit(0);
+
+    } else {
+        std::string cnf = getMainSplitter().getSMTSolver().printCnfClauses();
+        net::Report::report(get_SMTS_socket(), smtsEvent.header, smtsEvent.header[PTPLib::common::Param.COMMAND], cnf);
+    }
+}
+
+void SolverProcess::getCnfLearnts(PTPLib::net::Header &header) {
+    std::string cnf = getMainSplitter().getSMTSolver().printCnfLearnts();
+    net::Report::report(get_SMTS_socket(), header, header[PTPLib::common::Param.COMMAND], cnf);
+}
+
+
+
