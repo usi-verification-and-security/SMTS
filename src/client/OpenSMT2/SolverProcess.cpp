@@ -244,3 +244,28 @@ void SolverProcess::kill_partition_process()
         exit(EXIT_FAILURE);
     }
 }
+
+void SolverProcess::add_constraint(std::unique_ptr<PTPLib::net::map_solver_clause> const & clauses, std::string & branch) {
+    for ( const auto &lemmaPulled : *clauses ) {
+        if (log_enabled)
+            synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Cyan : PTPLib::common::Color::FG_DEFAULT,
+                                  "[ t ", __func__, "] -> "," check for Node -> "+ lemmaPulled.first);
+        if (not lemmaPulled.first.empty()) {
+            assert(not lemmaPulled.first.empty() and not branch.empty());
+            if (isPrefix(lemmaPulled.first.substr(1, lemmaPulled.first.size() - 2),branch.substr(1, branch.size() - 2))) {
+                if (log_enabled)
+                    synced_stream.println_bold(log_enabled ? PTPLib::common::Color::FG_Cyan : PTPLib::common::Color::FG_DEFAULT,
+                                               "[ t ", __func__, "] -> ", "Solver At: " , branch,
+                                               " Injecting ", lemmaPulled.second.size(), " Clauses From: ", lemmaPulled.first);
+                for (const auto & lemma : lemmaPulled.second)
+                {
+                    assert(lemma.clause.size());
+                    if (log_enabled)
+                        synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Cyan : PTPLib::common::Color::FG_DEFAULT, lemma.clause);
+                    splitterInterpret->interpFile((char *) ("(assert " + lemma.clause + ")").c_str());
+                }
+            }
+        }
+    }
+}
+
