@@ -31,7 +31,7 @@ void ReportSolverType(net::Socket const & SMTS_server)
     SMTS_server.write(PTPLib::net::SMTS_Event(std::move(header)));
 }
 
-void SolverServer::handle_event(net::Socket const & socket, PTPLib::net::SMTS_Event && SMTS_event) {
+void SolverServer::handle_event(net::Socket & socket, PTPLib::net::SMTS_Event && SMTS_event) {
     assert(not SMTS_event.empty());
     if (socket.get_fd() == this->SMTSServer_socket.get_fd()) {
         if (SMTS_event.header.count("enableLog") == 1 and SMTS_event.header.at("enableLog") == "1") {
@@ -43,12 +43,10 @@ void SolverServer::handle_event(net::Socket const & socket, PTPLib::net::SMTS_Ev
             schedular.push_to_pool(PTPLib::common::TASK::MEMORYCHECK,
                                    atoi(SMTS_event.header.at(PTPLib::common::Param.MAX_MEMORY).c_str()));
             schedular.push_to_pool(PTPLib::common::TASK::COMMUNICATION);
-            if (this->lemmaServer_socket)
-                this->push_lemma_workers(SMTS_event);
             return;
         }
         bool reset = false;
-        assert(not SMTS_event.header.count(PTPLib::common::Param.COMMAND));
+        assert(SMTS_event.header.count(PTPLib::common::Param.COMMAND));
         if (SMTS_event.header.count(PTPLib::common::Param.COMMAND) != 1) {
             if (log_enabled)
                 synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Red : PTPLib::common::Color::FG_DEFAULT,
@@ -69,6 +67,11 @@ void SolverServer::handle_event(net::Socket const & socket, PTPLib::net::SMTS_Ev
             getChannel().setClauseShareMode();
         }
         else {
+            if (SMTS_event.header[PTPLib::common::Param.COMMAND] == PTPLib::common::Command.SOLVE)
+            {
+                if (this->lemmaServer_socket)
+                    this->push_lemma_workers(SMTS_event);
+            }
             std::unique_lock<std::mutex> listener_lk(getChannel().getMutex());
             assert([&]() {
                 if (not listener_lk.owns_lock()) {
@@ -150,7 +153,7 @@ void SolverServer::push_lemma_workers(PTPLib::net::SMTS_Event & SMTS_event)
     schedular.push_to_pool(PTPLib::common::TASK::CLAUSELEARN, interval / 2);
 }
 
-void SolverServer::handle_close(net::Socket const & socket) {
+void SolverServer::handle_close(net::Socket & socket) {
     if (log_enabled)
         synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Red : PTPLib::common::Color::FG_DEFAULT,
                               "server closed the connection");

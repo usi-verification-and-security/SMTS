@@ -41,11 +41,11 @@ private:
     void push_lemma_workers(PTPLib::net::SMTS_Event & SMTS_Event);
 
 protected:
-    void handle_close(net::Socket const & SMTSServer_socket);
+    void handle_close(net::Socket & SMTSServer_socket);
 
     void handle_exception(net::Socket const & SMTSServer_socket, const std::exception &);
 
-    void handle_event(net::Socket const & SMTSServer_socket, PTPLib::net::SMTS_Event && SMTS_event);
+    void handle_event(net::Socket & SMTSServer_socket, PTPLib::net::SMTS_Event && SMTS_event);
 
 public:
     PTPLib::net::Channel & getChannel()             { return channel; };
