@@ -4,9 +4,8 @@
 
 #include <getopt.h>
 #include <sstream>
-#include "lib/lib.h"
 #include "Settings.h"
-
+#include "lib/Logger.h"
 
 Settings::Settings() :
         verbose(false),
@@ -19,7 +18,8 @@ void Settings::load(int argc, char **argv) {
         switch (opt) {
             case 'h':
                 new(this) Settings();
-                std::cout << "\n=== SMTS version " << SMTS_VERSION << " ===\n\n"
+                std::cout << "\n******* Compiled with " << __VERSION__ << " on " << __DATE__ << " ******\n"
+                << "SMTS version: " << SMTS_VERSION << "\n"
                         "Usage: " << argv[0] << "\n"
                                   "[-h] display this message\n"
                                   "[-s server-host:port] if not set then file mode is enabled\n"

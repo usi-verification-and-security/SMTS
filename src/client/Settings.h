@@ -7,7 +7,7 @@
 
 #include <list>
 #include <map>
-#include "lib/net/Header.h"
+#include "PTPLib/net/Header.hpp"
 
 
 class Settings {
@@ -21,7 +21,7 @@ public:
     std::list<std::string> files;
     bool keep_lemmas;
     bool dump_clauses;
-    net::Header parameters;
+    PTPLib::net::Header parameters;
 };
 
 #endif
