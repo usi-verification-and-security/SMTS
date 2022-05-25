@@ -43,6 +43,8 @@ void SolverServer::handle_event(net::Socket const & socket, PTPLib::net::SMTS_Ev
             schedular.push_to_pool(PTPLib::common::TASK::MEMORYCHECK,
                                    atoi(SMTS_event.header.at(PTPLib::common::Param.MAX_MEMORY).c_str()));
             schedular.push_to_pool(PTPLib::common::TASK::COMMUNICATION);
+            if (this->lemmaServer_socket)
+                this->push_lemma_workers(SMTS_event);
             return;
         }
         bool reset = false;
@@ -59,6 +61,12 @@ void SolverServer::handle_event(net::Socket const & socket, PTPLib::net::SMTS_Ev
                 synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Red : PTPLib::common::Color::FG_DEFAULT,
                                       "unexpected message from server to terminate");
             exit(EXIT_FAILURE);
+        }
+        else if (SMTS_event.header[PTPLib::common::Param.COMMAND] == PTPLib::common::Command.LEMMAS) {
+            this->lemmaServer_address = SMTS_event.header[PTPLib::common::Command.LEMMAS];
+            this->schedular.set_lemma_amount(SMTS_event.header[PTPLib::common::Param.LEMMA_AMOUNT]);
+            this->initiate_lemma_server(SMTS_event);
+            getChannel().setClauseShareMode();
         }
         else {
             std::unique_lock<std::mutex> listener_lk(getChannel().getMutex());
@@ -114,6 +122,33 @@ void SolverServer::stop_schedular() {
     }
 }
 
+void SolverServer::initiate_lemma_server(PTPLib::net::SMTS_Event & SMTS_Event) {
+
+    if (log_enabled)
+        synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Red : PTPLib::common::Color::FG_DEFAULT,
+                              "LemmasServer Address: ", this->lemmaServer_address);
+    if (not this->lemmaServer_address.empty()) {
+        try {
+            this->lemmaServer_socket.reset(new net::Socket(this->lemmaServer_address));
+            schedular.set_LemmaServer_socket(this->lemmaServer_socket.get());
+        } catch (net::SocketException &ex) {
+            net::Report::error(get_SMTS_server_socket(), SMTS_Event.header, std::string("lemma server connection failed: ") + ex.what());
+        }
+    }
+}
+
+void SolverServer::push_lemma_workers(PTPLib::net::SMTS_Event & SMTS_event)
+{
+    int seed = atoi(SMTS_event.header.get(PTPLib::net::parameter, PTPLib::common::Param.SEED).c_str());
+    int interval = atoi(SMTS_event.header["lemma_push_min"].c_str()) + seed
+            % ( atoi(SMTS_event.header["lemma_push_max"].c_str()) - atoi(SMTS_event.header["lemma_push_min"].c_str()) + 1 );
+
+    schedular.push_to_pool(PTPLib::common::TASK::CLAUSEPUSH, seed, atoi(SMTS_event.header["lemma_push_min"].c_str()),
+                           atoi(SMTS_event.header["lemma_push_max"].c_str()));
+    schedular.push_to_pool(PTPLib::common::TASK::CLAUSEPULL, seed, atoi(SMTS_event.header["lemma_pull_min"].c_str()),
+                           atoi(SMTS_event.header["lemma_pull_max"].c_str()));
+    schedular.push_to_pool(PTPLib::common::TASK::CLAUSELEARN, interval / 2);
+}
 
 void SolverServer::handle_close(net::Socket const & socket) {
     if (log_enabled)
