@@ -229,4 +229,18 @@ void SolverProcess::partition(PTPLib::net::SMTS_Event & SMTS_Event, uint8_t n) {
     exit(EXIT_SUCCESS);
 }
 
+void SolverProcess::kill_partition_process()
+{
+    int wstatus;
+    int sig_res;
+    sig_res = kill(forked_partitionId, SIGKILL);
+    if (sig_res == -1) {
+        perror("kill");
+        exit(EXIT_FAILURE);
+    }
 
+    if (waitpid(forked_partitionId, &wstatus, WUNTRACED | WCONTINUED) == -1) {
+        perror("waitpid");
+        exit(EXIT_FAILURE);
+    }
+}
