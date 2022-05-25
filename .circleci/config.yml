@@ -27,12 +27,12 @@ jobs:
                 command: mkdir build
             - run:
                 name: Release build gcc
-                command: sh ./ci/make_smts.sh
+                command: sh ./bin/make_smts.sh
                 environment:
                     CMAKE_BUILD_TYPE: Release
             - run:
                 name: Debug build gcc
-                command: sh ./ci/make_smts.sh
+                command: sh ./bin/make_smts.sh
                 environment:
                     CMAKE_BUILD_TYPE: Debug
             - run:
@@ -47,18 +47,18 @@ jobs:
                     sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++ 60
             - run:
                 name: Release build llvm
-                command: sh ./ci/make_smts.sh
+                command: sh ./bin/make_smts.sh
                 environment:
                     CMAKE_BUILD_TYPE: Release
             - run:
                 name: Debug build llvm
-                command: sh ./ci/make_smts.sh
+                command: sh ./bin/make_smts.sh
                 environment:
                     CMAKE_BUILD_TYPE: Debug
                     FLAGS: -Wall -Werror=sign-compare -Wunused-lambda-capture -fsanitize=signed-integer-overflow
             - run:
                 name: Run Server - Client
-                command: sh ./runtest/run-server-client.sh      
+                command: sh ./bin/run-server-client.sh
 
 
 workflows:
