@@ -4,7 +4,6 @@ import struct
 import logging
 import traceback
 import time
-from datetime import datetime
 
 __author__ = 'Matteo Marescotti'
 
@@ -133,7 +132,7 @@ class Server(object):
     def handle_timeout(self):
         pass
 
-    def run_until_timeout(self, timeout=None):
+    def run_until_timeout(self, enable_log, timeout=None):
         timeout_time = None
         if timeout is None:
             timeout = self._timeout
@@ -151,9 +150,7 @@ class Server(object):
                     self.handle_accept(new_socket)
                     continue
                 try:
-                    # print("Server: Start to read -> time =", datetime.now().strftime("%H:%M:%S"))
                     header, message = sock.read()
-                    # print("     Finished Reading -> Header",header)
                 except ConnectionAbortedError:
                     self.handle_close(sock)
                     sock.close()
@@ -163,28 +160,30 @@ class Server(object):
         except KeyboardInterrupt:
             raise
         except Exception as exp:
-            self.log(logging.ERROR, '{}\n{}'.format(
-                type(exp).__name__,
-                '\n'.join(('   {}'.format(line) for line in traceback.format_exc().split('\n')))
-            ))
+            if enable_log:
+                self.log(logging.ERROR, '{}\n{}'.format(
+                    type(exp).__name__,
+                    '\n'.join(('   {}'.format(line) for line in traceback.format_exc().split('\n')))
+                ))
         return timeout_time
 
-    def run_forever(self):
+    def run_forever(self, enable_log):
         last = time.time()
         try:
             while True:
                 if not self._rlist:
                     return
                 lts = self.run_until_timeout(
-                    max(0, self._timeout - (time.time() - last)) if self._timeout else None
+                    max(0, enable_log, self._timeout - (time.time() - last)) if self._timeout else None
                 )
                 if lts:
                     last = lts
         except Exception as exp:
-            self.log(logging.ERROR, '{}\n{}'.format(
-            type(exp).__name__,
-            '\n'.join(('   {}'.format(line) for line in traceback.format_exc().split('\n')))
-        ))
+            if enable_log:
+                self.log(logging.ERROR, '{}\n{}'.format(
+                type(exp).__name__,
+                '\n'.join(('   {}'.format(line) for line in traceback.format_exc().split('\n')))))
+
     def close(self):
         while self._rlist:
             socket = self._rlist.pop()
