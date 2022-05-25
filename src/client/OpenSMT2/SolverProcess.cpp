@@ -84,3 +84,43 @@ void SolverProcess::cleanSolverState() {
     result = s_Undef;
 }
 
+SolverProcess::Result SolverProcess::solve(PTPLib::net::SMTS_Event SMTS_event, bool shouldUpdateSolverAddress) {
+
+    result = s_Undef;
+    getScatterSplitter().resetSplitType();
+    if (log_enabled) {
+        synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Green : PTPLib::common::Color::FG_DEFAULT,
+                              "[t SEARCH ] -> ", "CURRENT SOLVER BRANCH: ",
+                              SMTS_event.header.at(PTPLib::common::Param.NODE),
+                              " QUERY: ", SMTS_event.header.at(PTPLib::common::Param.QUERY));
+        synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Green : PTPLib::common::Color::FG_DEFAULT,
+                              "[t SEARCH ] -> ", "SMT2 SCRIPT: ",
+                              SMTS_event.body + SMTS_event.header.at(PTPLib::common::Param.QUERY));
+    }
+    assert(not SMTS_event.header.at(PTPLib::common::Param.QUERY).empty());
+    sstat res = splitterInterpret->interpSMTContent((char *) (SMTS_event.body + SMTS_event.header.at(PTPLib::common::Param.QUERY)).c_str(),
+    (shouldUpdateSolverAddress ? SMTS_event.header.at(PTPLib::common::Param.NODE).substr(1,
+                                                                                         SMTS_event.header.at(PTPLib::common::Param.NODE).size() - 2) : ""));
+    if (log_enabled) {
+        int SearchCounter = (((ScatterSplitter &) getMainSplitter().getSMTSolver()).getSearchCounter());
+        std::string option = "(set-option :solver-limit " + to_string(SearchCounter) + ")";
+        if (not base_instance.empty())
+            base_instance = std::string("(set-option :scatter-split)") + "\n" + base_instance;
+        Logger::build_SolverInputPath(false, true,
+                                      option + "\n" + base_instance + "\n" + SMTS_event.body + "\n" +
+                                      SMTS_event.header.at(PTPLib::common::Param.QUERY),
+                                      to_string(get_SMTS_socket().get_local()), getpid());
+        base_instance.clear();
+    }
+    if (res == s_Undef)
+        return SolverProcess::Result::UNKNOWN;
+    else if (res == s_True)
+        return SolverProcess::Result::SAT;
+    else if (res == s_False)
+        return SolverProcess::Result::UNSAT;
+    else if (res == s_Error)
+        return SolverProcess::Result::ERROR;
+
+    net::Report::error(get_SMTS_socket(), SMTS_event.header, "parser error");
+}
+
