@@ -53,7 +53,7 @@ namespace net {
 
         PTPLib::net::SMTS_Event read(uint32_t & length) const;
 
-        uint32_t write(const PTPLib::net::SMTS_Event &) const;
+        uint32_t write(PTPLib::net::SMTS_Event const &) const;
 
         void close();
 

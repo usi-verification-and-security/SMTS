@@ -7,6 +7,7 @@
  */
 
 #include "Socket.h"
+
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
@@ -15,6 +16,7 @@
 
 
 namespace net {
+
     Socket::Socket(const Address address) {
         int sockfd;
         struct sockaddr_in server_addr;
@@ -135,7 +137,7 @@ namespace net {
         return PTPLib::net::SMTS_Event(std::move(header), std::move(payload));
     }
 
-    uint32_t Socket::write(const PTPLib::net::SMTS_Event & SMTS_Event) const {
+    uint32_t Socket::write(PTPLib::net::SMTS_Event const & SMTS_Event) const {
         std::scoped_lock<std::mutex> _l(this->write_mtx);
         if (SMTS_Event.header.count(""))
             throw SocketException(__FILE__, __LINE__, "empty key is not allowed");
