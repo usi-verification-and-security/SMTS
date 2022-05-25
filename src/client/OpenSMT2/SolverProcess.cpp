@@ -75,3 +75,12 @@ void  SolverProcess::init(PTPLib::net::SMTS_Event & SMTS_Event) {
                                   "\n" + std::string("(set-option :split-units time)") + "\n" + std::string("(set-option :split-init-tune "+ to_string(DBL_MAX) + ")"),
                                   to_string(get_SMTS_socket().get_local()), getpid());
 }
+
+void SolverProcess::cleanSolverState() {
+    delete config;
+    config = nullptr;
+    delete splitterInterpret;
+    splitterInterpret = nullptr;
+    result = s_Undef;
+}
+
