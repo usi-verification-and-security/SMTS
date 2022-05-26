@@ -1,15 +1,21 @@
-//
-// Author: Matteo Marescotti
-//
+/*
+ * Copyright (c) Matteo Marescotti <Matteo.marescotti@usi.ch>
+ * Copyright (c) 2022, Antti Hyvarinen <antti.hyvarinen@gmail.com>
+ * Copyright (c) 2022, Seyedmasoud Asadzadeh <seyedmasoud.asadzadeh@usi.ch>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+
+#include "Settings.h"
 
 #include <getopt.h>
 #include <iostream>
-#include "Settings.h"
+#include <string>
 
-
-Settings::Settings() :
-        send_again(false),
-        port(5000) {}
+Settings::Settings()
+: send_again(false)
+, port(5000) {}
 
 void Settings::load(int argc, char **argv) {
     int opt;
@@ -17,7 +23,8 @@ void Settings::load(int argc, char **argv) {
         switch (opt) {
             case 'h':
                 new(this) Settings();
-                std::cout << "\n=== SMTS version " << SMTS_VERSION << " ===\n\n"
+                std::cout << "\n******* Compiled with " << __VERSION__ << " on " << __DATE__ << " ******\n"
+                          << "SMTS version: " << SMTS_VERSION << "\n"
                         "Usage: " << argv[0] << "\n"
                                   "[-h] display this message\n"
                                   "[-s server-host:port]\n"
@@ -42,7 +49,4 @@ void Settings::load(int argc, char **argv) {
                 std::cout << "unknown option '" << opt << "'" << "\n";
                 exit(-1);
         }
-
-    for (int i = optind; i < argc; i++) {
-    }
 }

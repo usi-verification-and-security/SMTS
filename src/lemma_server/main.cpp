@@ -8,7 +8,6 @@
 
 #include <PTPLib/common/Exception.hpp>
 
-#include <iostream>
 #include "lib/Logger.h"
 #include "Settings.h"
 #include "LemmaServer.h"
