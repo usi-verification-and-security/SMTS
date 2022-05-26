@@ -23,7 +23,6 @@ typedef uint8_t log_level;
 class Logger {
 private:
     Logger() { }
-
 public:
     static void writeIntoFile(bool parent,string type,string description,pid_t processId) {
         static std::mutex mtx;
@@ -45,6 +44,28 @@ public:
             file <<" "<< description << endl;
             file <<" time: " <<std::put_time(&tm, "%H:%M:%S") << "\t";
             file <<endl<<endl<<endl;
+        }
+        mtx.unlock();
+    }
+
+    static void build_SolverInputPath(bool exist, bool parent, const std::string & smt_lib, std::string solver_address, pid_t processId) {
+        static std::mutex mtx;
+        mtx.lock();
+        string fileName;
+        if (parent)
+            fileName = "logs/Parent-" + solver_address + ".smt2";
+        else
+            fileName = "logs/Child-" + solver_address  + ".smt2";
+
+        string filename(fileName);
+        ofstream file;
+        if (exist)
+            file.open(fileName, ios::out | ios::trunc);
+        file.open(filename, ios::app | ios::out);
+        if (file.is_open()) {
+
+            file << smt_lib << endl;
+            file.close();
         }
         mtx.unlock();
     }
