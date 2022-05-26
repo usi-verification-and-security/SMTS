@@ -24,9 +24,9 @@ namespace net {
     protected:
         virtual void handle_accept(Socket const &) {}
 
-        virtual void handle_close(Socket const &)  {}
+        virtual void handle_close(Socket &) {}
 
-        virtual void handle_event(Socket const &, PTPLib::net::SMTS_Event &&) {}
+        virtual void handle_event(Socket &, PTPLib::net::SMTS_Event &&) {}
 
         virtual void handle_exception(Socket const &, const std::exception &) {}
 

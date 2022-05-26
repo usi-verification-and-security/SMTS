@@ -74,8 +74,8 @@ public:
                 const bool                           & le)
     : channel                               (ch)
     , thread_pool                           (th_pool)
-    , synced_stream                         (ss)
     , SMTS_server_socket                    (&server)
+    , synced_stream                         (ss)
     , log_enabled                           (le)
      {}
 

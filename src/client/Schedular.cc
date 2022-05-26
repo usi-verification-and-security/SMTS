@@ -357,7 +357,7 @@ void Schedular::lemma_push(std::vector<PTPLib::net::Lemma> const & toPush_lemma,
             PTPLib::common::PrintStopWatch psw("[t Push(" + to_string(getpid()) + ") ] -> Lemma write time: ", synced_stream,
                                                log_enabled ? PTPLib::common::Color::FG_Blue : PTPLib::common::Color::FG_DEFAULT);
 
-        this->get_lemma_server().write(PTPLib::net::SMTS_Event(std::move(header), std::move(::to_string(toPush_lemma))));
+        this->get_lemma_server().write(PTPLib::net::SMTS_Event(std::move(header), ::to_string(toPush_lemma)));
     } catch (net::SocketException & ex) {
         net::Report::error(get_SMTS_server(), header, std::string("lemma push failed: ") + ex.what());
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));

@@ -42,7 +42,7 @@ namespace net::Report {
         SMTS_Event.header[PTPLib::common::Param.SEARCH_COUNTER] = search_counter;
         SMTS_Event.header[PTPLib::common::Param.STATUS_INFO] = status;
 
-        SMTS_Event.body = std::move(::to_string(partitions));
+        SMTS_Event.body = ::to_string(partitions);
         if (error_str != nullptr)
             return error(socket, SMTS_Event.header, error_str);
 
