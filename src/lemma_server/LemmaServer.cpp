@@ -122,7 +122,32 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
         net::Report::error(getSMTS_serverSocket(),SMTS_Event.header, " invalid solver branch from " + to_string(client.get_remote()));
         return;
     }
-    
+    if (this->lemmas.count(SMTS_Event.header[PTPLib::common::Param.NAME]) != 1)
+        this->lemmas[SMTS_Event.header[PTPLib::common::Param.NAME]];
+
+    uint32_t clauses_request = 0;
+    if (SMTS_Event.header[PTPLib::common::Command.LEMMAS] != "0")
+        clauses_request = (uint32_t) stoi(SMTS_Event.header[PTPLib::common::Command.LEMMAS].substr(1));
+
+    std::vector<Node *> node_path;
+    node_path.push_back(&this->lemmas[SMTS_Event.header[PTPLib::common::Param.NAME]]);
+    std::string node_code = SMTS_Event.header[PTPLib::common::Param.NODE].substr(1, SMTS_Event.header[PTPLib::common::Param.NODE].size() - 2);
+    node_code.erase(std::remove(node_code.begin(), node_code.end(), ' '), node_code.end());
+    std::string const delimiter = ",";
+    size_t beg, pos = 0;
+    int counter = 0;
+    while ((beg = node_code.find_first_not_of(delimiter, pos)) != std::string::npos)
+    {
+        pos = node_code.find_first_of(delimiter, beg + 1);
+        if (counter % 2 == 1) {
+            int index = stoi(node_code.substr(beg, pos - beg));
+            while ((unsigned int)index >= node_path.back()->children.size()) {
+                node_path.back()->children.push_back(new Node);
+            }
+            node_path.push_back(node_path.back()->children[index]);
+        }
+        counter++;
+    }
 }
 
 
