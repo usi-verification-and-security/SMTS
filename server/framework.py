@@ -196,7 +196,7 @@ class OrNode(Node):
 
 class Root(AndNode):
     def __init__(self, name: str, smt: str):
-        super().__init__(None, smt, config.node_timeout)
+        super().__init__(None, smt)
         self.name = name
 
     def __repr__(self):
