@@ -200,6 +200,14 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
         for (auto const & node : node_path) {
             node->filter(lemmas_filtered, lemmas_solver);
         }
+        if (lemmas_filtered.size() > clauses_request)
+        {
+            std::size_t cut_size = 2 * clauses_request;
+            auto it = lemmas_filtered.begin() + (std::min(cut_size, lemmas_filtered.size()));
+            std::nth_element(lemmas_filtered.begin(), it, lemmas_filtered.end(), Lemma::score_compare);
+            std::partial_sort(lemmas_filtered.begin(), lemmas_filtered.begin() + (clauses_request), it,  Lemma::level_compare);
+        }
+
         std::vector<PTPLib::net::Lemma> lemmas_send;
         uint32_t n = 0;
         for (auto const & lemma : lemmas_filtered) {
