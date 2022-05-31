@@ -4,6 +4,7 @@ import enum
 import utils
 import json
 import  re
+import constant
 
 __author__ = 'Matteo Marescotti'
 
@@ -12,14 +13,6 @@ class SolveStatus(enum.Enum):
     unknown = 0
     sat = 1
     unsat = -1
-
-class SplitPreference(enum.Enum):
-    # sppref_eq = 'eq'
-    # sppref_tterm = 'tterm'
-    # sppref_noteq = 'noteq'
-    # sppref_bterm = 'bterm'
-    # sppref_tterm_neq = 'tterm_neq'
-    sppref_blind = 'blind'
 
 class Node:
     def __init__(self, parent, smt):
@@ -36,7 +29,6 @@ class Node:
         self._status = SolveStatus.unknown
         self._started = None
         self._assumed_timout = False
-        self.assumed_timout_r = False
         self._partitioning = False
 
     def __repr__(self):
@@ -147,14 +139,6 @@ class Node:
         self._assumed_timout = asked
 
     @property
-    def assumed_timout_r(self):
-        return self._assumed_timout_r
-
-    @assumed_timout_r.setter
-    def assumed_timout_r(self, asked):
-        self._assumed_timout_r = asked
-
-    @property
     def partitioning(self):
         return self._partitioning
 
@@ -163,14 +147,12 @@ class Node:
         self._partitioning = asked
 
 class AndNode(Node):
-    def __init__(self, parent, smt, expected_time_point=0):
+    def __init__(self, parent, smt):
         if not isinstance(parent, (OrNode, type(None))):
             raise TypeError
         super().__init__(parent, smt)
         self._processed = False
         self._is_timeout = False
-        self._expected_timeout_point = expected_time_point
-        # print("_expected_timeout_point", expected_time_point)
 
     def _set_status(self, status: SolveStatus):
         self._status = status
@@ -200,15 +182,6 @@ class AndNode(Node):
     @is_timeout.setter
     def is_timeout(self, it):
         self._is_timeout = it
-
-    @property
-    def expected_timeout_point(self):
-        return self._expected_timeout_point
-
-    @expected_timeout_point.setter
-    def expected_timeout_point(self, etp):
-        self._expected_timeout_point = etp
-
 
 class OrNode(Node):
     def __init__(self, parent, smt: str = ''):
@@ -245,7 +218,7 @@ class Root(AndNode):
 
 class SMT(Root):
     def __init__(self, name: str, smt: str):
-        super().__init__(name, (re.sub(r';(.*)(\n+)', '', smt)).split('(check-sat)')[0])
+        super().__init__(name, (re.sub(r';(.*)(\n+)', '', smt)).split(constant.CHECK_SAT)[0])
 
     def to_string(self, node: AndNode, start: AndNode = None):
         n_pop = 0
@@ -264,7 +237,7 @@ class SMT(Root):
             node = node.parent
         smt += ['(pop 1)' for _ in range(n_pop)]
         smt.reverse()
-        return '\n'.join(smt), '(check-sat)'
+        return '\n'.join(smt), constant.CHECK_SAT
 
 
 class Fixedpoint(Root):
@@ -272,14 +245,14 @@ class Fixedpoint(Root):
         self.json = utils.smt2json(smt)
         self.query = None
         for i in self.json:
-            if i[0] == 'query':
+            if i[0] == constant.QUERY:
                 self.query = i[1]
                 self.json = self.json[:self.json.index(i)]
                 break
         if self.query is None:
             raise ValueError('query not found')
-        self.json = [i for i in self.json if i[0] != 'query']
-        super().__init__(name, smt.split('(query ')[0])
+        self.json = [i for i in self.json if i[0] != constant.QUERY]
+        super().__init__(name, smt.split('(' + constant.QUERY)[0])
 
     def partition(self):
         obj = self.json.copy()
