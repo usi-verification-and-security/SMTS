@@ -60,8 +60,39 @@ jobs:
                 name: Run Server - Client
                 command: sh ./bin/run-server-client.sh
 
+    build-macos:
+      macos:
+        xcode: 12.4.0
+      steps:
+        - run:
+            name: Packages
+            command: |
+              brew install cmake
+              brew install gmp
+              brew install bison
+              brew install flex
+
+        - checkout
+        - run:
+            name: Store path
+            command: echo 'export PATH=/usr/local/opt/flex/bin:/usr/local/opt/bison/bin:$PATH' >> $BASH_ENV
+
+        - run:
+            name: Debug build OS X With Address Sanitizer
+            command: sh ./bin/make_smts.sh
+            environment:
+              CMAKE_BUILD_TYPE: Debug
+              FLAGS: -Wall -Wextra -Werror -fsanitize=signed-integer-overflow,address,undefined
+
+        - run:
+            name: Release build OS X with Thread Sanitizer
+            command: sh ./bin/make_smts.sh
+            environment:
+              CMAKE_BUILD_TYPE: Release
+              FLAGS: -Wall -Wextra -Werror -fsanitize=signed-integer-overflow,thread,undefined
 
 workflows:
-    build-test:
-        jobs:
-            - build-recent
+  build-test:
+      jobs:
+        - build-recent
+        - build-macos
