@@ -99,6 +99,7 @@ def run_solvers(*solvers):
 
 
 def send_files(files, address):
+    sleep(1)
     socket = net.Socket()
     socket.connect(address)
     for path in files.split(','):
