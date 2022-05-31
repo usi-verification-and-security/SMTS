@@ -332,7 +332,6 @@ if config.visualize_tree:
                         if level == logging.ERROR:
                             self.current.timeout = 0
                             print(";error ", message, self.current.root.name)
-                            self.close()
                             exit(1)
                             # self.counter += 1
                             # if self.counter == self.total_solvers:
@@ -357,7 +356,6 @@ if config.visualize_tree:
                     level = logging._nameToLevel[level.upper()]
                     if level == logging.ERROR:
                         print(";error ", message)
-                        self.close()
                         exit(1)
             if constant.COMMAND in header:
                 # if terminate command is found, close the server
