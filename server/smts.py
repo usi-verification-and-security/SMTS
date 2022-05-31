@@ -2,13 +2,12 @@
 # -*- coding: utf-8 -*-
 
 from version import version
-import schedular2 as schedular
+import schedular as schedular
 import utils
 import argparse
 import logging
 import threading
 import sys
-from time import sleep
 
 __author__ = 'Matteo Marescotti'
 
@@ -104,12 +103,11 @@ if __name__ == '__main__':
     #         port
     #     )
     if args.file_paths:
-        sleep(1)
         files_thread = threading.Thread(target=utils.send_files,
                                         args=(args.file_paths, ('127.0.0.1', port)))
         files_thread.daemon = True
         files_thread.start()
-    # try:
-    ps.run_forever()
-    # except KeyboardInterrupt:
-    #     sys.exit(0)
+    try:
+        ps.run_forever(schedular.config.enableLog)
+    except KeyboardInterrupt:
+        sys.exit(0)
