@@ -1,16 +1,23 @@
-//
-// Author: Matteo Marescotti
-//
+/*
+ * Copyright (c) Matteo Marescotti <Matteo.marescotti@usi.ch>
+ * Copyright (c) 2022, Antti Hyvarinen <antti.hyvarinen@gmail.com>
+ * Copyright (c) 2022, Seyedmasoud Asadzadeh <seyedmasoud.asadzadeh@usi.ch>
+ *
+ * SPDX-License-Identifier: MIT
+ */
 
 #ifndef SMTS_LEMMASERVER_NODE_H
 #define SMTS_LEMMASERVER_NODE_H
+
+#include "Lemma.h"
+
+#include <PTPLib/net/Lemma.hpp>
 
 #include <string>
 #include <map>
 #include <list>
 #include <vector>
-#include "lib/net/Lemma.h"
-#include "Lemma.h"
+#include <unordered_map>
 
 
 class Node {
@@ -22,30 +29,31 @@ public:
     Node() {}
 
     ~Node() {
-        for (auto &pair:this->index) {
+        for (auto const & pair : this->index) {
             delete (this->index[pair.first]);
         }
-        for (auto child:this->children) {
+        for (auto const & child : this->children) {
             delete (child);
         }
     }
 
-    Lemma *get(net::Lemma &lemma) {
-        return this->index.count(lemma.smtlib) ? this->index[lemma.smtlib] : nullptr;
+    Lemma *get(PTPLib::net::Lemma &lemma) {
+        return this->index.count(lemma.clause) ? this->index[lemma.clause] : nullptr;
     }
 
-    Lemma *add_lemma(net::Lemma &lemma) {
+    Lemma *add_lemma(PTPLib::net::Lemma &lemma) {
         Lemma *r = this->get(lemma);
         if (!r) {
             r = new Lemma(lemma);
-            this->index[lemma.smtlib] = r;
+            this->index[lemma.clause] = r;
         }
         return r;
     }
 
-    void fill(std::list<Lemma *> &lemmas, std::map<Lemma *, bool> &lemmas_solver) {
-        for (auto &pair:this->index) {
-            if (this->index[pair.first]->smtlib.length() > 5000)
+    void filter(std::vector<Lemma *> &lemmas, std::map<Lemma *, bool> &lemmas_solver) {
+        for (auto const & pair : this->index) {
+            // A hack!: Not allowing clauses with too many nested lets (more than 5000 in size)
+            if (this->index[pair.first]->clause.length() > 5000)
                 continue;
             if (lemmas_solver[this->index[pair.first]])
                 continue;

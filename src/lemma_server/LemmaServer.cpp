@@ -161,6 +161,10 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
     bool push;
     if (SMTS_Event.header[PTPLib::common::Command.LEMMAS][0] == '+')
         push = true;
+    else if (SMTS_Event.header[PTPLib::common::Command.LEMMAS][0] == '-')
+        push = false;
+    else
+        return;
 
     if (push) {
         map<Lemma *, bool> & lemmas_solver = this->solvers[SMTS_Event.header[PTPLib::common::Param.NAME]][&client];
@@ -189,6 +193,35 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
                     " push [" + std::to_string(clauses_request) + "]\t" + std::to_string(lemmas_pushed.size()) +
                     "\t(" + std::to_string(pushed) + "\tfresh, " + std::to_string(lemmas_pushed.size() - pushed) + "\tpresent)");
 
+    }
+    else {
+        std::map<Lemma *, bool> &lemmas_solver = this->solvers[SMTS_Event.header[PTPLib::common::Param.NAME]][&client];
+        std::vector<Lemma *> lemmas_filtered;
+        for (auto const & node : node_path) {
+            node->filter(lemmas_filtered, lemmas_solver);
+        }
+        std::vector<PTPLib::net::Lemma> lemmas_send;
+        uint32_t n = 0;
+        for (auto const & lemma : lemmas_filtered) {
+            if (n >= clauses_request)
+                break;
+
+            assert(lemma->level <= (counter / 2));
+            if (!this->send_again)
+                lemmas_solver[lemma] = true;
+
+            lemmas_send.push_back(PTPLib::net::Lemma(lemma->clause, lemma->level));
+            n++;
+        }
+
+        SMTS_Event.header[PTPLib::common::Command.LEMMAS] = std::to_string(n);
+        SMTS_Event.body = ::to_string(lemmas_send);
+        client.write(SMTS_Event);
+
+        if (n > 0 and logEnabled)
+            Logger::log(Logger::PULL,
+                        SMTS_Event.header[PTPLib::common::Param.NAME] + SMTS_Event.header[PTPLib::common::Param.NODE] + " " + to_string(client.get_remote()) +
+                        " pull [" + std::to_string(clauses_request) + "]\t" + std::to_string(n));
     }
 }
 
