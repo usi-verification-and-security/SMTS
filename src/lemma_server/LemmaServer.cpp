@@ -112,6 +112,17 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
         t_mem_check.detach();
         return;
     }
+    if (SMTS_Event.header.count(PTPLib::common::Param.NAME) == 0 or
+        SMTS_Event.header.count(PTPLib::common::Param.NODE) == 0 or
+        SMTS_Event.header.count(PTPLib::common::Command.LEMMAS) == 0) {
+        net::Report::error(getSMTS_serverSocket(),SMTS_Event.header, " invalid solver event from " + to_string(client.get_remote()));
+        return;
+    }
+    if (SMTS_Event.header[PTPLib::common::Param.NODE].size() < 2) {
+        net::Report::error(getSMTS_serverSocket(),SMTS_Event.header, " invalid solver branch from " + to_string(client.get_remote()));
+        return;
+    }
+    
 }
 
 
