@@ -109,7 +109,7 @@ void Schedular::communicate_worker()
             getChannel().wait_event_solver_reset(lk);
 #ifdef VERBOSE_THREAD
             if (communicator_thread_id != std::this_thread::get_id())
-                    throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) +" has inconsistent thread id");
+                throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) +" has inconsistent thread id");
 #endif
 
             assert([&]() {
@@ -209,24 +209,26 @@ bool Schedular::execute_event(PTPLib::net::SMTS_Event & smts_event, bool & shoul
                               "[ t ", __func__, "] -> ", " SOLVER START TO SOLVE ON ", smts_event.header.at(PTPLib::common::Param.NAME));
         if (not (solver_process = new SolverProcess(synced_stream, SMTS_server_socket, getChannel())))
             throw PTPLib::common::Exception(__FILE__, __LINE__, ";SolverProcess: out of memory");
-        solver_process->init(smts_event);
+        SolverProcess::Result res = solver_process->init(smts_event);
+        if (res == SolverProcess::Result::ERROR)
+            throw PTPLib::common::Exception(__FILE__, __LINE__, ";SolverProcess: parser error");
+        assert(res == SolverProcess::Result::UNKNOWN);
+
         smts_event.body.clear();
         shouldUpdateSolverAddress = true;
         getChannel().set_current_header(smts_event.header);
     }
     else if (smts_event.header.at(PTPLib::common::Param.COMMAND) == PTPLib::common::Command.PARTITION) {
-            solver_process->partition(smts_event,
-                                      (uint8_t) atoi(smts_event.header.at(PTPLib::common::Param.PARTITIONS).c_str()));
+        solver_process->partition(smts_event, (uint8_t) atoi(smts_event.header.at(PTPLib::common::Param.PARTITIONS).c_str()));
     }
     else if (smts_event.header.at(PTPLib::common::Param.COMMAND) == PTPLib::common::Command.CLAUSEINJECTION) {
-            auto pulled_clauses = channel.swap_pulled_clauses();
+        auto pulled_clauses = channel.swap_pulled_clauses();
         solver_process->add_constraint(pulled_clauses, smts_event.header.at(PTPLib::common::Param.NODE));
     }
     else if (smts_event.header.at(PTPLib::common::Param.COMMAND) == PTPLib::common::Command.INCREMENTAL) {
         if (smts_event.header.count(PTPLib::common::Param.NODE_) and smts_event.header.count(PTPLib::common::Param.QUERY)) {
             if (log_enabled)
-                net::Report::info(get_SMTS_server(), smts_event,
-                             "incremental solving step from " + smts_event.header[PTPLib::common::Param.NODE]);
+                net::Report::info(get_SMTS_server(), smts_event, "incremental solving step from " + smts_event.header[PTPLib::common::Param.NODE]);
             if (solver_process->forked) {
                 solver_process->kill_partition_process();
                 solver_process->forked = false;
@@ -273,71 +275,76 @@ void Schedular::notify_reset() {
     _lk.unlock();
 }
 
-
-
 void Schedular::push_clause_worker(int seed, int min, int max) {
 #ifdef VERBOSE_THREAD
     push_thread_id = std::this_thread::get_id();
 #endif
-    int push_duration = min + (seed % (max - min + 1));
-    if (log_enabled)
-        synced_stream.println_bold(log_enabled ? PTPLib::common::Color::FG_Blue : PTPLib::common::Color::FG_DEFAULT,
-                               "[ t ", __func__, "] -> ", " timout : ", push_duration, " ms");
-    PTPLib::net::time_duration wakeupAt = std::chrono::milliseconds(push_duration);
-    while (true) {
+    PTPLib::net::Header header;
+    try {
+        int push_duration = min + (seed % (max - min + 1));
         if (log_enabled)
-            PTPLib::common::PrintStopWatch psw("[t PUSH ] -> measured wait and write duration: ", synced_stream,
-                                           log_enabled ? PTPLib::common::Color::FG_Blue : PTPLib::common::Color::FG_DEFAULT);
-        std::unique_lock<std::mutex> lk(getChannel().getMutex());
-        bool reset = getChannel().wait_for_reset(lk, wakeupAt);
+            synced_stream.println_bold(log_enabled ? PTPLib::common::Color::FG_Blue : PTPLib::common::Color::FG_DEFAULT,
+                                       "[ t ", __func__, "] -> ", " timout : ", push_duration, " ms");
+        PTPLib::net::time_duration wakeupAt = std::chrono::milliseconds(push_duration);
+        while (true) {
+            if (log_enabled)
+                PTPLib::common::PrintStopWatch psw("[t PUSH ] -> measured wait and write duration: ", synced_stream,
+                                                   log_enabled ? PTPLib::common::Color::FG_Blue : PTPLib::common::Color::FG_DEFAULT);
+            std::unique_lock<std::mutex> lk(getChannel().getMutex());
+            bool reset = getChannel().wait_for_reset(lk, wakeupAt);
 #ifdef VERBOSE_THREAD
-        if (push_thread_id != std::this_thread::get_id())
+            if (push_thread_id != std::this_thread::get_id())
                 throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) +" has inconsistent thread id");
 #endif
 
-        assert([&]() {
-            if (not lk.owns_lock()) {
-                throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) + " can't take the lock");
-            }
-            return true;
-        }());
-        if (not reset) {
-            if (not getChannel().empty_learned_clauses()) {
-                auto map_branch_clauses = getChannel().swap_learned_clauses();
-                getChannel().clear_learned_clauses();
-                auto header = channel.get_current_header({PTPLib::common::Param.NAME, PTPLib::common::Param.NODE, PTPLib::common::Param.QUERY});
-                lk.unlock();
-
-                assert([&]() {
-                    if (lk.owns_lock()) {
-                        throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) + " should not hold the lock");
-                    }
-                    return true;
-                }());
-                if (not header.empty()) {
-                    lemmas_publish(map_branch_clauses, header);
-                    map_branch_clauses->clear();
+            assert([&]() {
+                if (not lk.owns_lock()) {
+                    throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) + " can't take the lock");
                 }
-            } else {
-                if (log_enabled)
-                    synced_stream.println(
-                            log_enabled ? PTPLib::common::Color::FG_Blue : PTPLib::common::Color::FG_DEFAULT,
-                            "[ t ", __func__, "] -> ", " Channel empty!");
-            }
-        } else if (getChannel().shouldReset())
-            break;
+                return true;
+            }());
+            if (not reset) {
+                if (not getChannel().empty_learned_clauses()) {
+                    auto map_branch_clauses = getChannel().swap_learned_clauses();
+                    getChannel().clear_learned_clauses();
+                    header.clear();
+                    header = channel.get_current_header({PTPLib::common::Param.NAME});
+                    lk.unlock();
 
-        else {
-            synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Blue : PTPLib::common::Color::FG_DEFAULT,
-                                  "[ t ", __func__, "] -> ", "spurious wake up!");
-            assert(EXIT_FAILURE);
+                    assert([&]() {
+                        if (lk.owns_lock()) {
+                            throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) + " should not hold the lock");
+                        }
+                        return true;
+                    }());
+                    if (not header.empty()) {
+                        lemmas_publish(map_branch_clauses, header);
+                        map_branch_clauses->clear();
+                    }
+                } else {
+                    if (log_enabled)
+                        synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Blue : PTPLib::common::Color::FG_DEFAULT,
+                                "[ t ", __func__, "] -> ", " Channel empty!");
+                }
+            } else if (getChannel().shouldReset())
+                break;
+
+            else {
+                synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Blue : PTPLib::common::Color::FG_DEFAULT,
+                                      "[ t ", __func__, "] -> ", "spurious wake up!");
+                assert(EXIT_FAILURE);
+            }
         }
+    }
+    catch (std::exception & ex) {
+        net::Report::error(get_SMTS_server(), header, std::string(ex.what()) + " from: "+ __func__ );
     }
 }
 
 void Schedular::lemmas_publish(std::unique_ptr<PTPLib::net::map_solver_clause> const & map_branch_clause, PTPLib::net::Header & header) {
-    assert((not header.at(PTPLib::common::Param.NODE).empty()) and (not header.at(PTPLib::common::Param.NAME).empty()));
     for (const auto & branch_clause : *map_branch_clause) {
+        if (header.count(PTPLib::common::Param.NAME) == 0 or branch_clause.first.empty())
+            throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) + " invalid keys");
         header[PTPLib::common::Param.NODE] = branch_clause.first;
         header[PTPLib::common::Command.LEMMAS] = "+" + std::to_string(branch_clause.second.size());
         lemma_push(branch_clause.second, header);
@@ -357,15 +364,16 @@ void Schedular::lemma_push(std::vector<PTPLib::net::Lemma> const & toPush_lemma,
             PTPLib::common::PrintStopWatch psw("[t Push(" + to_string(getpid()) + ") ] -> Lemma write time: ", synced_stream,
                                                log_enabled ? PTPLib::common::Color::FG_Blue : PTPLib::common::Color::FG_DEFAULT);
 
-        this->get_lemma_server().write(PTPLib::net::SMTS_Event(std::move(header), ::to_string(toPush_lemma)));
+        this->get_lemma_server().write(PTPLib::net::SMTS_Event(header, ::to_string(toPush_lemma)));
     } catch (net::SocketException & ex) {
-        net::Report::error(get_SMTS_server(), header, std::string("lemma push failed: ") + ex.what());
+        net::Report::warning(get_SMTS_server(), header, std::string("lemma push failed: ") + ex.what());
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
         return;
     }
 }
 
 void Schedular::pull_clause_worker(int seed, int min, int max) {
+    PTPLib::net::Header header;
     try {
 #ifdef VERBOSE_THREAD
         pull_thread_id = std::this_thread::get_id();
@@ -393,7 +401,8 @@ void Schedular::pull_clause_worker(int seed, int min, int max) {
                 return true;
             }());
             if (not reset) {
-                auto header = channel.get_current_header({PTPLib::common::Param.NAME, PTPLib::common::Param.NODE, PTPLib::common::Param.QUERY});
+                header.clear();
+                header = channel.get_current_header({PTPLib::common::Param.NAME, PTPLib::common::Param.NODE, PTPLib::common::Param.QUERY});
                 u_lk.unlock();
                 assert([&]() {
                     if (u_lk.owns_lock()) {
@@ -420,7 +429,7 @@ void Schedular::pull_clause_worker(int seed, int min, int max) {
                                 break;
                             channel.insert_pulled_clause(std::move(lemmas));
                             header[PTPLib::common::Param.COMMAND] = PTPLib::common::Command.CLAUSEINJECTION;
-                            queue_event(PTPLib::net::SMTS_Event(std::move(header)));
+                            queue_event(PTPLib::net::SMTS_Event(header));
                             uniqueLock.unlock();
                         }
                         if (log_enabled)
@@ -441,15 +450,16 @@ void Schedular::pull_clause_worker(int seed, int min, int max) {
             }
         }
     }
-    catch (PTPLib::common::Exception & ex)
+    catch (std::exception & ex)
     {
-        std::cerr << __func__ << ex.what() << std::endl;
+        net::Report::error(get_SMTS_server(), header, std::string(ex.what()) + " from: "+ __func__ );
     }
 }
 
 bool Schedular::read_lemma(std::vector<PTPLib::net::Lemma> & lemmas, PTPLib::net::Header & header) {
     std::scoped_lock<std::mutex> _l(this->lemma_mutex);
-    assert((not header.at(PTPLib::common::Param.NODE).empty()) and (not header.at(PTPLib::common::Param.NAME).empty()));
+    if (header.count(PTPLib::common::Param.NAME) == 0 or header.count(PTPLib::common::Param.NODE) == 0)
+        throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) + " invalid keys");
     assert(not lemma_amount.empty());
     header[PTPLib::common::Command.LEMMAS] = "-" + lemma_amount;
     lemma_pull(lemmas, header);
@@ -480,7 +490,7 @@ bool Schedular::lemma_pull(std::vector<PTPLib::net::Lemma> & lemmas, PTPLib::net
         return lemmas.size();
 
     } catch (net::SocketException & ex) {
-        net::Report::error(get_SMTS_server(), header, std::string("lemma pull failed: ") + ex.what());
+        net::Report::warning(get_SMTS_server(), header, std::string("lemma pull failed: ") + ex.what());
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
         return false;
     }

@@ -10,7 +10,6 @@
 #include "lib/Logger.h"
 #include "Settings.h"
 #include "SolverServer.h"
-#include "FileThread.h"
 
 #include <PTPLib/common/Exception.hpp>
 
