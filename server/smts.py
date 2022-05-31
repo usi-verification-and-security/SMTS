@@ -64,8 +64,7 @@ if __name__ == '__main__':
             if schedular.config.enableLog:
                 print('{} = {}'.format(attr_name, repr(getattr(schedular.config, attr_name))))
         sys.exit(0)
-
-    ps = schedular.ParallelizationServer(logging.getLogger('server'),port)
+    ps = schedular.ParallelizationServer(logging.getLogger('schedular'), port)
     if schedular.config.gui:
         if not schedular.config.db_path:
             logging.error('GUI requires a database. please specify one with -d')
