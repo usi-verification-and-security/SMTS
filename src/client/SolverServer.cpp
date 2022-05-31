@@ -37,14 +37,9 @@ void SolverServer::handle_event(net::Socket & socket, PTPLib::net::SMTS_Event &&
         if (SMTS_event.header.count("enableLog") == 1 and SMTS_event.header.at("enableLog") == "1") {
             schedular.set_log_enabled(log_enabled = true);
             thread_pool.set_syncedStream(synced_stream);
-        }
-
-        if (SMTS_event.header.count("communication") == 1 and SMTS_event.header.at("communication") == "1") {
-            schedular.push_to_pool(PTPLib::common::TASK::MEMORYCHECK,
-                                   atoi(SMTS_event.header.at(PTPLib::common::Param.MAX_MEMORY).c_str()));
-            schedular.push_to_pool(PTPLib::common::TASK::COMMUNICATION);
             return;
         }
+
         bool reset = false;
         assert(SMTS_event.header.count(PTPLib::common::Param.COMMAND));
         if (SMTS_event.header.count(PTPLib::common::Param.COMMAND) != 1) {
@@ -61,16 +56,25 @@ void SolverServer::handle_event(net::Socket & socket, PTPLib::net::SMTS_Event &&
             exit(EXIT_FAILURE);
         }
         else if (SMTS_event.header[PTPLib::common::Param.COMMAND] == PTPLib::common::Command.LEMMAS) {
-            this->lemmaServer_address = SMTS_event.header[PTPLib::common::Command.LEMMAS];
             this->schedular.set_lemma_amount(SMTS_event.header[PTPLib::common::Param.LEMMA_AMOUNT]);
+            this->lemma_stat.lemma_push_min = atoi(SMTS_event.header["lemma_push_min"].c_str());
+            this->lemma_stat.lemma_push_max = atoi(SMTS_event.header["lemma_push_max"].c_str());
+            this->lemma_stat.lemma_pull_min = atoi(SMTS_event.header["lemma_pull_min"].c_str());
+            this->lemma_stat.lemma_pull_max = atoi(SMTS_event.header["lemma_pull_max"].c_str());
             this->initiate_lemma_server(SMTS_event);
             getChannel().setClauseShareMode();
+            if (this->lemma_stat.seed)
+                this->push_lemma_workers(SMTS_event);
         }
         else {
             if (SMTS_event.header[PTPLib::common::Param.COMMAND] == PTPLib::common::Command.SOLVE)
             {
+                this->lemma_stat.seed = atoi(SMTS_event.header.get(PTPLib::net::parameter, PTPLib::common::Param.SEED).c_str());
                 if (this->lemmaServer_socket)
                     this->push_lemma_workers(SMTS_event);
+                schedular.push_to_pool(PTPLib::common::TASK::MEMORYCHECK,
+                                       atoi(SMTS_event.header.at(PTPLib::common::Param.MAX_MEMORY).c_str()));
+                schedular.push_to_pool(PTPLib::common::TASK::COMMUNICATION);
             }
             std::unique_lock<std::mutex> listener_lk(getChannel().getMutex());
             assert([&]() {
@@ -129,10 +133,10 @@ void SolverServer::initiate_lemma_server(PTPLib::net::SMTS_Event & SMTS_Event) {
 
     if (log_enabled)
         synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Red : PTPLib::common::Color::FG_DEFAULT,
-                              "LemmasServer Address: ", this->lemmaServer_address);
-    if (not this->lemmaServer_address.empty()) {
+                              "LemmasServer Address: ", SMTS_Event.header[PTPLib::common::Command.LEMMAS]);
+    if (not SMTS_Event.header[PTPLib::common::Command.LEMMAS].empty() and not this->lemmaServer_socket) {
         try {
-            this->lemmaServer_socket.reset(new net::Socket(this->lemmaServer_address));
+            this->lemmaServer_socket.reset(new net::Socket(SMTS_Event.header[PTPLib::common::Command.LEMMAS]));
             schedular.set_LemmaServer_socket(this->lemmaServer_socket.get());
         } catch (net::SocketException &ex) {
             net::Report::error(get_SMTS_server_socket(), SMTS_Event.header, std::string("lemma server connection failed: ") + ex.what());
@@ -142,14 +146,10 @@ void SolverServer::initiate_lemma_server(PTPLib::net::SMTS_Event & SMTS_Event) {
 
 void SolverServer::push_lemma_workers(PTPLib::net::SMTS_Event & SMTS_event)
 {
-    int seed = atoi(SMTS_event.header.get(PTPLib::net::parameter, PTPLib::common::Param.SEED).c_str());
-    int interval = atoi(SMTS_event.header["lemma_push_min"].c_str()) + seed
-            % ( atoi(SMTS_event.header["lemma_push_max"].c_str()) - atoi(SMTS_event.header["lemma_push_min"].c_str()) + 1 );
+    int interval = this->lemma_stat.lemma_push_min + this->lemma_stat.seed % ( this->lemma_stat.lemma_push_max - this->lemma_stat.lemma_push_min + 1 );
 
-    schedular.push_to_pool(PTPLib::common::TASK::CLAUSEPUSH, seed, atoi(SMTS_event.header["lemma_push_min"].c_str()),
-                           atoi(SMTS_event.header["lemma_push_max"].c_str()));
-    schedular.push_to_pool(PTPLib::common::TASK::CLAUSEPULL, seed, atoi(SMTS_event.header["lemma_pull_min"].c_str()),
-                           atoi(SMTS_event.header["lemma_pull_max"].c_str()));
+    schedular.push_to_pool(PTPLib::common::TASK::CLAUSEPUSH, this->lemma_stat.seed, this->lemma_stat.lemma_push_min, this->lemma_stat.lemma_push_max);
+    schedular.push_to_pool(PTPLib::common::TASK::CLAUSEPULL, this->lemma_stat.seed, this->lemma_stat.lemma_pull_min, this->lemma_stat.lemma_pull_max);
     schedular.push_to_pool(PTPLib::common::TASK::CLAUSELEARN, interval / 2);
 }
 

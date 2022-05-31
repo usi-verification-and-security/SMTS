@@ -28,11 +28,17 @@ private:
 
     std::shared_ptr<net::Socket> lemmaServer_socket = nullptr;
 
-    std::string lemmaServer_address;
-
     PTPLib::net::Channel channel;
 
     PTPLib::common::synced_stream synced_stream;
+
+    struct {
+        int lemma_push_min = 0;
+        int lemma_push_max = 0;
+        int lemma_pull_min = 0;
+        int lemma_pull_max = 0;
+        int seed = 0;
+    } lemma_stat;
 
     void stop_schedular();
 
