@@ -74,9 +74,6 @@ if __name__ == '__main__':
         gui_thread.daemon = True
         gui_thread.start()
 
-
-
-
     # done in separate thread because gethostbyname could take time
     if args.lemma_sharing:
         lemma_thread = threading.Thread(target=utils.run_lemma_server, args=(
@@ -94,13 +91,13 @@ if __name__ == '__main__':
             (schedular.config.build_path + '/solver_z3spacer', schedular.config.z3spacer, port),
             (schedular.config.build_path + '/solver_sally', schedular.config.sally, port)
         )
-    # if args.lemma_sharing:
-    #     utils.run_lemma_server(
-    #         schedular.config.build_path + '/lemma_server',
-    #         schedular.config.db_path if schedular.config.lemma_db_path else None,
-    #         schedular.config.lemma_resend,
-    #         port
-    #     )
+    if args.lemma_sharing:
+        utils.run_lemma_server(
+            schedular.config.build_path + '/lemma_server',
+            schedular.config.db_path if schedular.config.lemma_db_path else None,
+            schedular.config.lemma_resend,
+            port
+        )
     if args.file_paths:
         files_thread = threading.Thread(target=utils.send_files,
                                         args=(args.file_paths, ('127.0.0.1', port)))
