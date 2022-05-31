@@ -157,7 +157,39 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
         this->solvers.erase(SMTS_Event.header[PTPLib::common::Param.NAME]);
         notify_reset();
     }
-    
+
+    bool push;
+    if (SMTS_Event.header[PTPLib::common::Command.LEMMAS][0] == '+')
+        push = true;
+
+    if (push) {
+        map<Lemma *, bool> & lemmas_solver = this->solvers[SMTS_Event.header[PTPLib::common::Param.NAME]][&client];
+        uint32_t pushed = 0;
+        std::vector<PTPLib::net::Lemma> lemmas_pushed;
+        std::istringstream is(SMTS_Event.body);
+        is >> lemmas_pushed;
+        for (auto & lemma : lemmas_pushed) {
+            assert(lemma.level <= (counter / 2));
+            assert(not lemma.clause.empty());
+            Lemma *l = node_path[lemma.level]->get(lemma);
+            if (l) {
+                l->increase();
+                if (!lemmas_solver[l]) {
+                    lemmas_solver[l] = true;
+                }
+            } else {
+                pushed++;
+                l = node_path[lemma.level]->add_lemma(lemma);
+                lemmas_solver[l] = true;
+            }
+        }
+        if (logEnabled)
+            Logger::log(Logger::PUSH,
+                    SMTS_Event.header[PTPLib::common::Param.NAME] + SMTS_Event.header[PTPLib::common::Param.NODE] + " " + to_string(client.get_remote()) +
+                    " push [" + std::to_string(clauses_request) + "]\t" + std::to_string(lemmas_pushed.size()) +
+                    "\t(" + std::to_string(pushed) + "\tfresh, " + std::to_string(lemmas_pushed.size() - pushed) + "\tpresent)");
+
+    }
 }
 
 
