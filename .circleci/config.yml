@@ -17,7 +17,7 @@ jobs:
                 command: sudo apt-get update
             - run:
                 name: Install Dependencies
-                command: sudo apt-get install libgmp-dev libedit-dev bison flex cmake libubsan0
+                command: sudo apt-get install libgmp-dev libedit-dev bison flex cmake libubsan0 python3
             
             - run:
                 name: Install Sqllite
