@@ -56,6 +56,14 @@ namespace net::Report {
     inline void warning(net::Socket const & socket,  PTPLib::net::Header & header, std::string const & warning) {
         report(socket, header, "warning:" + warning);
     }
+
+    inline void error(net::Socket const & socket, std::string const & error) {
+        if (error.size()) {
+            auto header = PTPLib::net::Header();
+            header[PTPLib::common::Param.REPORT] = "error:" + error;
+            report(socket, header, "error:" + error);
+        }
+    }
 };
 
 
