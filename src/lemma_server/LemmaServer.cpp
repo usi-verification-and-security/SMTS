@@ -8,12 +8,15 @@
 
 #include "LemmaServer.h"
 #include "lib/Logger.h"
+#include "lib/net/Report.h"
 
 #include <PTPLib/common/Lib.hpp>
 #include <PTPLib/net/Header.hpp>
+#include <PTPLib/common/Memory.hpp>
 
 #include <string>
 #include <algorithm>
+#include <thread>
 
 LemmaServer::LemmaServer(uint16_t port, const std::string &server, const std::string &db_filename, bool send_again) :
         Server(port),
@@ -47,6 +50,34 @@ LemmaServer::LemmaServer(uint16_t port, const std::string &server, const std::st
 #endif
 };
 
+void LemmaServer::notify_reset() {
+    std::scoped_lock<std::mutex> s_lk(getChannel().getMutex());
+    channel.setReset();
+    channel.notify_one();
+}
+
+void LemmaServer::memory_checker(int max_memory)
+{
+    size_t limit = static_cast<std::size_t>(max_memory);
+    if (limit == 0)
+        return;
+
+    while (true) {
+        size_t memory_size_b = PTPLib::common::current_memory();
+        if (memory_size_b > limit *1024 * 1024 ) {
+            std::scoped_lock<std::mutex> lk(getChannel().getMutex());
+            net::Report::error(getSMTS_serverSocket()," max memory reached from lemma-server: " + std::to_string(memory_size_b));
+        }
+        std::unique_lock<std::mutex> lk(getChannel().getMutex());
+        if (getChannel().wait_for_reset(lk, std::chrono::seconds (3)))
+            break;
+
+        if (not lk.owns_lock()) {
+            net::Report::error(getSMTS_serverSocket(), std::string(__FUNCTION__) + " can't take the lock");
+        }
+    }
+}
+
 void LemmaServer::handle_accept(net::Socket const & client) {
     Logger::log(Logger::INFO, "+ " + to_string(client.get_remote()));
 }
@@ -73,6 +104,13 @@ void LemmaServer::handle_exception(net::Socket const & client, const std::except
 void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && SMTS_Event)  {
     if (SMTS_Event.header.count("enableLog") == 1 and SMTS_Event.header.at("enableLog") == "1") {
         logEnabled = true;
+    }
+    if (SMTS_Event.header.count(PTPLib::common::Param.MAX_MEMORY) == 1) {
+        std::thread t_mem_check([&] {
+            memory_checker(atoi(SMTS_Event.header.at(PTPLib::common::Param.MAX_MEMORY).c_str()));
+        });
+        t_mem_check.detach();
+        return;
     }
 }
 

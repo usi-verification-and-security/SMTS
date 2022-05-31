@@ -17,6 +17,8 @@
 #include "lib/sqlite3.h"
 #endif
 
+#include <PTPLib/net/Channel.hpp>
+
 #include <map>
 #include <unordered_map>
 #include <ctime>
@@ -25,6 +27,7 @@ class LemmaServer : public net::Server {
 private:
     bool send_again;
     std::shared_ptr<net::Socket> server;
+    PTPLib::net::Channel channel;
 
 #ifdef SQLITE_IS_ON
     std::shared_ptr<SQLite3::Connection> db;
@@ -42,6 +45,11 @@ protected:
 
     void handle_exception(net::Socket const &, const std::exception &);
 
+    PTPLib::net::Channel & getChannel()             { return channel; };
+    net::Socket const & getSMTS_serverSocket()    { return *server.get(); };
+
+    void notify_reset();
+    void memory_checker(int);
 public:
     LemmaServer(uint16_t, const std::string &, const std::string &, bool send_again);
 };
