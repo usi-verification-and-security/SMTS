@@ -148,6 +148,16 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
         }
         counter++;
     }
+    if (clauses_request == 0) {
+        if (logEnabled)
+            Logger::log(Logger::INFO, SMTS_Event.header[PTPLib::common::Param.NAME] +
+                        SMTS_Event.header[PTPLib::common::Param.NODE] + " " + to_string(client.get_remote()) + " clear");
+
+        this->lemmas.erase(SMTS_Event.header[PTPLib::common::Param.NAME]);
+        this->solvers.erase(SMTS_Event.header[PTPLib::common::Param.NAME]);
+        notify_reset();
+    }
+    
 }
 
 
