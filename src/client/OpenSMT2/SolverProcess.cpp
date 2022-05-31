@@ -35,7 +35,7 @@ inline ScatterSplitter & getScatterSplitter() {
     return dynamic_cast<ScatterSplitter&>(getMainSplitter().getSMTSolver());
 }
 
-void  SolverProcess::init(PTPLib::net::SMTS_Event & SMTS_Event) {
+SolverProcess::Result SolverProcess::init(PTPLib::net::SMTS_Event & SMTS_Event) {
     const char *msg;
     static const char *default_split = SMTConfig::o_sat_scatter_split;
     static const char *default_seed = "0";
@@ -66,14 +66,22 @@ void  SolverProcess::init(PTPLib::net::SMTS_Event & SMTS_Event) {
     if (not (splitterInterpret = new SplitterInterpret(*config, getChannel())))
         throw PTPLib::common::Exception(__FILE__, __LINE__, ";SplitterInterpret: out of memory");
 
-    splitterInterpret->interpSMTContent((char *) SMTS_Event.body.c_str());
-
     if (log_enabled)
         getScatterSplitter().set_syncedStream(synced_stream);
         base_instance = SMTS_Event.body;
         Logger::build_SolverInputPath(true, true, "(set-option :random-seed " + SMTS_Event.header.get(PTPLib::net::parameter, "seed") + ")"
                                   "\n" + std::string("(set-option :split-units time)") + "\n" + std::string("(set-option :split-init-tune "+ to_string(DBL_MAX) + ")"),
                                   to_string(get_SMTS_socket().get_local()), getpid());
+
+    auto res = splitterInterpret->interpSMTContent((char *) SMTS_Event.body.c_str());
+    if (res == s_Undef)
+        return SolverProcess::Result::UNKNOWN;
+    else if (res == s_True)
+        return SolverProcess::Result::SAT;
+    else if (res == s_False)
+        return SolverProcess::Result::UNSAT;
+    else if (res == s_Error)
+        return SolverProcess::Result::ERROR;
 }
 
 void SolverProcess::cleanSolverState() {
@@ -98,7 +106,7 @@ SolverProcess::Result SolverProcess::solve(PTPLib::net::SMTS_Event SMTS_event, b
                               SMTS_event.body + SMTS_event.header.at(PTPLib::common::Param.QUERY));
     }
     assert(not SMTS_event.header.at(PTPLib::common::Param.QUERY).empty());
-    sstat res = splitterInterpret->interpSMTContent((char *) (SMTS_event.body + SMTS_event.header.at(PTPLib::common::Param.QUERY)).c_str(),
+    auto res = splitterInterpret->interpSMTContent((char *) (SMTS_event.body + SMTS_event.header.at(PTPLib::common::Param.QUERY)).c_str(),
     (shouldUpdateSolverAddress ? SMTS_event.header.at(PTPLib::common::Param.NODE).substr(1,
                                                                                          SMTS_event.header.at(PTPLib::common::Param.NODE).size() - 2) : ""));
     if (log_enabled) {
@@ -173,7 +181,6 @@ void SolverProcess::partition(PTPLib::net::SMTS_Event & SMTS_Event, uint8_t n) {
     std::vector<std::string> partitions;
     int searchCounter = (((ScatterSplitter &) getMainSplitter().getSMTSolver()).getSearchCounter());
     std::string statusInfo = getMainSplitter().getConfig().getInfo(":status").toString();
-
     const char *msg;
     if ( not (
             getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_num, SMTOption(int(n)),msg)                   and
