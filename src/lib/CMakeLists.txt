@@ -18,4 +18,4 @@ if (SQLITE3_Enabled)
     target_compile_definitions(Lib PUBLIC -DSQLITE_IS_ON)
 endif()
 
-target_link_libraries(Lib PUBLIC PTPLib::PTPLib)
+target_link_libraries(Lib PUBLIC PTPLib::PTPLib Threads::Threads)
