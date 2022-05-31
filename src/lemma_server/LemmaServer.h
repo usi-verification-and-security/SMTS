@@ -25,6 +25,7 @@ class LemmaServer : public net::Server {
 private:
     bool send_again;
     std::shared_ptr<net::Socket> server;
+
 #ifdef SQLITE_IS_ON
     std::shared_ptr<SQLite3::Connection> db;
 #endif
@@ -36,6 +37,8 @@ protected:
     void handle_accept(net::Socket const &);
 
     void handle_close(net::Socket &);
+
+    void handle_event(net::Socket &, PTPLib::net::SMTS_Event &&);
 
     void handle_exception(net::Socket const &, const std::exception &);
 

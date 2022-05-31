@@ -22,7 +22,7 @@ LemmaServer::LemmaServer(uint16_t port, const std::string &server, const std::st
         this->server.reset(new net::Socket(server));
         PTPLib::net::Header header;
         header[PTPLib::common::Command.LEMMAS] = ":" + std::to_string(port);
-        this->server->write(PTPLib::net::SMTS_Event(std::move(header), std::string()));
+        this->server->write(PTPLib::net::SMTS_Event(std::move(header)));
         this->add_socket(this->server);
     }
 
@@ -68,6 +68,12 @@ void LemmaServer::handle_close(net::Socket & client) {
 
 void LemmaServer::handle_exception(net::Socket const & client, const std::exception & ex) {
     Logger::log(Logger::WARNING, "Exception from: " + to_string(client.get_remote()) + ": " + ex.what());
+}
+
+void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && SMTS_Event)  {
+    if (SMTS_Event.header.count("enableLog") == 1 and SMTS_Event.header.at("enableLog") == "1") {
+        logEnabled = true;
+    }
 }
 
 
