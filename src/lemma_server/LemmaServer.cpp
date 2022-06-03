@@ -71,7 +71,8 @@ void LemmaServer::memory_checker(int max_memory)
         std::unique_lock<std::mutex> lk(getChannel().getMutex());
         if (getChannel().wait_for_reset(lk, std::chrono::seconds (3)))
             break;
-
+        if (logEnabled)
+            Logger::log(Logger::WARNING, "Current Memory Usage (MB): " + to_string(memory_size_b/(1024*1024)));
         if (not lk.owns_lock()) {
             net::Report::error(getSMTS_serverSocket(), std::string(__FUNCTION__) + " can't take the lock");
         }
@@ -148,6 +149,12 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
         }
         counter++;
     }
+    if (logEnabled) {
+        int size = SMTS_Event.body.capacity() / (1024 * 1024);
+        if (size > 1)
+        Logger::log(Logger::WARNING, "Current Memory Of Lemmas (MB): " + to_string(size));
+    }
+
     if (clauses_request == 0) {
         if (logEnabled)
             Logger::log(Logger::INFO, SMTS_Event.header[PTPLib::common::Param.NAME] +
