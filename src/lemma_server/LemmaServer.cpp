@@ -179,6 +179,7 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
         std::vector<PTPLib::net::Lemma> lemmas_pushed;
         std::istringstream is(SMTS_Event.body);
         is >> lemmas_pushed;
+        garbageCollect(lemmas_pushed.size(), SMTS_Event.header[PTPLib::common::Param.NAME]);
         for (auto & lemma : lemmas_pushed) {
             assert(lemma.level <= (counter / 2));
             assert(not lemma.clause.empty());
@@ -240,4 +241,23 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
     }
 }
 
+void LemmaServer::garbageCollect(std::size_t batchSize, std::string const & instanceName)
+{
 
+    lemmasSize += batchSize;
+    std::size_t cut_size = 50000;
+    if (lemmasSize > cut_size * 2)
+    {
+        for (auto & solver_lemmas : solvers[instanceName]) {
+            for (auto & lemma : solver_lemmas.second)
+            {
+                if (lemma.first->get_score() == 0 or lemma.first->level == 0) {
+                    solver_lemmas.second.erase(lemma.first);
+                    cut_size--;
+                    if (cut_size <= 0) return;
+                }
+            }
+        }
+        lemmasSize -= cut_size;
+    }
+}

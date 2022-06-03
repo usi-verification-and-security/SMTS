@@ -33,6 +33,9 @@ private:
     std::unordered_map<std::string, Node> lemmas;                            // name -> lemmas
     std::unordered_map<std::string, std::unordered_map<int, std::unordered_map<Lemma *, bool>>> solvers;  // name -> solver -> lemma -> t/f
     bool logEnabled = false;
+    std::size_t lemmasSize = 0;
+
+    void garbageCollect(std::size_t batchSize, std::string const & instanceName);
 
 protected:
     void handle_accept(net::Socket const &);
