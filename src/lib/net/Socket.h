@@ -37,6 +37,7 @@ namespace net {
         mutable std::mutex read_mtx, write_mtx;
 
         inline uint32_t readn(char *, uint32_t) const;
+        int Id = 0;
 
     public:
         Socket(int);
@@ -63,6 +64,9 @@ namespace net {
 
         Address get_remote() const;
 
+        void setId(int id) { Id = id; }
+
+        int getId() { return Id; }
     };
 }
 
