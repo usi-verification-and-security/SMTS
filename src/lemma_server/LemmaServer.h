@@ -28,12 +28,11 @@ private:
     bool send_again;
     std::shared_ptr<net::Socket> server;
     PTPLib::net::Channel channel;
-
 #ifdef SQLITE_IS_ON
     std::shared_ptr<SQLite3::Connection> db;
 #endif
     std::unordered_map<std::string, Node> lemmas;                            // name -> lemmas
-    std::unordered_map<std::string, std::unordered_map<net::Socket *, std::map<Lemma *, bool>>> solvers;  // name -> solver -> lemma -> t/f
+    std::unordered_map<std::string, std::unordered_map<net::Socket *, std::unordered_map<Lemma *, bool>>> solvers;  // name -> solver -> lemma -> t/f
     bool logEnabled = false;
 
 protected:

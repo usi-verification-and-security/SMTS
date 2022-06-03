@@ -167,7 +167,7 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
         return;
 
     if (push) {
-        map<Lemma *, bool> & lemmas_solver = this->solvers[SMTS_Event.header[PTPLib::common::Param.NAME]][&client];
+        std::unordered_map<Lemma *, bool> & lemmas_solver = this->solvers[SMTS_Event.header[PTPLib::common::Param.NAME]][&client];
         uint32_t pushed = 0;
         std::vector<PTPLib::net::Lemma> lemmas_pushed;
         std::istringstream is(SMTS_Event.body);
@@ -195,7 +195,7 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
 
     }
     else {
-        std::map<Lemma *, bool> &lemmas_solver = this->solvers[SMTS_Event.header[PTPLib::common::Param.NAME]][&client];
+        std::unordered_map<Lemma *, bool> &lemmas_solver = this->solvers[SMTS_Event.header[PTPLib::common::Param.NAME]][&client];
         std::vector<Lemma *> lemmas_filtered;
         for (auto const & node : node_path) {
             node->filter(lemmas_filtered, lemmas_solver);
