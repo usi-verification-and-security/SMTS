@@ -63,7 +63,9 @@ namespace net {
                             socket++;
                             continue;
                         }
+
                         this->sockets.insert(client);
+                        client->setId(++counter);
                         this->handle_accept(*client);
 
                     }

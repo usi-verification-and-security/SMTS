@@ -19,7 +19,6 @@
 
 #include <PTPLib/net/Channel.hpp>
 
-#include <map>
 #include <unordered_map>
 #include <ctime>
 
@@ -32,7 +31,7 @@ private:
     std::shared_ptr<SQLite3::Connection> db;
 #endif
     std::unordered_map<std::string, Node> lemmas;                            // name -> lemmas
-    std::unordered_map<std::string, std::unordered_map<net::Socket *, std::unordered_map<Lemma *, bool>>> solvers;  // name -> solver -> lemma -> t/f
+    std::unordered_map<std::string, std::unordered_map<int, std::unordered_map<Lemma *, bool>>> solvers;  // name -> solver -> lemma -> t/f
     bool logEnabled = false;
 
 protected:

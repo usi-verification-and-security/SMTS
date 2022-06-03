@@ -20,7 +20,7 @@ namespace net {
     private:
         std::shared_ptr<Socket> socket;
         std::set<std::shared_ptr<Socket>> sockets;
-
+        int counter = 0;
     protected:
         virtual void handle_accept(Socket const &) {}
 
