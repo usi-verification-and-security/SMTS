@@ -50,11 +50,8 @@ public:
         return r;
     }
 
-    void filter(std::vector<Lemma *> &lemmas, std::map<Lemma *, bool> &lemmas_solver) {
+    void filter(std::vector<Lemma *> &lemmas, std::unordered_map<Lemma *, bool> &lemmas_solver) {
         for (auto const & pair : this->index) {
-            // A hack!: Not allowing clauses with too many nested lets (more than 5000 in size)
-            if (this->index[pair.first]->clause.length() > 5000)
-                continue;
             if (lemmas_solver[this->index[pair.first]])
                 continue;
             lemmas.push_back(this->index[pair.first]);
