@@ -91,7 +91,11 @@ public:
 
     PTPLib::threads::ThreadPool & getPool()      { return thread_pool; }
 
-    void queue_event(PTPLib::net::SMTS_Event && header_payload);
+    template<class T>
+    inline void queue_event(T && event) {
+        getChannel().push_back_query(std::forward<T>(event));
+        getChannel().notify_all();
+    };
 
     void notify_reset();
 
