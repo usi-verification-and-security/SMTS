@@ -35,6 +35,26 @@ inline ScatterSplitter & getScatterSplitter() {
     return dynamic_cast<ScatterSplitter&>(getMainSplitter().getSMTSolver());
 }
 
+vec<opensmt::pair<int,int>> extractSolverBranch(std::string solverBranch_str)
+{
+    vec<opensmt::pair<int,int>> solverBranch;
+    solverBranch_str.erase(std::remove(solverBranch_str.begin(), solverBranch_str.end(), ' '), solverBranch_str.end());
+    std::string const delimiter = ",";
+    size_t beg, pos = 0;
+    int counter = 0;
+    int temp = 0;
+    while ((beg = solverBranch_str.find_first_not_of(delimiter, pos)) != std::string::npos)
+    {
+        pos = solverBranch_str.find_first_of(delimiter, beg + 1);
+        int index = stoi(solverBranch_str.substr(beg, pos - beg));
+        if (counter % 2 == 1) {
+            solverBranch.push({temp, index});
+        } else temp = index;
+        counter++;
+    }
+    return solverBranch;
+}
+
 SolverProcess::Result SolverProcess::init(PTPLib::net::SMTS_Event & SMTS_Event) {
     const char *msg;
     static const char *default_split = SMTConfig::o_sat_scatter_split;
@@ -73,7 +93,10 @@ SolverProcess::Result SolverProcess::init(PTPLib::net::SMTS_Event & SMTS_Event) 
                                   "\n" + std::string("(set-option :split-units time)") + "\n" + std::string("(set-option :split-init-tune "+ to_string(DBL_MAX) + ")"),
                                   to_string(get_SMTS_socket().get_local()), getpid());
 
-    auto res = splitterInterpret->interpSMTContent((char *) SMTS_Event.body.c_str());
+    auto res = splitterInterpret->interpSMTContent(
+            (char *) SMTS_Event.body.c_str(),
+            extractSolverBranch(SMTS_Event.header.at(PTPLib::common::Param.NODE).substr(1,SMTS_Event.header.at(PTPLib::common::Param.NODE).size() -2)),
+            false);
     if (res == s_Undef)
         return SolverProcess::Result::UNKNOWN;
     else if (res == s_True)
@@ -92,7 +115,7 @@ void SolverProcess::cleanSolverState() {
     result = s_Undef;
 }
 
-SolverProcess::Result SolverProcess::solve(PTPLib::net::SMTS_Event SMTS_event, bool shouldUpdateSolverAddress) {
+SolverProcess::Result SolverProcess::solve(PTPLib::net::SMTS_Event SMTS_event, bool shouldUpdateSolverBranch) {
 
     result = s_Undef;
     getScatterSplitter().resetSplitType();
@@ -106,9 +129,10 @@ SolverProcess::Result SolverProcess::solve(PTPLib::net::SMTS_Event SMTS_event, b
                               SMTS_event.body + SMTS_event.header.at(PTPLib::common::Param.QUERY));
     }
     assert(not SMTS_event.header.at(PTPLib::common::Param.QUERY).empty());
-    auto res = splitterInterpret->interpSMTContent((char *) (SMTS_event.body + SMTS_event.header.at(PTPLib::common::Param.QUERY)).c_str(),
-    (shouldUpdateSolverAddress ? SMTS_event.header.at(PTPLib::common::Param.NODE).substr(1,
-                                                                                         SMTS_event.header.at(PTPLib::common::Param.NODE).size() - 2) : ""));
+    auto res = splitterInterpret->interpSMTContent(
+            (char *) (SMTS_event.body + SMTS_event.header.at(PTPLib::common::Param.QUERY)).c_str(),
+            extractSolverBranch(SMTS_event.header.at(PTPLib::common::Param.NODE).substr(1,SMTS_event.header.at(PTPLib::common::Param.NODE).size() -2)),
+            shouldUpdateSolverBranch);
     if (log_enabled) {
         int SearchCounter = (((ScatterSplitter &) getMainSplitter().getSMTSolver()).getSearchCounter());
         std::string option = "(set-option :solver-limit " + to_string(SearchCounter) + ")";
