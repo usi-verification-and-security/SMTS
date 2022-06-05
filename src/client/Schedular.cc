@@ -260,11 +260,6 @@ bool Schedular::request_solver_toStop(PTPLib::net::SMTS_Event const & SMTS_Event
     } else return false;
 }
 
-void Schedular::queue_event(PTPLib::net::SMTS_Event && event) {
-    getChannel().push_back_query(std::move(event));
-    getChannel().notify_all();
-}
-
 void Schedular::notify_reset() {
     std::unique_lock<std::mutex> _lk(getChannel().getMutex());
     if (not _lk.owns_lock()) {
