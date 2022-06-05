@@ -152,7 +152,7 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
     if (logEnabled) {
         int size = SMTS_Event.body.capacity() / (1024 * 1024);
         if (size > 1)
-        Logger::log(Logger::WARNING, "Current Memory Of Lemmas (MB): " + to_string(size));
+            Logger::log(Logger::WARNING, "Current Memory Of Lemmas (MB): " + to_string(size));
     }
 
     if (clauses_request == 0) {
@@ -183,7 +183,7 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
         for (auto & lemma : lemmas_pushed) {
             assert(lemma.level <= (counter / 2));
             assert(not lemma.clause.empty());
-            Lemma *l = node_path[lemma.level]->get(lemma);
+            Lemma *l = node_path[lemma.level]->get(lemma.clause);
             if (l) {
                 l->increase();
                 if (!lemmas_solver[l]) {

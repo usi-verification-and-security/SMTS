@@ -37,12 +37,12 @@ public:
         }
     }
 
-    Lemma *get(PTPLib::net::Lemma &lemma) {
-        return this->index.count(lemma.clause) ? this->index[lemma.clause] : nullptr;
+    Lemma *get(std::string const & clause) {
+        return this->index.count(clause) ? this->index[clause] : nullptr;
     }
 
-    Lemma *add_lemma(PTPLib::net::Lemma &lemma) {
-        Lemma *r = this->get(lemma);
+    Lemma *add_lemma(PTPLib::net::Lemma & lemma) {
+        Lemma *r = this->get(lemma.clause);
         if (!r) {
             r = new Lemma(lemma);
             this->index[lemma.clause] = r;
@@ -50,7 +50,7 @@ public:
         return r;
     }
 
-    void filter(std::vector<Lemma *> &lemmas, std::unordered_map<Lemma *, bool> &lemmas_solver) {
+    void filter(std::vector<Lemma *> & lemmas, std::unordered_map<Lemma *, bool> & lemmas_solver) {
         for (auto const & pair : this->index) {
             if (lemmas_solver[this->index[pair.first]])
                 continue;
