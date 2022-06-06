@@ -89,6 +89,7 @@ void LemmaServer::handle_close(net::Socket & client) {
     {
         Logger::log(Logger::INFO, "server connection closed.");
         this->stop();
+        notify_reset();
         return;
     }
     for (auto const & pair : this->solvers) {
@@ -149,11 +150,6 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
         }
         counter++;
     }
-    if (logEnabled) {
-        int size = SMTS_Event.body.capacity() / (1024 * 1024);
-        if (size > 1)
-            Logger::log(Logger::WARNING, "Current Memory Of Lemmas (MB): " + to_string(size));
-    }
 
     if (clauses_request == 0) {
         if (logEnabled)
@@ -174,6 +170,13 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
         return;
 
     if (push) {
+        if (logEnabled) {
+            int size = SMTS_Event.body.capacity() / (1024);
+            if (size > 1) {
+                Logger::log(Logger::WARNING, "Current Memory Of Lemmas (KB): " + to_string(size));
+                Logger::log(Logger::WARNING, "Length Of Lemmas (SZ): " + to_string(SMTS_Event.body.length()));
+            }
+        }
         std::unordered_map<Lemma *, bool> & lemmas_solver = this->solvers[SMTS_Event.header[PTPLib::common::Param.NAME]][client.getId()];
         uint32_t pushed = 0;
         std::vector<PTPLib::net::Lemma> lemmas_pushed;
@@ -243,19 +246,22 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
 
 void LemmaServer::garbageCollect(std::size_t batchSize, std::string const & instanceName)
 {
-
     lemmasSize += batchSize;
     std::size_t cut_size = 50000;
     if (lemmasSize > cut_size * 2)
     {
         for (auto & solver_lemmas : solvers[instanceName]) {
-            for (auto & lemma : solver_lemmas.second)
+            for (auto it = solver_lemmas.second.begin(); it != solver_lemmas.second.end();)
             {
-                if (lemma.first->get_score() == 0 or lemma.first->level == 0) {
-                    solver_lemmas.second.erase(lemma.first);
-                    cut_size--;
-                    if (cut_size <= 0) return;
-                }
+//                if (it->first->get_score() == 0 or it->first->level == 0) {
+                    it = solver_lemmas.second.erase(it);
+                    --cut_size;
+                    if (cut_size <= 0)
+                    {
+                        Logger::log(Logger::WARNING, " Erased: " + std::to_string(lemmasSize - cut_size));
+                        return;
+                    }
+//                }
             }
         }
         lemmasSize -= cut_size;

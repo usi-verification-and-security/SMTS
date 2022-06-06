@@ -1,11 +1,16 @@
-//
-// Author: Matteo Marescotti
-//
+/*
+ * Copyright (c) Matteo Marescotti <Matteo.marescotti@usi.ch>
+ * Copyright (c) 2022, Antti Hyvarinen <antti.hyvarinen@gmail.com>
+ * Copyright (c) 2022, Seyedmasoud Asadzadeh <seyedmasoud.asadzadeh@usi.ch>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 
 #ifndef SMTS_LIB_LOGGER_H
 #define SMTS_LIB_LOGGER_H
 
-#include <assert.h>
+#include <cassert>
 #include <ctime>
 #include <iostream>
 #include <sstream>
@@ -14,7 +19,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include "unistd.h"
+#include <unistd.h>
 
 using namespace std;
 
@@ -53,9 +58,9 @@ public:
         mtx.lock();
         string fileName;
         if (parent)
-            fileName = "logs/Parent-" + solver_address + ".smt2";
+            fileName = "logs/Parent-" + processId + solver_address + ".smt2";
         else
-            fileName = "logs/Child-" + solver_address  + ".smt2";
+            fileName = "logs/Child-" + processId + solver_address  + ".smt2";
 
         string filename(fileName);
         ofstream file;
