@@ -82,14 +82,14 @@ jobs:
             command: sh ./bin/make_smts.sh
             environment:
               CMAKE_BUILD_TYPE: Debug
-              FLAGS: -Wall -Wextra -Werror -fsanitize=signed-integer-overflow,address,undefined
+              FLAGS: -Wall -Wextra -fsanitize=signed-integer-overflow,address,undefined
 
         - run:
             name: Release build OS X with Thread Sanitizer
             command: sh ./bin/make_smts.sh
             environment:
               CMAKE_BUILD_TYPE: Release
-              FLAGS: -Wall -Wextra -Werror -fsanitize=signed-integer-overflow,thread,undefined
+              FLAGS: -Wall -Wextra -fsanitize=signed-integer-overflow,thread,undefined
 
 workflows:
   build-test:
