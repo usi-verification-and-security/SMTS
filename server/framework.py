@@ -218,7 +218,7 @@ class Root(AndNode):
 
 class SMT(Root):
     def __init__(self, name: str, smt: str):
-        super().__init__(name, (re.sub(r';(.*)(\n+)', '', smt)).split(constant.CHECK_SAT)[0])
+        super().__init__(name, (re.sub(r'; *\((.*)\n', '', smt)).split(constant.CHECK_SAT)[0])
 
     def to_string(self, node: AndNode, start: AndNode = None):
         n_pop = 0
