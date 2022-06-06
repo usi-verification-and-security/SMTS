@@ -47,6 +47,7 @@ wait_for_nodes () {
   echo "$ip" >> $HOST_FILE_PATH
   if  [ "${DownloadFromS3}" == "N" ]
       then
+      git clone https://github.com/usi-verification-and-security/SMT-LIB-benchmarks.git --single-branch
       echo Distributing problem from DockerImage: SMTS/${COMP_S3_PROBLEM_PATH}
     else
       echo Downloading problem from S3: ${COMP_S3_PROBLEM_PATH}
