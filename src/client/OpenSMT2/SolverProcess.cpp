@@ -99,7 +99,7 @@ SolverProcess::Result SolverProcess::init(PTPLib::net::SMTS_Event & SMTS_Event) 
     auto res = splitterInterpret->interpSMTContent(
             (char *) SMTS_Event.body.c_str(),
             extractSolverBranch(SMTS_Event.header.at(PTPLib::common::Param.NODE).substr(1,SMTS_Event.header.at(PTPLib::common::Param.NODE).size() -2)),
-            false);
+            false, false);
     if (res == s_Undef)
         return SolverProcess::Result::UNKNOWN;
     else if (res == s_True)
@@ -135,7 +135,7 @@ SolverProcess::Result SolverProcess::solve(PTPLib::net::SMTS_Event SMTS_event, b
     auto res = splitterInterpret->interpSMTContent(
             (char *) (SMTS_event.body + SMTS_event.header.at(PTPLib::common::Param.QUERY)).c_str(),
             extractSolverBranch(SMTS_event.header.at(PTPLib::common::Param.NODE).substr(1,SMTS_event.header.at(PTPLib::common::Param.NODE).size() -2)),
-            shouldUpdateSolverBranch);
+            shouldUpdateSolverBranch, true);
     if (log_enabled) {
         int SearchCounter = (((ScatterSplitter &) getMainSplitter().getSMTSolver()).getSearchCounter());
         std::string option = "(set-option :solver-limit " + to_string(SearchCounter) + ")";
