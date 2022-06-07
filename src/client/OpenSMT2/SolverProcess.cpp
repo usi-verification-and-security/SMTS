@@ -86,13 +86,16 @@ SolverProcess::Result SolverProcess::init(PTPLib::net::SMTS_Event & SMTS_Event) 
     if (not (splitterInterpret = new SplitterInterpret(*config, getChannel())))
         throw PTPLib::common::Exception(__FILE__, __LINE__, ";SplitterInterpret: out of memory");
 
-    if (log_enabled)
+    if (log_enabled) {
         getScatterSplitter().set_syncedStream(synced_stream);
         base_instance = SMTS_Event.body;
-        Logger::build_SolverInputPath(true, true, "(set-option :random-seed " + SMTS_Event.header.get(PTPLib::net::parameter, "seed") + ")"
-                                  "\n" + std::string("(set-option :split-units time)") + "\n" + std::string("(set-option :split-init-tune "+ to_string(DBL_MAX) + ")"),
-                                  to_string(get_SMTS_socket().get_local()), getpid());
-
+        Logger::build_SolverInputPath(true, true, "(set-option :random-seed " +
+                                                  SMTS_Event.header.get(PTPLib::net::parameter, "seed") + ")"
+                                                                                                          "\n" +
+                                                  std::string("(set-option :split-units time)") + "\n" + std::string(
+                "(set-option :split-init-tune " + to_string(DBL_MAX) + ")"),
+                                      to_string(get_SMTS_socket().get_local()), getpid());
+    }
     auto res = splitterInterpret->interpSMTContent(
             (char *) SMTS_Event.body.c_str(),
             extractSolverBranch(SMTS_Event.header.at(PTPLib::common::Param.NODE).substr(1,SMTS_Event.header.at(PTPLib::common::Param.NODE).size() -2)),
