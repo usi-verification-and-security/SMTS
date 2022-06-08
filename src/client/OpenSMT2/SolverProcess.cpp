@@ -87,7 +87,6 @@ SolverProcess::Result SolverProcess::init(PTPLib::net::SMTS_Event & SMTS_Event) 
         throw PTPLib::common::Exception(__FILE__, __LINE__, ";SplitterInterpret: out of memory");
 
     if (log_enabled) {
-        getScatterSplitter().set_syncedStream(synced_stream);
         base_instance = SMTS_Event.body;
         Logger::build_SolverInputPath(true, true, "(set-option :random-seed " +
                                                   SMTS_Event.header.get(PTPLib::net::parameter, "seed") + ")"
@@ -100,6 +99,8 @@ SolverProcess::Result SolverProcess::init(PTPLib::net::SMTS_Event & SMTS_Event) 
             (char *) SMTS_Event.body.c_str(),
             extractSolverBranch(SMTS_Event.header.at(PTPLib::common::Param.NODE).substr(1,SMTS_Event.header.at(PTPLib::common::Param.NODE).size() -2)),
             false, false);
+    if (log_enabled)
+        getScatterSplitter().set_syncedStream(synced_stream);
     if (res == s_Undef)
         return SolverProcess::Result::UNKNOWN;
     else if (res == s_True)
@@ -165,12 +166,6 @@ void cleanupRoutine(int signal_number) {
 }
 
 void SolverProcess::partition(PTPLib::net::SMTS_Event & SMTS_Event, uint8_t n) {
-    if (not log_enabled) {
-        FILE * file = fopen("/dev/null", "w");
-        dup2(fileno(file), fileno(stdout));
-        dup2(fileno(file), fileno(stderr));
-        fclose(file);
-    }
 //    fork() returns -1 if it fails, and if it succeeds, it returns the forked child's pid in the parent, and 0 in the child.
     forked_partitionId = fork();
     if (forked_partitionId == -1) {
@@ -180,6 +175,12 @@ void SolverProcess::partition(PTPLib::net::SMTS_Event & SMTS_Event, uint8_t n) {
     if (forked_partitionId > 0) {
         forked = true;
         return;
+    }
+    if (not log_enabled) {
+        FILE * file = fopen("/dev/null", "w");
+        dup2(fileno(file), fileno(stdout));
+        dup2(fileno(file), fileno(stderr));
+        fclose(file);
     }
     std::thread t_handle_orphant([&] {
         while (true) {
