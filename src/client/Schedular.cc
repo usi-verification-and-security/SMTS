@@ -169,8 +169,8 @@ void Schedular::communicate_worker()
                 bool shouldUpdateSolverAddress = false;
                 {
                     getChannel().clearShouldStop();
-                    std::scoped_lock<std::mutex> s_lk(getChannel().getMutex());
-                    should_resume = execute_event(smts_event, shouldUpdateSolverAddress);
+                    std::unique_lock<std::mutex> u_lk(getChannel().getMutex());
+                    should_resume = execute_event(u_lk, smts_event, shouldUpdateSolverAddress);
                 }
                 if (should_resume) {
                     assert(not smts_event.header.at(PTPLib::common::Param.QUERY).empty());
@@ -197,7 +197,7 @@ void Schedular::communicate_worker()
     }
 }
 
-bool Schedular::execute_event(PTPLib::net::SMTS_Event & smts_event, bool & shouldUpdateSolverAddress) {
+bool Schedular::execute_event(std::unique_lock<std::mutex> & u_lk, PTPLib::net::SMTS_Event & smts_event, bool & shouldUpdateSolverAddress) {
     assert(not smts_event.header.empty());
     if (smts_event.header.at(PTPLib::common::Param.COMMAND) == PTPLib::common::Command.STOP)
         return false;
@@ -209,7 +209,9 @@ bool Schedular::execute_event(PTPLib::net::SMTS_Event & smts_event, bool & shoul
                               "[ t ", __func__, "] -> ", " SOLVER START TO SOLVE ON ", smts_event.header.at(PTPLib::common::Param.NAME));
         if (not (solver_process = new SolverProcess(synced_stream, SMTS_server_socket, getChannel())))
             throw PTPLib::common::Exception(__FILE__, __LINE__, ";SolverProcess: out of memory");
+        u_lk.unlock();
         SolverProcess::Result res = solver_process->init(smts_event);
+        u_lk.lock();
         if (res == SolverProcess::Result::ERROR)
             throw PTPLib::common::Exception(__FILE__, __LINE__, ";SolverProcess: parser error");
         assert(res == SolverProcess::Result::UNKNOWN);
@@ -496,7 +498,7 @@ void Schedular::periodic_clauseLearning_worker(int wait_duration) {
         if (log_enabled)
             synced_stream.println_bold(
                     log_enabled ? PTPLib::common::Color::FG_BrightBlue : PTPLib::common::Color::FG_DEFAULT,
-                    "[ t ", __func__, "] -> ", " clause learn timout: ", getChannel().getClauseLearnDuration());
+                    "[ t ", __func__, "] -> ", " clause learn timout: ", wait_duration);
         while (true) {
             std::unique_lock<std::mutex> lk(channel.getMutex());
             if (getChannel().wait_for_reset(lk, std::chrono::milliseconds(wait_duration)))
