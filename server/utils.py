@@ -63,15 +63,7 @@ def gui_start(args):
 
 
 def run_lemma_server(lemma_server, database, send_again, port):
-    # searching for a better IP here because
-    # this IP will be sent to the solvers
-    # that perhaps are on another host, this 127.0.0.1 would not work
     ip = '127.0.0.1'
-    try:
-        ip = socket.gethostbyname(socket.gethostname())
-    except:
-        pass
-
     args = [lemma_server, '-s', ip + ':' + str(port)]
     if database:
         database = pathlib.Path(database)
