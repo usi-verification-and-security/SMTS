@@ -44,7 +44,7 @@ private:
 
     void worker(PTPLib::common::TASK tname, int seed, int td_min, int td_max);
 
-    bool execute_event(PTPLib::net::SMTS_Event & smts_event, bool & shouldUpdateSolverAddress);
+    bool execute_event(std::unique_lock<std::mutex> & s_lk, PTPLib::net::SMTS_Event & smts_event, bool & shouldUpdateSolverAddress);
 
     bool request_solver_toStop(PTPLib::net::SMTS_Event const & SMTS_event);
 
