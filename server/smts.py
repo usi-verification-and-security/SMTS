@@ -21,6 +21,9 @@ if __name__ == '__main__':
     parser.add_argument('-d', dest='db_path', help='sqlite3 database file path')
     parser.add_argument('-fp', dest='file_paths', help='file paths')
     parser.add_argument('-g', dest='gui', action='store_true', help='run GUI in live mode')
+    pg = parser.add_argument_group('partitioning')
+    pg.add_argument('-pt', dest='partition_timeout', type=int, metavar='N', help='partition timeout')
+    pg.add_argument('-p', dest='partitioning', action='store_true', help='enable partitioning')
     lg = parser.add_argument_group('lemma sharing')
     lg.add_argument('-l', dest='lemma_sharing', action='store_true', help='enable lemma sharing')
     lg.add_argument('-D', dest='lemma_db', action='store_true', help='store lemmas in database')
@@ -29,7 +32,7 @@ if __name__ == '__main__':
     sg.add_argument('-o', dest='opensmt', type=int, metavar='N', help='run N opensmt2 solvers')
     sg.add_argument('-z', dest='z3spacer', type=int, metavar='N', help='run N z3spacer solvers')
     sg.add_argument('-s', dest='sally', type=int, metavar='N', help='run N sally solvers')
-    sg.add_argument('-p', dest='port', type=int, metavar='N', help='port number')
+    sg.add_argument('-pn', dest='port', type=int, metavar='N', help='port number')
 
     args = parser.parse_args()
     port = schedular.config.port
@@ -38,6 +41,11 @@ if __name__ == '__main__':
     if args.db_path:
         schedular.config.db_path = args.db_path
     schedular.config.db()
+
+    if args.partition_timeout:
+        schedular.config.partition_timeout = args.partition_timeout
+    if not args.partitioning:
+        schedular.config.partition_timeout = None;
 
     if args.gui:
         schedular.config.gui = args.gui
