@@ -18,6 +18,7 @@
 #endif
 
 #include <PTPLib/net/Channel.hpp>
+#include <PTPLib/threads/ThreadPool.hpp>
 
 #include <unordered_map>
 #include <ctime>
@@ -35,6 +36,8 @@ private:
     bool logEnabled = false;
     std::size_t lemmasSize = 0;
 
+    PTPLib::threads::ThreadPool pool;
+
     void garbageCollect(std::size_t batchSize, std::string const & instanceName);
 
 protected:
@@ -46,11 +49,14 @@ protected:
 
     void handle_exception(net::Socket const &, const std::exception &);
 
+    void lemma_worker(net::Socket &&, PTPLib::net::SMTS_Event &&);
+
     PTPLib::net::Channel & getChannel()             { return channel; };
     net::Socket const & getSMTS_serverSocket()    { return *server.get(); };
 
     void notify_reset();
     void memory_checker(int);
+
 public:
     LemmaServer(uint16_t, const std::string &, const std::string &, bool send_again);
 };
