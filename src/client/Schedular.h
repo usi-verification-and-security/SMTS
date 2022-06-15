@@ -92,9 +92,17 @@ public:
     PTPLib::threads::ThreadPool & getPool()      { return thread_pool; }
 
     template<class T>
-    inline void queue_event(T && event) {
-        getChannel().push_back_query(std::forward<T>(event));
+    bool queue_event(T && event) {
+        bool reset = false;
+        if (event.header[PTPLib::common::Param.COMMAND] == PTPLib::common::Command.STOP) {
+            reset = true;
+            getChannel().push_front_event(std::forward<T>(event));
+        }
+        else
+            getChannel().push_back_event(std::forward<T>(event));
+
         getChannel().notify_all();
+        return reset;
     };
 
     void notify_reset();
