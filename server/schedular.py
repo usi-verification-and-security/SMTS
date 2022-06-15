@@ -49,6 +49,7 @@ class Solver(net.Socket):
         super().__init__(sock._sock)
         self.name = name
         self._reset()
+        self.initialize()
 
     def initialize(self):
         if config.enableLog:
@@ -523,7 +524,6 @@ class ParallelizationServer(net.Server):
                 self.total_solvers = len(self.solvers(False))
                 for solver in self.solvers(None):
                     assert isinstance(solver, Solver)
-                    solver.initialize()
                     parameters = {}
                     # if self.config.lemma_amount:
                     #     parameters[constant.LEMMAS] = self.config.lemma_amount
