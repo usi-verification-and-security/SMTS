@@ -16,7 +16,6 @@
 
 #include <string>
 #include <algorithm>
-#include <thread>
 
 LemmaServer::LemmaServer(uint16_t port, const std::string &server, const std::string &db_filename, bool send_again)
 : Server(port)
@@ -255,22 +254,19 @@ void LemmaServer::garbageCollect(std::size_t batchSize, std::string const & inst
 {
     lemmasSize += batchSize;
     std::size_t cut_size = 50000;
-    if (lemmasSize > cut_size * 2)
-    {
+    if (lemmasSize > cut_size * 2) {
         for (auto & solver_lemmas : solvers[instanceName]) {
-            for (auto it = solver_lemmas.second.begin(); it != solver_lemmas.second.end();)
-            {
+            for (auto it = solver_lemmas.second.begin(); it != solver_lemmas.second.end();) {
 //                if (it->first->get_score() == 0 or it->first->level == 0) {
-                    it = solver_lemmas.second.erase(it);
-                    --cut_size;
-                    if (cut_size <= 0)
-                    {
-                        Logger::log(Logger::WARNING, " Erased: " + std::to_string(lemmasSize - cut_size));
-                        return;
-                    }
+                it = solver_lemmas.second.erase(it);
+                --lemmasSize;
+                if (lemmasSize == cut_size) {
+                    if (logEnabled)
+                        Logger::log(Logger::WARNING, " Erased: " + std::to_string(cut_size));
+                    return;
+                }
 //                }
             }
         }
-        lemmasSize -= cut_size;
     }
 }
