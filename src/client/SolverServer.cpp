@@ -83,16 +83,11 @@ void SolverServer::handle_event(net::Socket & socket, PTPLib::net::SMTS_Event &&
                 }
                 return true;
             }());
-            if (SMTS_event.header[PTPLib::common::Param.COMMAND] == PTPLib::common::Command.STOP) {
-                reset = true;
-                if (not getChannel().isEmpty_query())
-                    getChannel().clear_queries();
-            }
             if (log_enabled)
                 synced_stream.println_bold(log_enabled ? PTPLib::common::Color::FG_Red : PTPLib::common::Color::FG_DEFAULT,
                                            "[ t ", __func__, "] -> ", "Updating the queue with ",
                                            SMTS_event.header.at(PTPLib::common::Param.COMMAND), " and waiting");
-            schedular.queue_event(std::move(SMTS_event));
+            reset = schedular.queue_event(std::move(SMTS_event));
             listener_lk.unlock();
         }
         if (reset)
