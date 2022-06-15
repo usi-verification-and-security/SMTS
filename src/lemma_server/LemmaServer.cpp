@@ -18,9 +18,10 @@
 #include <algorithm>
 #include <thread>
 
-LemmaServer::LemmaServer(uint16_t port, const std::string &server, const std::string &db_filename, bool send_again) :
-        Server(port),
-        send_again(send_again) {
+LemmaServer::LemmaServer(uint16_t port, const std::string &server, const std::string &db_filename, bool send_again)
+: Server(port)
+, send_again(send_again)
+, pool(__FUNCTION__ , 2) {
     if (server.size()) {
         this->server.reset(new net::Socket(server));
         PTPLib::net::Header header;
@@ -104,32 +105,38 @@ void LemmaServer::handle_exception(net::Socket const & client, const std::except
 }
 
 void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && SMTS_Event)  {
-    if (SMTS_Event.header.count("enableLog") == 1 and SMTS_Event.header.at("enableLog") == "1") {
+    if (SMTS_Event.header[PTPLib::common::Command.LEMMAS] == "0")
+        exit(EXIT_SUCCESS);
+    else if (SMTS_Event.header.count(PTPLib::common::Param.MAX_MEMORY) == 1 and SMTS_Event.header.count("enableLog")) {
         logEnabled = true;
-    }
-    if (SMTS_Event.header.count(PTPLib::common::Param.MAX_MEMORY) == 1) {
-        std::thread t_mem_check([&] {
-            memory_checker(atoi(SMTS_Event.header.at(PTPLib::common::Param.MAX_MEMORY).c_str()));
+        int mm = atoi(SMTS_Event.header.at(PTPLib::common::Param.MAX_MEMORY).c_str());
+        this->pool.push_task([this, mm] {
+            this->memory_checker(mm);
         });
-        t_mem_check.detach();
         return;
     }
-    if (SMTS_Event.header.count(PTPLib::common::Param.NAME) == 0 or
-        SMTS_Event.header.count(PTPLib::common::Param.NODE) == 0 or
-        SMTS_Event.header.count(PTPLib::common::Command.LEMMAS) == 0) {
+    else if (SMTS_Event.header.count(PTPLib::common::Param.NAME) == 0 or
+             SMTS_Event.header.count(PTPLib::common::Param.NODE) == 0 or
+             SMTS_Event.header.count(PTPLib::common::Command.LEMMAS) == 0) {
         net::Report::error(getSMTS_serverSocket(),SMTS_Event.header, " invalid solver event from " + to_string(client.get_remote()));
         return;
     }
-    if (SMTS_Event.header[PTPLib::common::Param.NODE].size() < 2) {
+    else if (SMTS_Event.header[PTPLib::common::Param.NODE].size() < 2) {
         net::Report::error(getSMTS_serverSocket(),SMTS_Event.header, " invalid solver branch from " + to_string(client.get_remote()));
         return;
     }
+    else {
+        this->pool.push_task([this, &client, &SMTS_Event] {
+            this->lemma_worker(std::forward<net::Socket>(client), std::forward<PTPLib::net::SMTS_Event>(SMTS_Event));
+        });
+    }
+}
+
+void LemmaServer::lemma_worker(net::Socket && client, PTPLib::net::SMTS_Event && SMTS_Event) {
+    uint32_t clauses_request = (uint32_t) stoi(SMTS_Event.header[PTPLib::common::Command.LEMMAS].substr(1));
+
     if (this->lemmas.count(SMTS_Event.header[PTPLib::common::Param.NAME]) != 1)
         this->lemmas[SMTS_Event.header[PTPLib::common::Param.NAME]];
-
-    uint32_t clauses_request = 0;
-    if (SMTS_Event.header[PTPLib::common::Command.LEMMAS] != "0")
-        clauses_request = (uint32_t) stoi(SMTS_Event.header[PTPLib::common::Command.LEMMAS].substr(1));
 
     std::vector<Node *> node_path;
     node_path.push_back(&this->lemmas[SMTS_Event.header[PTPLib::common::Param.NAME]]);
@@ -154,7 +161,7 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
     if (clauses_request == 0) {
         if (logEnabled)
             Logger::log(Logger::INFO, SMTS_Event.header[PTPLib::common::Param.NAME] +
-                        SMTS_Event.header[PTPLib::common::Param.NODE] + " " + to_string(client.get_remote()) + " clear");
+                                      SMTS_Event.header[PTPLib::common::Param.NODE] + " " + to_string(client.get_remote()) + " clear");
 
         this->lemmas.erase(SMTS_Event.header[PTPLib::common::Param.NAME]);
         this->solvers.erase(SMTS_Event.header[PTPLib::common::Param.NAME]);
@@ -200,9 +207,9 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
         }
         if (logEnabled)
             Logger::log(Logger::PUSH,
-                    SMTS_Event.header[PTPLib::common::Param.NAME] + SMTS_Event.header[PTPLib::common::Param.NODE] + " " + to_string(client.get_remote()) +
-                    " push [" + std::to_string(clauses_request) + "]\t" + std::to_string(lemmas_pushed.size()) +
-                    "\t(" + std::to_string(pushed) + "\tfresh, " + std::to_string(lemmas_pushed.size() - pushed) + "\tpresent)");
+                        SMTS_Event.header[PTPLib::common::Param.NAME] + SMTS_Event.header[PTPLib::common::Param.NODE] + " " + to_string(client.get_remote()) +
+                        " push [" + std::to_string(clauses_request) + "]\t" + std::to_string(lemmas_pushed.size()) +
+                        "\t(" + std::to_string(pushed) + "\tfresh, " + std::to_string(lemmas_pushed.size() - pushed) + "\tpresent)");
 
     }
     else {
