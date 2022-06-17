@@ -46,22 +46,20 @@ namespace net {
         struct sockaddr_in server_addr;
 
         if ((sockfd = ::socket(AF_INET, SOCK_STREAM, 0)) < 0)
-            throw SocketException(__FILE__, __LINE__, "socket init failed");
-
+            throw SocketException(__FILE__, __LINE__, strerror(errno));
         int reuse = 1;
         if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0)
-            throw SocketException(__FILE__, __LINE__, "socket SO_REUSEADDR failed");
+            throw SocketException(__FILE__, __LINE__, strerror(errno));
 
         ::bzero(&server_addr, sizeof(server_addr));
         server_addr.sin_family = AF_INET;
         server_addr.sin_addr.s_addr = INADDR_ANY;
         server_addr.sin_port = htons(port);
-
         if (::bind(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) != 0)
-            throw SocketException(__FILE__, __LINE__, "bind failed");
+            throw SocketException(__FILE__, __LINE__, strerror(errno));
 
         if (::listen(sockfd, 1024) != 0)
-            throw SocketException(__FILE__, __LINE__, "listen error");
+            throw SocketException(__FILE__, __LINE__, strerror(errno));
 
         new(this) Socket(sockfd);
     }
