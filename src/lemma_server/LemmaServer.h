@@ -27,7 +27,7 @@ class LemmaServer : public net::Server {
 private:
     bool send_again;
     std::shared_ptr<net::Socket> server;
-    PTPLib::net::Channel channel;
+    PTPLib::net::Channel<PTPLib::net::SMTS_Event, PTPLib::net::Lemma> channel;
 #ifdef SQLITE_IS_ON
     std::shared_ptr<SQLite3::Connection> db;
 #endif
@@ -41,17 +41,17 @@ private:
     void garbageCollect(std::size_t batchSize, std::string const & instanceName);
 
 protected:
-    void handle_accept(net::Socket const &);
+    void handle_accept(net::Socket const &) override;
+    
+    void handle_close(net::Socket &) override;
 
-    void handle_close(net::Socket &);
+    void handle_event(net::Socket &, PTPLib::net::SMTS_Event &&) override;
 
-    void handle_event(net::Socket &, PTPLib::net::SMTS_Event &&);
+    void handle_exception(net::Socket const &, const std::exception &) override;
 
-    void handle_exception(net::Socket const &, const std::exception &);
+    void lemma_worker(int clientId, PTPLib::net::SMTS_Event &&);
 
-    void lemma_worker(net::Socket &&, PTPLib::net::SMTS_Event &&);
-
-    PTPLib::net::Channel & getChannel()             { return channel; };
+    PTPLib::net::Channel<PTPLib::net::SMTS_Event, PTPLib::net::Lemma> & getChannel()   { return channel; };
     net::Socket const & getSMTS_serverSocket()    { return *server.get(); };
 
     void notify_reset();
