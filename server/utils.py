@@ -62,18 +62,20 @@ def gui_start(args):
     run_log(['npm', 'start', '--silent', '--'] + args, cwd=gui_path())
 
 
-def run_lemma_server(lemma_server, database, send_again, port):
+def run_lemma_server(lemma_server, database, send_again, port, enable_log):
     ip = '127.0.0.1'
-    args = [lemma_server, '-s', ip + ':' + str(port)]
+    ls_args = [lemma_server, '-s', ip + ':' + str(port)]
+    ls_args += ['-p', str(port + 2000)]
     if database:
         database = pathlib.Path(database)
-        args += ['-d', str(database.parent / (database.stem + '.lemma.db'))]
+        ls_args += ['-d', str(database.parent / (database.stem + '.lemma.db'))]
     if send_again:
-        args += ['-a']
+        ls_args += ['-a']
     try:
-        return subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return subprocess.Popen(ls_args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except BaseException as ex:
-        print(ex)
+        if enable_log:
+            print(ex)
 
 
 def run_solvers(*solvers):
