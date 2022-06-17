@@ -18,9 +18,8 @@
 #include <algorithm>
 
 LemmaServer::LemmaServer(uint16_t port, const std::string &server, const std::string &db_filename, bool send_again)
-        : Server(port)
-        , send_again(send_again)
-        , pool(__FUNCTION__ , 2) {
+: Server(port)
+, send_again(send_again) {
     if (server.size()) {
         this->server.reset(new net::Socket(server));
         PTPLib::net::Header header;
@@ -91,6 +90,7 @@ void LemmaServer::handle_close(net::Socket & client) {
     Logger::log(Logger::INFO, "- " + to_string(client.get_remote()));
     if (&client == this->server.get())
     {
+        exit(EXIT_SUCCESS);
         Logger::log(Logger::INFO, "server connection closed.");
         this->stop();
         notify_reset();
@@ -114,9 +114,14 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
     else if (SMTS_Event.header.count(PTPLib::common::Param.MAX_MEMORY) == 1 and SMTS_Event.header.count("enableLog")) {
         logEnabled = true;
         int mm = atoi(SMTS_Event.header.at(PTPLib::common::Param.MAX_MEMORY).c_str());
-        this->pool.push_task([this, mm] {
-            this->memory_checker(mm);
-        });
+        if (mm == 0) {
+            pool = new PTPLib::threads::ThreadPool(__FUNCTION__, 1);
+        } else {
+            pool = new PTPLib::threads::ThreadPool(__FUNCTION__ , 2);
+            this->pool->push_task([this, mm] {
+                this->memory_checker(mm);
+            });
+        }
         return;
     } else if (SMTS_Event.header.count(PTPLib::common::Param.NAME) == 0 or
              SMTS_Event.header.count(PTPLib::common::Param.NODE) == 0 or
@@ -132,7 +137,7 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
                                                    {
                                                        return lemma_worker(client.getId(), std::move(SMTS_Event));
                                                    });
-        this->pool.push_task(lemma_task);
+        this->pool->push_task(lemma_task);
     }
 }
 
