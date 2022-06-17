@@ -21,6 +21,7 @@ namespace net {
         std::shared_ptr<Socket> socket;
         std::set<std::shared_ptr<Socket>> sockets;
         int counter = 0;
+
     protected:
         virtual void handle_accept(Socket const &) {}
 
@@ -29,6 +30,8 @@ namespace net {
         virtual void handle_event(Socket &, PTPLib::net::SMTS_Event &&) {}
 
         virtual void handle_exception(Socket const &, const std::exception &) {}
+
+        virtual void mapIdToSocket(Socket const *) const {}
 
     public:
         Server();
