@@ -81,10 +81,9 @@ private:
         else return "undefined";
     };
 
-    bool isPrefix(std::string_view prefix, std::string_view full) {
-        if (prefix.size() > full.size())
-            return false;
-        return prefix == full.substr(0, prefix.size());
+    template <class T>
+    bool isPrefix( const T &s, const T &t ) {
+        return s.size() >= t.size() and std::equal(t.begin(), t.end(), s.begin());
     }
 
 };
