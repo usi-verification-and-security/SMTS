@@ -18,9 +18,9 @@
 #include <algorithm>
 
 LemmaServer::LemmaServer(uint16_t port, const std::string &server, const std::string &db_filename, bool send_again)
-: Server(port)
-, send_again(send_again)
-, pool(__FUNCTION__ , 2) {
+        : Server(port)
+        , send_again(send_again)
+        , pool(__FUNCTION__ , 2) {
     if (server.size()) {
         this->server.reset(new net::Socket(server));
         PTPLib::net::Header header;
@@ -110,6 +110,7 @@ void LemmaServer::handle_exception(net::Socket const & client, const std::except
 void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && SMTS_Event)  {
     if (SMTS_Event.header[PTPLib::common::Command.LEMMAS] == "0")
         exit(EXIT_SUCCESS);
+
     else if (SMTS_Event.header.count(PTPLib::common::Param.MAX_MEMORY) == 1 and SMTS_Event.header.count("enableLog")) {
         logEnabled = true;
         int mm = atoi(SMTS_Event.header.at(PTPLib::common::Param.MAX_MEMORY).c_str());
@@ -117,25 +118,25 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
             this->memory_checker(mm);
         });
         return;
-    }
-    else if (SMTS_Event.header.count(PTPLib::common::Param.NAME) == 0 or
+    } else if (SMTS_Event.header.count(PTPLib::common::Param.NAME) == 0 or
              SMTS_Event.header.count(PTPLib::common::Param.NODE) == 0 or
              SMTS_Event.header.count(PTPLib::common::Command.LEMMAS) == 0) {
         net::Report::error(getSMTS_serverSocket(),SMTS_Event.header, " invalid solver event from " + to_string(client.get_remote()));
         return;
-    }
-    else if (SMTS_Event.header[PTPLib::common::Param.NODE].size() < 2) {
+    } else if (SMTS_Event.header[PTPLib::common::Param.NODE].size() < 2) {
         net::Report::error(getSMTS_serverSocket(),SMTS_Event.header, " invalid solver branch from " + to_string(client.get_remote()));
         return;
-    }
-    else {
-        this->pool.push_task([this, &client, &SMTS_Event] {
-            this->lemma_worker(std::forward<net::Socket>(client), std::forward<PTPLib::net::SMTS_Event>(SMTS_Event));
-        });
+    } else {
+        auto lemma_task = PTPLib::common::capture( std::move(SMTS_Event),
+                                                   [this, &client](PTPLib::net::SMTS_Event & SMTS_Event)
+                                                   {
+                                                       return lemma_worker(client.getId(), std::move(SMTS_Event));
+                                                   });
+        this->pool.push_task(lemma_task);
     }
 }
 
-void LemmaServer::lemma_worker(net::Socket && client, PTPLib::net::SMTS_Event && SMTS_Event) {
+void LemmaServer::lemma_worker(int clientId, PTPLib::net::SMTS_Event && SMTS_Event) {
     uint32_t clauses_request = (uint32_t) stoi(SMTS_Event.header[PTPLib::common::Command.LEMMAS].substr(1));
 
     if (this->lemmas.count(SMTS_Event.header[PTPLib::common::Param.NAME]) != 1)
@@ -164,7 +165,7 @@ void LemmaServer::lemma_worker(net::Socket && client, PTPLib::net::SMTS_Event &&
     if (clauses_request == 0) {
         if (logEnabled)
             Logger::log(Logger::INFO, SMTS_Event.header[PTPLib::common::Param.NAME] +
-                                      SMTS_Event.header[PTPLib::common::Param.NODE] + " " + to_string(client.get_remote()) + " clear");
+                                      SMTS_Event.header[PTPLib::common::Param.NODE] + " " + to_string(idToSocket[clientId]->get_remote()) + " clear");
 
         this->lemmas.erase(SMTS_Event.header[PTPLib::common::Param.NAME]);
         this->solvers.erase(SMTS_Event.header[PTPLib::common::Param.NAME]);
@@ -187,7 +188,7 @@ void LemmaServer::lemma_worker(net::Socket && client, PTPLib::net::SMTS_Event &&
                 Logger::log(Logger::WARNING, "Length Of Lemmas (SZ): " + to_string(SMTS_Event.body.length()));
             }
         }
-        std::unordered_map<Lemma *, bool> & lemmas_solver = this->solvers[SMTS_Event.header[PTPLib::common::Param.NAME]][client.getId()];
+        std::unordered_map<Lemma *, bool> & lemmas_solver = this->solvers[SMTS_Event.header[PTPLib::common::Param.NAME]][clientId];
         uint32_t pushed = 0;
         std::vector<PTPLib::net::Lemma> lemmas_pushed;
         std::istringstream is(SMTS_Event.body);
@@ -210,13 +211,13 @@ void LemmaServer::lemma_worker(net::Socket && client, PTPLib::net::SMTS_Event &&
         }
         if (logEnabled)
             Logger::log(Logger::PUSH,
-                        SMTS_Event.header[PTPLib::common::Param.NAME] + SMTS_Event.header[PTPLib::common::Param.NODE] + " " + to_string(client.get_remote()) +
+                        SMTS_Event.header[PTPLib::common::Param.NAME] + SMTS_Event.header[PTPLib::common::Param.NODE] + " " + to_string(idToSocket[clientId]->get_remote()) +
                         " push [" + std::to_string(clauses_request) + "]\t" + std::to_string(lemmas_pushed.size()) +
                         "\t(" + std::to_string(pushed) + "\tfresh, " + std::to_string(lemmas_pushed.size() - pushed) + "\tpresent)");
 
     }
     else {
-        std::unordered_map<Lemma *, bool> &lemmas_solver = this->solvers[SMTS_Event.header[PTPLib::common::Param.NAME]][client.getId()];
+        std::unordered_map<Lemma *, bool> &lemmas_solver = this->solvers[SMTS_Event.header[PTPLib::common::Param.NAME]][clientId];
         std::vector<Lemma *> lemmas_filtered;
         for (auto const & node : node_path) {
             node->filter(lemmas_filtered, lemmas_solver);
@@ -245,11 +246,11 @@ void LemmaServer::lemma_worker(net::Socket && client, PTPLib::net::SMTS_Event &&
 
         SMTS_Event.header[PTPLib::common::Command.LEMMAS] = std::to_string(n);
         SMTS_Event.body = ::to_string(lemmas_send);
-        client.write(SMTS_Event);
+        idToSocket[clientId]->write(SMTS_Event);
 
         if (n > 0 and logEnabled)
             Logger::log(Logger::PULL,
-                        SMTS_Event.header[PTPLib::common::Param.NAME] + SMTS_Event.header[PTPLib::common::Param.NODE] + " " + to_string(client.get_remote()) +
+                        SMTS_Event.header[PTPLib::common::Param.NAME] + SMTS_Event.header[PTPLib::common::Param.NODE] + " " + to_string(idToSocket[clientId]->get_remote()) +
                         " pull [" + std::to_string(clauses_request) + "]\t" + std::to_string(n));
     }
 }
