@@ -28,7 +28,7 @@ private:
 
     std::shared_ptr<net::Socket> lemmaServer_socket = nullptr;
 
-    PTPLib::net::Channel channel;
+    PTPLib::net::Channel<PTPLib::net::SMTS_Event, PTPLib::net::Lemma> channel;
 
     PTPLib::common::synced_stream synced_stream;
 
@@ -54,7 +54,7 @@ protected:
     void handle_event(net::Socket & SMTSServer_socket, PTPLib::net::SMTS_Event && SMTS_event);
 
 public:
-    PTPLib::net::Channel & getChannel()             { return channel; };
+    PTPLib::net::Channel<PTPLib::net::SMTS_Event, PTPLib::net::Lemma> & getChannel()   { return channel; };
     net::Socket const & get_SMTS_server_socket()    { return  this->SMTSServer_socket; };
 
     SolverServer(net::Address const & server);

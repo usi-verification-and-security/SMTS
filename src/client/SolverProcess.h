@@ -23,7 +23,7 @@ class SolverProcess  {
     friend class Schedular;
 
 public:
-    SolverProcess(PTPLib::common::synced_stream & ss, net::Socket * s, PTPLib::net::Channel& ch)
+    SolverProcess(PTPLib::common::synced_stream & ss, net::Socket * s, PTPLib::net::Channel<PTPLib::net::SMTS_Event, PTPLib::net::Lemma> & ch)
     : synced_stream(ss)
     , channel(ch)
     , SMTS_server_socket(s)
@@ -40,7 +40,7 @@ public:
 
     Result solve(PTPLib::net::SMTS_Event SMTS_event, bool shouldUpdateSolverAddress);
 
-    void add_constraint(std::unique_ptr<PTPLib::net::map_solver_clause> const & clauses, std::string & branch);
+    void add_constraint(std::unique_ptr<PTPLib::net::map_solverBranch_lemmas> const & clauses, std::string & branch);
 
     net::Socket & get_SMTS_socket() const   { return *SMTS_server_socket; }
 
@@ -52,7 +52,7 @@ public:
 
 private:
     PTPLib::common::synced_stream & synced_stream;
-    PTPLib::net::Channel & channel;
+    PTPLib::net::Channel<PTPLib::net::SMTS_Event, PTPLib::net::Lemma> & channel;
     net::Socket * SMTS_server_socket;
     pid_t forked_partitionId;
     bool log_enabled = false;
@@ -67,7 +67,7 @@ private:
 
     void cleanSolverState();
 
-    PTPLib::net::Channel& getChannel()  {  return channel; };
+    PTPLib::net::Channel<PTPLib::net::SMTS_Event, PTPLib::net::Lemma> & getChannel()  {  return channel; };
 
     static std::string resultToString(SolverProcess::Result res) {
         if (res == SolverProcess::Result::UNKNOWN)

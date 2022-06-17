@@ -18,7 +18,7 @@
 
 class Schedular {
 private:
-    PTPLib::net::Channel &              channel;
+    PTPLib::net::Channel<PTPLib::net::SMTS_Event, PTPLib::net::Lemma> & channel;
     PTPLib::threads::ThreadPool &       thread_pool;
     SolverProcess *                     solver_process;
     net::Socket *                       SMTS_server_socket  = nullptr;
@@ -56,7 +56,7 @@ private:
     }
 
     void push_clause_worker(int seed, int n_min, int n_max);
-    void lemmas_publish(std::unique_ptr<PTPLib::net::map_solver_clause> const & lemmas, PTPLib::net::Header & header);
+    void lemmas_publish(std::unique_ptr<PTPLib::net::map_solverBranch_lemmas> const & lemmas, PTPLib::net::Header & header);
     void lemma_push(std::vector<PTPLib::net::Lemma> const & toPush_lemma, PTPLib::net::Header & header);
 
     void pull_clause_worker(int seed, int n_min, int n_max);
@@ -69,7 +69,7 @@ public:
 
     Schedular (PTPLib::threads::ThreadPool           & th_pool,
                 PTPLib::common::synced_stream        & ss,
-                PTPLib::net::Channel                 & ch,
+                PTPLib::net::Channel<PTPLib::net::SMTS_Event, PTPLib::net::Lemma> & ch,
                 net::Socket                          & server,
                 const bool                           & le)
     : channel                               (ch)
@@ -87,7 +87,7 @@ public:
 
     inline void set_log_enabled(bool le)                { log_enabled = le; }
 
-    PTPLib::net::Channel & getChannel()          { return channel; }
+    PTPLib::net::Channel<PTPLib::net::SMTS_Event, PTPLib::net::Lemma> & getChannel()          { return channel; }
 
     PTPLib::threads::ThreadPool & getPool()      { return thread_pool; }
 
