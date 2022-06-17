@@ -138,8 +138,8 @@ void Schedular::communicate_worker()
                     }
                 }
 
-            } else if (not getChannel().isEmpty_query()) {
-                smts_event = getChannel().pop_front_query();
+            } else if (not getChannel().isEmpty_event()) {
+                smts_event = getChannel().pop_front_event();
                 if (not smts_event.header.count(PTPLib::common::Param.NAME) or not smts_event.header.count(PTPLib::common::Param.NODE))
                     throw PTPLib::common::Exception(__FILE__, __LINE__, "missing mandatory key in header");
                 if (log_enabled)
@@ -338,7 +338,7 @@ void Schedular::push_clause_worker(int seed, int min, int max) {
     }
 }
 
-void Schedular::lemmas_publish(std::unique_ptr<PTPLib::net::map_solver_clause> const & map_branch_clause, PTPLib::net::Header & header) {
+void Schedular::lemmas_publish(std::unique_ptr<PTPLib::net::map_solverBranch_lemmas> const & map_branch_clause, PTPLib::net::Header & header) {
     for (const auto & branch_clause : *map_branch_clause) {
         if (header.count(PTPLib::common::Param.NAME) == 0 or branch_clause.first.empty())
             throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) + " invalid keys");

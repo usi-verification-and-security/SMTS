@@ -280,7 +280,7 @@ void SolverProcess::kill_partition_process()
     }
 }
 
-void SolverProcess::add_constraint(std::unique_ptr<PTPLib::net::map_solver_clause> const & clauses, std::string & branch) {
+void SolverProcess::add_constraint(std::unique_ptr<PTPLib::net::map_solverBranch_lemmas> const & clauses, std::string & branch) {
     for ( const auto &lemmaPulled : *clauses ) {
         if (log_enabled)
             synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Cyan : PTPLib::common::Color::FG_DEFAULT,
