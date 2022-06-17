@@ -88,7 +88,8 @@ if __name__ == '__main__':
             schedular.config.build_path + '/lemma_server',
             schedular.config.db_path if schedular.config.lemma_db_path else None,
             schedular.config.lemma_resend,
-            port
+            port,
+            schedular.config.enableLog
         ))
         lemma_thread.daemon = True
         lemma_thread.start()
