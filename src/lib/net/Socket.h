@@ -66,7 +66,7 @@ namespace net {
 
         void setId(int id) { Id = id; }
 
-        int getId() { return Id; }
+        int getId() const { return Id; }
     };
 }
 
