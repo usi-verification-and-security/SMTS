@@ -67,12 +67,12 @@ namespace net {
                         this->sockets.insert(client);
                         client->setId(++counter);
                         this->handle_accept(*client);
-
+                        mapIdToSocket(client.get());
                     }
                     else {
                         try {
                             uint32_t length = 0;
-                            this->handle_event(**socket, (*socket)->read(length));
+                            this->handle_event(**socket, std::move(*socket)->read(length));
                         }
                         catch (SocketClosedException &ex) {
                             std::shared_ptr<net::Socket> s = *socket;

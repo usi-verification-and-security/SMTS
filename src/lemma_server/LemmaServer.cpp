@@ -83,6 +83,10 @@ void LemmaServer::handle_accept(net::Socket const & client) {
     Logger::log(Logger::INFO, "+ " + to_string(client.get_remote()));
 }
 
+void LemmaServer::mapIdToSocket(net::Socket const * client) const {
+    idToSocket[client->getId()] = client;
+}
+
 void LemmaServer::handle_close(net::Socket & client) {
     Logger::log(Logger::INFO, "- " + to_string(client.get_remote()));
     if (&client == this->server.get())

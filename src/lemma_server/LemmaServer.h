@@ -38,11 +38,15 @@ private:
 
     PTPLib::threads::ThreadPool pool;
 
+    mutable std::map<int, const net::Socket *> idToSocket;
+
     void garbageCollect(std::size_t batchSize, std::string const & instanceName);
 
 protected:
     void handle_accept(net::Socket const &) override;
-    
+
+    void mapIdToSocket(net::Socket const *) const override;
+
     void handle_close(net::Socket &) override;
 
     void handle_event(net::Socket &, PTPLib::net::SMTS_Event &&) override;
