@@ -36,7 +36,7 @@ private:
     bool logEnabled = false;
     std::size_t lemmasSize = 0;
 
-    PTPLib::threads::ThreadPool pool;
+    PTPLib::threads::ThreadPool * pool;
 
     mutable std::map<int, const net::Socket *> idToSocket;
 
@@ -63,6 +63,7 @@ protected:
 
 public:
     LemmaServer(uint16_t, const std::string &, const std::string &, bool send_again);
+    ~LemmaServer() { delete pool;  pool = nullptr;}
 };
 
 #endif
