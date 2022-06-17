@@ -37,7 +37,7 @@ void Settings::load(int argc, char **argv) {
                 this->server = optarg;
                 break;
             case 'p':
-                this->port = (uint16_t) atoi(optarg);
+                this->port = static_cast<int>(atoi(optarg));
                 break;
             case 'd':
                 this->db_filename = optarg;
