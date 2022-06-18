@@ -53,7 +53,7 @@ void SolverServer::handle_event(net::Socket & socket, PTPLib::net::SMTS_Event &&
             if (log_enabled)
                 synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Red : PTPLib::common::Color::FG_DEFAULT,
                                       "unexpected message from server to terminate");
-            exit(EXIT_FAILURE);
+            exit(EXIT_SUCCESS);
         }
         else if (SMTS_event.header[PTPLib::common::Param.COMMAND] == PTPLib::common::Command.LEMMAS) {
             this->schedular.set_lemma_amount(SMTS_event.header[PTPLib::common::Param.LEMMA_AMOUNT]);
@@ -63,30 +63,26 @@ void SolverServer::handle_event(net::Socket & socket, PTPLib::net::SMTS_Event &&
             this->lemma_stat.lemma_pull_max = atoi(SMTS_event.header["lemma_pull_max"].c_str());
             this->initiate_lemma_server(SMTS_event);
             getChannel().setClauseShareMode();
-            if (this->lemma_stat.seed)
-                this->push_lemma_workers(SMTS_event);
         }
         else {
+            std::unique_lock<std::mutex> listener_lk(getChannel().getMutex());
             if (SMTS_event.header[PTPLib::common::Param.COMMAND] == PTPLib::common::Command.SOLVE)
             {
                 this->lemma_stat.seed = atoi(SMTS_event.header.get(PTPLib::net::parameter, PTPLib::common::Param.SEED).c_str());
-                if (this->lemmaServer_socket)
-                    this->push_lemma_workers(SMTS_event);
-                schedular.push_to_pool(PTPLib::common::TASK::MEMORYCHECK,
-                                       atoi(SMTS_event.header.at(PTPLib::common::Param.MAX_MEMORY).c_str()));
-                schedular.push_to_pool(PTPLib::common::TASK::COMMUNICATION);
+                assert([&]() {
+                    if (not listener_lk.owns_lock()) {
+                        throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) + " can't take the lock");
+                    }
+                    return true;
+                }());
+                if (log_enabled)
+                    synced_stream.println_bold(log_enabled ? PTPLib::common::Color::FG_Red : PTPLib::common::Color::FG_DEFAULT,
+                                               "[ t ", __func__, "] -> ", "Updating the queue with ",
+                                               SMTS_event.header.at(PTPLib::common::Param.COMMAND), " and waiting");
+
+                if (schedular.preProcess_instance(SMTS_event))
+                    setUpThreadArch(SMTS_event);
             }
-            std::unique_lock<std::mutex> listener_lk(getChannel().getMutex());
-            assert([&]() {
-                if (not listener_lk.owns_lock()) {
-                    throw PTPLib::common::Exception(__FILE__, __LINE__, std::string(__FUNCTION__) + " can't take the lock");
-                }
-                return true;
-            }());
-            if (log_enabled)
-                synced_stream.println_bold(log_enabled ? PTPLib::common::Color::FG_Red : PTPLib::common::Color::FG_DEFAULT,
-                                           "[ t ", __func__, "] -> ", "Updating the queue with ",
-                                           SMTS_event.header.at(PTPLib::common::Param.COMMAND), " and waiting");
             reset = schedular.queue_event(std::move(SMTS_event));
             listener_lk.unlock();
         }
@@ -139,7 +135,7 @@ void SolverServer::initiate_lemma_server(PTPLib::net::SMTS_Event & SMTS_Event) {
     }
 }
 
-void SolverServer::push_lemma_workers(PTPLib::net::SMTS_Event & SMTS_event)
+void SolverServer::push_lemma_workers()
 {
     int interval = this->lemma_stat.lemma_push_min + this->lemma_stat.seed % ( this->lemma_stat.lemma_push_max - this->lemma_stat.lemma_push_min + 1 );
 
@@ -157,4 +153,14 @@ void SolverServer::handle_close(net::Socket & socket) {
 
 void SolverServer::handle_exception(net::Socket const & socket, const std::exception & exception) {
     synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Red : PTPLib::common::Color::FG_DEFAULT, exception.what());
+}
+
+void SolverServer::setUpThreadArch(PTPLib::net::SMTS_Event const & SMTS_event)
+{
+    if (this->lemma_stat.seed)
+        this->push_lemma_workers();
+
+    schedular.push_to_pool(PTPLib::common::TASK::MEMORYCHECK,
+                           atoi(SMTS_event.header.at(PTPLib::common::Param.MAX_MEMORY).c_str()));
+    schedular.push_to_pool(PTPLib::common::TASK::COMMUNICATION);
 }

@@ -199,7 +199,10 @@ void Schedular::communicate_worker()
 
 bool Schedular::execute_event(std::unique_lock<std::mutex> & u_lk, PTPLib::net::SMTS_Event & smts_event, bool & shouldUpdateSolverAddress) {
     assert(not smts_event.header.empty());
-    if (smts_event.header.at(PTPLib::common::Param.COMMAND) == PTPLib::common::Command.STOP)
+    if (smts_event.header.at(PTPLib::common::Param.COMMAND) == "resume")
+        return true;
+
+    else if (smts_event.header.at(PTPLib::common::Param.COMMAND) == PTPLib::common::Command.STOP)
         return false;
 
     else if (smts_event.header.at(PTPLib::common::Param.COMMAND) == PTPLib::common::Command.SOLVE) {
@@ -212,6 +215,7 @@ bool Schedular::execute_event(std::unique_lock<std::mutex> & u_lk, PTPLib::net::
         u_lk.unlock();
         SolverProcess::Result res = solver_process->init(smts_event);
         u_lk.lock();
+
         if (res == SolverProcess::Result::ERROR)
             throw PTPLib::common::Exception(__FILE__, __LINE__, ";SolverProcess: parser error");
         assert(res == SolverProcess::Result::UNKNOWN);
@@ -513,4 +517,22 @@ void Schedular::periodic_clauseLearning_worker(int wait_duration) {
             lk.unlock();
         }
     }
-};
+}
+
+bool Schedular::preProcess_instance(PTPLib::net::SMTS_Event & smts_event) {
+    net::Report::info(get_SMTS_server(), smts_event, "start");
+    if (log_enabled)
+        synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Cyan : PTPLib::common::Color::FG_DEFAULT,
+                              "[ t ", __func__, "] -> ", " Listener Start To Parse ", smts_event.header.at(PTPLib::common::Param.NAME));
+    if (not (solver_process = new SolverProcess(synced_stream, SMTS_server_socket, getChannel())))
+        throw PTPLib::common::Exception(__FILE__, __LINE__, ";SolverProcess: out of memory");
+
+    SolverProcess::Result res = solver_process->init(smts_event);
+    if (res == SolverProcess::Result::ERROR)
+        throw PTPLib::common::Exception(__FILE__, __LINE__, ";SolverProcess: parser error");
+    assert(res == SolverProcess::Result::UNKNOWN);
+
+    smts_event.body.clear();
+    getChannel().set_current_header(smts_event.header);
+    return true;
+}

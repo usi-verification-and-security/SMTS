@@ -44,7 +44,9 @@ private:
 
     void initiate_lemma_server(PTPLib::net::SMTS_Event & SMTS_Event);
 
-    void push_lemma_workers(PTPLib::net::SMTS_Event & SMTS_Event);
+    void push_lemma_workers();
+
+    void setUpThreadArch(PTPLib::net::SMTS_Event const & SMTS_Event);
 
 protected:
     void handle_close(net::Socket & SMTSServer_socket);
