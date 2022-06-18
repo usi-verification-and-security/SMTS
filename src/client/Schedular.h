@@ -44,7 +44,7 @@ private:
 
     void worker(PTPLib::common::TASK tname, int seed, int td_min, int td_max);
 
-    bool execute_event(std::unique_lock<std::mutex> & s_lk, PTPLib::net::SMTS_Event & smts_event, bool & shouldUpdateSolverAddress);
+
 
     bool request_solver_toStop(PTPLib::net::SMTS_Event const & SMTS_event);
 
@@ -64,6 +64,8 @@ private:
     bool lemma_pull(std::vector<PTPLib::net::Lemma> &lemmas, PTPLib::net::Header &header);
 
     void periodic_clauseLearning_worker(int wait_duration);
+
+    bool execute_event(std::unique_lock<std::mutex> & s_lk, PTPLib::net::SMTS_Event & smts_event, bool & shouldUpdateSolverAddress);
 
 public:
 
@@ -98,8 +100,11 @@ public:
             reset = true;
             getChannel().push_front_event(std::forward<T>(event));
         }
-        else
+        else {
+            if (event.header[PTPLib::common::Param.COMMAND] == PTPLib::common::Command.SOLVE)
+                event.header[PTPLib::common::Param.COMMAND] = "resume";
             getChannel().push_back_event(std::forward<T>(event));
+        }
 
         getChannel().notify_all();
         return reset;
@@ -108,5 +113,8 @@ public:
     void notify_reset();
 
     void set_LemmaServer_socket(net::Socket * lemma_server_socket) { Lemma_server_socket = lemma_server_socket; }
+
+    bool preProcess_instance(PTPLib::net::SMTS_Event & smts_event);
+
 };
 #endif
