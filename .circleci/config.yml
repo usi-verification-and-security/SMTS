@@ -86,9 +86,6 @@ jobs:
             environment:
               CMAKE_BUILD_TYPE: Debug
               FLAGS: -Wall -Wextra -fsanitize=signed-integer-overflow,address,undefined
-        - run:
-            name: Run Server - Client
-            command: sh ./bin/run-server-client.sh
 
         - run:
             name: Release build OS X with Thread Sanitizer
@@ -96,9 +93,6 @@ jobs:
             environment:
               CMAKE_BUILD_TYPE: Release
               FLAGS: -Wall -Wextra -fsanitize=signed-integer-overflow,thread,undefined
-        - run:
-            name: Run Server - Client
-            command: sh ./bin/run-server-client.sh
 workflows:
   build-test:
       jobs:
