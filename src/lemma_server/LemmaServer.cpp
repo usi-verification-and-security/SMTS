@@ -19,7 +19,8 @@
 
 LemmaServer::LemmaServer(uint16_t port, const std::string &server, const std::string &db_filename, bool send_again)
 : Server(port)
-, send_again(send_again) {
+, send_again(send_again)
+, pool(__FUNCTION__, 1) {
     if (server.size()) {
         this->server.reset(new net::Socket(server));
         PTPLib::net::Header header;
@@ -111,14 +112,14 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
     if (SMTS_Event.header[PTPLib::common::Command.LEMMAS] == "0")
         exit(EXIT_SUCCESS);
 
-    else if (SMTS_Event.header.count(PTPLib::common::Param.MAX_MEMORY) == 1 and SMTS_Event.header.count("enableLog")) {
+    if (SMTS_Event.header.count(PTPLib::common::Param.LOG_MODE) == 1 and ::to_bool(SMTS_Event.header.at(PTPLib::common::Param.LOG_MODE)))
         logEnabled = true;
+
+    if (SMTS_Event.header.count(PTPLib::common::Param.MAX_MEMORY) == 1) {
         int mm = atoi(SMTS_Event.header.at(PTPLib::common::Param.MAX_MEMORY).c_str());
-        if (mm == 0) {
-            pool = new PTPLib::threads::ThreadPool(__FUNCTION__, 1);
-        } else {
-            pool = new PTPLib::threads::ThreadPool(__FUNCTION__ , 2);
-            this->pool->push_task([this, mm] {
+        if (mm != 0) {
+            pool.increase(1);
+            this->pool.push_task([this, mm] {
                 this->memory_checker(mm);
             });
         }
@@ -137,7 +138,7 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
                                                    {
                                                        return lemma_worker(client.getId(), std::move(SMTS_Event));
                                                    });
-        this->pool->push_task(lemma_task);
+        this->pool.push_task(lemma_task);
     }
 }
 
