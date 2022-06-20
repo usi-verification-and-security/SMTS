@@ -58,9 +58,9 @@ public:
         mtx.lock();
         string fileName;
         if (parent)
-            fileName = "logs/Parent-" + processId + solver_address + ".smt2";
+            fileName = "logs/Parent-" + to_string(processId) + solver_address + ".smt2";
         else
-            fileName = "logs/Child-" + processId + solver_address  + ".smt2";
+            fileName = "logs/Child-" + to_string(processId) + solver_address  + ".smt2";
 
         string filename(fileName);
         ofstream file;
