@@ -102,7 +102,7 @@ public:
         }
         else {
             if (event.header[PTPLib::common::Param.COMMAND] == PTPLib::common::Command.SOLVE)
-                event.header[PTPLib::common::Param.COMMAND] = "resume";
+                event.header[PTPLib::common::Param.COMMAND] = PTPLib::common::Command.RESUME;
             getChannel().push_back_event(std::forward<T>(event));
         }
 

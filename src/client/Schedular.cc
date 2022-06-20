@@ -199,8 +199,9 @@ void Schedular::communicate_worker()
 
 bool Schedular::execute_event(std::unique_lock<std::mutex> & u_lk, PTPLib::net::SMTS_Event & smts_event, bool & shouldUpdateSolverAddress) {
     assert(not smts_event.header.empty());
-    if (smts_event.header.at(PTPLib::common::Param.COMMAND) == "resume")
+    if (smts_event.header.at(PTPLib::common::Param.COMMAND) == PTPLib::common::Command.RESUME) {
         return true;
+    }
 
     else if (smts_event.header.at(PTPLib::common::Param.COMMAND) == PTPLib::common::Command.STOP)
         return false;
@@ -222,7 +223,7 @@ bool Schedular::execute_event(std::unique_lock<std::mutex> & u_lk, PTPLib::net::
 
         smts_event.body.clear();
         shouldUpdateSolverAddress = true;
-        getChannel().set_current_header(smts_event.header);
+        getChannel().set_current_header(smts_event.header, {PTPLib::common::Param.NAME, PTPLib::common::Param.NODE, PTPLib::common::Param.QUERY});
     }
     else if (smts_event.header.at(PTPLib::common::Param.COMMAND) == PTPLib::common::Command.PARTITION) {
         solver_process->partition(smts_event, (uint8_t) atoi(smts_event.header.at(PTPLib::common::Param.PARTITIONS).c_str()));
@@ -242,7 +243,7 @@ bool Schedular::execute_event(std::unique_lock<std::mutex> & u_lk, PTPLib::net::
             shouldUpdateSolverAddress = true;
             smts_event.header[PTPLib::common::Param.NODE] = smts_event.header.at(PTPLib::common::Param.NODE_);
             smts_event.header.erase(PTPLib::common::Param.NODE_);
-            getChannel().set_current_header(smts_event.header);
+            getChannel().set_current_header(smts_event.header, {PTPLib::common::Param.NAME, PTPLib::common::Param.NODE, PTPLib::common::Param.QUERY});
         }
     }
 
@@ -533,6 +534,6 @@ bool Schedular::preProcess_instance(PTPLib::net::SMTS_Event & smts_event) {
     assert(res == SolverProcess::Result::UNKNOWN);
 
     smts_event.body.clear();
-    getChannel().set_current_header(smts_event.header);
+    getChannel().set_current_header(smts_event.header, {PTPLib::common::Param.NAME, PTPLib::common::Param.NODE, PTPLib::common::Param.QUERY});
     return true;
 }
