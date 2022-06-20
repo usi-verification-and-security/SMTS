@@ -200,6 +200,7 @@ void Schedular::communicate_worker()
 bool Schedular::execute_event(std::unique_lock<std::mutex> & u_lk, PTPLib::net::SMTS_Event & smts_event, bool & shouldUpdateSolverAddress) {
     assert(not smts_event.header.empty());
     if (smts_event.header.at(PTPLib::common::Param.COMMAND) == PTPLib::common::Command.RESUME) {
+        thread_pool.increase(1);
         return true;
     }
 
