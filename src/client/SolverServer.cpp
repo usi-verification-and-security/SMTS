@@ -86,8 +86,10 @@ void SolverServer::handle_event(net::Socket & socket, PTPLib::net::SMTS_Event &&
             reset = schedular.queue_event(std::move(SMTS_event));
             listener_lk.unlock();
         }
-        if (reset)
+        if (reset) {
+            exit(EXIT_SUCCESS);
             stop_schedular();
+        }
 
     } else if (&socket == &this->get_SMTS_server_socket()) {
         this->SMTSServer_socket.write(SMTS_event);
