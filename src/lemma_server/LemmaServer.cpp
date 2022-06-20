@@ -13,6 +13,7 @@
 #include <PTPLib/common/Lib.hpp>
 #include <PTPLib/net/Header.hpp>
 #include <PTPLib/common/Memory.hpp>
+#include <PTPLib/common/EventAndTask.hpp>
 
 #include <string>
 #include <algorithm>
@@ -133,10 +134,10 @@ void LemmaServer::handle_event(net::Socket & client, PTPLib::net::SMTS_Event && 
         net::Report::error(getSMTS_serverSocket(),SMTS_Event.header, " invalid solver branch from " + to_string(client.get_remote()));
         return;
     } else {
-        auto lemma_task = PTPLib::common::capture( std::move(SMTS_Event),
-                                                   [this, &client](PTPLib::net::SMTS_Event & SMTS_Event)
+        auto lemma_task = PTPLib::common::EventAndTask(std::move(SMTS_Event),
+                                                   [this, &client](PTPLib::net::SMTS_Event & smtsEvent)
                                                    {
-                                                       return lemma_worker(client.getId(), std::move(SMTS_Event));
+                                                       return lemma_worker(client.getId(), std::move(smtsEvent));
                                                    });
         this->pool.push_task(lemma_task);
     }
