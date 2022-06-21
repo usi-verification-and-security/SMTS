@@ -27,8 +27,10 @@ else(OpenSMT_FOUND)
     set(BUILD_STATIC_LIBS ON CACHE INTERNAL "")
     set(PACKAGE_TESTS OFF CACHE INTERNAL "")
 
-    message(STATUS "SMTS's Client is fetching OpenSMT from ${OpenSMT_repository}")
-    message(STATUS "OpenSMT Branch : ${OpenSMT_branch}")
+    string(ASCII 27 ESCAPE)
+    message(STATUS "${ESCAPE}[32m${solver_type} SOLVER ${ESCAPE}[0m ${ESCAPE}[34m${OpenSMT_repository}${ESCAPE}[0m")
+    message(STATUS "${ESCAPE}[32m${solver_type} BRANCH: ${ESCAPE}[0m${ESCAPE}[34m${OpenSMT_branch}${ESCAPE}[0m")
+
     FetchContent_MakeAvailable(OpenSMT)
 
     add_library(OpenSMT::OpenSMT ALIAS OpenSMT-splitter-static)
