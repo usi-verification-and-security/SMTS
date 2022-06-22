@@ -1,23 +1,34 @@
-set(solver_type ${solver})
-if(NOT solver_type)
-    set(PARALLEL ON CACHE INTERNAL "")
-    set(solver_type OpenSMT2)
-    message(STATUS "Solver Type is set to OpenSMT2 by default.")
-endif()
-
 include(FetchContent)
 SET(OPENSMT_HOME CACHE STRING "OpenSMT installation directory")
 find_package(OpenSMT CONFIG PATHS ${OPENSMT_HOME} NO_DEFAULT_PATH)
 
 if (OpenSMT_FOUND)
 else(OpenSMT_FOUND)
-    set(OpenSMT_repository "https://github.com/MasoudAsadzade/opensmt-verification.git")
-    set(OpenSMT_branch communicationChannel)
+    string(ASCII 27 ESCAPE)
+    set(PINK [35m)
+    set(TM [0m)
+
+    set(solver_type ${solver})
+    if(NOT solver_type)
+        set(PARALLEL ON CACHE INTERNAL "")
+        set(solver_type OpenSMT2)
+        message(STATUS "Solver Type is set to OpenSMT2 by default.")
+    endif()
+
+    if(NOT osmt_repo)
+        message(STATUS "${ESCAPE}${PINK} You can choose which repository of ${solver_type} to fetch by: ${ESCAPE}${TM} ${ESCAPE}${PINK}-Dosmt_repo=<repository>${ESCAPE}${TM}")
+        set(osmt_repo "https://github.com/usi-verification-and-security/opensmt.git")
+    endif()
+
+    if(NOT osmt_branch)
+        message(STATUS "${ESCAPE}${PINK} You can choose which branch of ${solver_type} to fetch by: ${ESCAPE}${TM} ${ESCAPE}${PINK}-Dosmt_branch=<branch>${ESCAPE}${TM}")
+        set(osmt_branch master)
+    endif()
 
     FetchContent_Declare(
             OpenSMT
-            GIT_REPOSITORY ${OpenSMT_repository}
-            GIT_TAG ${OpenSMT_branch}
+            GIT_REPOSITORY ${osmt_repo}
+            GIT_TAG ${osmt_branch}
             GIT_SHALLOW true
             GIT_PROGRESS true
     )
@@ -27,9 +38,10 @@ else(OpenSMT_FOUND)
     set(BUILD_STATIC_LIBS ON CACHE INTERNAL "")
     set(PACKAGE_TESTS OFF CACHE INTERNAL "")
 
-    string(ASCII 27 ESCAPE)
-    message(STATUS "${ESCAPE}[32m${solver_type} SOLVER ${ESCAPE}[0m ${ESCAPE}[34m${OpenSMT_repository}${ESCAPE}[0m")
-    message(STATUS "${ESCAPE}[32m${solver_type} BRANCH: ${ESCAPE}[0m${ESCAPE}[34m${OpenSMT_branch}${ESCAPE}[0m")
+    set(GREEN [32m)
+    set(BLUE [34m)
+    message(STATUS "${ESCAPE}${GREEN} ${solver_type} Repository: ${ESCAPE}${TM} ${ESCAPE}${BLUE}${osmt_repo}${ESCAPE}${TM}")
+    message(STATUS "${ESCAPE}${GREEN} ${solver_type} BRANCH: ${ESCAPE}${TM}${ESCAPE}${BLUE}${osmt_branch}${ESCAPE}${TM}")
 
     FetchContent_MakeAvailable(OpenSMT)
 
