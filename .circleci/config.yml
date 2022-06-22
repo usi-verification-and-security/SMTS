@@ -35,6 +35,7 @@ jobs:
                 command: sh ./bin/make_smts.sh
                 environment:
                     CMAKE_BUILD_TYPE: Debug
+                    FLAGS: -Wall -Wextra -fsanitize=signed-integer-overflow,thread,undefined
             - run:
                 name: Run Server - Client
                 command: sh ./bin/run-server-client.sh
@@ -58,7 +59,7 @@ jobs:
                 command: sh ./bin/make_smts.sh
                 environment:
                     CMAKE_BUILD_TYPE: Debug
-                    FLAGS: -Wall -Werror=sign-compare -Wunused-lambda-capture -fsanitize=signed-integer-overflow
+                    FLAGS: -Wall -Wextra -Werror=sign-compare -Wunused-lambda-capture -fsanitize=signed-integer-overflow,thread,undefined
             - run:
                 name: Run Server - Client
                 command: sh ./bin/run-server-client.sh
