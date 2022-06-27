@@ -183,11 +183,12 @@ class Solver(net.Socket):
                 if str(n.path()) == header[constant.NODE]:
                     if n.status == framework.SolveStatus.unknown and header[constant.REPORT] == constant.PARTITIONS:
                         print(";illegal move ", self, header)
+                        print(utils.bcolors.FAIL + ";illegal move from ", self.node.path(), " SOLVER POS: ", header + utils.bcolors.ENDC)
                         exit(1)
                     else:
                         return header, b''
-        if self.node.root.name != header[constant.NAME] or str(self.node.path()) != header[constant.NODE]:
-            return header, b''
+        # if self.node.root.name != header[constant.NAME] or str(self.node.path()) != header[constant.NODE]:
+        #     return header, b''
 
         del header[constant.NAME]
         # del header[constant.NODE]
@@ -346,7 +347,10 @@ class ParallelizationServer(net.Server):
                 if self.config.visualize_tree:
                     self.collectData_vTree(sock, message, header)
                 if self.config.enableLog:
-                    self.log(level, '{}: {}'.format(sock, message), {constant.HEADER: header, constant.PAYLOAD: payload.decode()})
+                    if message in framework.SolveStatus.__members__:
+                        self.log(level, utils.bcolors.OKGREEN + '{}: {}'.format(sock, message + utils.bcolors.ENDC), {constant.HEADER: header, constant.PAYLOAD: payload.decode()})
+                    else:
+                        self.log(level, '{}: {}'.format(sock, message), {constant.HEADER: header, constant.PAYLOAD: payload.decode()})
             self.entrust(header)
             return
         if isinstance(sock, LemmaServer):
@@ -362,7 +366,7 @@ class ParallelizationServer(net.Server):
             # if terminate command is found, close the server
             if header[constant.COMMAND] == constant.TERMINATE:
                 if self.config.visualize_tree:
-                    self.render_vTree(0)
+                    self.render_vTree(time.time() - self.current.started)
                 self.log(logging.INFO, 'Termination command is received!')
                 self.close()
             elif header[constant.COMMAND] == constant.SOLVE:
@@ -462,7 +466,7 @@ class ParallelizationServer(net.Server):
         if isinstance(self.current, Instance):
             if not self.terminate:
                 if sum(map(lambda solver: isinstance(solver, Solver), self._rlist)) != self.total_solvers and self.total_solvers != 0:
-                    print(';error,solvers are lost', self.current.root.name)
+                    print(';error, solvers are lost ', self.current.root.name)
                     for solver in {solver for solver in self.solvers(False)}:
                         solver.terminate()
                     self.terminate = True
@@ -771,10 +775,10 @@ class ParallelizationServer(net.Server):
         self.v_tree.filename = self.current.root.name  + '.gv';
         # self.node_dict = sorted(self.node_dict.items(), key=self.node_dict.get(2))
         self.v_tree.attr(bgcolor='white',rankdir='UP', label='\n Solvers: ' + str(len(self.solvers(False)) ) + '    Portfolio: '
-                                                             + str(self.config.portfolio_min) + '     node_timeout: ' +
-                                                             str(self.config.node_timeout) + '      Partition_policy ' +
-                                                             str(self.config.partition_policy) + '      solved_time: ' +str(round(solved_time))+
-                                                             '   partition_timout: '+str(self.config.partition_timeout )+ '\n'+comment
+                                                             + str(self.config.portfolio_min) + '    Node Timeout: ' +
+                                                             str(self.config.node_timeout) + '      Partition Policy ' +
+                                                             str(self.config.partition_policy) + '      Elapsed Time: ' +str(round(solved_time))+
+                                                             '   Partition Timout: '+str(self.config.partition_timeout )+ '\n'+comment
                          , fontcolor = 'black')
         self.v_tree.comment = "Test"
         lastSolvedNode = ''
@@ -832,7 +836,7 @@ class ParallelizationServer(net.Server):
                                                                     + str(self.node_dict[lastSolvedNode][7])+'|<f1> '
                                                                     + "("+str(rank)+") " + self.node_alias[lastSolvedNode] + '|<f2>' +
                                                                     str(self.node_dict[lastSolvedNode][1]) + ' - ' + str(self.node_dict[lastSolvedNode][6])),
-                             color ='#11971A')
+                             color ='#DFA500')
         self.v_tree.view()
 
     def collectData_vTree(self, sock, message, header):
