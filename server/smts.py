@@ -21,6 +21,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', dest='db_path', help='sqlite3 database file path')
     parser.add_argument('-fp', dest='file_paths', help='file paths')
     parser.add_argument('-g', dest='gui', action='store_true', help='run GUI in live mode')
+    parser.add_argument('-el', dest='log_mode', action='store_true', help='enable logging system-widely')
     pg = parser.add_argument_group('partitioning')
     pg.add_argument('-pt', dest='partition_timeout', type=int, metavar='N', help='partition timeout')
     pg.add_argument('-p', dest='partitioning', action='store_true', help='enable partitioning')
@@ -46,7 +47,8 @@ if __name__ == '__main__':
         schedular.config.partition_timeout = args.partition_timeout
     if not args.partitioning:
         schedular.config.partition_timeout = None;
-
+    if args.log_mode:
+        schedular.config.enableLog = args.log_mode;
     if args.gui:
         schedular.config.gui = args.gui
     # if args.lemma_sharing:
