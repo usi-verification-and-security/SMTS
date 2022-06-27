@@ -178,15 +178,15 @@ class Solver(net.Socket):
         if constant.NAME not in header or constant.NODE not in header:
             return header, payload
 
-        if str(self.node.path()) != header[constant.NODE]:
-            for n in self.node.root.all():
-                if str(n.path()) == header[constant.NODE]:
-                    if n.status == framework.SolveStatus.unknown and header[constant.REPORT] == constant.PARTITIONS:
-                        print(";illegal move ", self, header)
-                        print(utils.bcolors.FAIL + ";illegal move from ", self.node.path(), " SOLVER POS: ", header + utils.bcolors.ENDC)
-                        exit(1)
-                    else:
-                        return header, b''
+        if config.debug:
+            if str(self.node.path()) != header[constant.NODE]:
+                for n in self.node.root.all():
+                    if str(n.path()) == header[constant.NODE]:
+                        if n.status == framework.SolveStatus.unknown and header[constant.REPORT] == constant.PARTITIONS:
+                            print(utils.bcolors.FAIL + ";illegal move from ", self.node.path(), " SOLVER POS: ", header + utils.bcolors.ENDC)
+                            exit(1)
+                        else:
+                            return header, b''
         # if self.node.root.name != header[constant.NAME] or str(self.node.path()) != header[constant.NODE]:
         #     return header, b''
 
