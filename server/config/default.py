@@ -27,6 +27,7 @@ sally = 0                       # number of sally processes
 idle_quit = True                # quit smts after solving the last instance
 enableLog = False               # enable logging system-widely
 visualize_tree = False          # draw a partition tree when timout reached based on incoming event from solvers
+debug = False
 lemmaPush_timeoutMin = 15000    # a timespan to distribute solvers "push operation" to the lemma server
 lemmaPush_timeoutMax = 15000
 lemmaPull_timeoutMin = 30000    # a timespan to distribute solvers "pull operation" to the lemma server
