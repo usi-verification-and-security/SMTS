@@ -464,16 +464,16 @@ class ParallelizationServer(net.Server):
         solving = self.current
 
         if isinstance(self.current, Instance):
-            if not self.terminate:
-                if sum(map(lambda solver: isinstance(solver, Solver), self._rlist)) != self.total_solvers and self.total_solvers != 0:
-                    print(';error, solvers are lost ', self.current.root.name)
-                    for solver in {solver for solver in self.solvers(False)}:
-                        solver.terminate()
-                    self.terminate = True
-                    return
-            elif sum(map(lambda solver: isinstance(solver, Solver), self._rlist)) == 0:
-                self.close()
-                exit(1)
+            # if not self.terminate:
+            #     if sum(map(lambda solver: isinstance(solver, Solver), self._rlist)) != self.total_solvers and self.total_solvers != 0:
+            #         print(';error, solvers are lost ', self.current.root.name)
+            #         for solver in {solver for solver in self.solvers(False)}:
+            #             solver.terminate()
+            #         self.terminate = True
+            #         return
+            # elif sum(map(lambda solver: isinstance(solver, Solver), self._rlist)) == 0:
+            #     self.close()
+            #     exit(1)
             if self.current.root.status != framework.SolveStatus.unknown or self.current.when_timeout < 0:
                 if self.config.visualize_tree:
                     self.render_vTree(time.time() - self.current.started)
@@ -544,6 +544,12 @@ class ParallelizationServer(net.Server):
                         self.current.started = time.time()
                     config.partition_count = 0
                 return
+        elif self.current is not None and self.newly_joint_solver():
+            for solver in self.newly_joint_solver():
+                self.total_solvers += 1
+                parameters = {}
+                self.config.entrust(self.current.root, parameters, solver.name, self.solvers(self.current.root))
+                solver.solve(self.current.root, parameters)
 
         # if solving is not None and solving != self.current and self.lemma_server:
         #     self.lemma_server.reset(solving.root)
@@ -712,9 +718,9 @@ class ParallelizationServer(net.Server):
     def partition(self, node: framework.AndNode, force=False):
         max_children = self.level_children(node.level)
         for i in range(max_children - len(node)):
-            solvers = list(self.solvers(node))
-            random.shuffle(solvers)
-            for solver in solvers:
+            # solvers = list(self.solvers(node))
+            # random.shuffle(solvers)
+            for solver in self.solvers(node):
                 if force or solver.started + self.config.partition_timeout <= time.time():
                     solver.ask_partitions(self.level_children(node.level + 1))
                     return True
@@ -730,6 +736,10 @@ class ParallelizationServer(net.Server):
                         (node is True and solver.node is not None) or
                         solver.node == node
                 )}
+
+    def newly_joint_solver(self):
+        return {solver for solver in self._rlist
+                if isinstance(solver, Solver) and (solver.node is None and solver.started is None)}
 
     @property
     def lemma_server(self) -> LemmaServer:
