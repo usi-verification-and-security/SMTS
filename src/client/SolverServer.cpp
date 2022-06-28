@@ -72,6 +72,12 @@ void SolverServer::handle_event(net::Socket & socket, PTPLib::net::SMTS_Event &&
             std::unique_lock<std::mutex> listener_lk(getChannel().getMutex());
             if (SMTS_event.header[PTPLib::common::Param.COMMAND] == PTPLib::common::Command.SOLVE)
             {
+                if (not log_enabled) {
+                    FILE * file = fopen("/dev/null", "w");
+                    dup2(fileno(file), fileno(stdout));
+                    dup2(fileno(file), fileno(stderr));
+                    fclose(file);
+                }
                 this->lemma_stat.seed = atoi(SMTS_event.header.get(PTPLib::net::parameter, PTPLib::common::Param.SEED).c_str());
                 assert([&]() {
                     if (not listener_lk.owns_lock()) {
