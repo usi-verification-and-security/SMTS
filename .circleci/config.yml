@@ -31,6 +31,10 @@ jobs:
                 environment:
                     CMAKE_BUILD_TYPE: Release
             - run:
+                name: Run Server - Client Dynamically - gcc release
+                command: sh ./bin/run-server-client_dynamically.sh
+
+            - run:
                 name: Debug build gcc
                 command: sh ./bin/make_smts.sh
                 environment:
@@ -54,6 +58,9 @@ jobs:
                 command: sh ./bin/make_smts.sh
                 environment:
                     CMAKE_BUILD_TYPE: Release
+            - run:
+                name: Run Server - Client Dynamically - llvm release
+                command: sh ./bin/run-server-client_dynamically.sh
             - run:
                 name: Debug build llvm
                 command: sh ./bin/make_smts.sh
