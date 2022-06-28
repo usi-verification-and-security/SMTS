@@ -500,15 +500,16 @@ class ParallelizationServer(net.Server):
                     if config.spit_preference:
                         for sp in framework.SplitPreference.__members__.values():
                             del self.trees[self.current.root.name + sp.value]
-                if not self.config.enableLog:
+                if not self.config.enableLog and self.current:
                     self.log(logging.INFO, '{}'.format(self.current.root.status.name),
                              self.current.root.name, round(time.time() - self.current.started, 2), header)
                     del self.trees[self.current.root.name]
                 else:
                     # self.log(logging.INFO, self.current.root.status.name , self.current.root.name, round(time.time() - self.current.started, 2))
-                    self.log(logging.INFO, '{} instance "{}" after {:.2f} seconds'.format(
-                        'solved' if self.current.root.status != framework.SolveStatus.unknown else 'timeout', self.current.root.name,
-                        time.time() - self.current.started))
+                    if self.current:
+                        self.log(logging.INFO, '{} instance "{}" after {:.2f} seconds'.format(
+                            'solved' if self.current.root.status != framework.SolveStatus.unknown else 'timeout', self.current.root.name,
+                            time.time() - self.current.started))
 
                 for solver in {solver for solver in self.solvers(False) if solver.node.root == self.current.root}:
                     solver.stop()
@@ -544,13 +545,14 @@ class ParallelizationServer(net.Server):
                         self.current.started = time.time()
                     config.partition_count = 0
                 return
-        elif self.current is not None and self.newly_joint_solver():
+        else:
             for solver in self.newly_joint_solver():
                 self.total_solvers += 1
                 parameters = {}
                 self.config.entrust(self.current.root, parameters, solver.name, self.solvers(self.current.root))
                 solver.solve(self.current.root, parameters)
-
+                if self.current.started is None:
+                    self.current.started = time.time()
         # if solving is not None and solving != self.current and self.lemma_server:
         #     self.lemma_server.reset(solving.root)
         if self.current is None:
