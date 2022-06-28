@@ -81,7 +81,8 @@ void LemmaServer::memory_checker(int max_memory)
 }
 
 void LemmaServer::handle_accept(net::Socket const & client) {
-    Logger::log(Logger::INFO, "+ " + to_string(client.get_remote()));
+    if (logEnabled)
+        Logger::log(Logger::INFO, "+ " + to_string(client.get_remote()));
 }
 
 void LemmaServer::mapIdToSocket(net::Socket const * client) const {
