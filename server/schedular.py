@@ -149,8 +149,6 @@ class Solver(net.Socket):
         config.partition_count += n
         if self.node is None:
             raise ValueError('not solving anything')
-        if config.enableLog:
-            print("             Partition emited from ",node,self)
         self.write({
             constant.COMMAND: constant.PARTITION,
             constant.NAME: self.node.root.name,
@@ -630,11 +628,11 @@ class ParallelizationServer(net.Server):
                                     self.idle_solvers.append(solver)
                                     config.partition_count -= 1
                             node.assumed_timout = True
-                    elif not config.node_timeout and len(node) == 0 and len(self.solvers(node)) == 1:
-                        if round(time.time() - self.current.root.started) < 60:
-                            config.node_timeout = 60
-                        else:
-                            config.node_timeout = round(time.time() - self.current.root.started + 5)
+                    # elif not config.node_timeout and len(node) == 0 and len(self.solvers(node)) == 1:
+                    #     if round(time.time() - self.current.root.started) < 60:
+                    #         config.node_timeout = 60
+                    #     else:
+                    #         config.node_timeout = round(time.time() - self.current.root.started + 5)
                     if not node.partitioning and not node.processed and len(node) == 0:
                         if to_partition_node is None:
                             to_partition_node = node
