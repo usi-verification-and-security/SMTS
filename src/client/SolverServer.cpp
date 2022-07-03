@@ -149,11 +149,11 @@ void SolverServer::initiate_lemma_server(PTPLib::net::SMTS_Event & SMTS_Event) {
 
 void SolverServer::push_lemma_workers()
 {
-    int interval = this->lemma_stat.lemma_push_min + this->lemma_stat.seed % ( this->lemma_stat.lemma_push_max - this->lemma_stat.lemma_push_min + 1 );
+//    int interval = this->lemma_stat.lemma_push_min + this->lemma_stat.seed % ( this->lemma_stat.lemma_push_max - this->lemma_stat.lemma_push_min + 1 );
 
     schedular.push_to_pool(PTPLib::common::TASK::CLAUSEPUSH, this->lemma_stat.seed, this->lemma_stat.lemma_push_min, this->lemma_stat.lemma_push_max);
     schedular.push_to_pool(PTPLib::common::TASK::CLAUSEPULL, this->lemma_stat.seed, this->lemma_stat.lemma_pull_min, this->lemma_stat.lemma_pull_max);
-    schedular.push_to_pool(PTPLib::common::TASK::CLAUSELEARN, interval / 2);
+    schedular.push_to_pool(PTPLib::common::TASK::CLAUSELEARN, 15000);
 }
 
 void SolverServer::handle_close(net::Socket & socket) {
