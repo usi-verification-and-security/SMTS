@@ -22,7 +22,7 @@ else(OpenSMT_FOUND)
 
     if(NOT osmt_branch)
         message(STATUS "${ESCAPE}${PINK} You can choose which branch of ${solver_type} to fetch by: ${ESCAPE}${TM} ${ESCAPE}${PINK}-Dosmt_branch=<branch>${ESCAPE}${TM}")
-        set(osmt_branch master)
+        set(osmt_branch 3552335a86c9fbf9fb39a6ba6cb768cc37209d3b)
     endif()
 
     FetchContent_Declare(
