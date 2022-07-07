@@ -34,7 +34,7 @@ public:
     enum class Result { SAT, UNSAT, UNKNOWN, ERROR };
 
     // here the module can edit class fields
-    SolverProcess::Result init(PTPLib::net::SMTS_Event & SMTS_Event);
+    SolverProcess::Result init(PTPLib::net::SMTS_Event & SMTS_Event, std::string & logic);
 
     void partition(PTPLib::net::SMTS_Event & SMTS_Event, uint8_t);
 

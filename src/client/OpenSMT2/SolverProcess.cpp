@@ -55,7 +55,7 @@ vec<opensmt::pair<int,int>> extractSolverBranch(std::string solverBranch_str)
     return solverBranch;
 }
 
-SolverProcess::Result SolverProcess::init(PTPLib::net::SMTS_Event & SMTS_Event) {
+SolverProcess::Result SolverProcess::init(PTPLib::net::SMTS_Event & SMTS_Event, std::string & logic) {
     const char *msg;
     static const char *default_split = SMTConfig::o_sat_scatter_split;
     static const char *default_seed = "0";
@@ -101,8 +101,10 @@ SolverProcess::Result SolverProcess::init(PTPLib::net::SMTS_Event & SMTS_Event) 
             false, false);
     if (log_enabled)
         getScatterSplitter().set_syncedStream(synced_stream);
-    if (res == s_Undef)
+    if (res == s_Undef) {
+        logic = splitterInterpret->getMainSplitter().getLogic().getName();
         return SolverProcess::Result::UNKNOWN;
+    }
     else if (res == s_True)
         return SolverProcess::Result::SAT;
     else if (res == s_False)

@@ -145,7 +145,6 @@ class Solver(net.Socket):
         }, '')
 
     def ask_partitions(self, n, node: framework.AndNode = None):
-        global estimate_partition_time
         config.partition_count += n
         if self.node is None:
             raise ValueError('not solving anything')
@@ -156,8 +155,6 @@ class Solver(net.Socket):
             constant.QUERY: constant.CHECK_SAT,
             constant.PARTITIONS: n
         }, '')
-        if isinstance(self.node, framework.SMT):
-            estimate_partition_time = time.time()
         if not node:
             node = framework.OrNode(self.node)
 
@@ -192,8 +189,9 @@ class Solver(net.Socket):
         # del header[constant.NODE]
         # if header[constant.NODE][1:len(header[constant.NODE])-1] != ', '.join(map(str, self.node.path())):
         #     print("   Solver has left . . ..........", header[constant.NODE])
+        if constant.LOGIC in header and not config.logic:
+            config.logic = header[constant.LOGIC];
         if header[constant.REPORT] == constant.PARTITIONS and self.or_waiting:
-            global estimate_partition_time
             node = self.or_waiting.pop()
             try:
                 # if isinstance(self.node, framework.SMT):
@@ -609,7 +607,6 @@ class ParallelizationServer(net.Server):
                             solved_solvers.add(solver)
                     elif config.node_timeout and (node.started and node.started + config.node_timeout <= time.time()):
                         if node.partitioning and (node._children[0])._children:
-                            global estimate_partition_time
                             if node.assumed_timout:
                                 for solver in self.solvers(node):
                                     if solver not in self.idle_solvers:
@@ -766,10 +763,15 @@ class ParallelizationServer(net.Server):
                     print(data, message, time, header['search_counter'], header['status_info'], res, level_info )
             else:
                 # status = 'timout'
+
                 # if message == 'sat' or message == 'unsat':
                 #     status = 'solved'
-                # print(data, message, time, status)
-                print(message)
+                if header is not None and header[constant.NODE] == '[]':
+                    level_info = 'root'
+                else:
+                    level_info = 'child'
+                print(data, message, time, config.logic, level_info)
+                # print(message)
         if not config.db() or level < self.config.log_level:
             return
         config.db().cursor().execute("INSERT INTO {}ServerLog (level, message, data) "

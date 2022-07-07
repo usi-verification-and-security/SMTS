@@ -35,6 +35,7 @@ lemmaPull_timeoutMax = 40000
 clientLogColorMode = False      # to enable color at logging
 partition_count = 0             # total number of valid partition SMTS would receive per instance
 spit_preference = False
+logic = ""
 
 # parameters is a dictionary solver_name.solver_parameter -> value:(int, str, callable)  where:
 # solver_parameter is a valid parameter for the solver solver_name and
