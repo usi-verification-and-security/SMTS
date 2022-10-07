@@ -101,8 +101,73 @@ jobs:
             environment:
               CMAKE_BUILD_TYPE: Release
               FLAGS: -Wall -Wextra -fsanitize=signed-integer-overflow,thread,undefined
+
+    # To set up the centos-7 environment:
+    #  - yum install centos-release-scl devtoolset-8 gmp-devel libedit-devel
+    #  - scl enable devtoolset-8 bash
+    build-starexec:
+      docker:
+        - image: centos:7
+          auth:
+            username: mydockerhub-user
+            password: $DOCKERHUB_PASSWORD
+          environment:
+            CMAKE_BUILD_TYPE: Release
+            FLAGS: -Wall -Wextra -Werror
+            USE_READLINE: OFF
+
+      steps:
+        - run:
+            name: Install the environment
+            command: |
+              yum -y install centos-release-scl
+              yum -y install devtoolset-8
+              yum -y install gmp-devel
+              yum -y install gmp-static
+              yum -y install libedit-devel
+              yum -y install bison
+              yum -y install git
+              yum -y install wget
+              yum -y install rh-python38
+              yum -y install python3-pip
+              yum -y install zlib-devel
+              pip3 install --upgrade pip
+              pip3 install wheel
+              echo "pip3 install pyinstaller" |scl enable devtoolset-8 bash
+              yum -y install Cython
+              yum -y install bzip2
+              yum -y install glibc-static
+              yum -y install libstdc++-static
+        - run:
+            name: Set up newer version of cmake
+            command: pip3 install cmake
+        - run:
+            name: Set up newer version of flex
+            command: |
+              cd ~
+              wget --no-verbose "https://github.com/westes/flex/files/981163/flex-2.6.4.tar.gz"
+              tar -xvzf flex-2.6.4.tar.gz
+              cd flex-2.6.4
+              echo "./configure --prefix=/usr/local; make -j4; make install" | scl enable devtoolset-8 bash
+              cd ..
+              rm -rf flex-*
+              flex --version
+        - checkout
+        - run:
+            name: Debug build gcc under devtoolset-8
+            command: |
+              cat ./bin/make_smts.sh |scl enable devtoolset-8 bash
+            environment:
+              CMAKE_BUILD_TYPE: Debug
+        - run:
+            name: Release build gcc under devtoolset-8
+            command: |
+              cat ./bin/make_smts.sh |scl enable devtoolset-8 bash
+            environment:
+              CMAKE_BUILD_TYPE: Release
 workflows:
   build-test:
       jobs:
         - build-recent
         - build-macos
+        - build-starexec
