@@ -73,7 +73,7 @@ jobs:
 
     build-macos:
       macos:
-        xcode: 12.4.0
+        xcode: 14.0
       steps:
         - run:
             name: Packages
