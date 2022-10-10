@@ -70,14 +70,13 @@ void LemmaServer::mapIdToSocket(net::Socket const * client) const {
 }
 
 void LemmaServer::handle_close(net::Socket & client) {
-    Logger::log(Logger::INFO, "- " + to_string(client.get_remote()));
+    if (logEnabled)
+        Logger::log(Logger::INFO, "- " + to_string(client.get_remote()));
     if (&client == this->server.get())
     {
+        if (logEnabled)
+            Logger::log(Logger::INFO, "server connection closed.");
         exit(EXIT_SUCCESS);
-        Logger::log(Logger::INFO, "server connection closed.");
-        this->stop();
-        notify_reset();
-        return;
     }
     for (auto const & pair : this->solvers) {
         if (this->solvers[pair.first].count(client.getId())) {

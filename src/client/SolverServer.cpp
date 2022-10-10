@@ -17,7 +17,7 @@ void ReportSolverType(net::Socket const &);
 SolverServer::SolverServer(net::Address const & server)
 : net::Server()
 , SMTSServer_socket(server)
-, thread_pool( __func__ )
+, thread_pool( __func__ , 1)
 , schedular(thread_pool, synced_stream, channel, SMTSServer_socket, log_enabled) {
     ReportSolverType(get_SMTS_server_socket());
     channel.setParallelMode();
@@ -101,21 +101,6 @@ void SolverServer::handle_event(net::Socket & socket, PTPLib::net::SMTS_Event &&
             stop_schedular();
         }
 
-    } else if (&socket == &this->get_SMTS_server_socket()) {
-        this->SMTSServer_socket.write(SMTS_event);
-        if (SMTS_event.header.count("report")) {
-            auto report = ::split(SMTS_event.header["report"], ":", 2);
-            log_level level = Logger::INFO;
-            if (report.size() == 2) {
-                if (report[0] == "error")
-                    level = Logger::ERROR;
-                else if (report[0] == "warning")
-                    level = Logger::WARNING;
-            }
-            if (log_enabled)
-                synced_stream.println_bold(log_enabled ? PTPLib::common::Color::FG_Red : PTPLib::common::Color::FG_DEFAULT,
-                                           "solver report: " + report.back());
-        }
     }
 }
 
@@ -156,15 +141,16 @@ void SolverServer::push_lemma_workers()
     schedular.push_to_pool(PTPLib::common::TASK::CLAUSELEARN, 15000);
 }
 
-void SolverServer::handle_close(net::Socket & socket) {
+void SolverServer::handle_close(net::Socket & client) {
+    (void) client;
     if (log_enabled)
         synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Red : PTPLib::common::Color::FG_DEFAULT,
                               "server closed the connection");
     exit(EXIT_SUCCESS);
 }
 
-void SolverServer::handle_exception(net::Socket const & socket, const std::exception & exception) {
-    synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Red : PTPLib::common::Color::FG_DEFAULT, exception.what());
+void SolverServer::handle_exception(net::Socket const & client, const std::exception & exception) {
+    synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Red : PTPLib::common::Color::FG_DEFAULT, "Exception from: " + to_string(client.get_remote()) + ": ", exception.what());
 }
 
 void SolverServer::setUpThreadArch(PTPLib::net::SMTS_Event const & SMTS_event)
