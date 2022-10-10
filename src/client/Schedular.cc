@@ -36,7 +36,7 @@ void Schedular::memory_checker(int max_memory)
         }
         if (log_enabled)
             synced_stream.println(log_enabled ? PTPLib::common::Color::FG_Yellow : PTPLib::common::Color::FG_DEFAULT, "[ t ", __func__, "] -> "
-                       , std::to_string(memory_size_b));
+                    , std::to_string(memory_size_b/ (1024)/ (1024)) + "(MB)");
         std::unique_lock<std::mutex> lk(channel.getMutex());
         if (channel.wait_for_reset(lk, std::chrono::seconds (5)))
             break;
