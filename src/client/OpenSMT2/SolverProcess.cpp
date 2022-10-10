@@ -166,6 +166,8 @@ void cleanupRoutine(int signal_number) {
 }
 
 void SolverProcess::partition(PTPLib::net::SMTS_Event & SMTS_Event, uint8_t n) {
+    if (getMainSplitter().getStatus() != s_Undef) return;
+    
 //    fork() returns -1 if it fails, and if it succeeds, it returns the forked child's pid in the parent, and 0 in the child.
     forked_partitionId = fork();
     if (forked_partitionId == -1) {
