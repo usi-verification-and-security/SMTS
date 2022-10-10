@@ -13,9 +13,4 @@ add_library(Lib STATIC
 
 target_compile_definitions(Lib PRIVATE -DSMTS_VERSION=${SMTS_VERSION})
 
-if (SQLITE3_Enabled)
-    target_link_libraries(Lib ${SQLITE3_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
-    target_compile_definitions(Lib PUBLIC -DSQLITE_IS_ON)
-endif()
-
 target_link_libraries(Lib PUBLIC PTPLib::PTPLib Threads::Threads)

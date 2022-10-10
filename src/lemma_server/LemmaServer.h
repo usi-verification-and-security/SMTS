@@ -13,9 +13,6 @@
 #include "Settings.h"
 #include "Node.h"
 #include "lib/net.h"
-#ifdef SQLITE_IS_ON
-#include "lib/sqlite3.h"
-#endif
 
 #include <PTPLib/net/Channel.hpp>
 #include <PTPLib/threads/ThreadPool.hpp>
@@ -28,9 +25,6 @@ private:
     bool send_again;
     std::shared_ptr<net::Socket> server;
     PTPLib::net::Channel<PTPLib::net::SMTS_Event, PTPLib::net::Lemma> channel;
-#ifdef SQLITE_IS_ON
-    std::shared_ptr<SQLite3::Connection> db;
-#endif
     std::unordered_map<std::string, Node> lemmas;                            // name -> lemmas
     std::unordered_map<std::string, std::unordered_map<int, std::unordered_map<Lemma *, bool>>> solvers;  // name -> solver -> lemma -> t/f
     bool logEnabled = false;
@@ -62,7 +56,7 @@ protected:
     void memory_checker(int);
 
 public:
-    LemmaServer(uint16_t, const std::string &, const std::string &, bool send_again);
+    LemmaServer(uint16_t, const std::string &, bool send_again);
 };
 
 #endif

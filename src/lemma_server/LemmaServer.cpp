@@ -18,7 +18,7 @@
 #include <string>
 #include <algorithm>
 
-LemmaServer::LemmaServer(uint16_t port, const std::string &server, const std::string &db_filename, bool send_again)
+LemmaServer::LemmaServer(uint16_t port, const std::string &server, bool send_again)
 : Server(port)
 , send_again(send_again)
 , pool(__FUNCTION__, 1) {
@@ -29,26 +29,6 @@ LemmaServer::LemmaServer(uint16_t port, const std::string &server, const std::st
         this->server->write(PTPLib::net::SMTS_Event(std::move(header)));
         this->add_socket(this->server);
     }
-
-#ifdef SQLITE_IS_ON
-    if (db_filename.size()) {
-        this->db.reset(new SQLite3::Connection(db_filename));
-        this->db->exec("CREATE TABLE IF NOT EXISTS Push("
-                               "id INTEGER PRIMARY KEY, "
-                               "ts INTEGER, "
-                               "name TEXT, "
-                               "node TEXT, "
-                               "data TEXT"
-                               ");");
-        this->db->exec("CREATE TABLE IF NOT EXISTS Lemma("
-                               "id INTEGER PRIMARY KEY, "
-                               "pid INTEGER REFERENCES Push(id), "
-                               "level INTEGER, "
-                               "score INTEGER, "
-                               "smtlib TEXT"
-                               ");");
-    }
-#endif
 };
 
 void LemmaServer::notify_reset() {

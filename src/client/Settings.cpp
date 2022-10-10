@@ -1,11 +1,16 @@
-//
-// Author: Matteo Marescotti
-//
+/*
+ * Copyright (c) Matteo Marescotti <Matteo.marescotti@usi.ch>
+ * Copyright (c) 2022, Antti Hyvarinen <antti.hyvarinen@gmail.com>
+ * Copyright (c) 2022, Seyedmasoud Asadzadeh <seyedmasoud.asadzadeh@usi.ch>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#include "Settings.h"
+#include "lib/Logger.h"
 
 #include <getopt.h>
 #include <sstream>
-#include "Settings.h"
-#include "lib/Logger.h"
 
 Settings::Settings() :
         verbose(false),
@@ -14,7 +19,7 @@ Settings::Settings() :
 
 void Settings::load(int argc, char **argv) {
     int opt;
-    while ((opt = getopt(argc, argv, "hvs:l:kdp:r:")) != -1)
+    while ((opt = getopt(argc, argv, "hvs:l:kp:r:")) != -1)
         switch (opt) {
             case 'h':
                 new(this) Settings();
@@ -26,7 +31,6 @@ void Settings::load(int argc, char **argv) {
                                   "[-l lemma_server-host:port]\n"
                                   "[-v] verbose\n"
                                   "[-k] (only for file mode) keep lemmas in lemma server after solving\n"
-                                  "[-d] dump clauses without solving (only for file mode)\n"
                                   "[-p parameter-json] (only for file mode)\n"
                                   "[-r parameter-key=value] (only for file mode)\n"
                                   "[file1 ...] (only for file mode)\n";
@@ -42,9 +46,6 @@ void Settings::load(int argc, char **argv) {
                 break;
             case 'k':
                 this->keep_lemmas = true;
-                break;
-            case 'd':
-                this->dump_clauses = true;
                 break;
             case 'p':
                 std::istringstream(optarg) >> this->parameters;
