@@ -24,6 +24,7 @@ if __name__ == '__main__':
     parser.add_argument('-el', dest='log_mode', action='store_true', help='enable logging system-widely')
     pg = parser.add_argument_group('partitioning')
     pg.add_argument('-pt', dest='partition_timeout', type=int, metavar='N', help='partition timeout')
+    pg.add_argument('-nt', dest='node_timeout', type=int, metavar='N', help='node timeout')
     pg.add_argument('-p', dest='partitioning', action='store_true', help='enable partitioning')
     lg = parser.add_argument_group('lemma sharing')
     lg.add_argument('-l', dest='lemma_sharing', action='store_true', help='enable lemma sharing')
@@ -45,6 +46,8 @@ if __name__ == '__main__':
 
     if args.partition_timeout:
         schedular.config.partition_timeout = args.partition_timeout
+    if args.node_timeout:
+        schedular.config.node_timeout = args.node_timeout
     if not args.partitioning:
         schedular.config.partition_timeout = None;
     if args.log_mode:
