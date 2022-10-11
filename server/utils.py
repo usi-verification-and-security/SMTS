@@ -16,7 +16,6 @@ import pathlib
 import argparse
 import os
 import threading
-from time import sleep
 
 __author__ = 'Matteo Marescotti'
 
