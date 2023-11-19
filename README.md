@@ -91,7 +91,7 @@ Set `visualize_tree = True` within `server/config/default.py`.
 
 ![example](./server/vt.jpg)
 #### SMTS participated in:
-Cloud and Parallel tracks for [SMT-COMP 21](https://smt-comp.github.io/2021/parallel-and-cloud-tracks.html) and [SMT-COMP 21](https://smt-comp.github.io/2022/parallel-and-cloud-tracks.html) .
+Cloud and Parallel tracks for [SMT-COMP 21](https://smt-comp.github.io/2021/parallel-and-cloud-tracks.html) and [SMT-COMP 22](https://smt-comp.github.io/2022/parallel-and-cloud-tracks.html) .
 
 Contact
 =====
