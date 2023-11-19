@@ -1,9 +1,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Gitter](https://badges.gitter.im/usi-verification-and-security/smts.svg)](https://gitter.im/usi-verification-and-security/smts?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 # SMTS
-
 ### Cloud and Parallel Solver
-[SMTS](https://verify.inf.usi.ch/smts) is a framework for organising and visualizing executions of SMT and PDR in distributed computing environments.  The design is based on a general parallelization technique that supports recursively combining algorithm portfolios and divide-and-conquer with the exchange of learned information. 
-The system is a client-server architecture that communicates with a custom protocol over TCP/IP. New features for 2022 include the complete implementation of the partition tree protocol with clause sharing. On a high level, the parallel solver partitions the instance dynamically on-demand and allows clauses to be shared between solvers working on different instances whenever this is allowed based on the information in the solvers. The dynamic partitioning is implemented as an iteration in a tree of consisting of partitioned instances, and the instances in inner nodes are considered equally to those in the leaves. This aproach guarantees under reasonable assumptions on the instance’s run time distribution that the parallel solver will not be slower than the sequential solver. For a fair and load-balanced scheduling of solving of the partitions, the solvers are distributed over the instances on parameters such as whether the instance has already been attempted, how many solvers are working on the instance, and how deep in the tree the instance is. We have entered two versions of the solver to the cloud and parallel tracks: SMTS portfolio which randomises the SAT solver by choosing 2% of the decision variables randomly; and SMTS cube-and-conquer, which uses the parallelization tree approach to implement a version of search-space-partitioning.
+[SMTS](https://verify.inf.usi.ch/smts) is a framework for organising and visualizing executions of SMT and PDR in distributed computing environments.  The design is based on a general parallelization technique that supports recursively combining algorithm portfolios and divide-and-conquer with the exchange of learned information. The system is a client-server architecture that communicates with a custom protocol over TCP IP. New features for 2022 include the complete implementation of the partition tree protocol with clause sharing. On a high level the parallel solver partitions the instance dynamically on-demand and allows clauses to be shared between solvers working on different instances whenever this is allowed based on the information in the solvers. The dynamic partitioning is implemented as an iteration in a tree of consisting of partitioned instances, and the instances in inner nodes are considered equally to those in the leaves. This aproach guarantees under reasonable assumptions on the instance’s run time distribution that the parallel solver will not be slower than the sequential solver. For a fair and load-balanced scheduling of solving of the partitions, the solvers are distributed over the instances on parameters such as whether the instance has already been attempted, how many solvers are working on the instance, and how deep in the tree the instance is. We have entered two versions of the solver to the cloud and parallel tracks: SMTS portfolio which randomises the SAT solver by choosing 2% of the decision variables randomly; and SMTS cube-and-conquer, which uses the parallelization tree approach to implement a version of search-space-partitioning.
 
 
 Project page: http://verify.inf.usi.ch/smts
@@ -78,18 +76,19 @@ Solvers:
 - `-pn N`: Set the port number.
 
 
-### Lemma Server
-To run the Lemma Server, navigate to `cd build` and run:
+#### Lemma Server
+To run the Lemma Server, navigate to `build` and run:
 `./lemma_server -s127.0.0.1:3000`
-### Solver Client
-To run the solver client, navigate to `cd build` and run:
+#### Solver Client
+To run the solver client, navigate to `build` and run:
 `./solver_opensmt -s127.0.0.1:3000`
 ### Client
-To send a smt2 script to the Parallization server navigate to `cd server` and run:
-/client.py 3000 /example.smt2
 
-Feel free to use these options to configure and customize the behavior of the SMTS server according to your requirements like the following example:
-`./smts.py -el -p -l -o2`
+To send a smt2 script to the Parallization server:
+ `cd server`
+`./client.py 3000 /example.smt2`
+
+Feel free to use these options to configure and customize the behavior of the SMTS server according to your requirements.
 
 #### Visualization Tree 
 SMTS draws a partition tree when timout reached based on incoming event from the solvers:
