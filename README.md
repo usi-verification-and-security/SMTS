@@ -36,12 +36,6 @@ $ mkdir build; cd build; cmake ..; make
 ```
 
 ### Changing build type
-The default build type is RELEASE. Different build type can be configured using cmake variable CMAKE_BUILD_TYPE. For example, to create a debug build use
-```
-$ cmake -DCMAKE_BUILD_TYPE=Debug ..
-```
-
-### Changing build type
 The default build type is RELEASE. Different build types can be configured using cmake variable CMAKE_BUILD_TYPE. For example, to create a debug build use
 ```
 $ cmake -DCMAKE_BUILD_TYPE=Debug ..
