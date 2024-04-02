@@ -13,6 +13,7 @@
 
 #include <string>
 #include <list>
+#include <cstdint>
 
 class Lemma : public PTPLib::net::Lemma {
 private:

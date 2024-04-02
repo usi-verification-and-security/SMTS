@@ -11,6 +11,7 @@
 
 #include <string>
 #include <sstream>
+#include <cstdint>
 #include <sys/socket.h>
 
 namespace net {
