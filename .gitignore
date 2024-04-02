@@ -1,6 +1,7 @@
 .DS_Store
 .idea/
 __pycache__/
+.ccls-cache/
 build/
 cmake-build-debug/CMakeCache.txt
 cmake-build-debug/CMakeFiles/
