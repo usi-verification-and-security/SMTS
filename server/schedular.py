@@ -181,22 +181,15 @@ class Solver(net.Socket):
                             print("Inconsistent result ... ")
 #                        else:
 #                            return {}, b''
-        if self.node.root.name != header[constant.NAME] or str(self.node.path()) != header[constant.NODE]:
-            return {}, b''
+        if self.node.root.name != header[constant.NAME]:
+           return {}, b''
 
         del header[constant.NAME]
-        # del header[constant.NODE]
-        # if header[constant.NODE][1:len(header[constant.NODE])-1] != ', '.join(map(str, self.node.path())):
-        #     print("   Solver has left . . ..........", header[constant.NODE])
+
         if header[constant.REPORT] == constant.PARTITIONS and self.or_waiting:
             global estimate_partition_time
             node = self.or_waiting.pop()
             try:
-                # if isinstance(self.node, framework.SMT):
-                #     config.node_timeout += round(time.time() - estimate_partition_time)
-                # if payload.decode() == '':
-                #     self.ask_partitions(config.partition_policy[1])
-                #     self.partitioning = True
                 for partition in payload.decode().split('\0'):
                     if len(partition) == 0:
                         continue
@@ -217,21 +210,7 @@ class Solver(net.Socket):
             status = framework.SolveStatus.__members__[header[constant.REPORT]]
             if self.or_waiting:
                 self.or_waiting.pop()
-            # if header[constant.NODE] != str(self.node.path()):
-            #     if self.or_waiting:
-            #         node = self.or_waiting.pop()
-            #         node.parent.status = status
-            #         if status == framework.SolveStatus.unsat:
-            #             for child in node.all():
-            #                 if child.status == framework.SolveStatus.unknown:
-            #                     if isinstance(child, framework.AndNode):
-            #                         child.status = framework.SolveStatus.unsat
-            # if self.node.status != framework.SolveStatus.unknown:
-            #     return header, payload
-            # if not config.conflict:
-            #     config.conflict = header['conflict']
-            # if not config.status_info:
-            #     config.status_info = header['statusinf']
+
             path = self.node.path(True)
             self.node.status = status
             path.reverse()
@@ -241,20 +220,6 @@ class Solver(net.Socket):
                         if isinstance(child, framework.AndNode):
                             child.status = framework.SolveStatus.unsat
 
-            # for node in path:
-            #     # print("node . . ..........", node)
-            #     if node.status != framework.SolveStatus.unknown:
-            #         if isinstance(node, framework.AndNode):
-            #             self._db_log('SOLVED', {'status': node.status.name, constant.NODE: str(node.path())})
-            #     else:
-            #         break
-            # if status != framework.SolveStatus.unknown:
-            #     if self.node == self.node.root:
-            #         header['level'] = 'root'
-            #     else:
-            #         header['level'] = 'child'
-            # else:
-            #     self.stop()
 
         return header, payload
 
@@ -315,11 +280,7 @@ class ParallelizationServer(net.Server):
                         self.current.timeout = 0
                         print(";error ", message, self.current.root.name)
                         exit(1)
-                        # self.counter += 1
-                        # if self.counter == self.total_solvers:
-                        #     self.current.timeout = 0
-                        #     print('solver sends an error!', self.current.root.name)
-                        #     self.close()
+
                 except:
                     level = logging.INFO
                     message = header[constant.REPORT]
