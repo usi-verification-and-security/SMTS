@@ -3,4 +3,4 @@
 
 cd "$(dirname "$0")"
 git config --global --add safe.directory /SMTS
-git rev-list --count origin/cube-and-conquer | tr -d '\n'
+git rev-list --count origin/master | tr -d '\n'
