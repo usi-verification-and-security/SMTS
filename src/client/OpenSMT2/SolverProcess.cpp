@@ -10,8 +10,9 @@
 #include "lib/net/Report.h"
 #include "lib/Logger.h"
 
-#include <SplitterInterpret.h>
-#include <ReportUtils.h>
+// OpenSMT headers
+#include <parallel/SplitterInterpret.h>
+#include <common/ReportUtils.h>
 
 #include <cstdio>
 #include <cstdlib>
@@ -19,6 +20,19 @@
 #include <sys/wait.h>
 #include <csignal>
 #include <iostream>
+
+using opensmt::SMTConfig;
+using opensmt::SMTOption;
+
+using opensmt::sstat;
+using opensmt::s_True;
+using opensmt::s_False;
+using opensmt::s_Undef;
+using opensmt::s_Error;
+
+using opensmt::parallel::SplitterInterpret;
+using opensmt::parallel::MainSplitter;
+using opensmt::parallel::ScatterSplitter;
 
 std::string SolverProcess::solver = PTPLib::common::Param.OPENSMT2;
 
@@ -35,9 +49,9 @@ inline ScatterSplitter & getScatterSplitter() {
     return dynamic_cast<ScatterSplitter&>(getMainSplitter().getSMTSolver());
 }
 
-vec<opensmt::pair<int,int>> extractSolverBranch(std::string solverBranch_str)
+opensmt::vec<opensmt::pair<int,int>> extractSolverBranch(std::string solverBranch_str)
 {
-    vec<opensmt::pair<int,int>> solverBranch;
+    opensmt::vec<opensmt::pair<int,int>> solverBranch;
     solverBranch_str.erase(std::remove(solverBranch_str.begin(), solverBranch_str.end(), ' '), solverBranch_str.end());
     std::string const delimiter = ",";
     size_t beg, pos = 0;
@@ -80,7 +94,7 @@ SolverProcess::Result SolverProcess::init(PTPLib::net::SMTS_Event & SMTS_Event) 
     if (SMTS_Event.header.count(PTPLib::common::Param.SPLIT_PREFERENCE)) {
         config->setOption(SMTConfig::o_sat_split_preference, SMTOption(SMTS_Event.header.at(PTPLib::common::Param.SPLIT_PREFERENCE).c_str()), msg);
     }
-    config->setOption(SMTConfig::o_sat_split_units, SMTOption(spts_search_counter), msg);
+    config->setOption(SMTConfig::o_sat_split_units, SMTOption(opensmt::spts_search_counter), msg);
     config->setOption(SMTConfig::o_sat_split_inittune, SMTOption(INT_MAX), msg);
 
     if (not (splitterInterpret = new SplitterInterpret(*config, getChannel())))
@@ -167,7 +181,7 @@ void cleanupRoutine(int signal_number) {
 
 void SolverProcess::partition(PTPLib::net::SMTS_Event & SMTS_Event, uint8_t n) {
     if (getMainSplitter().getStatus() != s_Undef) return;
-    
+
 //    fork() returns -1 if it fails, and if it succeeds, it returns the forked child's pid in the parent, and 0 in the child.
     forked_partitionId = fork();
     if (forked_partitionId == -1) {
@@ -214,7 +228,7 @@ void SolverProcess::partition(PTPLib::net::SMTS_Event & SMTS_Event, uint8_t n) {
     const char *msg;
     if ( not (
             getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_num, SMTOption(int(n)),msg)                   and
-            getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_units, SMTOption(spts_search_counter), msg)   and
+            getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_units, SMTOption(opensmt::spts_search_counter), msg)   and
             getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_inittune, SMTOption(1), msg)         and
             getMainSplitter().getConfig().setOption(SMTConfig::o_sat_split_midtune, SMTOption(1), msg)
              )
@@ -258,7 +272,7 @@ void SolverProcess::partition(PTPLib::net::SMTS_Event & SMTS_Event, uint8_t n) {
         fprintf(stdout,
                 "; |           |                            |                              |          |           | \n");
         reportf("; %9d   | %8d                %8d           |           %8.3f s      | %6.3f MB\n", searchCounter,
-                getScatterSplitter().getSplitTypeValue(), getpid(), cpuTime(), memUsed() / 1048576.0);
+                getScatterSplitter().getSplitTypeValue(), getpid(), opensmt::cpuTime(), opensmt::memUsed() / 1048576.0);
         fflush(stderr);
         fprintf(stdout,
                 "; =====================================================================================================\n");
@@ -341,6 +355,3 @@ void SolverProcess::getCnfLearnts(PTPLib::net::Header &header) {
     std::string cnf = getMainSplitter().getSMTSolver().printCnfLearnts();
     net::Report::report(get_SMTS_socket(), header, header[PTPLib::common::Param.COMMAND], cnf);
 }
-
-
-

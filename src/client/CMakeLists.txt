@@ -22,7 +22,7 @@ else(OpenSMT_FOUND)
 
     if(NOT osmt_branch)
         message(STATUS "${ESCAPE}${PINK} You can choose which branch of ${solver_type} to fetch by: ${ESCAPE}${TM} ${ESCAPE}${PINK}-Dosmt_branch=<branch>${ESCAPE}${TM}")
-        set(osmt_branch v2.7.0)
+        set(osmt_branch v2.9.0)
     endif()
 
     FetchContent_Declare(
@@ -62,34 +62,10 @@ target_sources(client
 if (NOT OpenSMT_FOUND)
     target_compile_definitions(client PUBLIC OPENSMT_LOCAL_BUILD)
     message(STATUS "OpenSMT2 Directories:${opensmt_SOURCE_DIR}; ${opensmt_BINARY_DIR}")
+
     target_include_directories(client PUBLIC
-           "${opensmt_SOURCE_DIR}/src/bin"
-           "${opensmt_SOURCE_DIR}/src/symbols"
-           "${opensmt_SOURCE_DIR}/src/minisat/mtl"
-            ${opensmt_SOURCE_DIR}/src/minisat/core
-            ${opensmt_SOURCE_DIR}/src/common
-            ${opensmt_SOURCE_DIR}/src/sorts
-            ${opensmt_SOURCE_DIR}/src/symbols
-            ${opensmt_SOURCE_DIR}/src/options
-            ${opensmt_SOURCE_DIR}/src/api
-            ${opensmt_SOURCE_DIR}/src/tsolvers
-            ${opensmt_SOURCE_DIR}/src/tsolvers/egraph
-            ${opensmt_SOURCE_DIR}/src/tsolvers/lasolver
-            ${opensmt_SOURCE_DIR}/src/tsolvers/lrasolver
-            ${opensmt_SOURCE_DIR}/src/tsolvers/liasolver
-            ${opensmt_SOURCE_DIR}/src/cnfizers
-            ${opensmt_SOURCE_DIR}/src/pterms
-            ${opensmt_SOURCE_DIR}/src/logics
-            ${opensmt_SOURCE_DIR}/src/smtsolvers
-            ${opensmt_SOURCE_DIR}/src/parsers/smt2new
-            ${opensmt_SOURCE_DIR}/src/simplifiers
-            ${opensmt_SOURCE_DIR}/src/rewriters
-            ${opensmt_SOURCE_DIR}/src/proof
-            ${opensmt_SOURCE_DIR}/src/models
-            ${opensmt_SOURCE_DIR}/src/itehandler
-            ${opensmt_SOURCE_DIR}/src/interpolation
-            ${opensmt_SOURCE_DIR}/src/parallel
-            )
+        ${opensmt_SOURCE_DIR}/src
+    )
     message(STATUS "GMP dirs:${GMP_INCLUDE_DIR}")
 
 endif()
