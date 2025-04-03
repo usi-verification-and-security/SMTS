@@ -73,7 +73,8 @@ jobs:
 
     build-macos:
       macos:
-        xcode: 14.0
+        xcode: 15.4.0
+      resource_class: macos.m1.medium.gen1
       steps:
         - run:
             name: Packages
@@ -82,12 +83,10 @@ jobs:
               brew install gmp
               brew install bison
               brew install flex
-
         - checkout
         - run:
             name: Store path
-            command: echo 'export PATH=/usr/local/opt/flex/bin:/usr/local/opt/bison/bin:$PATH' >> $BASH_ENV
-
+            command: echo 'export PATH=/opt/homebrew/opt/flex/bin:/opt/homebrew/opt/bison/bin:$PATH' >> $BASH_ENV
         - run:
             name: Debug build OS X With Address Sanitizer
             command: sh ./bin/make_smts.sh
