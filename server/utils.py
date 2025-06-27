@@ -181,7 +181,8 @@ def smt2json(smt, return_string=False):
         s = re.sub(r"\(", "[", s)
         s = re.sub(r"\)", "]", s)
 
-        s = re.sub('(\{[0-9]*\})', lambda x: strings[x.group(1)], s)
+        ## Python complains if the curly brackets are escaped ...
+        s = re.sub('([{][0-9]*[}])', lambda x: strings[x.group(1)], s)
 
         return s if return_string else json.loads(s)
 
