@@ -21,6 +21,8 @@ if __name__ == '__main__':
     parser.add_argument('-d', dest='db_path', help='sqlite3 database file path')
     parser.add_argument('-fp', dest='file_paths', help='file paths')
     parser.add_argument('-g', dest='gui', action='store_true', help='run GUI in live mode')
+    parser.add_argument('-Pf', dest='print_filename', action='store_true', help='print filename in front of the result')
+    parser.add_argument('-Pt', dest='print_runtime', action='store_true', help='print elapsed runtime')
     parser.add_argument('-el', dest='log_mode', action='store_true', help='enable logging system-widely')
     pg = parser.add_argument_group('partitioning')
     pg.add_argument('-pt', dest='partition_timeout', type=int, metavar='N', help='partition timeout')
@@ -49,9 +51,13 @@ if __name__ == '__main__':
     if args.node_timeout:
         schedular.config.node_timeout = args.node_timeout
     if not args.partitioning:
-        schedular.config.partition_timeout = None;
+        schedular.config.partition_timeout = None
+    if args.print_filename:
+        schedular.config.printFilename = args.print_filename
+    if args.print_runtime:
+        schedular.config.printRuntime = args.print_runtime
     if args.log_mode:
-        schedular.config.enableLog = args.log_mode;
+        schedular.config.enableLog = args.log_mode
     if args.gui:
         schedular.config.gui = args.gui
     # if args.lemma_sharing:
