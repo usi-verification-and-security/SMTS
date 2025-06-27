@@ -435,11 +435,13 @@ class ParallelizationServer(net.Server):
                         for sp in framework.SplitPreference.__members__.values():
                             del self.trees[self.current.root.name + sp.value]
                 ## This prints out the overall result
-                filename = self.current.root.name if self.config.printFilename else None
-                runtime = round(time.time() - self.current.started, 2) if self.config.printRuntime else None
+                filename = self.current.root.name
+                runtime = round(time.time() - self.current.started, 2)
                 if not self.config.enableLog and self.current:
                     self.log(logging.INFO, '{}'.format(self.current.root.status.name),
-                             filename, runtime, header)
+                             filename if self.config.printFilename else None,
+                             runtime if self.config.printRuntime else None,
+                             header)
                     del self.trees[self.current.root.name]
                 else:
                     # self.log(logging.INFO, self.current.root.status.name , self.current.root.name, round(time.time() - self.current.started, 2))
