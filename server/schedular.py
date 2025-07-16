@@ -181,8 +181,10 @@ class Solver(net.Socket):
                             print("Inconsistent result ... ")
 #                        else:
 #                            return {}, b''
-        if self.node.root.name != header[constant.NAME]:
-           return {}, b''
+        ## this fixes logging but introduces unsoudness!!!
+        ## if self.node.root.name != header[constant.NAME]:
+        if self.node.root.name != header[constant.NAME] or str(self.node.path()) != header[constant.NODE]:
+            return {}, b''
 
         del header[constant.NAME]
 
