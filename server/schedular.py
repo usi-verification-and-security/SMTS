@@ -575,6 +575,7 @@ class ParallelizationServer(net.Server):
                                     self.idle_solvers.append(solver)
                                     config.partition_count -= 1
                             node.assumed_timout = True
+                    ##+ investigate more thoroughly the impact of this elif branch for dynamic timeout mode
                     elif not config.node_timeout and len(node) == 0 and len(self.solvers(node)) == 1:
                         if round(time.time() - self.current.root.started) < 60:
                             config.node_timeout = 60
