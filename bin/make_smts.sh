@@ -10,4 +10,7 @@ cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
       -DENABLE_LINE_EDITING:BOOL=${ENABLE_LINE_EDITING} \
       ..
 
-make -j$(nproc)
+[ -n $1 ] && NPROC=$1
+[ -z $NPROC ] && NPROC=$(nproc)
+
+make -j$NPROC
