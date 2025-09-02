@@ -521,7 +521,10 @@ class ParallelizationServer(net.Server):
                                                       isinstance(node, framework.AndNode) and not node.processed))
 
             def un_attempted_active_leaves():
-                return (node for node in nodes if (len(node) == 0 and node.status == framework.SolveStatus.unknown and
+                # _nodes = nodes
+                _nodes = self.current.root.all()
+                _nodes.sort(reverse=True)
+                return (node for node in _nodes if (len(node) == 0 and node.status == framework.SolveStatus.unknown and
                                                    node.started is None and isinstance(node, framework.AndNode) and not node.processed))
 
             movable_solvers = []
