@@ -35,7 +35,7 @@ lemmaPush_timeoutMax = 30000
 lemmaPull_timeoutMin = 20000    # a timespan to distribute solvers "pull operation" to the lemma server
 lemmaPull_timeoutMax = 40000
 clientLogColorMode = False      # to enable color at logging
-partition_count = 0             # total number of valid partition SMTS would receive per instance
+partition_count = 1             # total number of valid partition SMTS would receive per instance
 spit_preference = False
 
 # parameters is a dictionary solver_name.solver_parameter -> value:(int, str, callable)  where:

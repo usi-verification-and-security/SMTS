@@ -552,7 +552,7 @@ class ParallelizationServer(net.Server):
                         for solver in self.solvers(node):
                             if solver in self.idle_solvers:
                                 self.idle_solvers.remove(solver)
-                            else:
+                            elif not node.assumed_timout:
                                 config.partition_count -= 1
                             solved_solvers.add(solver)
                     elif config.node_timeout and (node.started and node.started + config.node_timeout <= time.time()):
