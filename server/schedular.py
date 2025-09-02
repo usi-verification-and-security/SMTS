@@ -579,6 +579,10 @@ class ParallelizationServer(net.Server):
                                     self.idle_solvers.append(solver)
                                     config.partition_count -= 1
                             node.assumed_timout = True
+                        else:
+                            for solver in self.solvers(node):
+                                if solver not in self.idle_solvers:
+                                    self.idle_solvers.append(solver)
                     ##+ investigate more thoroughly the impact of this elif branch for dynamic timeout mode
                     elif not config.node_timeout and len(node) == 0 and len(self.solvers(node)) == 1:
                         if round(time.time() - self.current.root.started) < 60:
@@ -591,8 +595,15 @@ class ParallelizationServer(net.Server):
                             if not self.solvers(node) and node.assumed_timout:
                                 solver_partition = True
             if solved_solvers:
-                childs = self.current.root.childeren()
+                childs = [self.current.root]
                 while 0 != len(solved_solvers):
+                    if to_partition_node is not None and not self.solvers(to_partition_node):
+                        s_solver = solved_solvers.pop()
+                        assert s_solver.node != to_partition_node
+                        s_solver.incremental(to_partition_node)
+                        solver_partition = False
+                        continue
+
                     for child in childs:
                         try:
                             all_active_node = list(all_active_nodes(child.all()))
@@ -637,6 +648,7 @@ class ParallelizationServer(net.Server):
                     try:
                         for solver in self.idle_solvers:
                             if solver.node is not None and solver.node.is_ancestor(node):
+                                assert solver.node is not to_partition_node
                                 self.idle_solvers.remove(solver)
                                 solver.incremental(node)
 
@@ -669,9 +681,11 @@ class ParallelizationServer(net.Server):
 
     def partition(self, node: framework.AndNode, force=False):
         max_children = self.level_children(node.level)
+        assert max_children - len(node) > 0
         for i in range(max_children - len(node)):
             # solvers = list(self.solvers(node))
             # random.shuffle(solvers)
+            ##! with multiple solvers sometimes still does not partition because there is no solver at node
             for solver in self.solvers(node):
                 if force or solver.started + self.config.partition_timeout <= time.time():
                     solver.ask_partitions(self.level_children(node.level + 1))
