@@ -90,11 +90,14 @@ class Node:
                 return False
         return True
 
-    def all(self):
+    def all_children(self):
         nodes = [self]
         for node in self:
-            nodes += node.all()
+            nodes += node.all_children()
         return nodes
+
+    def all_and_children(self):
+        pass
 
     def clear(self):
         self._children.clear()
@@ -160,7 +163,14 @@ class AndNode(Node):
             if status == SolveStatus.sat or all([node.status == status for node in self.parent]):
                 self.parent.status = status
 
-    def childeren(self):
+    def all_and_children(self):
+        nodes = [self]
+        for node in self:
+            assert isinstance(node, OrNode)
+            nodes += node.all_and_children()
+        return nodes
+
+    def remaining_children(self):
         childs = []
         for ch in (self._children[0])._children:
             if ch.status == SolveStatus.unknown:
@@ -192,6 +202,13 @@ class OrNode(Node):
     def _set_status(self, status: SolveStatus):
         self._status = status
         self.parent.status = status
+
+    def all_and_children(self):
+        nodes = []
+        for node in self:
+            assert isinstance(node, AndNode)
+            nodes += node.all_and_children()
+        return nodes
 
 
 class Root(AndNode):

@@ -171,7 +171,7 @@ class Solver(net.Socket):
 
         if config.debug:
             if str(self.node.path()) != header[constant.NODE] and header[constant.REPORT] == constant.PARTITIONS:
-                for n in self.node.root.all():
+                for n in self.node.root.all_children():
                     if str(n.path()) == header[constant.NODE]:
                         if n.status == framework.SolveStatus.unknown:
                             print(utils.bcolors.FAIL + ";illegal move from ", self.node.path(), " SOLVER POS: ", header + utils.bcolors.ENDC)
@@ -217,10 +217,9 @@ class Solver(net.Socket):
             self.node.status = status
             path.reverse()
             if status == framework.SolveStatus.unsat:
-                for child in self.node.all():
+                for child in self.node.all_and_children():
                     if child.status == framework.SolveStatus.unknown:
-                        if isinstance(child, framework.AndNode):
-                            child.status = framework.SolveStatus.unsat
+                        child.status = framework.SolveStatus.unsat
 
 
         return header, payload
@@ -425,7 +424,7 @@ class ParallelizationServer(net.Server):
                     self.v_tree.clear()
                 if self.current.root.status == framework.SolveStatus.unknown:
                     if self.current.root.partitioning:
-                        if not self.current.root.childeren():
+                        if not self.current.root.remaining_children():
                             if not self.terminate:
                                 print(';error,stuck',self.current.root.name)
                                 for solver in {solver for solver in self.all_solvers()}:
@@ -513,19 +512,17 @@ class ParallelizationServer(net.Server):
         assert isinstance(self.current, Instance)
         if config.partition_timeout:
 
-            nodes = self.current.root.all()
-            nodes.sort(reverse=False)
+            nodes = self.get_nodes(unsolved=False)
 
             def all_active_nodes(sub_tree):
+                ## assuming that the sub_tree only contains and-nodes
                 return (node for node in sub_tree if (node.status == framework.SolveStatus.unknown and
-                                                      isinstance(node, framework.AndNode) and not node.processed))
+                                                      not node.processed))
 
             def un_attempted_active_leaves():
-                # _nodes = nodes
-                _nodes = self.current.root.all()
-                _nodes.sort(reverse=True)
+                _nodes = self.get_nodes(reverse=True, unsolved=False)
                 return (node for node in _nodes if (len(node) == 0 and node.status == framework.SolveStatus.unknown and
-                                                   node.started is None and isinstance(node, framework.AndNode) and not node.processed))
+                                                   node.started is None and not node.processed))
 
             movable_solvers = []
             solved_solvers = set()
@@ -533,7 +530,8 @@ class ParallelizationServer(net.Server):
             solver_partition = False
 
             for node in nodes:
-                if isinstance(node, framework.AndNode) and not node.processed:
+                assert isinstance(node, framework.AndNode)
+                if not node.processed:
                     # if p_node and str(node.path()) == p_node and node.status == framework.SolveStatus.unknown:
                     #     p_node = node
                     # elif solved_moved_node and str(node.path()) == solved_moved_node:
@@ -606,7 +604,7 @@ class ParallelizationServer(net.Server):
 
                     for child in childs:
                         try:
-                            all_active_node = list(all_active_nodes(child.all()))
+                            all_active_node = list(all_active_nodes(child.all_and_children()))
                             for ch in sorted(all_active_node, key=lambda leave: len(self.solvers_at(leave)), reverse=False):
                                 if len(solved_solvers) != 0:
                                     s_solver = solved_solvers.pop()
@@ -630,7 +628,7 @@ class ParallelizationServer(net.Server):
                     movable_solvers = list(self.active_solvers())
 
                 while 0 != len(movable_solvers):
-                    for node in p_node.childeren():
+                    for node in p_node.remaining_children():
                         if len(movable_solvers) == 0:
                             break
                         try:
@@ -678,6 +676,13 @@ class ParallelizationServer(net.Server):
             if to_partition_node is not None:
                 if self.total_solvers > config.partition_count:
                     self.partition(to_partition_node)
+
+    def get_nodes(self, reverse=False, unsolved=True):
+        nodes = self.current.root.all_and_children()
+        if unsolved:
+            nodes = [n for n in nodes if not n.solved]
+        nodes.sort(reverse=reverse)
+        return nodes
 
     def partition(self, node: framework.AndNode, force=False):
         max_children = self.level_children(node.level)
