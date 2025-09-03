@@ -380,7 +380,7 @@ class ParallelizationServer(net.Server):
             except:
                 pass
         if isinstance(sock, LemmaServer):
-            for solver in self.solvers(False):
+            for solver in self.all_solvers():
                 solver.set_lemma_server()
 
     def handle_timeout(self):
@@ -403,7 +403,7 @@ class ParallelizationServer(net.Server):
             # if not self.terminate:
             #     if sum(map(lambda solver: isinstance(solver, Solver), self._rlist)) != self.total_solvers and self.total_solvers != 0:
             #         print(';error, solvers are lost ', self.current.root.name)
-            #         for solver in {solver for solver in self.solvers(False)}:
+            #         for solver in {solver for solver in self.all_solvers()}:
             #             solver.terminate()
             #         self.terminate = True
             #         return
@@ -428,7 +428,7 @@ class ParallelizationServer(net.Server):
                         if not self.current.root.childeren():
                             if not self.terminate:
                                 print(';error,stuck',self.current.root.name)
-                                for solver in {solver for solver in self.solvers(False)}:
+                                for solver in {solver for solver in self.all_solvers()}:
                                     solver.terminate()
                                 self.terminate = True
                                 return
@@ -452,7 +452,7 @@ class ParallelizationServer(net.Server):
                             'solved' if self.current.root.status != framework.SolveStatus.unknown else 'timeout', filename,
                             runtime))
 
-                for solver in {solver for solver in self.solvers(False) if solver.node.root == self.current.root}:
+                for solver in {solver for solver in self.all_solvers() if solver.node.root == self.current.root}:
                     solver.stop()
                 if self.lemma_server:
                     self.lemma_server.reset(self.current.root)
@@ -467,13 +467,13 @@ class ParallelizationServer(net.Server):
 
                 if self.config.enableLog:
                     self.log(logging.INFO, 'solving instance "{}"'.format(self.current.root.name))
-                self.total_solvers = len(self.solvers(False))
-                for solver in self.solvers(None):
+                self.total_solvers = len(self.all_solvers())
+                for solver in self.new_solvers():
                     assert isinstance(solver, Solver)
                     parameters = {}
                     # if self.config.lemma_amount:
                     #     parameters[constant.LEMMAS] = self.config.lemma_amount
-                    self.config.entrust(self.current.root, parameters, solver.name, self.solvers(self.current.root))
+                    self.config.entrust(self.current.root, parameters, solver.name, self.solvers_at(self.current.root))
                     # self.seed_counter += 1
                     # if config.lemma_sharing:
                     #     parameters.update({
@@ -492,7 +492,7 @@ class ParallelizationServer(net.Server):
             for solver in self.newly_joint_solver():
                 self.total_solvers += 1
                 parameters = {}
-                self.config.entrust(self.current.root, parameters, solver.name, self.solvers(self.current.root))
+                self.config.entrust(self.current.root, parameters, solver.name, self.solvers_at(self.current.root))
                 self.counter += 1
                 parameters['parameter.seed'] = self.counter
                 solver.solve(self.current.root, parameters)
@@ -544,7 +544,7 @@ class ParallelizationServer(net.Server):
                     if node.status == framework.SolveStatus.unsat:
                         if node.parent:
                             if node.parent.parent.status == framework.SolveStatus.unknown:
-                                for solver in self.solvers(node.parent.parent):
+                                for solver in self.solvers_at(node.parent.parent):
                                     if solver in self.idle_solvers:
                                         self.idle_solvers.remove(solver)
                                     else:
@@ -552,7 +552,7 @@ class ParallelizationServer(net.Server):
                                     solved_solvers.add(solver)
                                 node.parent.parent.processed = True
                         node.processed = True
-                        for solver in self.solvers(node):
+                        for solver in self.solvers_at(node):
                             if solver in self.idle_solvers:
                                 self.idle_solvers.remove(solver)
                             elif not node.assumed_timout:
@@ -562,11 +562,11 @@ class ParallelizationServer(net.Server):
                         if node.partitioning and (node._children[0])._children:
                             global estimate_partition_time
                             if node.assumed_timout:
-                                for solver in self.solvers(node):
+                                for solver in self.solvers_at(node):
                                     if solver not in self.idle_solvers:
                                         self.idle_solvers.append(solver)
                             else:
-                                for solver in self.solvers(node):
+                                for solver in self.solvers_at(node):
                                     if solver not in self.idle_solvers:
                                         self.idle_solvers.append(solver)
                                         config.partition_count -= 1
@@ -574,17 +574,17 @@ class ParallelizationServer(net.Server):
                             node.is_timeout = True
 
                         elif not node.assumed_timout:
-                            for solver in self.solvers(node):
+                            for solver in self.solvers_at(node):
                                 if solver not in self.idle_solvers:
                                     self.idle_solvers.append(solver)
                                     config.partition_count -= 1
                             node.assumed_timout = True
                         else:
-                            for solver in self.solvers(node):
+                            for solver in self.solvers_at(node):
                                 if solver not in self.idle_solvers:
                                     self.idle_solvers.append(solver)
                     ##+ investigate more thoroughly the impact of this elif branch for dynamic timeout mode
-                    elif not config.node_timeout and len(node) == 0 and len(self.solvers(node)) == 1:
+                    elif not config.node_timeout and len(node) == 0 and len(self.solvers_at(node)) == 1:
                         if round(time.time() - self.current.root.started) < 60:
                             config.node_timeout = 60
                         else:
@@ -592,12 +592,12 @@ class ParallelizationServer(net.Server):
                     if not node.partitioning and not node.processed and len(node) == 0:
                         if to_partition_node is None:
                             to_partition_node = node
-                            if not self.solvers(node) and node.assumed_timout:
+                            if not self.solvers_at(node) and node.assumed_timout:
                                 solver_partition = True
             if solved_solvers:
                 childs = [self.current.root]
                 while 0 != len(solved_solvers):
-                    if to_partition_node is not None and not self.solvers(to_partition_node):
+                    if to_partition_node is not None and not self.solvers_at(to_partition_node):
                         s_solver = solved_solvers.pop()
                         assert s_solver.node != to_partition_node
                         s_solver.incremental(to_partition_node)
@@ -607,7 +607,7 @@ class ParallelizationServer(net.Server):
                     for child in childs:
                         try:
                             all_active_node = list(all_active_nodes(child.all()))
-                            for ch in sorted(all_active_node, key=lambda leave: len(self.solvers(leave)), reverse=False):
+                            for ch in sorted(all_active_node, key=lambda leave: len(self.solvers_at(leave)), reverse=False):
                                 if len(solved_solvers) != 0:
                                     s_solver = solved_solvers.pop()
                                     s_solver.incremental(ch)
@@ -618,7 +618,7 @@ class ParallelizationServer(net.Server):
             if partition_recieved:
                 if config.portfolio_min:
                     for _node in p_node.path_to_node():
-                        solvers = self.solvers(_node)
+                        solvers = self.solvers_at(_node)
 
                         counter = len(solvers)
                         for solver in solvers:
@@ -627,7 +627,7 @@ class ParallelizationServer(net.Server):
                                     counter -= 1
                                     movable_solvers.append(solver)
                 else:
-                    movable_solvers = list(self.solvers(True))
+                    movable_solvers = list(self.active_solvers())
 
                 while 0 != len(movable_solvers):
                     for node in p_node.childeren():
@@ -654,7 +654,7 @@ class ParallelizationServer(net.Server):
 
                                 raise StopIteration
                             elif len(solver.node) == 0 and solver.node.assumed_timout and not node.is_timeout and \
-                                    not self.solvers(node) and solver.node is not node:
+                                    not self.solvers_at(node) and solver.node is not node:
                                 self.idle_solvers.remove(solver)
                                 solver.incremental(node)
 
@@ -683,25 +683,31 @@ class ParallelizationServer(net.Server):
         max_children = self.level_children(node.level)
         assert max_children - len(node) > 0
         for i in range(max_children - len(node)):
-            # solvers = list(self.solvers(node))
+            # solvers = list(self.solvers_at(node))
             # random.shuffle(solvers)
             ##! with multiple solvers sometimes still does not partition because there is no solver at node
-            for solver in self.solvers(node):
+            for solver in self.solvers_at(node):
                 if force or solver.started + self.config.partition_timeout <= time.time():
                     solver.ask_partitions(self.level_children(node.level + 1))
                     return True
         return False
 
-    # node = False : return all solvers
-    # node = True  : return all non idle solvers
-    # node = None  : return all idle solvers
-    def solvers(self, node):
+
+    def all_solvers(self):
         return {solver for solver in self._rlist
-                if isinstance(solver, Solver) and (
-                        node is False or
-                        (node is True and solver.node is not None) or
-                        solver.node == node
-                )}
+                if isinstance(solver, Solver)}
+
+    def solvers_at(self, node):
+        return {solver for solver in self._rlist
+                if isinstance(solver, Solver) and solver.node == node}
+
+    def active_solvers(self):
+        return {solver for solver in self._rlist
+                if isinstance(solver, Solver) and solver.node is not None}
+
+    def new_solvers(self):
+        return {solver for solver in self._rlist
+                if isinstance(solver, Solver) and solver.node is None}
 
     def newly_joint_solver(self):
         return {solver for solver in self._rlist
@@ -723,7 +729,7 @@ class ParallelizationServer(net.Server):
         global comment
         self.v_tree.filename = self.current.root.name  + '.gv';
         # self.node_dict = sorted(self.node_dict.items(), key=self.node_dict.get(2))
-        self.v_tree.attr(bgcolor='white',rankdir='UP', label='\n Solvers: ' + str(len(self.solvers(False)) ) + '    Portfolio: '
+        self.v_tree.attr(bgcolor='white',rankdir='UP', label='\n Solvers: ' + str(len(self.all_solvers()) ) + '    Portfolio: '
                                                              + str(self.config.portfolio_min) + '    Node Timeout: ' +
                                                              str(self.config.node_timeout) + '      Partition Policy ' +
                                                              str(self.config.partition_policy) + '      Elapsed Time: ' +str(round(solved_time))+
