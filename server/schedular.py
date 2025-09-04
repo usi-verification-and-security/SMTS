@@ -423,7 +423,7 @@ class ParallelizationServer(net.Server):
                     self.v_tree.clear()
                 if self.current.root.status == framework.SolveStatus.unknown:
                     if self.current.root.partitioning:
-                        if not self.current.root.remaining_children():
+                        if not self.current.root.remaining_and_children():
                             if not self.terminate:
                                 print(';error,stuck',self.current.root.name)
                                 for solver in {solver for solver in self.all_solvers()}:
@@ -626,7 +626,7 @@ class ParallelizationServer(net.Server):
                     movable_solvers = list(self.active_solvers())
 
                 while 0 != len(movable_solvers):
-                    for node in p_node.remaining_children():
+                    for node in p_node.remaining_and_children():
                         if len(movable_solvers) == 0:
                             break
                         try:
@@ -700,7 +700,7 @@ class ParallelizationServer(net.Server):
         return {solver for solver in self._rlist
                 if isinstance(solver, Solver)}
 
-    def solvers_at(self, node):
+    def solvers_at(self, node: framework.AndNode):
         return {solver for solver in self._rlist
                 if isinstance(solver, Solver) and solver.node == node}
 

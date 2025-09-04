@@ -170,7 +170,7 @@ class AndNode(Node):
             nodes += node.all_and_children()
         return nodes
 
-    def remaining_children(self):
+    def remaining_and_children(self):
         childs = []
         for ch in (self._children[0])._children:
             if ch.status == SolveStatus.unknown:
@@ -201,7 +201,9 @@ class OrNode(Node):
 
     def _set_status(self, status: SolveStatus):
         self._status = status
-        self.parent.status = status
+        assert self.parent
+        if self.parent.status != status:
+            self.parent.status = status
 
     def all_and_children(self):
         nodes = []
