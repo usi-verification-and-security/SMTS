@@ -509,8 +509,7 @@ class ParallelizationServer(net.Server):
             return
 
         assert isinstance(self.current, Instance)
-        if config.partition_timeout:
-
+        if config.partitioning():
             nodes = self.get_nodes(unsolved=False)
 
             def all_active_nodes(sub_tree):

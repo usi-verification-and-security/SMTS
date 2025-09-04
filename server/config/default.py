@@ -6,7 +6,8 @@ db_path = None                  # sqlite3 event db path absolute or relative to 
 table_prefix = ''               # db table prefix
 portfolio_max = 0               # 0 if no limit
 portfolio_min = 1               # 0 if no limit
-partition_timeout = 10          # None if no partitioning
+## minimum solving time for a solver before it can do partitioning
+partition_timeout = 0           # None if no partitioning
 node_timeout = None             # None for automatic calculation timeout
 partition_policy = [1, 2]       # [number of solvers, number of partition per solver]
 solving_timeout = 2000          # None for no timeout
@@ -35,7 +36,8 @@ lemmaPush_timeoutMax = 30000
 lemmaPull_timeoutMin = 20000    # a timespan to distribute solvers "pull operation" to the lemma server
 lemmaPull_timeoutMax = 40000
 clientLogColorMode = False      # to enable color at logging
-partition_count = 1             # total number of valid partition SMTS would receive per instance
+##! should not be in config, here just to make it "global"
+partition_count = 1             # total number of remaining partitions
 spit_preference = False
 
 # parameters is a dictionary solver_name.solver_parameter -> value:(int, str, callable)  where:
