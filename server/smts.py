@@ -3,6 +3,7 @@
 
 from version import version
 import schedular as schedular
+import config
 import utils
 import argparse
 import logging
@@ -15,7 +16,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='=== SMTS version {} ==='.format(version))
 
     parser.add_argument('--version', action='version', version=str(version))
-    parser.add_argument('-c', dest='config_path', nargs='+', type=lambda value: schedular.config.extend(value),
+    parser.add_argument('-c', dest='config_path', nargs='+', type=lambda value: config.extend(value),
                         help='config files path. following files update previous ones')
     parser.add_argument('-L', dest='list', action='store_true', help='list config parameters and exit')
     parser.add_argument('-d', dest='db_path', help='sqlite3 database file path')
@@ -39,53 +40,53 @@ if __name__ == '__main__':
     sg.add_argument('-pn', dest='port', type=int, metavar='N', help='port number')
 
     args = parser.parse_args()
-    port = schedular.config.port
+    port = config.port
     if args.port:
         port = args.port
     if args.db_path:
-        schedular.config.db_path = args.db_path
-    schedular.config.db()
+        config.db_path = args.db_path
+    config.db()
 
     if args.partition_timeout:
-        schedular.config.partition_timeout = args.partition_timeout
+        config.partition_timeout = args.partition_timeout
     if args.node_timeout:
-        schedular.config.node_timeout = args.node_timeout
+        config.node_timeout = args.node_timeout
     if not args.partitioning:
-        schedular.config.partition_timeout = None
+        config.partition_timeout = None
     if args.print_filename:
-        schedular.config.printFilename = args.print_filename
+        config.printFilename = args.print_filename
     if args.print_runtime:
-        schedular.config.printRuntime = args.print_runtime
+        config.printRuntime = args.print_runtime
     if args.log_mode:
-        schedular.config.enableLog = args.log_mode
+        config.enableLog = args.log_mode
     if args.gui:
-        schedular.config.gui = args.gui
+        config.gui = args.gui
     # if args.lemma_sharing:
-    #     schedular.config.lemma_sharing = args.lemma_sharing
+    #     config.lemma_sharing = args.lemma_sharing
     if args.lemma_db:
-        schedular.config.lemma_db_path = args.lemma_db
+        config.lemma_db_path = args.lemma_db
     if args.lemma_resend:
-        schedular.config.lemma_resend = args.lemma_resend
+        config.lemma_resend = args.lemma_resend
     if args.opensmt:
-        schedular.config.opensmt = args.opensmt
+        config.opensmt = args.opensmt
     if args.z3spacer:
-        schedular.config.z3spacer = args.z3spacer
+        config.z3spacer = args.z3spacer
     if args.sally:
-        schedular.config.sally = args.sally
+        config.sally = args.sally
 
     if args.list:
-        for attr_name in dir(schedular.config):
+        for attr_name in dir(config):
             if attr_name.startswith('_'):
                 continue
-            attr = getattr(schedular.config, attr_name)
+            attr = getattr(config, attr_name)
             if type(attr) not in [list, dict, str, int, bool, type(None)]:
                 continue
-            if schedular.config.enableLog:
-                print('{} = {}'.format(attr_name, repr(getattr(schedular.config, attr_name))))
+            if config.enableLog:
+                print('{} = {}'.format(attr_name, repr(getattr(config, attr_name))))
         sys.exit(0)
     ps = schedular.ParallelizationServer(logging.getLogger('schedular'), port)
-    if schedular.config.gui:
-        if not schedular.config.db_path:
+    if config.gui:
+        if not config.db_path:
             logging.error('GUI requires a database. please specify one with -d')
             sys.exit(-1)
         utils.gui_install()
@@ -96,20 +97,20 @@ if __name__ == '__main__':
     # done in separate thread because gethostbyname could take time
     if args.lemma_sharing:
         lemma_thread = threading.Thread(target=utils.run_lemma_server, args=(
-            schedular.config.build_path + '/lemma_server',
-            schedular.config.db_path if schedular.config.lemma_db_path else None,
-            schedular.config.lemma_resend,
+            config.build_path + '/lemma_server',
+            config.db_path if config.lemma_db_path else None,
+            config.lemma_resend,
             port,
-            schedular.config.enableLog
+            config.enableLog
         ))
         lemma_thread.daemon = True
         lemma_thread.start()
 
-    if schedular.config.opensmt or schedular.config.z3spacer or schedular.config.sally:
+    if config.opensmt or config.z3spacer or config.sally:
         utils.run_solvers(
-            (schedular.config.build_path + '/solver_opensmt', schedular.config.opensmt, port),
-            (schedular.config.build_path + '/solver_z3spacer', schedular.config.z3spacer, port),
-            (schedular.config.build_path + '/solver_sally', schedular.config.sally, port)
+            (config.build_path + '/solver_opensmt', config.opensmt, port),
+            (config.build_path + '/solver_z3spacer', config.z3spacer, port),
+            (config.build_path + '/solver_sally', config.sally, port)
         )
 
     if args.file_paths:
@@ -118,6 +119,6 @@ if __name__ == '__main__':
         files_thread.daemon = True
         files_thread.start()
     try:
-        ps.run_forever(schedular.config.enableLog)
+        ps.run_forever(config.enableLog)
     except KeyboardInterrupt:
         sys.exit(0)

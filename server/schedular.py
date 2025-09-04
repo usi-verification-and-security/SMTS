@@ -243,16 +243,15 @@ class Instance(object):
 class ParallelizationServer(net.Server):
     def __init__(self, logger: logging.Logger = None, port=None):
         super().__init__(port=port, timeout=0.1, logger=logger)
-        self.config = config
         self.trees = dict()
         self.current = None
         self.idle_solvers = list()
         self.total_solvers = 0
         self.terminate = False
         self.counter = 75674531
-        if self.config.enableLog:
+        if config.enableLog:
             self.log(logging.INFO, 'server start. version {}'.format(version))
-        if self.config.visualize_tree:
+        if config.visualize_tree:
             global comment
             comment = 'Lemma Server OFF'
             self.v_tree = graphviz.Digraph('f',
@@ -263,11 +262,11 @@ class ParallelizationServer(net.Server):
             self.rank = 0
 
     def handle_accept(self, sock):
-        if self.config.enableLog:
+        if config.enableLog:
             self.log(logging.DEBUG, 'new connection from {}'.format(sock.remote_address))
 
     def handle_message(self, sock, header, payload):
-        if self.config.enableLog:
+        if config.enableLog:
             self.log(logging.DEBUG, 'message from {}'.format(sock.remote_address),
                      {constant.HEADER: header, constant.PAYLOAD: payload.decode()})
         if isinstance(sock, Solver):
@@ -286,9 +285,9 @@ class ParallelizationServer(net.Server):
                     level = logging.INFO
                     message = header[constant.REPORT]
 
-                if self.config.visualize_tree:
+                if config.visualize_tree:
                     self.collectData_vTree(sock, message, header)
-                if self.config.enableLog:
+                if config.enableLog:
                     if message in framework.SolveStatus.__members__:
                         self.log(level, utils.bcolors.OKGREEN + '{}: {}'.format(sock, message + utils.bcolors.ENDC), {constant.HEADER: header, constant.PAYLOAD: payload.decode()})
                     else:
@@ -307,14 +306,14 @@ class ParallelizationServer(net.Server):
         if constant.COMMAND in header:
             # if terminate command is found, close the server
             if header[constant.COMMAND] == constant.TERMINATE:
-                if self.config.visualize_tree:
+                if config.visualize_tree:
                     self.render_vTree(time.time() - self.current.started)
                 self.log(logging.INFO, 'Termination command is received!')
                 self.close()
             elif header[constant.COMMAND] == constant.SOLVE:
                 if constant.NAME not in header:
                     return
-                if self.config.enableLog:
+                if config.enableLog:
                     self.log(logging.INFO, 'new instance "{}"'.format(
                         header[constant.NAME]
                     ), {constant.HEADER: header})
@@ -330,7 +329,7 @@ class ParallelizationServer(net.Server):
                 self.entrust()
         elif constant.SOLVER in header:
             solver = Solver(sock, header[constant.SOLVER])
-            if self.config.enableLog:
+            if config.enableLog:
                 self.log(logging.INFO, 'new {}'.format(
                     solver,
                 ), {constant.HEADER: header, constant.PAYLOAD: payload.decode()})
@@ -348,7 +347,7 @@ class ParallelizationServer(net.Server):
                 lemma_server.close()
             self._rlist.remove(sock)
             lemma_server = LemmaServer(sock, header[constant.LEMMAS])
-            if self.config.enableLog:
+            if config.enableLog:
                 self.log(logging.INFO, 'new {}'.format(
                     lemma_server
                 ), {constant.HEADER: header, constant.PAYLOAD: payload.decode()})
@@ -366,13 +365,13 @@ class ParallelizationServer(net.Server):
                 sock.write({}, response_payload)
 
     def handle_close(self, sock):
-        if self.config.enableLog:
+        if config.enableLog:
             self.log(logging.DEBUG, 'connection closed by {}'.format(
                 sock
             ))
         if isinstance(sock, Solver):
             if sock.or_waiting:
-                if self.config.enableLog:
+                if config.enableLog:
                     self.log(logging.WARNING, '{} had waiting or-nodes {}'.format(sock, sock.or_waiting))
             try:
                 sock.stop()
@@ -386,7 +385,7 @@ class ParallelizationServer(net.Server):
         self.entrust()
 
     def level_children(self, level):
-        return self.config.partition_policy[level % len(self.config.partition_policy)]
+        return config.partition_policy[level % len(config.partition_policy)]
 
     def entrust(self, header=None):
         p_node = None
@@ -410,7 +409,7 @@ class ParallelizationServer(net.Server):
             #     self.close()
             #     exit(1)
             if self.current.root.status != framework.SolveStatus.unknown or self.current.when_timeout < 0:
-                if self.config.visualize_tree:
+                if config.visualize_tree:
                     self.render_vTree(time.time() - self.current.started)
                     self.node_dict.clear()
                     self.node_alias.clear()
@@ -438,10 +437,10 @@ class ParallelizationServer(net.Server):
                 ## This prints out the overall result
                 filename = self.current.root.name
                 runtime = round(time.time() - self.current.started, 2)
-                if not self.config.enableLog and self.current:
+                if not config.enableLog and self.current:
                     self.log(logging.INFO, '{}'.format(self.current.root.status.name),
-                             filename if self.config.printFilename else None,
-                             runtime if self.config.printRuntime else None,
+                             filename if config.printFilename else None,
+                             runtime if config.printRuntime else None,
                              header)
                     del self.trees[self.current.root.name]
                 else:
@@ -464,15 +463,15 @@ class ParallelizationServer(net.Server):
             if schedulables:
                 self.current = schedulables[0]
 
-                if self.config.enableLog:
+                if config.enableLog:
                     self.log(logging.INFO, 'solving instance "{}"'.format(self.current.root.name))
                 self.total_solvers = len(self.all_solvers())
                 for solver in self.new_solvers():
                     assert isinstance(solver, Solver)
                     parameters = {}
-                    # if self.config.lemma_amount:
-                    #     parameters[constant.LEMMAS] = self.config.lemma_amount
-                    self.config.entrust(self.current.root, parameters, solver.name, self.solvers_at(self.current.root))
+                    # if config.lemma_amount:
+                    #     parameters[constant.LEMMAS] = config.lemma_amount
+                    config.entrust(self.current.root, parameters, solver.name, self.solvers_at(self.current.root))
                     # self.seed_counter += 1
                     # if config.lemma_sharing:
                     #     parameters.update({
@@ -491,7 +490,7 @@ class ParallelizationServer(net.Server):
             for solver in self.newly_joint_solver():
                 self.total_solvers += 1
                 parameters = {}
-                self.config.entrust(self.current.root, parameters, solver.name, self.solvers_at(self.current.root))
+                config.entrust(self.current.root, parameters, solver.name, self.solvers_at(self.current.root))
                 self.counter += 1
                 parameters['parameter.seed'] = self.counter
                 solver.solve(self.current.root, parameters)
@@ -501,9 +500,9 @@ class ParallelizationServer(net.Server):
         #     self.lemma_server.reset(solving.root)
         if self.current is None:
             if solving is not None:
-                if self.config.enableLog:
+                if config.enableLog:
                     self.log(logging.INFO, 'all done.')
-                if self.config.idle_quit:
+                if config.idle_quit:
                     if not any([type(socket) == net.Socket and socket is not self._sock for socket in self._rlist]):
                         self.close()
                         exit(0)
@@ -620,7 +619,7 @@ class ParallelizationServer(net.Server):
 
                         counter = len(solvers)
                         for solver in solvers:
-                            if 0 <= self.config.portfolio_min < counter:
+                            if 0 <= config.portfolio_min < counter:
                                 if solver not in self.idle_solvers:
                                     counter -= 1
                                     movable_solvers.append(solver)
@@ -692,7 +691,7 @@ class ParallelizationServer(net.Server):
             # random.shuffle(solvers)
             ##! with multiple solvers sometimes still does not partition because there is no solver at node
             for solver in self.solvers_at(node):
-                if force or solver.started + self.config.partition_timeout <= time.time():
+                if force or solver.started + config.partition_timeout <= time.time():
                     solver.ask_partitions(self.level_children(node.level + 1))
                     return True
         return False
@@ -735,10 +734,10 @@ class ParallelizationServer(net.Server):
         self.v_tree.filename = self.current.root.name  + '.gv';
         # self.node_dict = sorted(self.node_dict.items(), key=self.node_dict.get(2))
         self.v_tree.attr(bgcolor='white',rankdir='UP', label='\n Solvers: ' + str(len(self.all_solvers()) ) + '    Portfolio: '
-                                                             + str(self.config.portfolio_min) + '    Node Timeout: ' +
-                                                             str(self.config.node_timeout) + '      Partition Policy ' +
-                                                             str(self.config.partition_policy) + '      Elapsed Time: ' +str(round(solved_time))+
-                                                             '   Partition Timout: '+str(self.config.partition_timeout )+ '\n'+comment
+                                                             + str(config.portfolio_min) + '    Node Timeout: ' +
+                                                             str(config.node_timeout) + '      Partition Policy ' +
+                                                             str(config.partition_policy) + '      Elapsed Time: ' +str(round(solved_time))+
+                                                             '   Partition Timout: '+str(config.partition_timeout )+ '\n'+comment
                          , fontcolor = 'black')
         self.v_tree.comment = "Test"
         lastSolvedNode = ''
