@@ -8,7 +8,8 @@ portfolio_max = 0               # 0 if no limit
 portfolio_min = 1               # 0 if no limit
 ## minimum solving time for a solver before it can do partitioning
 partition_timeout = 0           # None if no partitioning
-node_timeout = None             # None for automatic calculation timeout
+##! automatic calculation currently does not work
+node_timeout = 1                # None for automatic calculation timeout
 partition_policy = [1, 2]       # [number of solvers, number of partition per solver]
 solving_timeout = 2000          # None for no timeout
 max_memory = 10000               # max memory for each solver process in MB

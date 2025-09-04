@@ -28,8 +28,6 @@ class Node:
         self._children = []
         self._status = SolveStatus.unknown
         self._started = None
-        self._assumed_timout = False
-        self._partitioning = False
 
     def __repr__(self):
         path = self.path()
@@ -133,29 +131,13 @@ class Node:
     def started(self, time):
         self._started = time
 
-    @property
-    def assumed_timout(self):
-        return self._assumed_timout
-
-    @assumed_timout.setter
-    def assumed_timout(self, asked):
-        self._assumed_timout = asked
-
-    @property
-    def partitioning(self):
-        return self._partitioning
-
-    @partitioning.setter
-    def partitioning(self, asked):
-        self._partitioning = asked
-
 class AndNode(Node):
     def __init__(self, parent, smt):
         if not isinstance(parent, (OrNode, type(None))):
             raise TypeError
         super().__init__(parent, smt)
-        self._processed = False
-        self._is_timeout = False
+        self._solved = False
+        self._n_timeouts = 0
 
     def _set_status(self, status: SolveStatus):
         self._status = status
@@ -178,20 +160,20 @@ class AndNode(Node):
         return childs
 
     @property
-    def processed(self):
-        return self._processed
+    def solved(self):
+        return self._solved
 
-    @processed.setter
-    def processed(self, p):
-        self._processed = p
+    @solved.setter
+    def solved(self, p):
+        self._solved = p
 
     @property
-    def is_timeout(self):
-        return self._is_timeout
+    def n_timeouts(self):
+        return self._n_timeouts
 
-    @is_timeout.setter
-    def is_timeout(self, it):
-        self._is_timeout = it
+    @n_timeouts.setter
+    def n_timeouts(self, n):
+        self._n_timeouts = n
 
 class OrNode(Node):
     def __init__(self, parent, smt: str = ''):
