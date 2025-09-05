@@ -531,7 +531,6 @@ class ParallelizationServer(net.Server):
 
             solved_solvers = []
             partition_node_candidate = None
-            any_event = False
 
             for node in nodes:
                 assert isinstance(node, framework.AndNode)
@@ -547,7 +546,6 @@ class ParallelizationServer(net.Server):
                     if node.status == framework.SolveStatus.unsat:
                         node.solved = True
                         config.partition_count -= 1
-                        any_event = True
                         for solver in self.solvers_at(node):
                             if solver.partitioning:
                                 assert solver.n_partitions > 0
@@ -562,7 +560,8 @@ class ParallelizationServer(net.Server):
                             partition_node_candidate = node
 
             for solver in self.active_solvers():
-                if solver.node.solved:
+                node = solver.node
+                if node.solved:
                     continue
                 assert solver not in solved_solvers
 
@@ -571,8 +570,13 @@ class ParallelizationServer(net.Server):
                     if not solver.partitioning:
                         if solver not in self.idle_solvers:
                             self.idle_solvers.append(solver)
-                        solver.node.n_timeouts += 1
-                        any_event = True
+                        node.n_timeouts += 1
+                elif partition_received and node == p_node:
+                    assert not solver.partitioning
+                    if solver not in self.idle_solvers:
+                        self.idle_solvers.append(solver)
+                    ## marking with a timeout does not seem beneficial - probably do it only once we move to precise runtimes instead of counting
+                    # node.n_timeouts += 1
 
             if solved_solvers:
                 self.idle_solvers = solved_solvers + self.idle_solvers
@@ -584,7 +588,7 @@ class ParallelizationServer(net.Server):
 
             assert len(self.idle_solvers) <= self.total_solvers
             if self.idle_solvers:
-                if partition_node_candidate is not None and any_event and not partition_received:
+                if partition_node_candidate is not None and not partition_received:
                     will_partition = self.will_partition(partition_node_candidate)
 
                 n = len(self.idle_solvers)
