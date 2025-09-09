@@ -525,7 +525,9 @@ class ParallelizationServer(net.Server):
                     assert node.status != framework.SolveStatus.sat
                     if node.status == framework.SolveStatus.unsat:
                         node.solved = True
-                        config.partition_count -= 1
+                        ## .. otherwise, it has already been decremented
+                        if config.n_timeouts_to_not_count_partition and node.n_timeouts < config.n_timeouts_to_not_count_partition:
+                            config.partition_count -= 1
                         for solver in self.solvers_at(node):
                             if solver.partitioning:
                                 assert solver.n_partitions > 0
@@ -551,6 +553,9 @@ class ParallelizationServer(net.Server):
                         if solver not in self.idle_solvers:
                             self.idle_solvers.append(solver)
                         node.n_timeouts += 1
+                        ## at a certain point, do not block the expansion any more and decrement
+                        if config.n_timeouts_to_not_count_partition and node.n_timeouts == config.n_timeouts_to_not_count_partition:
+                            config.partition_count -= 1
                 elif partition_received and node == p_node:
                     assert not solver.partitioning
                     if solver not in self.idle_solvers:
