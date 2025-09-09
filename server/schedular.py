@@ -517,7 +517,8 @@ class ParallelizationServer(net.Server):
                 if config.enableLog:
                     self.log(logging.INFO, 'all done.')
                 if config.idle_quit:
-                    if not any([type(socket) == net.Socket and socket is not self._sock for socket in self._rlist]):
+                    # if not any([type(socket) == net.Socket and socket is not self._sock for socket in self._rlist]):
+                    if True:
                         self.close()
                         exit(0)
             return

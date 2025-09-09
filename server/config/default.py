@@ -22,8 +22,8 @@ shuffle_morpeach = False        # randomizes the order of selecting nodes for pl
 move_to_new_partition_timeout_factor = 0.1 # solver with new partitions is instantly moved there only if its runtime is lower than factor of timeout
 redundant_only_if_tree_changed = True  # trigger re-placement of redundant solvers only when solved nodes or received new nodes; or after any event
 nonredundant_max = 2            # 0 if no limit, portfolio_min <= x <= portfolio_max
-solving_timeout = 2000          # None for no timeout
-max_memory = 10000               # max memory for each solver process in MB
+solving_timeout = 1200          # None for no timeout
+max_memory = 64000              # max memory for each solver process in MB
 build_path = "../../build"      # build path absolute or relative to the config file
 lemma_sharing = False           # enabling lemma sharing
 lemma_amount = 1000             # None for auto
