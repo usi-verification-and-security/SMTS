@@ -9,9 +9,6 @@ from .default import *
 __author__ = 'Matteo Marescotti'
 
 
-def partitioning():
-    return partition_timeout is not None
-
 def db():
     if hasattr(db, 'db'):
         return db.db

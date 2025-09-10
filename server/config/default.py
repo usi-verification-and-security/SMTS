@@ -6,8 +6,7 @@ db_path = None                  # sqlite3 event db path absolute or relative to 
 table_prefix = ''               # db table prefix
 portfolio_max = 0               # 0 if no limit
 portfolio_min = 1               # 0 if no limit
-## minimum solving time for a solver before it can do partitioning
-partition_timeout = 0           # None if no partitioning
+partitioning = False            # Enable partitioning
 ##! automatic calculation currently does not work
 node_timeout = 1                # None for automatic calculation timeout
 partition_policy = [1, 2]       # [number of solvers, number of partition per solver]

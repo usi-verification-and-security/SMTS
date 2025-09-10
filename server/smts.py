@@ -26,9 +26,8 @@ if __name__ == '__main__':
     parser.add_argument('-Pt', dest='print_runtime', action='store_true', help='print elapsed runtime')
     parser.add_argument('-el', dest='log_mode', action='store_true', help='enable logging system-widely')
     pg = parser.add_argument_group('partitioning')
-    pg.add_argument('-pt', dest='partition_timeout', type=float, metavar='N', help='partition timeout')
-    pg.add_argument('-nt', dest='node_timeout', type=float, metavar='N', help='node timeout')
     pg.add_argument('-p', dest='partitioning', action='store_true', help='enable partitioning')
+    pg.add_argument('-nt', dest='node_timeout', type=float, metavar='N', help='node timeout')
     lg = parser.add_argument_group('lemma sharing')
     lg.add_argument('-l', dest='lemma_sharing', action='store_true', help='enable lemma sharing')
     lg.add_argument('-D', dest='lemma_db', action='store_true', help='store lemmas in database')
@@ -47,12 +46,10 @@ if __name__ == '__main__':
         config.db_path = args.db_path
     config.db()
 
-    if args.partition_timeout:
-        config.partition_timeout = args.partition_timeout
+    if args.partitioning:
+        config.partitioning = args.partitioning
     if args.node_timeout:
         config.node_timeout = args.node_timeout
-    if not args.partitioning:
-        config.partition_timeout = None
     if args.print_filename:
         config.printFilename = args.print_filename
     if args.print_runtime:

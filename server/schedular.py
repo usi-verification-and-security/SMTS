@@ -526,7 +526,7 @@ class ParallelizationServer(net.Server):
             return
 
         assert isinstance(self.current, Instance)
-        if config.partitioning():
+        if config.partitioning:
             nodes = self.get_nodes()
 
             solved_solvers = []
@@ -695,16 +695,11 @@ class ParallelizationServer(net.Server):
         return r < 1/p
 
     def partition(self, node: framework.AndNode):
-        max_children = self.level_children(node.level)
-        assert max_children - len(node) > 0
-        for i in range(max_children - len(node)):
-            solvers = self.solvers_at(node)
-            assert solvers
-            for solver in solvers:
-                if solver.started + config.partition_timeout <= time.time():
-                    solver.ask_partitions(self.level_children(node.level + 1))
-                    return True
-        return False
+        solvers = self.solvers_at(node)
+        assert solvers
+        for solver in solvers:
+            solver.ask_partitions(self.level_children(node.level + 1))
+            return
 
 
     def all_solvers(self):
@@ -747,7 +742,7 @@ class ParallelizationServer(net.Server):
                                                              + str(config.portfolio_min) + '    Node Timeout: ' +
                                                              str(config.node_timeout) + '      Partition Policy ' +
                                                              str(config.partition_policy) + '      Elapsed Time: ' +str(round(solved_time))+
-                                                             '   Partition Timout: '+str(config.partition_timeout )+ '\n'+comment
+                                                             '\n'+comment
                          , fontcolor = 'black')
         self.v_tree.comment = "Test"
         lastSolvedNode = ''
