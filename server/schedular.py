@@ -556,6 +556,7 @@ class ParallelizationServer(net.Server):
                             if solver in self.idle_solvers:
                                 self.idle_solvers.remove(solver)
                             solved_solvers.append(solver)
+                        continue
                     if not any(solver.partitioning for solver in self.solvers_at(node)) and len(node) == 0:
                         if partition_node_candidate is None:
                             partition_node_candidate = node
