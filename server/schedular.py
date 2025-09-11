@@ -484,35 +484,15 @@ class ParallelizationServer(net.Server):
                 self.total_solvers = len(self.all_solvers())
                 for solver in self.new_solvers():
                     assert isinstance(solver, Solver)
-                    parameters = {}
-                    # if config.lemma_amount:
-                    #     parameters[constant.LEMMAS] = config.lemma_amount
-                    config.entrust(self.current.root, parameters, solver.name, self.solvers_at(self.current.root))
-                    # self.seed_counter += 1
-                    # if config.lemma_sharing:
-                    #     parameters.update({
-                    #         'lemma_push_min': self.seed_counter,
-                    #         'lemma_pull_min': self.seed_counter*2,
-                    #         constant.LEMMA_AMOUNT: config.lemma_amount
-                    #     })
-                    self.counter += 1
-                    parameters['parameter.seed'] = self.counter
-                    solver.solve(self.current.root, parameters)
-                    if self.current.started is None:
-                        self.current.started = time.time()
-                    ## TK: I am not sure what was the reason for that
-                    # config.partition_count = 0
+                    self.run_solver_at_root(solver)
+                ##+ initialize again to the same value as in default config after moving to a new instance
+                ## > should be removed from config
+                # config.partition_count = 0
                 return
         else:
             for solver in self.newly_joint_solver():
                 self.total_solvers += 1
-                parameters = {}
-                config.entrust(self.current.root, parameters, solver.name, self.solvers_at(self.current.root))
-                self.counter += 1
-                parameters['parameter.seed'] = self.counter
-                solver.solve(self.current.root, parameters)
-                if self.current.started is None:
-                    self.current.started = time.time()
+                self.run_solver_at_root(solver)
         # if solving is not None and solving != self.current and self.lemma_server:
         #     self.lemma_server.reset(solving.root)
         if self.current is None:
@@ -612,6 +592,34 @@ class ParallelizationServer(net.Server):
             if will_partition:
                 self.partition(partition_node_candidate)
 
+    def run_solver_at_root(self, solver: Solver):
+        root = self.current.root
+
+        parameters = {}
+        # if config.lemma_amount:
+        #     parameters[constant.LEMMAS] = config.lemma_amount
+        config.entrust(root, parameters, solver.name, self.solvers_at(root))
+        # self.seed_counter += 1
+        # if config.lemma_sharing:
+        #     parameters.update({
+        #         'lemma_push_min': self.seed_counter,
+        #         'lemma_pull_min': self.seed_counter*2,
+        #         constant.LEMMA_AMOUNT: config.lemma_amount
+        #     })
+        self.counter += 1
+        parameters['parameter.seed'] = self.counter
+        solver.solve(root, parameters)
+        if self.current.started is None:
+            self.current.started = time.time()
+
+        if not config.partitioning:
+            return
+
+        if any(s.partitioning for s in self.solvers_at(root)) or len(root) > 0:
+            return
+        if self.will_partition(root):
+            self.partition(root)
+
     def get_nodes(self, reverse=False, unsolved=True):
         nodes = self.current.root.all_and_children()
         if unsolved:
@@ -679,7 +687,7 @@ class ParallelizationServer(net.Server):
         solver.incremental(node)
 
     def will_partition(self, node: framework.AndNode):
-        assert self.idle_solvers
+        assert node == self.current.root or self.idle_solvers
 
         ##+ minPortfolio disregarded
         n = self.total_solvers
