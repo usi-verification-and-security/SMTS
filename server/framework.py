@@ -27,7 +27,9 @@ class Node:
         self.smt = smt
         self._children = []
         self._status = SolveStatus.unknown
-        self._started = None
+        self._start_time = None
+        self.total_runtime = None
+        self.counted = True
 
     def __repr__(self):
         path = self.path()
@@ -124,12 +126,27 @@ class Node:
         raise NotImplementedError
 
     @property
-    def started(self):
-        return self._started
+    def start_time(self):
+        return self._start_time
 
-    @started.setter
-    def started(self, time):
-        self._started = time
+    @start_time.setter
+    def start_time(self, time):
+        self._start_time = time
+        self.total_runtime = 0
+
+    def started(self):
+        return self.start_time is not None
+
+    def runtime(self):
+        if not self.started():
+            return 0
+        return time.time() - self.start_time
+
+    def n_timeouts(self):
+        if not self.started():
+            return 0
+        assert config.node_timeout
+        return self.total_runtime/config.node_timeout
 
 class AndNode(Node):
     def __init__(self, parent, smt):
@@ -137,7 +154,6 @@ class AndNode(Node):
             raise TypeError
         super().__init__(parent, smt)
         self._solved = False
-        self._n_timeouts = 0
 
     def _set_status(self, status: SolveStatus):
         self._status = status
@@ -166,14 +182,6 @@ class AndNode(Node):
     @solved.setter
     def solved(self, p):
         self._solved = p
-
-    @property
-    def n_timeouts(self):
-        return self._n_timeouts
-
-    @n_timeouts.setter
-    def n_timeouts(self, n):
-        self._n_timeouts = n
 
 class OrNode(Node):
     def __init__(self, parent, smt: str = ''):

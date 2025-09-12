@@ -38,7 +38,7 @@ lemmaPull_timeoutMax = 40000
 clientLogColorMode = False      # to enable color at logging
 ##! should not be in config, here just to make it "global"
 partition_count = 1             # total number of remaining partitions
-n_timeouts_to_not_count_partition = 4  # no. timeouts at which the node is not anymore counted into the size of the tree
+n_timeouts_to_count_partition = 4  # no. timeouts after which the node is not anymore counted into the size of the tree
 spit_preference = False
 
 # parameters is a dictionary solver_name.solver_parameter -> value:(int, str, callable)  where:

@@ -60,7 +60,7 @@ class Solver(net.Socket):
 
     def _reset(self):
         self.node = None
-        self.started = None
+        self.start_time = None
         self.or_waiting = []
         self.parameters = {}
 
@@ -81,6 +81,14 @@ class Solver(net.Socket):
         if not flag:
             self.n_partitions = None
 
+    def started(self):
+        return self.start_time is not None
+
+    def runtime(self):
+        if not self.started():
+            return 0
+        return time.time() - self.start_time
+
     def solve(self, node: framework.AndNode, parameters: dict):
         if self.node is not None:
             self.stop()
@@ -99,9 +107,9 @@ class Solver(net.Socket):
         else:
             parameters.update({constant.MAX_MEMORY: 0})
         self.write(parameters, smt)
-        self.started = time.time()
-        if self.node.started is None:
-            self.node.started = time.time()
+        self.start_time = time.time()
+        if not self.node.started():
+            self.node.start_time = time.time()
 
     def incremental(self, node: framework.AndNode):
         smt, query = self.node.root.to_string(node, self.node)
@@ -113,9 +121,9 @@ class Solver(net.Socket):
                   }
         self.write(header, smt)
         self.or_waiting = []
-        self.started = time.time()
-        if node.started is None:
-            node.started = time.time()
+        self.start_time = time.time()
+        if not node.started():
+            node.start_time = time.time()
         self.node = node
 
     def stop(self):
@@ -243,16 +251,24 @@ class Solver(net.Socket):
 class Instance(object):
     def __init__(self, name: str, smt: str):
         self.root = framework.parse(name, smt)
-        self.started = None
+        self.start_time = None
         self.timeout = None
         self.sp = None
 
     def __repr__(self):
         return '{}({:.2f})'.format(repr(self.root), self.when_timeout)
 
+    def started(self):
+        return self.start_time is not None
+
+    def runtime(self):
+        if not self.started():
+            return 0
+        return time.time() - self.start_time
+
     @property
     def when_timeout(self):
-        return self.started + self.timeout - time.time() if self.started and self.timeout is not None else float('inf')
+        return self.timeout - self.runtime() if self.started() and self.timeout is not None else float('inf')
 
 # Parallelization_Server ===============================================================================================
 class ParallelizationServer(net.Server):
@@ -322,7 +338,7 @@ class ParallelizationServer(net.Server):
             # if terminate command is found, close the server
             if header[constant.COMMAND] == constant.TERMINATE:
                 if config.visualize_tree:
-                    self.render_vTree(time.time() - self.current.started)
+                    self.render_vTree(self.current.runtime())
                 self.log(logging.INFO, 'Termination command is received!')
                 self.close()
             elif header[constant.COMMAND] == constant.SOLVE:
@@ -426,7 +442,7 @@ class ParallelizationServer(net.Server):
             #     exit(1)
             if self.current.root.status != framework.SolveStatus.unknown or self.current.when_timeout < 0:
                 if config.visualize_tree:
-                    self.render_vTree(time.time() - self.current.started)
+                    self.render_vTree(self.current.runtime())
                     self.node_dict.clear()
                     self.node_alias.clear()
                     self.node_alias['[]'] = ('[]')
@@ -452,7 +468,7 @@ class ParallelizationServer(net.Server):
                             del self.trees[self.current.root.name + sp.value]
                 ## This prints out the overall result
                 filename = self.current.root.name
-                runtime = round(time.time() - self.current.started, 2)
+                runtime = round(self.current.runtime(), 2)
                 if not config.enableLog and self.current:
                     self.log(logging.INFO, '{}'.format(self.current.root.status.name),
                              filename if config.printFilename else None,
@@ -460,7 +476,7 @@ class ParallelizationServer(net.Server):
                              header)
                     del self.trees[self.current.root.name]
                 else:
-                    # self.log(logging.INFO, self.current.root.status.name , self.current.root.name, round(time.time() - self.current.started, 2))
+                    # self.log(logging.INFO, self.current.root.status.name , self.current.root.name, round(self.current.runtime(), 2))
                     if self.current:
                         self.log(logging.INFO, '{} instance "{}" after {:.2f} seconds'.format(
                             'solved' if self.current.root.status != framework.SolveStatus.unknown else 'timeout', filename,
@@ -490,7 +506,7 @@ class ParallelizationServer(net.Server):
                 # config.partition_count = 0
                 return
         else:
-            for solver in self.newly_joint_solver():
+            for solver in self.newly_joined_solvers():
                 self.total_solvers += 1
                 self.run_solver_at_root(solver)
         # if solving is not None and solving != self.current and self.lemma_server:
@@ -526,8 +542,9 @@ class ParallelizationServer(net.Server):
                     if node.status == framework.SolveStatus.unsat:
                         node.solved = True
                         ## .. otherwise, it has already been decremented
-                        if config.n_timeouts_to_not_count_partition and node.n_timeouts < config.n_timeouts_to_not_count_partition:
+                        if node.counted:
                             config.partition_count -= 1
+                            node.counted = False
                         for solver in self.solvers_at(node):
                             if solver.partitioning:
                                 assert solver.n_partitions > 0
@@ -536,32 +553,34 @@ class ParallelizationServer(net.Server):
                             if solver in self.idle_solvers:
                                 self.idle_solvers.remove(solver)
                             solved_solvers.append(solver)
+                            node.total_runtime += solver.runtime()
                         continue
                     if not any(solver.partitioning for solver in self.solvers_at(node)) and len(node) == 0:
                         if partition_node_candidate is None:
                             partition_node_candidate = node
 
-            for solver in self.active_solvers():
+            for solver in self.placed_solvers():
                 node = solver.node
                 if node.solved:
                     continue
                 assert solver not in solved_solvers
 
-                assert solver.started
-                if config.node_timeout and solver.started and solver.started + config.node_timeout <= time.time():
+                assert solver.started()
+                if config.node_timeout and solver.runtime() >= config.node_timeout:
                     if not solver.partitioning:
                         if solver not in self.idle_solvers:
                             self.idle_solvers.append(solver)
-                        node.n_timeouts += 1
+                        ## usually, solver.runtime() > config.node_timeout
+                        node.total_runtime += config.node_timeout
                         ## at a certain point, do not block the expansion any more and decrement
-                        if config.n_timeouts_to_not_count_partition and node.n_timeouts == config.n_timeouts_to_not_count_partition:
+                        if config.n_timeouts_to_count_partition and node.counted and node.n_timeouts() >= config.n_timeouts_to_count_partition:
                             config.partition_count -= 1
+                            node.counted = False
                 elif partition_received and node == p_node:
                     assert not solver.partitioning
                     if solver not in self.idle_solvers:
                         self.idle_solvers.append(solver)
-                    ## marking with a timeout does not seem beneficial - probably do it only once we move to precise runtimes instead of counting
-                    # node.n_timeouts += 1
+                    node.total_runtime += solver.runtime()
 
             if solved_solvers:
                 self.idle_solvers = solved_solvers + self.idle_solvers
@@ -614,8 +633,8 @@ class ParallelizationServer(net.Server):
         self.counter += 1
         parameters['parameter.seed'] = self.counter
         solver.solve(root, parameters)
-        if self.current.started is None:
-            self.current.started = time.time()
+        if not self.current.started():
+            self.current.start_time = time.time()
 
         if not config.partitioning:
             return
@@ -642,7 +661,7 @@ class ParallelizationServer(net.Server):
             for node in nodes:
                 assert not node.solved
                 assert node.status == framework.SolveStatus.unknown
-                if node.n_timeouts > max_touts:
+                if node.n_timeouts() > max_touts:
                     continue
                 ret_nodes.append(node)
                 if len(ret_nodes) == n:
@@ -704,7 +723,7 @@ class ParallelizationServer(net.Server):
         k = 2
         if tree_size >= k*n:
             return False
-        if any(not nd.started for nd in self.get_nodes()):
+        if any(not nd.started() for nd in self.get_nodes()):
             return False
 
         r = 0
@@ -728,7 +747,7 @@ class ParallelizationServer(net.Server):
         return {solver for solver in self._rlist
                 if isinstance(solver, Solver) and solver.node == node}
 
-    def active_solvers(self):
+    def placed_solvers(self):
         return {solver for solver in self._rlist
                 if isinstance(solver, Solver) and solver.node is not None}
 
@@ -736,9 +755,9 @@ class ParallelizationServer(net.Server):
         return {solver for solver in self._rlist
                 if isinstance(solver, Solver) and solver.node is None}
 
-    def newly_joint_solver(self):
+    def newly_joined_solvers(self):
         return {solver for solver in self._rlist
-                if isinstance(solver, Solver) and (solver.node is None and solver.started is None)}
+                if isinstance(solver, Solver) and (solver.node is None and not solver.started())}
 
     @property
     def lemma_server(self) -> LemmaServer:
