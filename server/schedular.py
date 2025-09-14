@@ -653,8 +653,19 @@ class ParallelizationServer(net.Server):
 
     ## Morpeach
     def get_nodes_to_solve(self, n: int):
+        assert n == len(self.idle_solvers)
         nodes = self.get_nodes(reverse=True)
         ret_nodes = []
+
+        n_skipped = 0
+        n_to_skip = 0
+        for node in nodes:
+            assert not hasattr(node, 'n_skipped')
+            node.n_skipped = 0
+            assert not hasattr(node, 'n_to_skip')
+            node.n_to_skip = len([solver for solver in self.solvers_at(node) if solver not in self.idle_solvers])
+            n_to_skip += node.n_to_skip
+        assert n_to_skip == len(self.placed_solvers()) - n
 
         max_touts = 0
         while True:
@@ -663,8 +674,19 @@ class ParallelizationServer(net.Server):
                 assert node.status == framework.SolveStatus.unknown
                 if node.n_timeouts() > max_touts:
                     continue
+
+                assert node.n_skipped <= node.n_to_skip
+                if node.n_skipped < node.n_to_skip:
+                    node.n_skipped += 1
+                    n_skipped += 1
+                    continue
+
                 ret_nodes.append(node)
                 if len(ret_nodes) == n:
+                    assert n_skipped <= n_to_skip
+                    for nd in nodes:
+                        del nd.n_skipped
+                        del nd.n_to_skip
                     return ret_nodes
             max_touts += 1
 
