@@ -723,6 +723,11 @@ class ParallelizationServer(net.Server):
             if path1_len > path2_len:
                 return 1
 
+            if s1.runtime() < s2.runtime():
+                return 1
+            if s1.runtime() > s2.runtime():
+                return -1
+
             return 0
 
         sorted_solvers = sorted(self.idle_solvers, key=functools.cmp_to_key(cmp))
@@ -757,11 +762,10 @@ class ParallelizationServer(net.Server):
         return r < 1/p
 
     def partition(self, node: framework.AndNode):
-        solvers = self.solvers_at(node)
+        solvers = sorted(list(self.solvers_at(node)), key=lambda solver: solver.runtime())
         assert solvers
-        for solver in solvers:
-            solver.ask_partitions(self.level_children(node.level + 1))
-            return
+        assert not any(solver.partitioning for solver in solvers)
+        solvers[0].ask_partitions(self.level_children(node.level + 1))
 
 
     def all_solvers(self):
