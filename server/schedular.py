@@ -600,11 +600,14 @@ class ParallelizationServer(net.Server):
                 nodes = self.get_nodes_to_solve(n)
                 if will_partition:
                     assert partition_node_candidate is not None
+                    assert not any(solver.partitioning for solver in self.solvers_at(partition_node_candidate))
                     if partition_node_candidate in nodes:
                         nodes.remove(partition_node_candidate)
-                    else:
+                        nodes.insert(0, partition_node_candidate)
+                    ## only if there is not already any solver that will stay there
+                    elif not any(solver not in self.idle_solvers for solver in self.solvers_at(partition_node_candidate)):
                         nodes.pop()
-                    nodes.insert(0, partition_node_candidate)
+                        nodes.insert(0, partition_node_candidate)
                 assert len(nodes) == n
                 for node in nodes:
                     self.map_solver_to_node(node)
