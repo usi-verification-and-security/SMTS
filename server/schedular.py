@@ -54,11 +54,11 @@ class Solver(net.Socket):
         self.initialize()
 
     def initialize(self):
-        self._partitioning = False
         if config.enableLog:
             self.write({constant.LOG_MODE: 1}, '')
 
     def _reset(self):
+        self._partitioning = False
         self.node = None
         self.start_time = None
         self.or_waiting = []
@@ -276,7 +276,7 @@ class ParallelizationServer(net.Server):
         super().__init__(port=port, timeout=0.1, logger=logger)
         self.trees = dict()
         self.current = None
-        self.idle_solvers = list()
+        self.movable_solvers = list()
         self.total_solvers = 0
         self.terminate = False
         self.counter = 75674531
@@ -423,8 +423,6 @@ class ParallelizationServer(net.Server):
         if header:
             if 'partition_recieved' in header:
                 p_node = header['partition_recieved']
-                for solver in self.solvers_at(p_node):
-                    solver.partitioning = False
                 partition_received = True
                 del header['partition_recieved']
         solving = self.current
@@ -488,7 +486,7 @@ class ParallelizationServer(net.Server):
                     self.lemma_server.reset(self.current.root)
                 self.current = None
                 # self.counter = 0
-                self.idle_solvers.clear()
+                self.movable_solvers.clear()
         if self.current is None:
             schedulables = [instance for instance in self.trees.values() if
                             instance.root.status == framework.SolveStatus.unknown and instance.when_timeout > 0]
@@ -523,41 +521,40 @@ class ParallelizationServer(net.Server):
 
         assert isinstance(self.current, Instance)
         if config.partitioning:
-            nodes = self.get_nodes()
-
             solved_solvers = []
-            partition_node_candidate = None
-
-            for node in nodes:
+            for node in self.get_nodes():
                 assert isinstance(node, framework.AndNode)
                 assert not node.solved
-                    # if p_node and str(node.path()) == p_node and node.status == framework.SolveStatus.unknown:
-                    #     p_node = node
-                    # elif solved_moved_node and str(node.path()) == solved_moved_node:
-                    #     node.status = framework.SolveStatus.__members__[header[constant.REPORT]]
-                    #     print('       solved solver in forked -> ', solver)
-                    #     return
-                if True:
-                    assert node.status != framework.SolveStatus.sat
-                    if node.status == framework.SolveStatus.unsat:
-                        node.solved = True
-                        ## .. otherwise, it has already been decremented
-                        if node.counted:
-                            config.partition_count -= 1
-                            node.counted = False
-                        for solver in self.solvers_at(node):
-                            if solver.partitioning:
-                                assert solver.n_partitions > 0
-                                config.partition_count -= solver.n_partitions
-                                solver.partitioning = False
-                            if solver in self.idle_solvers:
-                                self.idle_solvers.remove(solver)
-                            solved_solvers.append(solver)
-                            node.total_runtime += solver.runtime()
-                        continue
-                    if not any(solver.partitioning for solver in self.solvers_at(node)) and len(node) == 0:
-                        if partition_node_candidate is None:
-                            partition_node_candidate = node
+                assert not partition_received or node != p_node or len([solver for solver in self.solvers_at(node) if solver.partitioning]) == 1
+                assert node.status != framework.SolveStatus.sat
+                if node.status != framework.SolveStatus.unsat:
+                    continue
+
+                ##+ also implement partition tree pruning?
+                node.solved = True
+                ## .. otherwise, it has already been decremented
+                if node.counted:
+                    config.partition_count -= 1
+                    node.counted = False
+                for solver in self.solvers_at(node):
+                    if solver.partitioning:
+                        if not (partition_received and node == p_node):
+                            assert solver.n_partitions > 0
+                            config.partition_count -= solver.n_partitions
+                        solver.partitioning = False
+                    assert solver not in self.movable_solvers
+                    assert solver not in solved_solvers
+                    solved_solvers.append(solver)
+                    node.total_runtime += solver.runtime()
+
+            partition_node_candidate = None
+            for node in self.get_nodes():
+                assert not node.solved
+                assert node.status == framework.SolveStatus.unknown
+
+                if not any(solver.partitioning for solver in self.solvers_at(node)) and len(node) == 0:
+                    if partition_node_candidate is None:
+                        partition_node_candidate = node
 
             for solver in self.placed_solvers():
                 node = solver.node
@@ -567,35 +564,29 @@ class ParallelizationServer(net.Server):
 
                 assert solver.started()
                 if config.node_timeout and solver.runtime() >= config.node_timeout:
-                    if not solver.partitioning:
-                        if solver not in self.idle_solvers:
-                            self.idle_solvers.append(solver)
-                        ## usually, solver.runtime() > config.node_timeout
-                        node.total_runtime += config.node_timeout
+                    if not solver.partitioning or (partition_received and node == p_node):
+                        self.add_movable_solver(solver, timeouted=True)
                         ## at a certain point, do not block the expansion any more and decrement
                         if config.n_timeouts_to_count_partition and node.counted and node.n_timeouts() >= config.n_timeouts_to_count_partition:
                             config.partition_count -= 1
                             node.counted = False
                 elif partition_received and node == p_node:
-                    assert not solver.partitioning
-                    if solver not in self.idle_solvers:
-                        self.idle_solvers.append(solver)
-                    node.total_runtime += solver.runtime()
+                    self.add_movable_solver(solver)
 
             if solved_solvers:
-                self.idle_solvers = solved_solvers + self.idle_solvers
+                self.movable_solvers = solved_solvers + self.movable_solvers
                 solved_solvers.clear()
 
-            assert all(not solver.partitioning for solver in self.idle_solvers)
+            assert all(not solver.partitioning for solver in self.movable_solvers)
 
             will_partition = False
 
-            assert len(self.idle_solvers) <= self.total_solvers
-            if self.idle_solvers:
+            assert len(self.movable_solvers) <= self.total_solvers
+            if self.movable_solvers:
                 if partition_node_candidate is not None and not partition_received:
                     will_partition = self.will_partition(partition_node_candidate)
 
-                n = len(self.idle_solvers)
+                n = len(self.movable_solvers)
                 ##+ minPortfolio disregarded
                 nodes = self.get_nodes_to_solve(n)
                 if will_partition:
@@ -605,13 +596,13 @@ class ParallelizationServer(net.Server):
                         nodes.remove(partition_node_candidate)
                         nodes.insert(0, partition_node_candidate)
                     ## only if there is not already any solver that will stay there
-                    elif not any(solver not in self.idle_solvers for solver in self.solvers_at(partition_node_candidate)):
+                    elif not any(solver not in self.movable_solvers for solver in self.solvers_at(partition_node_candidate)):
                         nodes.pop()
                         nodes.insert(0, partition_node_candidate)
                 assert len(nodes) == n
                 for node in nodes:
                     self.map_solver_to_node(node)
-            assert len(self.idle_solvers) == 0
+            assert len(self.movable_solvers) == 0
 
             if not isinstance(self.current.root, framework.SMT):
                 return
@@ -647,6 +638,17 @@ class ParallelizationServer(net.Server):
         if self.will_partition(root):
             self.partition(root)
 
+    def add_movable_solver(self, solver: Solver, timeouted=False):
+        assert solver not in self.movable_solvers
+        self.movable_solvers.append(solver)
+        solver.partitioning = False
+        if timeouted:
+            ## usually, solver.runtime() > config.node_timeout
+            solver.node.total_runtime += config.node_timeout
+        else:
+            solver.node.total_runtime += solver.runtime()
+
+    ##++ shuffle
     def get_nodes(self, reverse=False, unsolved=True):
         nodes = self.current.root.all_and_children()
         if unsolved:
@@ -656,7 +658,7 @@ class ParallelizationServer(net.Server):
 
     ## Morpeach
     def get_nodes_to_solve(self, n: int):
-        assert n == len(self.idle_solvers)
+        assert n == len(self.movable_solvers)
         nodes = self.get_nodes(reverse=True)
         ret_nodes = []
 
@@ -666,7 +668,7 @@ class ParallelizationServer(net.Server):
             assert not hasattr(node, 'n_skipped')
             node.n_skipped = 0
             assert not hasattr(node, 'n_to_skip')
-            node.n_to_skip = len([solver for solver in self.solvers_at(node) if solver not in self.idle_solvers])
+            node.n_to_skip = len([solver for solver in self.solvers_at(node) if solver not in self.movable_solvers])
             n_to_skip += node.n_to_skip
         assert n_to_skip == len(self.placed_solvers()) - n
 
@@ -695,8 +697,8 @@ class ParallelizationServer(net.Server):
 
     ##+ n to n mapping would be more efficient and avoid unnecessary moves
     def get_solver_for_node(self, node: framework.AndNode):
-        assert self.idle_solvers
-        assert all(solver.node is not None and not solver.partitioning for solver in self.idle_solvers)
+        assert self.movable_solvers
+        assert all(solver.node is not None and not solver.partitioning for solver in self.movable_solvers)
 
         node_path = node.path()
         node_path_str = str(node_path)
@@ -730,18 +732,18 @@ class ParallelizationServer(net.Server):
 
             return 0
 
-        sorted_solvers = sorted(self.idle_solvers, key=functools.cmp_to_key(cmp))
+        sorted_solvers = sorted(self.movable_solvers, key=functools.cmp_to_key(cmp))
         return sorted_solvers[0]
 
     def map_solver_to_node(self, node: framework.AndNode):
         solver = self.get_solver_for_node(node)
-        assert isinstance(solver, Solver)
-        self.idle_solvers.remove(solver)
+        assert solver in self.movable_solvers
+        self.movable_solvers.remove(solver)
         assert not solver.partitioning
         solver.incremental(node)
 
     def will_partition(self, node: framework.AndNode):
-        assert node == self.current.root or self.idle_solvers
+        assert node == self.current.root or self.movable_solvers
 
         ##+ minPortfolio disregarded
         n = self.total_solvers
@@ -759,6 +761,7 @@ class ParallelizationServer(net.Server):
         r = 0
         while r == 0:
             r = random.random()
+        ##++ parametrization with b is missing
         return r < 1/p
 
     def partition(self, node: framework.AndNode):
