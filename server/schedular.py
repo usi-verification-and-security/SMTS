@@ -103,6 +103,8 @@ class Solver(net.Socket):
             constant.QUERY: query,
 
         })
+        if config.enableLog:
+            print('{}: solve {}'.format(self.remote_address, self.node.path()))
         if config.max_memory:
             parameters.update({constant.MAX_MEMORY: config.max_memory})
         else:
@@ -120,6 +122,8 @@ class Solver(net.Socket):
                   constant.NODE_: node.path(),
                   constant.QUERY: query,
                   }
+        if config.enableLog:
+            print('{}: incremental {} -> {}'.format(self.remote_address, self.node.path(), node.path()))
         self.write(header, smt)
         self.or_waiting = []
         self.start_time = time.time()
@@ -173,6 +177,8 @@ class Solver(net.Socket):
             constant.QUERY: constant.CHECK_SAT,
             constant.PARTITIONS: n
         }, '')
+        if config.enableLog:
+            print('{}: ask_partitions {}'.format(self.remote_address, self.node.path()))
         if isinstance(self.node, framework.SMT):
             estimate_partition_time = time.time()
         if not node:
@@ -228,6 +234,7 @@ class Solver(net.Socket):
                 header[constant.REPORT] = 'info:(server) received {} partitions'.format(len(node))
                 if node.parent.status != framework.SolveStatus.unknown:
                     node.clear()
+                #??
                 if len(node) != config.partition_policy[1]:
                     config.partition_count = config.partition_count - config.partition_policy[1] + len(node)
             return header, payload
@@ -428,6 +435,8 @@ class ParallelizationServer(net.Server):
                 p_node = header['partition_recieved']
                 partition_received = True
                 del header['partition_recieved']
+                if config.enableLog:
+                    print('partition received: {}'.format(p_node.path()))
         solving = self.current
 
         if isinstance(self.current, Instance):
@@ -544,6 +553,8 @@ class ParallelizationServer(net.Server):
                 if node.counted:
                     config.partition_count -= 1
                     node.counted = False
+                if config.enableLog:
+                    print('unsat: {}'.format(node.path()))
                 for solver in self.solvers_at(node):
                     if solver.partitioning:
                         if not (partition_received and node == p_node):
@@ -586,6 +597,9 @@ class ParallelizationServer(net.Server):
                     else:
                         assert partition_received and node == p_node
                         node.total_runtime += solver.runtime()
+
+                    if config.enableLog:
+                        print('{}: timeout ({}): {}'.format(solver.remote_address, round(node.n_timeouts(), 2), node.path()))
 
                     ## at a certain point, do not block the expansion any more and decrement
                     if config.n_timeouts_to_count_partition and node.counted and node.n_timeouts() >= config.n_timeouts_to_count_partition:
@@ -635,6 +649,8 @@ class ParallelizationServer(net.Server):
                             continue
                         redundant_solvers.append(solver)
                         solver.redundant = True
+                        if config.enableLog:
+                            print('redundant solver at: {}'.format(node.path()))
 
             if solved_solvers:
                 self.movable_solvers = solved_solvers + self.movable_solvers
@@ -655,6 +671,14 @@ class ParallelizationServer(net.Server):
 
             assert len(self.movable_solvers) <= self.total_solvers
             if self.movable_solvers:
+                if config.enableLog:
+                    print('will_partition: {}'.format(will_partition))
+
+                if config.enableLog:
+                    print('before placement:')
+                    for node in self.get_nodes():
+                        print('{}: T: {} solvers: {}'.format(node.path(), round(node.n_timeouts(), 2), len(self.solvers_at(node))))
+
                 assert config.portfolio_min >= 1
                 ##+ minPortfolio disregarded
                 n = len(self.movable_solvers)
@@ -665,13 +689,24 @@ class ParallelizationServer(net.Server):
                     if partition_node_candidate in nodes:
                         nodes.remove(partition_node_candidate)
                         nodes.insert(0, partition_node_candidate)
+                        if config.enableLog:
+                            print('morpeach: prepending existing partition node: {}'.format(partition_node_candidate.path()))
                     ## only if there is not already any solver that will stay there
                     elif not any(solver not in self.movable_solvers for solver in self.solvers_at(partition_node_candidate)):
                         nodes.pop()
                         nodes.insert(0, partition_node_candidate)
+                        if config.enableLog:
+                            print('morpeach: prepending missing partition node: {}'.format(partition_node_candidate.path()))
                 assert len(nodes) == n
                 for node in nodes:
+                    if config.enableLog:
+                        print('morpeach node: {}'.format(node.path()))
                     self.map_solver_to_node(node)
+
+                if config.enableLog:
+                    print('after placement:')
+                    for node in self.get_nodes():
+                        print('{}: T: {} solvers: {}'.format(node.path(), round(node.n_timeouts(), 2), len(self.solvers_at(node))))
             assert len(self.movable_solvers) == 0
 
             if not isinstance(self.current.root, framework.SMT):
@@ -765,6 +800,8 @@ class ParallelizationServer(net.Server):
                 if node.n_skipped < node.n_to_skip:
                     node.n_skipped += 1
                     n_skipped += 1
+                    if config.enableLog:
+                        print('morpeach skip: {}'.format(node.path()))
                     continue
 
                 ret_nodes.append(node)
@@ -840,6 +877,9 @@ class ParallelizationServer(net.Server):
         n = self.total_solvers
         tree_size = config.partition_count
 
+        if config.enableLog:
+            print('will_partition?(n={}, T={}): {}'.format(n, tree_size, node.path()))
+
         if tree_size < n:
             return True
 
@@ -857,6 +897,9 @@ class ParallelizationServer(net.Server):
         while r == 0:
             r = random.random()
 
+        if config.enableLog:
+            print('random: {}'.format(r))
+
         b = config.partitioning_boost_factor
         assert -1 <= b <= 1
         rhs = (1/p)*(1 - b*b) + (b/2)*(1 + b)
@@ -867,6 +910,8 @@ class ParallelizationServer(net.Server):
         return r < rhs
 
     def partition(self, node: framework.AndNode):
+        if config.enableLog:
+            print('partition: {}'.format(node.path()))
         solvers = sorted(list(self.solvers_at(node)), key=lambda solver: solver.runtime())
         assert solvers
         assert not any(solver.partitioning for solver in solvers)
