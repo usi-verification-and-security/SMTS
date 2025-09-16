@@ -4,12 +4,14 @@ import logging
 port = 3000                     # Default listening port
 db_path = None                  # sqlite3 event db path absolute or relative to the config file
 table_prefix = ''               # db table prefix
-portfolio_max = 0               # 0 if no limit
-portfolio_min = 1               # 0 if no limit
+##+ portfolio_max not implemented
+portfolio_max = 0               # 0 if no limit, >= portfolio_min : max. no. solvers per node
+portfolio_min = 1               # >= 1 : min. no. solvers per node
 partitioning = False            # Enable partitioning
-##! automatic calculation currently does not work
+##+ automatic calculation not implemented
 node_timeout = 20               # None for automatic calculation timeout
 partition_policy = [1, 2]       # [number of solvers, number of partition per solver]
+redundant_only_if_tree_changed = True  # trigger re-placement of redundant solvers only when solved nodes or received new nodes; or after any event
 solving_timeout = 2000          # None for no timeout
 max_memory = 10000               # max memory for each solver process in MB
 build_path = "../../build"      # build path absolute or relative to the config file
