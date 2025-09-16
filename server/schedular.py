@@ -579,13 +579,10 @@ class ParallelizationServer(net.Server):
 
             assert all(not solver.partitioning for solver in self.movable_solvers)
 
-            will_partition = False
+            will_partition = self.will_partition(partition_node_candidate, partition_received)
 
             assert len(self.movable_solvers) <= self.total_solvers
             if self.movable_solvers:
-                if partition_node_candidate is not None and not partition_received:
-                    will_partition = self.will_partition(partition_node_candidate)
-
                 n = len(self.movable_solvers)
                 ##+ minPortfolio disregarded
                 nodes = self.get_nodes_to_solve(n)
@@ -742,21 +739,32 @@ class ParallelizationServer(net.Server):
         assert not solver.partitioning
         solver.incremental(node)
 
-    def will_partition(self, node: framework.AndNode):
-        assert node == self.current.root or self.movable_solvers
+    def will_partition(self, node: framework.AndNode, partition_received: bool = False):
+        if node is None:
+            return False
+
+        if not self.movable_solvers:
+            if node != self.current.root:
+                return False
 
         ##+ minPortfolio disregarded
         n = self.total_solvers
         tree_size = config.partition_count
-        p = config.partition_policy[1]
 
         if tree_size < n:
             return True
+
+        if partition_received:
+            return False
+
         k = 2
         if tree_size >= k*n:
             return False
+
         if any(not nd.started() for nd in self.get_nodes()):
             return False
+
+        p = config.partition_policy[1]
 
         r = 0
         while r == 0:
