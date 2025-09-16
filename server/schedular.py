@@ -59,6 +59,7 @@ class Solver(net.Socket):
 
     def _reset(self):
         self._partitioning = False
+        self.redundant = False
         self.node = None
         self.start_time = None
         self.or_waiting = []
@@ -521,6 +522,11 @@ class ParallelizationServer(net.Server):
 
         assert isinstance(self.current, Instance)
         if config.partitioning:
+            assert len(self.movable_solvers) == 0
+
+            for solver in self.placed_solvers():
+                solver.redundant = False
+
             solved_solvers = []
             for node in self.get_nodes():
                 assert isinstance(node, framework.AndNode)
@@ -548,7 +554,8 @@ class ParallelizationServer(net.Server):
                     node.total_runtime += solver.runtime()
 
             partition_node_candidate = None
-            for node in self.get_nodes():
+            unsolved_nodes = self.get_nodes()
+            for node in unsolved_nodes:
                 assert not node.solved
                 assert node.status == framework.SolveStatus.unknown
 
@@ -556,35 +563,84 @@ class ParallelizationServer(net.Server):
                     if partition_node_candidate is None:
                         partition_node_candidate = node
 
-            for solver in self.placed_solvers():
-                node = solver.node
-                if node.solved:
-                    continue
-                assert solver not in solved_solvers
+            if config.node_timeout:
+                for solver in self.placed_solvers():
+                    node = solver.node
+                    if node.solved:
+                        continue
+                    assert solver not in solved_solvers
 
-                assert solver.started()
-                if config.node_timeout and solver.runtime() >= config.node_timeout:
-                    if not solver.partitioning or (partition_received and node == p_node):
-                        self.add_movable_solver(solver, timeouted=True)
-                        ## at a certain point, do not block the expansion any more and decrement
-                        if config.n_timeouts_to_count_partition and node.counted and node.n_timeouts() >= config.n_timeouts_to_count_partition:
-                            config.partition_count -= 1
-                            node.counted = False
-                elif partition_received and node == p_node:
+                    assert solver.started()
+                    if solver.runtime() < config.node_timeout:
+                        continue
+
+                    if solver.partitioning and not (partition_received and node == p_node):
+                        continue
+
                     self.add_movable_solver(solver)
+                    if not solver.partitioning:
+                        ## usually, solver.runtime() > config.node_timeout
+                        node.total_runtime += config.node_timeout
+                    else:
+                        node.total_runtime += solver.runtime()
+
+                    ## at a certain point, do not block the expansion any more and decrement
+                    if config.n_timeouts_to_count_partition and node.counted and node.n_timeouts() >= config.n_timeouts_to_count_partition:
+                        config.partition_count -= 1
+                        node.counted = False
+
+            if partition_received and not p_node.solved:
+                assert len([solver for solver in self.solvers_at(p_node) if solver.partitioning]) == 1
+                for solver in self.solvers_at(p_node):
+                    if solver.partitioning:
+                        solver.partitioning = False
+                        break
+
+            redundant_solvers = []
+            ## allow redundant re-placement only when the tree has changed
+            ##+ should only be useful if portfolio_max is not configured or tree is small
+            if partition_received or solved_solvers or (not config.redundant_only_if_tree_changed and self.movable_solvers):
+                for node in unsolved_nodes:
+                    n_stay = 0
+                    ##++ config by redundant_max
+                    min_stay = config.portfolio_min
+                    assert min_stay > 0
+                    ## keep solvers that already run for some time
+                    solvers = sorted(self.solvers_at(node), key=lambda solver: solver.runtime(), reverse=True)
+                    for solver in solvers:
+                        assert solver not in solved_solvers
+                        assert solver not in redundant_solvers
+                        if solver.partitioning:
+                            assert not (partition_received and node == p_node)
+                            n_stay += 1
+                            continue
+                        ## i.e. just timeouted
+                        if solver in self.movable_solvers:
+                            continue
+                        if n_stay < min_stay:
+                            n_stay += 1
+                            continue
+                        redundant_solvers.append(solver)
+                        solver.redundant = True
 
             if solved_solvers:
                 self.movable_solvers = solved_solvers + self.movable_solvers
                 solved_solvers.clear()
 
+            if redundant_solvers:
+                self.movable_solvers += redundant_solvers
+                redundant_solvers.clear()
+
             assert all(not solver.partitioning for solver in self.movable_solvers)
+            assert not partition_received or all(not solver.partitioning for solver in self.placed_solvers() if solver.node == p_node)
 
             will_partition = self.will_partition(partition_node_candidate, partition_received)
 
             assert len(self.movable_solvers) <= self.total_solvers
             if self.movable_solvers:
-                n = len(self.movable_solvers)
+                assert config.portfolio_min >= 1
                 ##+ minPortfolio disregarded
+                n = len(self.movable_solvers)
                 nodes = self.get_nodes_to_solve(n)
                 if will_partition:
                     assert partition_node_candidate is not None
@@ -635,15 +691,9 @@ class ParallelizationServer(net.Server):
         if self.will_partition(root):
             self.partition(root)
 
-    def add_movable_solver(self, solver: Solver, timeouted=False):
+    def add_movable_solver(self, solver: Solver):
         assert solver not in self.movable_solvers
         self.movable_solvers.append(solver)
-        solver.partitioning = False
-        if timeouted:
-            ## usually, solver.runtime() > config.node_timeout
-            solver.node.total_runtime += config.node_timeout
-        else:
-            solver.node.total_runtime += solver.runtime()
 
     ##++ shuffle
     def get_nodes(self, reverse=False, unsolved=True):
@@ -677,6 +727,7 @@ class ParallelizationServer(net.Server):
                 if node.n_timeouts() > max_touts:
                     continue
 
+                ##+ implement portfolio_max by skipping nodes (if enough available)
                 assert node.n_skipped <= node.n_to_skip
                 if node.n_skipped < node.n_to_skip:
                     node.n_skipped += 1
@@ -737,6 +788,11 @@ class ParallelizationServer(net.Server):
         assert solver in self.movable_solvers
         self.movable_solvers.remove(solver)
         assert not solver.partitioning
+        if solver.redundant:
+            ##+ sometimes do not interrupt even if not redundant?
+            if solver.node == node:
+                return
+            solver.node.total_runtime += solver.runtime()
         solver.incremental(node)
 
     def will_partition(self, node: framework.AndNode, partition_received: bool = False):
@@ -746,6 +802,8 @@ class ParallelizationServer(net.Server):
         if not self.movable_solvers:
             if node != self.current.root:
                 return False
+
+        assert partition_received or any(not solver.redundant for solver in self.placed_solvers())
 
         ##+ minPortfolio disregarded
         n = self.total_solvers
