@@ -599,11 +599,12 @@ class ParallelizationServer(net.Server):
             redundant_solvers = []
             ## allow redundant re-placement only when the tree has changed
             ##+ should only be useful if portfolio_max is not configured or tree is small
-            if partition_received or solved_solvers or (not config.redundant_only_if_tree_changed and self.movable_solvers):
+            if config.nonredundant_max and (partition_received or solved_solvers or (not config.redundant_only_if_tree_changed and self.movable_solvers)):
+                assert config.portfolio_min <= config.nonredundant_max
+                assert not config.portfolio_max or config.nonredundant_max <= config.portfolio_max
                 for node in unsolved_nodes:
                     n_stay = 0
-                    ##++ config by redundant_max
-                    min_stay = config.portfolio_min
+                    min_stay = config.nonredundant_max
                     assert min_stay > 0
                     ## keep solvers that already run for some time
                     solvers = sorted(self.solvers_at(node), key=lambda solver: solver.runtime(), reverse=True)
