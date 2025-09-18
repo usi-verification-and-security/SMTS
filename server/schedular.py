@@ -282,6 +282,7 @@ class ParallelizationServer(net.Server):
         self.terminate = False
         self.counter = 75674531
         self.reverse_cousins_for_partitioning = False
+        self.reverse_cousins_for_morpeach = False
         if config.enableLog:
             self.log(logging.INFO, 'server start. version {}'.format(version))
         if config.visualize_tree:
@@ -697,7 +698,7 @@ class ParallelizationServer(net.Server):
         assert solver not in self.movable_solvers
         self.movable_solvers.append(solver)
 
-    def get_nodes(self, reverse=False, unsolved=True, partitioning=False):
+    def get_nodes(self, reverse=False, unsolved=True, partitioning=False, morpeach=False):
         nodes = self.current.root.all_and_children()
         if unsolved:
             nodes = [n for n in nodes if not n.solved]
@@ -706,13 +707,20 @@ class ParallelizationServer(net.Server):
                 nodes.reverse()
             if config.shuffle_partitioning:
                 random.shuffle(nodes)
+        elif morpeach:
+            if config.balance_morpeach:
+                if self.reverse_cousins_for_morpeach:
+                    nodes.reverse()
+                self.reverse_cousins_for_morpeach = not self.reverse_cousins_for_morpeach
+            if config.shuffle_morpeach:
+                random.shuffle(nodes)
         nodes.sort(reverse=reverse)
         return nodes
 
     ## Morpeach
     def get_nodes_to_solve(self, n: int):
         assert n == len(self.movable_solvers)
-        nodes = self.get_nodes(reverse=True)
+        nodes = self.get_nodes(reverse=True, morpeach=True)
         ret_nodes = []
 
         n_skipped = 0
