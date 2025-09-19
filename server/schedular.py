@@ -526,7 +526,7 @@ class ParallelizationServer(net.Server):
         if config.partitioning:
             assert len(self.movable_solvers) == 0
 
-            for solver in self.placed_solvers():
+            for solver in self.all_solvers():
                 solver.redundant = False
 
             solved_solvers = []
@@ -584,6 +584,7 @@ class ParallelizationServer(net.Server):
                         ## usually, solver.runtime() > config.node_timeout
                         node.total_runtime += config.node_timeout
                     else:
+                        assert partition_received and node == p_node
                         node.total_runtime += solver.runtime()
 
                     ## at a certain point, do not block the expansion any more and decrement
@@ -593,10 +594,20 @@ class ParallelizationServer(net.Server):
 
             if partition_received and not p_node.solved:
                 assert len([solver for solver in self.solvers_at(p_node) if solver.partitioning]) == 1
-                for solver in self.solvers_at(p_node):
+                p_solvers = sorted(self.solvers_at(p_node), key=lambda solver: solver.runtime())
+                move_solver_to_new_partition = True
+                for solver in p_solvers:
                     if solver.partitioning:
                         solver.partitioning = False
-                        break
+                    if solver in self.movable_solvers:
+                        move_solver_to_new_partition = False
+                if move_solver_to_new_partition and config.node_timeout and config.move_to_new_partition_timeout_factor:
+                    solver = p_solvers[0]
+                    assert 0 < solver.runtime() < config.node_timeout
+                    assert len(p_solvers) < 2 or solver.runtime() <= p_solvers[1].runtime()
+                    if solver.runtime()/config.node_timeout < config.move_to_new_partition_timeout_factor:
+                        self.add_movable_solver(solver)
+                        node.total_runtime += solver.runtime()
 
             redundant_solvers = []
             ## allow redundant re-placement only when the tree has changed
@@ -617,7 +628,6 @@ class ParallelizationServer(net.Server):
                             assert not (partition_received and node == p_node)
                             n_stay += 1
                             continue
-                        ## i.e. just timeouted
                         if solver in self.movable_solvers:
                             continue
                         if n_stay < min_stay:
@@ -636,6 +646,9 @@ class ParallelizationServer(net.Server):
 
             assert all(not solver.partitioning for solver in self.movable_solvers)
             assert not partition_received or all(not solver.partitioning for solver in self.placed_solvers() if solver.node == p_node)
+
+            # assert any(not solver.redundant for solver in self.movable_solvers)
+            assert any(not solver.redundant for solver in self.placed_solvers())
 
             will_partition = self.will_partition(partition_node_candidate, partition_received)
 
@@ -759,6 +772,7 @@ class ParallelizationServer(net.Server):
 
     ##+ n to n mapping would be more efficient and avoid unnecessary moves
     def get_solver_for_node(self, node: framework.AndNode):
+        assert node is not None
         assert self.movable_solvers
         assert all(solver.node is not None and not solver.partitioning for solver in self.movable_solvers)
 
@@ -803,7 +817,6 @@ class ParallelizationServer(net.Server):
         self.movable_solvers.remove(solver)
         assert not solver.partitioning
         if solver.redundant:
-            ##+ sometimes do not interrupt even if not redundant?
             if solver.node == node:
                 return
             solver.node.total_runtime += solver.runtime()
@@ -816,8 +829,6 @@ class ParallelizationServer(net.Server):
         if not self.movable_solvers:
             if node != self.current.root:
                 return False
-
-        assert partition_received or any(not solver.redundant for solver in self.placed_solvers())
 
         ##+ minPortfolio disregarded
         n = self.total_solvers
