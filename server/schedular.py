@@ -281,6 +281,7 @@ class ParallelizationServer(net.Server):
         self.total_solvers = 0
         self.terminate = False
         self.counter = 75674531
+        self.reverse_cousins_for_partitioning = False
         if config.enableLog:
             self.log(logging.INFO, 'server start. version {}'.format(version))
         if config.visualize_tree:
@@ -554,7 +555,7 @@ class ParallelizationServer(net.Server):
                     node.total_runtime += solver.runtime()
 
             partition_node_candidate = None
-            unsolved_nodes = self.get_nodes()
+            unsolved_nodes = self.get_nodes(partitioning=True)
             for node in unsolved_nodes:
                 assert not node.solved
                 assert node.status == framework.SolveStatus.unknown
@@ -696,11 +697,15 @@ class ParallelizationServer(net.Server):
         assert solver not in self.movable_solvers
         self.movable_solvers.append(solver)
 
-    ##++ shuffle
-    def get_nodes(self, reverse=False, unsolved=True):
+    def get_nodes(self, reverse=False, unsolved=True, partitioning=False):
         nodes = self.current.root.all_and_children()
         if unsolved:
             nodes = [n for n in nodes if not n.solved]
+        if partitioning:
+            if config.balance_partitioning and self.reverse_cousins_for_partitioning:
+                nodes.reverse()
+            if config.shuffle_partitioning:
+                random.shuffle(nodes)
         nodes.sort(reverse=reverse)
         return nodes
 
@@ -833,6 +838,8 @@ class ParallelizationServer(net.Server):
         assert solvers
         assert not any(solver.partitioning for solver in solvers)
         solvers[0].ask_partitions(self.level_children(node.level + 1))
+        ## to keep the tree balanced
+        self.reverse_cousins_for_partitioning = not self.reverse_cousins_for_partitioning
 
 
     def all_solvers(self):

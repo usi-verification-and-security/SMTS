@@ -11,6 +11,8 @@ partitioning = False            # Enable partitioning
 ##+ automatic calculation not implemented
 node_timeout = 20               # None for automatic calculation timeout
 partition_policy = [1, 2]       # [number of solvers, number of partition per solver]
+balance_partitioning = True     # balances the order of selecting nodes for partitioning within the same depth
+shuffle_partitioning = False    # randomizes the order of selecting nodes for partitioning within the same depth
 redundant_only_if_tree_changed = True  # trigger re-placement of redundant solvers only when solved nodes or received new nodes; or after any event
 nonredundant_max = 2            # 0 if no limit, portfolio_min <= x <= portfolio_max
 solving_timeout = 2000          # None for no timeout
