@@ -8,8 +8,10 @@ table_prefix = ''               # db table prefix
 portfolio_max = 0               # 0 if no limit, >= portfolio_min : max. no. solvers per node
 portfolio_min = 1               # >= 1 : min. no. solvers per node
 partitioning = False            # Enable partitioning
-##+ automatic calculation not implemented
-node_timeout = 20               # None for automatic calculation timeout
+node_timeout = 24               # timeout per each solver
+dynamic_node_timeout = True     # increase the timeout over time
+dynamic_node_timeout_factor = 2 # factor by which the dynamic node timeout is increased
+dynamic_node_timeout_threshold_factor = 4 # dynamic node timeout is increased when the overall time exceeds this factor threshold
 partition_policy = [1, 2]       # [number of solvers, number of partition per solver]
 max_tree_size_factor = 2        # >= 1 : max. relative size of the tree compared to solvers (excluding solved nodes)
 partitioning_boost_factor = 0   # in [-1,1] : increases/decreases the probability of partitioning (up to 0 and 1, resp.)

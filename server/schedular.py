@@ -680,6 +680,11 @@ class ParallelizationServer(net.Server):
             if will_partition:
                 self.partition(partition_node_candidate)
 
+            if config.dynamic_node_timeout:
+                assert config.node_timeout
+                if self.current.runtime() >= config.node_timeout*config.dynamic_node_timeout_threshold_factor:
+                    config.node_timeout *= config.dynamic_node_timeout_factor
+
     def run_solver_at_root(self, solver: Solver):
         root = self.current.root
 
