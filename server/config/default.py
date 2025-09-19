@@ -11,6 +11,8 @@ partitioning = False            # Enable partitioning
 ##+ automatic calculation not implemented
 node_timeout = 20               # None for automatic calculation timeout
 partition_policy = [1, 2]       # [number of solvers, number of partition per solver]
+max_tree_size_factor = 2        # >= 1 : max. relative size of the tree compared to solvers (excluding solved nodes)
+partitioning_boost_factor = 0   # in [-1,1] : increases/decreases the probability of partitioning (up to 0 and 1, resp.)
 balance_partitioning = True     # balances the order of selecting nodes for partitioning within the same depth
 shuffle_partitioning = False    # randomizes the order of selecting nodes for partitioning within the same depth
 balance_morpeach = False        # balances the order of selecting nodes for placement within the same depth

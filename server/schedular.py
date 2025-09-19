@@ -826,7 +826,8 @@ class ParallelizationServer(net.Server):
         if tree_size < n:
             return True
 
-        k = 2
+        k = config.max_tree_size_factor
+        assert k >= 1
         if tree_size >= k*n:
             return False
 
@@ -838,8 +839,15 @@ class ParallelizationServer(net.Server):
         r = 0
         while r == 0:
             r = random.random()
-        ##++ parametrization with b is missing
-        return r < 1/p
+
+        b = config.partitioning_boost_factor
+        assert -1 <= b <= 1
+        rhs = (1/p)*(1 - b*b) + (b/2)*(1 + b)
+        assert b != 0 or rhs == 1/p
+        assert b != 1 or rhs == 1
+        assert b != -1 or rhs == 0
+
+        return r < rhs
 
     def partition(self, node: framework.AndNode):
         solvers = sorted(list(self.solvers_at(node)), key=lambda solver: solver.runtime())
