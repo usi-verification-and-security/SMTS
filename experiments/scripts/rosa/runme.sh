@@ -86,6 +86,7 @@ for o in $os; do
           timeout $super_timeout ./server/smts.py $partitioning_opt $lemma_sharing_opt -Pf -Pt $nt_opt -o $o -fp "$file" >$out 2>$err
           ret=$?
           sleep 0.5
+          pkill solver_opensmt
           (( $ret == 0 )) && break
         done
 
