@@ -175,7 +175,8 @@ if __name__ == '__main__':
 
     print('#!/usr/bin/env gnuplot')
 #    print('set term epslatex standalone color size 8, 4')
-    print('set term pngcairo')
+    # print('set term pngcairo')
+    print('set term svg dynamic fname "Arvo"')
 
     print('set output "%s"' % output)
     print('set size square')
@@ -189,7 +190,7 @@ if __name__ == '__main__':
     print('set key right bottom')
     print('set xrange [%f:%f]' % (low, bnd2))
     print('set yrange [%f:%f]' % (low, bnd2))
-    print('set pointsize 1.5')
+    print('set pointsize 0.7')
     print('set arrow from graph 0, first %f to %f,%f nohead' % (to, to, to))
     print('set arrow from %f, graph 0 to %f,%f nohead' % (to, to, to))
     print('set arrow from graph 0, first %f to %f,%f nohead' % (bnd, bnd, bnd))

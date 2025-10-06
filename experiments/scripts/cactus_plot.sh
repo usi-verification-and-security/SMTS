@@ -5,7 +5,8 @@ results=("$@")
 # [[ -z $TIMEOUT ]] && TIMEOUT=300
 [[ -z $TIMEOUT ]] && TIMEOUT=1200
 
-IMAGE_FILE=plot.png
+IMAGE_FILE=plot.svg
+PDF_FILE=plot.pdf
 GNUPLOT_FILE=plot.gp
 
 function cleanup {
@@ -24,6 +25,8 @@ gnuplot "$GNUPLOT_FILE" || exit $?
 # printf "The resulting plot is stored in %s\n" "$IMAGE_FILE"
 
 display "$IMAGE_FILE"
+
+inkscape --export-filename="$PDF_FILE" "$IMAGE_FILE"
 
 cleanup
 exit 0
