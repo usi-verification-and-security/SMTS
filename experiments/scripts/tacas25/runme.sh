@@ -17,8 +17,10 @@ version=$1
 files_file="$2"
 files_name=$(basename "$files_file")
 
+logic="${files_name%_files*}"
+
 DATA_DIR=$(dirname "$files_file")
-RESULTS_DIR="$DATA_DIR/$version/$files_name"
+RESULTS_DIR="$DATA_DIR/${version}/${logic}"
 mkdir -p "$RESULTS_DIR" >/dev/null || exit $?
 
 [[ -z $TIMEOUT ]] && TIMEOUT=300
