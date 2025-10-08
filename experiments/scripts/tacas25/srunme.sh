@@ -5,4 +5,4 @@
 #SBATCH --cpus-per-task=20
 #SBATCH --time=2-00:00:00
 
-srun bash "$SCRIPTS_DIR/runme.sh" "$@"
+srun bash "$TACAS_SCRIPTS_DIR/runme.sh" "$@"
