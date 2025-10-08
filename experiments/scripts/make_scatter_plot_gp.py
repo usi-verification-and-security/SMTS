@@ -108,10 +108,10 @@ if __name__ == '__main__':
 
     for k in x_res.keys():
         if k not in y_res:
-            print("Not in y: %s" % k, file=sys.stderr)
+            print("!! Not in y: %s" % k, file=sys.stderr)
         elif x_res[k][1] >= 0:
             if y_res[k][1] < 0:
-                print("Indet y-only (%s): %s" % (x_res[k][0], k), file=sys.stderr)
+                print("unknown y-only (%s): %s" % (x_res[k][0], k), file=sys.stderr)
             else:
                 assert x_res[k][1] > 0
                 assert y_res[k][1] > 0
@@ -129,9 +129,46 @@ if __name__ == '__main__':
 
     for k in y_res.keys():
         if k not in x_res:
-            print("Not in x: %s" % k, file=sys.stderr)
+            print("!! Not in x: %s" % k, file=sys.stderr)
         elif y_res[k][1] >= 0 and x_res[k][1] < 0:
-            print("Indet x-only (%s): %s" % (y_res[k][0], k), file=sys.stderr)
+            print("unknown x-only (%s): %s" % (y_res[k][0], k), file=sys.stderr)
+
+    x_par2 = 0
+    y_par2 = 0
+    sat_x_par2 = 0
+    sat_y_par2 = 0
+    unsat_x_par2 = 0
+    unsat_y_par2 = 0
+
+    for k in x_res.keys():
+        if k not in y_res:
+            continue
+        if x_res[k][1] < 0:
+            x_par2 += float(2*to)
+        else:
+            x_par2 += float(x_res[k][1])
+            if x_res[k][0] == 'sat':
+                sat_x_par2 += float(x_res[k][1])
+                if y_res[k][1] < 0:
+                    sat_y_par2 += float(2*to)
+            elif x_res[k][0] == 'unsat':
+                unsat_x_par2 += float(x_res[k][1])
+                if y_res[k][1] < 0:
+                    unsat_y_par2 += float(2*to)
+        if y_res[k][1] < 0:
+            y_par2 += float(2*to)
+        else:
+            y_par2 += float(y_res[k][1])
+            if y_res[k][0] == 'sat':
+                sat_y_par2 += float(y_res[k][1])
+                if x_res[k][1] < 0:
+                    sat_x_par2 += float(2*to)
+            elif y_res[k][0] == 'unsat':
+                unsat_y_par2 += float(y_res[k][1])
+                if x_res[k][1] < 0:
+                    unsat_x_par2 += float(2*to)
+
+    # print('PAR-2: x:{} y:{}'.format(x_par2, y_par2), file=sys.stderr)
 
     speedup = sum(speedups)/len(speedups)
     if sat_speedups:
@@ -161,6 +198,10 @@ if __name__ == '__main__':
 
     solved_x = len(list(filter(lambda x: x_res[x][1] >= 0, x_res.keys())))
     solved_y = len(list(filter(lambda x: y_res[x][1] >= 0, y_res.keys())))
+    sat_solved_x = len(list(filter(lambda x: x_res[x][1] >= 0 and x_res[x][0] == 'sat', x_res.keys())))
+    sat_solved_y = len(list(filter(lambda x: y_res[x][1] >= 0 and y_res[x][0] == 'sat', y_res.keys())))
+    unsat_solved_x = len(list(filter(lambda x: x_res[x][1] >= 0 and x_res[x][0] == 'unsat', x_res.keys())))
+    unsat_solved_y = len(list(filter(lambda x: y_res[x][1] >= 0 and y_res[x][0] == 'unsat', y_res.keys())))
 
 
     def postProc(h, bnd):
@@ -199,18 +240,47 @@ if __name__ == '__main__':
     print('set label "t/o" at graph .95, graph -0.14')
     print('set arrow from %f, graph 0 to graph 1.05, graph -.08 backhead lt 2' % bnd2)
     print('set label "m/o" at graph 1.05, graph -0.1')
-    print('set label "avg speedup x/y: %.02f" at graph 1.01,1.0' % speedup)
+
+    label_xpos = 1.05
+    label_ypos = 0.9
+    label_ypos_step = 0.075
+    # print('set label "avg speedup x/y: %.02f" at graph %f,%f' % (speedup, label_xpos, label_ypos))
+    # label_ypos -= label_ypos_step
+    # if sat_speedups:
+    #     print('set label "   - sat speedup x/y: %.02f" at graph %f,%f' % (sat_speedup, label_xpos, label_ypos))
+    # label_ypos -= label_ypos_step
+    # if unsat_speedups:
+    #     print('set label "   - unsat speedup x/y: %.02f" at graph %f,%f' % (unsat_speedup, label_xpos, label_ypos))
+    # label_ypos -= label_ypos_step
+    # print('set label "total time ratio x/y: %.02f" at graph %f,%f' % (x_total/float(y_total), label_xpos, label_ypos))
+    # label_ypos -= label_ypos_step
+    # if sat_speedups:
+    #     print('set label "   - sat ratio x/y: %.02f" at graph %f,%f' % (sat_x_total/float(sat_y_total), label_xpos, label_ypos))
+    # label_ypos -= label_ypos_step
+    # if unsat_speedups:
+    #     print('set label "   - unsat ratio x/y: %.02f" at graph %f,%f' % (unsat_x_total/float(unsat_y_total), label_xpos, label_ypos))
+    # label_ypos -= label_ypos_step
+    print('set label "solved x %d" at graph %f,%f' % (solved_x, label_xpos, label_ypos))
+    label_ypos -= label_ypos_step
+    print('set label "   - sat solved x %d" at graph %f,%f' % (sat_solved_x, label_xpos, label_ypos))
+    label_ypos -= label_ypos_step
+    print('set label "   - unsat solved x %d" at graph %f,%f' % (unsat_solved_x, label_xpos, label_ypos))
+    label_ypos -= label_ypos_step
+    print('set label "solved y %d" at graph %f,%f' % (solved_y, label_xpos, label_ypos))
+    label_ypos -= label_ypos_step
+    print('set label "   - sat solved y %d" at graph %f,%f' % (sat_solved_y, label_xpos, label_ypos))
+    label_ypos -= label_ypos_step
+    print('set label "   - unsat solved y %d" at graph %f,%f' % (unsat_solved_y, label_xpos, label_ypos))
+    label_ypos -= label_ypos_step
+    print('set label "PAR-2 ratio x/y: %.02f" at graph %f,%f' % (x_par2/float(y_par2), label_xpos, label_ypos))
+    label_ypos -= label_ypos_step
     if sat_speedups:
-      print('set label "   - sat speedup x/y: %.02f" at graph 1.01,0.9' % sat_speedup)
+        print('set label "   - sat ratio x/y: %.02f" at graph %f,%f' % (sat_x_par2/float(sat_y_par2), label_xpos, label_ypos))
+    label_ypos -= label_ypos_step
     if unsat_speedups:
-      print('set label "   - unsat speedup x/y: %.02f" at graph 1.01,0.8' % unsat_speedup)
-    print('set label "total time ratio x/y: %.02f" at graph 1.01,0.7' % (x_total/float(y_total)))
-    if sat_speedups:
-      print('set label "   - sat ratio x/y: %.02f" at graph 1.01,0.6' % (sat_x_total/float(sat_y_total)))
-    if unsat_speedups:
-      print('set label "   - unsat ratio x/y: %.02f" at graph 1.01,0.5' % (unsat_x_total/float(unsat_y_total)))
-    print('set label "solved x %d" at graph 1.02,0.4' % solved_x)
-    print('set label "solved y %d" at graph 1.02,0.3' % solved_y)
+        print('set label "   - unsat ratio x/y: %.02f" at graph %f,%f' % (unsat_x_par2/float(unsat_y_par2), label_xpos, label_ypos))
+    label_ypos -= label_ypos_step
+
     print('plot x title "" lc "black", "-" title "" with point pointtype 2 lc "green", "-" title "" with points pointtype 4 lc "red", "-" title "" with points pointtype 3 lc "blue", "-" title "" with points pointtype 5 lc "magenta"')
 
     sat_strings = []
@@ -223,7 +293,7 @@ if __name__ == '__main__':
                 y_res[name][0] == 'unsat') or \
                (x_res[name][0] == 'unsat' and \
                 y_res[name][0] == 'sat'):
-                print("Oops: %s %s %s" %
+                print("!! Oops: %s %s %s" %
                         (name, x_res[name], y_res[name]), file=sys.stderr)
                 fail_strings.append("%.02f %.02f # %s" % (x_res[name][1], y_res[name][1], name))
 
