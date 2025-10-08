@@ -24,7 +24,7 @@ gnuplot "$GNUPLOT_FILE" || exit $?
 
 # printf "The resulting plot is stored in %s\n" "$IMAGE_FILE"
 
-display "$IMAGE_FILE"
+[[ -n $SHOW ]] && display "$IMAGE_FILE"
 
 inkscape --export-filename="$PDF_FILE" "$IMAGE_FILE"
 

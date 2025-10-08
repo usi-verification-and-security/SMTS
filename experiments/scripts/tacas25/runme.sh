@@ -1,5 +1,5 @@
-SCRIPTS_DIR=$(dirname $(realpath "$0"))
-ROOT_DIR=$(realpath "$SCRIPTS_DIR/../../../")
+TACAS_SCRIPTS_DIR=$(dirname $(realpath "$0"))
+ROOT_DIR=$(realpath "$TACAS_SCRIPTS_DIR/../../../")
 
 [[ -z $os ]] && os='8'
 [[ -z $nts ]] && nts='32'
@@ -77,7 +77,7 @@ for o in $os; do
       nt_opt="-nt $nt"
     fi
     results_file+="_o-${o}"
-    err_file=ERROR_$(basename $results_file)
+    err_file=ERROR_$(basename "$results_file")
     while read file; do
       prev_res=
       sum_time=0
@@ -112,7 +112,7 @@ for o in $os; do
       [[ $res == unknown ]] && continue
       avg_time=$(bc -l <<<"scale=2; ($sum_time)/$N")
       printf "%s %s %s\n" "$file" $res $avg_time
-    done <$files_file >$results_file
+    done <"$files_file" >"$results_file"
   done
 done
 

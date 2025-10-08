@@ -1,7 +1,8 @@
 #!/bin/bash
 
-SCRIPTS_DIR=$(dirname $(realpath "$0"))
-ROOT_DIR=$(realpath "$SCRIPTS_DIR/../../../")
+TACAS_SCRIPTS_DIR=$(dirname $(realpath "$0"))
+SCRIPTS_DIR=$(realpath "$TACAS_SCRIPTS_DIR/../")
+ROOT_DIR=$(realpath "$SCRIPTS_DIR/../../")
 
 if [[ -z $OLD_ALG ]]; then
   VERSION=final-alg
@@ -17,8 +18,10 @@ export TIMEOUT=1200
 
 FILES=(
   "$ROOT_DIR/data/QF_LRA_files"
-  "$ROOT_DIR/data/QF_LIA_files_1-2000"
-  "$ROOT_DIR/data/QF_LIA_files_2001-4000"
+  "$ROOT_DIR/data/QF_LIA_files_1-1000"
+  "$ROOT_DIR/data/QF_LIA_files_1001-2000"
+  "$ROOT_DIR/data/QF_LIA_files_2001-3000"
+  "$ROOT_DIR/data/QF_LIA_files_3001-4000"
   "$ROOT_DIR/data/QF_LIA_files_4001-6000"
   "$ROOT_DIR/data/QF_LIA_files_6001-8000"
   "$ROOT_DIR/data/QF_LIA_files_8001-10000"
@@ -37,7 +40,7 @@ for f in "${FILES[@]}"; do
     fi
     for p in $ps; do
       for l in $ls; do
-        PARTITIONING=$p LEMMA_SHARING=$l os=$o "$SCRIPTS_DIR/sbatch.sh" $VERSION "$f"
+        PARTITIONING=$p LEMMA_SHARING=$l os=$o "$TACAS_SCRIPTS_DIR/sbatch.sh" $VERSION "$f"
       done
     done
   done
