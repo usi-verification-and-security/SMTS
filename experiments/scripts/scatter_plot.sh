@@ -1,7 +1,15 @@
 #!/bin/bash
 
-results1=$1
-results2=$2
+results1="$1"
+results2="$2"
+
+if [[ -n $3 ]]; then
+  label1="$3"
+  label2="$4"
+else
+  label1=$(basename "$results1")
+  label2=$(basename "$results2")
+fi
 
 # [[ -z $TIMEOUT ]] && TIMEOUT=300
 [[ -z $TIMEOUT ]] && TIMEOUT=1200
@@ -14,7 +22,7 @@ function cleanup {
   rm -f $GNUPLOT_FILE
 }
 
-python make_scatter_plot_gp.py "$results1" "$results2" $results1 $results2 "" '' "$IMAGE_FILE" $TIMEOUT_SECONDS >"$GNUPLOT_FILE" || {
+python make_scatter_plot_gp.py "$results1" "$results2" "$label1" "$label2" "" '' "$IMAGE_FILE" $TIMEOUT_SECONDS >"$GNUPLOT_FILE" || {
     status=$?
     [[ -s $GNUPLOT_FILE ]] && less "$GNUPLOT_FILE"
     cleanup
