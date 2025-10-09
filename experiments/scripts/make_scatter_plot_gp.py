@@ -223,8 +223,8 @@ if __name__ == '__main__':
     print('set size square')
     print('set size 0.8, 0.8')
     print('set title "%s %s"' % (division, subdivision))
-    print('set xlabel "%s"' % sys.argv[3])
-    print('set ylabel "%s"' % sys.argv[4])
+    print('set xlabel "%s" offset 0,0.25' % sys.argv[3])
+    print('set ylabel "%s" offset 1.5,0' % sys.argv[4])
     if (use_log):
         print('set logscale x')
         print('set logscale y')
@@ -241,8 +241,14 @@ if __name__ == '__main__':
     print('set arrow from %f, graph 0 to graph 1.05, graph -.08 backhead lt 2' % bnd2)
     print('set label "m/o" at graph 1.05, graph -0.1')
 
+    sat_point_str = 'point pointtype 2 lc "green"'
+    unsat_point_str = 'point pointtype 4 lc "red"'
+    unknown_point_str = 'point pointtype 3 lc "blue"'
+    unsound_point_str = 'point pointtype 5 lc "magenta"'
+
     label_xpos = 1.05
-    label_ypos = 0.9
+    label_xsatpos = 1.1
+    label_ypos = 0.8
     label_ypos_step = 0.075
     # print('set label "avg speedup x/y: %.02f" at graph %f,%f' % (speedup, label_xpos, label_ypos))
     # label_ypos -= label_ypos_step
@@ -260,28 +266,35 @@ if __name__ == '__main__':
     # if unsat_speedups:
     #     print('set label "   - unsat ratio x/y: %.02f" at graph %f,%f' % (unsat_x_total/float(unsat_y_total), label_xpos, label_ypos))
     # label_ypos -= label_ypos_step
-    print('set label "solved x %d" at graph %f,%f' % (solved_x, label_xpos, label_ypos))
+    print('set label "solved x: %d" at graph %f,%f' % (solved_x, label_xpos, label_ypos))
     label_ypos -= label_ypos_step
-    print('set label "   - sat solved x %d" at graph %f,%f' % (sat_solved_x, label_xpos, label_ypos))
+    print('set label "" at graph %f,%f %s' % (label_xsatpos, label_ypos, sat_point_str))
+    print('set label "   solved x: %d" at graph %f,%f' % (sat_solved_x, label_xsatpos, label_ypos))
     label_ypos -= label_ypos_step
-    print('set label "   - unsat solved x %d" at graph %f,%f' % (unsat_solved_x, label_xpos, label_ypos))
+    print('set label "" at graph %f,%f %s' % (label_xsatpos, label_ypos, unsat_point_str))
+    print('set label "   solved x: %d" at graph %f,%f' % (unsat_solved_x, label_xsatpos, label_ypos))
     label_ypos -= label_ypos_step
-    print('set label "solved y %d" at graph %f,%f' % (solved_y, label_xpos, label_ypos))
+    print('set label "solved y: %d" at graph %f,%f' % (solved_y, label_xpos, label_ypos))
     label_ypos -= label_ypos_step
-    print('set label "   - sat solved y %d" at graph %f,%f' % (sat_solved_y, label_xpos, label_ypos))
+    print('set label "" at graph %f,%f %s' % (label_xsatpos, label_ypos, sat_point_str))
+    print('set label "   solved y: %d" at graph %f,%f' % (sat_solved_y, label_xsatpos, label_ypos))
     label_ypos -= label_ypos_step
-    print('set label "   - unsat solved y %d" at graph %f,%f' % (unsat_solved_y, label_xpos, label_ypos))
+    print('set label "" at graph %f,%f %s' % (label_xsatpos, label_ypos, unsat_point_str))
+    print('set label "   solved y: %d" at graph %f,%f' % (unsat_solved_y, label_xsatpos, label_ypos))
+    label_ypos -= label_ypos_step
     label_ypos -= label_ypos_step
     print('set label "PAR-2 ratio x/y: %.02f" at graph %f,%f' % (x_par2/float(y_par2), label_xpos, label_ypos))
     label_ypos -= label_ypos_step
     if sat_speedups:
-        print('set label "   - sat ratio x/y: %.02f" at graph %f,%f' % (sat_x_par2/float(sat_y_par2), label_xpos, label_ypos))
+        print('set label "" at graph %f,%f %s' % (label_xsatpos, label_ypos, sat_point_str))
+        print('set label "   ratio x/y: %.02f" at graph %f,%f' % (sat_x_par2/float(sat_y_par2), label_xsatpos, label_ypos))
     label_ypos -= label_ypos_step
     if unsat_speedups:
-        print('set label "   - unsat ratio x/y: %.02f" at graph %f,%f' % (unsat_x_par2/float(unsat_y_par2), label_xpos, label_ypos))
+        print('set label "" at graph %f,%f %s' % (label_xsatpos, label_ypos, unsat_point_str))
+        print('set label "   ratio x/y: %.02f" at graph %f,%f' % (unsat_x_par2/float(unsat_y_par2), label_xsatpos, label_ypos))
     label_ypos -= label_ypos_step
 
-    print('plot x title "" lc "black", "-" title "" with point pointtype 2 lc "green", "-" title "" with points pointtype 4 lc "red", "-" title "" with points pointtype 3 lc "blue", "-" title "" with points pointtype 5 lc "magenta"')
+    print('plot x title "" lc "black", "-" title "" with %s, "-" title "" with %s, "-" title "" with %s, "-" title "" with %s' % (sat_point_str, unsat_point_str, unknown_point_str, unsound_point_str))
 
     sat_strings = []
     unsat_strings = []

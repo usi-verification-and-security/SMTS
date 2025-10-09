@@ -112,6 +112,13 @@ if __name__ == '__main__':
     input_files = args.lists if len(args.lists) > 0 else \
             list(map(lambda x: x.strip(), sys.stdin.readlines()))
 
+    if input_files:
+        if not os.path.isfile(input_files[-1]):
+            assert len(input_files) % 2 == 0
+            input_files, labels = input_files[:len(input_files)//2], input_files[len(input_files)//2:]
+        else:
+            labels = list(map(lambda f: f.split("/")[-1].removesuffix(".list"), input_files))
+
     parallelSolvers = set()
     # parallelSolvers = set() if args.csv == None \
     #         else getParallelSolvers(args.csv)
@@ -131,10 +138,8 @@ if __name__ == '__main__':
     max_runtime = list()
     min_runtime = list()
 
-    for input_file in input_files:
+    for input_file, solverName in zip(input_files, labels):
         result = open(input_file).readlines()
-
-        solverName = input_file.split("/")[-1].removesuffix(".list")
 
         use_log = True
         # use_log = False
@@ -213,8 +218,8 @@ if __name__ == '__main__':
     print('set term svg dynamic fname "Arvo"')
 
     print('set output "%s"' % output)
-    print('set xlabel "timeout"')
-    print('set ylabel "instances"')
+    print('set xlabel "Runtime" offset 0,0.5')
+    print('set ylabel "Solved benchmarks" offset 0.5,0')
     if (use_log):
         print('set logscale x')
     print('set key left top')

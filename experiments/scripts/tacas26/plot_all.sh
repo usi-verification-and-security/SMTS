@@ -18,7 +18,18 @@ function plot {
     local type=$1
     shift
 
-    local files=("$@")
+    local n=$(( $# / 2 ))
+    local labels=()
+    local files=()
+    for (( i=0; i<n; ++i )); do
+        labels+=("$1")
+        shift
+    done
+    for (( i=0; i<n; ++i )); do
+        files+=("$1")
+        shift
+    done
+
     local file1="${files[0]}"
 
     local logic=$(basename $(dirname "$file1"))
@@ -40,7 +51,7 @@ function plot {
     local version1="${versions[0]}"
 
     cd "$SCRIPTS_DIR"
-    ./${type}_plot.sh "${files[@]}" &>o
+    ./${type}_plot.sh "${files[@]}" "${labels[@]}" &>o
     local ret=$?
     local out=$(<o)
     rm o
@@ -72,11 +83,16 @@ function plot {
     mv plot.pdf "$out_file"
 }
 
-plot scatter "$TACAS_OUTPUT_DIR/opensmt/QF_LRA/opensmt_QF_LRA_files" "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-p-l_nt-32_o-8"
-plot scatter "$TACAS_OUTPUT_DIR/opensmt/QF_LRA/opensmt_QF_LRA_files" "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-p_nt-32_o-1"
-plot scatter "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-l_nt-32_o-8" "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-p-l_nt-32_o-8"
-plot scatter "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-p_nt-32_o-8" "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-p-l_nt-32_o-8"
-plot scatter "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files_nt-32_o-8" "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-l_nt-32_o-8"
+plot scatter OpenSMT2 'SMTS (8 solvers)' "$TACAS_OUTPUT_DIR/opensmt/QF_LRA/opensmt_QF_LRA_files" "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-p-l_nt-32_o-8"
+plot scatter OpenSMT2 'SMTS (1 solver)' "$TACAS_OUTPUT_DIR/opensmt/QF_LRA/opensmt_QF_LRA_files" "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-p_nt-32_o-1"
+plot scatter 'SMTS portfolio (8 solvers)' 'SMTS (8 solvers)' "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-l_nt-32_o-8" "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-p-l_nt-32_o-8"
+plot scatter 'SMTS portfolio no-sharing (8 solvers)' 'SMTS portfolio (8 solvers)' "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files_nt-32_o-8" "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-l_nt-32_o-8"
+plot scatter 'SMTS no-sharing (8 solvers)' 'SMTS (8 solvers)' "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-p_nt-32_o-8" "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-p-l_nt-32_o-8"
 
 # plot cactus "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-p_nt-32_o-1" "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-p-l_nt-32_o-"*
-plot cactus "$TACAS_OUTPUT_DIR/opensmt/QF_LRA/opensmt_QF_LRA_files" "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-p_nt-32_o-1" "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-p-l_nt-32_o-"{2,4,8}
+plot cactus OpenSMT2 'SMTS ('{1,2,4,8}')' "$TACAS_OUTPUT_DIR/opensmt/QF_LRA/opensmt_QF_LRA_files" "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-p_nt-32_o-1" "$TACAS_OUTPUT_DIR/final-alg/QF_LRA/final-alg_QF_LRA_files-p-l_nt-32_o-"{2,4,8}
+
+plot scatter OpenSMT2 'SMTS (8 solvers)' "$TACAS_OUTPUT_DIR/opensmt/QF_LIA/opensmt_QF_LIA_files_selected-2000-1350" "$TACAS_OUTPUT_DIR/final-alg/QF_LIA/final-alg_QF_LIA_files_selected-2000-1350_nt-32_o-8"
+plot scatter OpenSMT2 'SMTS (1 solver)' "$TACAS_OUTPUT_DIR/opensmt/QF_LIA/opensmt_QF_LIA_files_selected-2000-1350" "$TACAS_OUTPUT_DIR/final-alg/QF_LIA/final-alg_QF_LIA_files_selected-2000-1350_nt-32_o-1"
+
+plot cactus OpenSMT2 'SMTS ('{1,2,4,8}')' "$TACAS_OUTPUT_DIR/opensmt/QF_LIA/opensmt_QF_LIA_files_selected-2000-1350" "$TACAS_OUTPUT_DIR/final-alg/QF_LIA/final-alg_QF_LIA_files_selected-2000-1350_nt-32_o-"{1,2,4,8}
