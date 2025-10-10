@@ -119,11 +119,11 @@ if __name__ == '__main__':
         else:
             labels = list(map(lambda f: f.split("/")[-1].removesuffix(".list"), input_files))
 
-    parallelSolvers = set()
+    # parallelSolvers = set()
     # parallelSolvers = set() if args.csv == None \
     #         else getParallelSolvers(args.csv)
 
-    unsoundSolvers = dict()
+    # unsoundSolvers = dict()
     # unsoundSolvers = dict() if args.unsound == None \
     #         else getUnsoundSolvers(args.unsound, \
     #                 args.divisions, args.track)
@@ -217,12 +217,18 @@ if __name__ == '__main__':
     print('#!/usr/bin/env gnuplot')
     print('set term svg dynamic fname "Arvo"')
 
+    axis_label_font_str = 'font ",16"'
+    key_label_font_str = 'font ",15"'
+    tics_label_font_str = 'font ",14"'
+
     print('set output "%s"' % output)
-    print('set xlabel "Runtime" offset 0,0.5')
-    print('set ylabel "Solved benchmarks" offset 0.5,0')
+    print('set xlabel "Runtime" offset 0,0.5 %s' % (axis_label_font_str))
+    print('set ylabel "Solved benchmarks" offset 0.5,0 %s' % (axis_label_font_str))
     if (use_log):
         print('set logscale x')
-    print('set key left top')
+    print('set key left top %s' % (key_label_font_str))
+    print('set xtics %s' % (tics_label_font_str))
+    print('set ytics %s' % (tics_label_font_str))
     print('set xrange [%f:%f]' % (low, bnd))
     # print('set pointsize 1')
 
@@ -232,9 +238,8 @@ if __name__ == '__main__':
                     # (x if args.division not in unsoundSolvers.keys() or \
                     #       x not in unsoundSolvers[args.division] \
                     #     else "{}*".format(x), \
-                    (x if True \
-                        else "{}*".format(x), \
-                    "" if x not in parallelSolvers else "lw 3") \
+                    # "" if x not in parallelSolvers else "lw 3") \
+                    (x, "lw 3 dt (3.75,0.5)") \
                     for x in results.keys() ])))
 
     for name in results.keys():
