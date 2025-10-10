@@ -4,37 +4,25 @@ ROOT_DIR=$(realpath "$TACAS_SCRIPTS_DIR/../../../")
 [[ -z $os ]] && os='8'
 [[ -z $nts ]] && nts='32'
 
+# shopt -s extglob
+# shopt -s patsub_replacement
+
 function usage {
-  echo "Usage: runme.sh <version_name> <files_file>"
+  echo "Usage: runme.sh <version_name> <files_file> [<start_line> <end_line>]"
 
   [[ -n $1 ]] && exit $1
 }
 
-[[ -z $1 ]] && usage 0
+function is_positive_int {
+  [[ $1 =~ ^[1-9][0-9]*$ ]]
+}
 
-version=$1
+function check_is_positive_int {
+  is_positive_int "$1" && return 0
 
-files_file="$2"
-files_name=$(basename "$files_file")
-
-logic="${files_name%_files*}"
-
-DATA_DIR=$(dirname "$files_file")
-RESULTS_DIR="$DATA_DIR/${version}/${logic}"
-mkdir -p "$RESULTS_DIR" >/dev/null || exit $?
-
-[[ -z $TIMEOUT ]] && TIMEOUT=300
-
-[[ -z $N ]] && N=1
-
-[[ -z $PARTITIONING ]] && PARTITIONING=1
-
-[[ -z $LEMMA_SHARING ]] && LEMMA_SHARING=1
-
-super_timeout=$(( $TIMEOUT + 5 ))
-
-err=$(mktemp)
-out=$(mktemp)
+  echo "Expected a positive number, got: $1" >&2
+  usage 2 >&2
+}
 
 function cleanup {
   if [[ -n $1 && $1 != 0 ]]; then
@@ -50,10 +38,57 @@ function cleanup {
     rm -f $out
   fi
 
+  [[ -n $new_files_file ]] && rm -f "$new_files_file"
+
   [[ -n $1 ]] && exit $1
 }
 
 trap 'cleanup 1' INT TERM QUIT
+
+[[ -z $1 ]] && usage 0
+
+version=$1
+
+[[ -z $2 ]] && usage 1 >&2
+
+files_file="$2"
+
+[[ -n $3 ]] && {
+  check_is_positive_int "$3"
+  lo=$3
+  if [[ -n $4 ]]; then
+    check_is_positive_int "$4"
+    hi=$4
+    # new_files_file="${files_file/_files*(_+([0-9]))*(-+([0-9]))/&_${lo}-${hi}}"
+    new_files_file="${files_file}_${lo}-${hi}"
+    sed -n "${lo},${hi}p" <"$files_file" >"$new_files_file"
+    files_file="$new_files_file"
+  else
+    echo "Expected <end_line>" >&2
+    usage 1 >&2
+  fi
+}
+
+files_name=$(basename "$files_file")
+
+logic="${files_name%_files*}"
+
+DATA_DIR=$(dirname "$files_file")
+RESULTS_DIR="$DATA_DIR/${version}/${logic}"
+mkdir -p "$RESULTS_DIR" >/dev/null || cleanup $?
+
+[[ -z $TIMEOUT ]] && TIMEOUT=300
+
+[[ -z $N ]] && N=1
+
+[[ -z $PARTITIONING ]] && PARTITIONING=1
+
+[[ -z $LEMMA_SHARING ]] && LEMMA_SHARING=1
+
+super_timeout=$(( $TIMEOUT + 5 ))
+
+err=$(mktemp)
+out=$(mktemp)
 
 cd "$ROOT_DIR"
 
