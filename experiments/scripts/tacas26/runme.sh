@@ -134,6 +134,7 @@ for o in $os; do
           printf "ERROR at %s:\nUnrecognized result:\n%s\n" "$file" "$res" >$err_file
           cleanup 1
         }
+        #++ distinguish mem-outs (use the time, not TIMEOUT)
         [[ $res == unknown ]] && {
           printf "%s %s %s\n" "$file" $res $TIMEOUT
           break
