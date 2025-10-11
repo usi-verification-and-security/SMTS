@@ -135,8 +135,18 @@ if __name__ == '__main__':
 
 
     results = dict()
+    filenames = dict()
     max_runtime = list()
     min_runtime = list()
+
+    for input_file in input_files:
+        for el in open(input_file).readlines():
+            rec = el.split()
+            name = rec[0]
+            if name not in filenames:
+                filenames[name] = 1
+            else:
+                filenames[name] += 1
 
     for input_file, solverName in zip(input_files, labels):
         result = open(input_file).readlines()
@@ -145,7 +155,7 @@ if __name__ == '__main__':
         # use_log = False
 
         def getRes(lst):
-            names = dict()
+            local_filenames = dict()
             resList = list()
             for el in lst:
                 rec = el.split()
@@ -154,16 +164,21 @@ if __name__ == '__main__':
                 time = -1
                 if len(rec) > 2:
                     time = rec[2]
-                if name in names:
+                if name in local_filenames:
                     print("Duplicate result: %s" % name)
                     sys.exit(1)
+                assert name in filenames
+                assert filenames[name] <= len(input_files)
+                ## Skip files that are not included in all lists
+                if filenames[name] != len(input_files):
+                    continue
                 if (res in ['unknown','indet']) and float(time) < to:
                     time = -2 # mem out
                 elif (res in ['unknown','indet']):
                     time = -1 # time out
                 elif (res == 'unsound'):
                     time = -3 # unsound
-                names[name] = True
+                local_filenames[name] = True
                 resList.append([res, float(time)])
             return resList
 
