@@ -54,6 +54,7 @@ function plot {
     ./${type}_plot.sh "${files[@]}" "${labels[@]}" &>o
     local ret=$?
     local out=$(<o)
+    grep '^!!' o
     rm o
     (( $ret )) && {
         printf 'ERROR:\n%s\n' "$out" >&2

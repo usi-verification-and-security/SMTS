@@ -108,7 +108,7 @@ if __name__ == '__main__':
 
     for k in x_res.keys():
         if k not in y_res:
-            print("!! Not in y: %s" % k, file=sys.stderr)
+            print("! Not in y: %s" % k, file=sys.stderr)
         elif x_res[k][1] >= 0:
             if y_res[k][1] < 0:
                 print("unknown y-only (%s): %s" % (x_res[k][0], k), file=sys.stderr)
@@ -129,7 +129,7 @@ if __name__ == '__main__':
 
     for k in y_res.keys():
         if k not in x_res:
-            print("!! Not in x: %s" % k, file=sys.stderr)
+            print("! Not in x: %s" % k, file=sys.stderr)
         elif y_res[k][1] >= 0 and x_res[k][1] < 0:
             print("unknown x-only (%s): %s" % (y_res[k][0], k), file=sys.stderr)
 
@@ -168,7 +168,9 @@ if __name__ == '__main__':
                 if x_res[k][1] < 0:
                     unsat_x_par2 += float(2*to)
 
-    # print('PAR-2: x:{} y:{}'.format(x_par2, y_par2), file=sys.stderr)
+    print('PAR-2: x:{} y:{}'.format(x_par2, y_par2), file=sys.stderr)
+    print('sat PAR-2: x:{} y:{}'.format(sat_x_par2, sat_y_par2), file=sys.stderr)
+    print('unsat PAR-2: x:{} y:{}'.format(unsat_x_par2, unsat_y_par2), file=sys.stderr)
 
     speedup = sum(speedups)/len(speedups)
     if sat_speedups:
@@ -195,24 +197,25 @@ if __name__ == '__main__':
     # print(len(x_res), file=sys.stderr)
     # print(len(y_res), file=sys.stderr)
 
+    res_keys = x_res.keys() & y_res.keys()
 
-    solved_x = len(list(filter(lambda x: x_res[x][1] >= 0, x_res.keys())))
-    solved_y = len(list(filter(lambda x: y_res[x][1] >= 0, y_res.keys())))
-    sat_solved_x = len(list(filter(lambda x: x_res[x][1] >= 0 and x_res[x][0] == 'sat', x_res.keys())))
-    sat_solved_y = len(list(filter(lambda x: y_res[x][1] >= 0 and y_res[x][0] == 'sat', y_res.keys())))
-    unsat_solved_x = len(list(filter(lambda x: x_res[x][1] >= 0 and x_res[x][0] == 'unsat', x_res.keys())))
-    unsat_solved_y = len(list(filter(lambda x: y_res[x][1] >= 0 and y_res[x][0] == 'unsat', y_res.keys())))
+    solved_x = len(list(filter(lambda x: x_res[x][1] >= 0, res_keys)))
+    solved_y = len(list(filter(lambda x: y_res[x][1] >= 0, res_keys)))
+    sat_solved_x = len(list(filter(lambda x: x_res[x][1] >= 0 and x_res[x][0] == 'sat', res_keys)))
+    sat_solved_y = len(list(filter(lambda x: y_res[x][1] >= 0 and y_res[x][0] == 'sat', res_keys)))
+    unsat_solved_x = len(list(filter(lambda x: x_res[x][1] >= 0 and x_res[x][0] == 'unsat', res_keys)))
+    unsat_solved_y = len(list(filter(lambda x: y_res[x][1] >= 0 and y_res[x][0] == 'unsat', res_keys)))
 
 
-    def postProc(h, bnd):
+    def postProc(h):
         for k in h:
             if h[k][1] == -1:
                 h[k][1] = bnd
             if h[k][1] == -2:
                 h[k][1] = bnd2
 
-    postProc(x_res, bnd)
-    postProc(y_res, bnd)
+    postProc(x_res)
+    postProc(y_res)
 
     print('#!/usr/bin/env gnuplot')
 #    print('set term epslatex standalone color size 8, 4')
@@ -332,7 +335,7 @@ if __name__ == '__main__':
                 y_res[name][0] == 'unsat') or \
                (x_res[name][0] == 'unsat' and \
                 y_res[name][0] == 'sat'):
-                print("!! Oops: %s %s %s" %
+                print("!!! Oops: %s %s %s" %
                         (name, x_res[name], y_res[name]), file=sys.stderr)
                 fail_strings.append("%.02f %.02f # %s" % (x_res[name][1], y_res[name][1], name))
 
