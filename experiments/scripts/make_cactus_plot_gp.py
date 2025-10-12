@@ -232,11 +232,12 @@ if __name__ == '__main__':
     print('#!/usr/bin/env gnuplot')
     print('set term svg dynamic fname "Arvo"')
 
-    axis_label_font_str = 'font ",16"'
-    key_label_font_str = 'font ",15"'
+    axis_label_font_str = 'font ",17"'
+    key_label_font_str = 'font ",16"'
     tics_label_font_str = 'font ",14"'
 
     print('set output "%s"' % output)
+    print('set size square')
     print('set xlabel "Runtime" offset 0,0.5 %s' % (axis_label_font_str))
     print('set ylabel "Solved benchmarks" offset 0.5,0 %s' % (axis_label_font_str))
     if (use_log):
@@ -244,7 +245,7 @@ if __name__ == '__main__':
     print('set key left top %s' % (key_label_font_str))
     print('set xtics %s' % (tics_label_font_str))
     print('set ytics %s' % (tics_label_font_str))
-    print('set xrange [%f:%f]' % (low, bnd))
+    print('set xrange [%f:%f]' % (low, to))
     # print('set pointsize 1')
 
     print('plot %s' % (\
