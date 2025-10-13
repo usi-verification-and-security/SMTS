@@ -77,7 +77,7 @@ DATA_DIR=$(dirname "$files_file")
 RESULTS_DIR="$DATA_DIR/${version}/${logic}"
 mkdir -p "$RESULTS_DIR" >/dev/null || cleanup $?
 
-[[ -z $TIMEOUT ]] && TIMEOUT=300
+[[ -z $TIMEOUT ]] && TIMEOUT=1200
 
 [[ -z $N ]] && N=1
 
@@ -85,7 +85,7 @@ mkdir -p "$RESULTS_DIR" >/dev/null || cleanup $?
 
 [[ -z $LEMMA_SHARING ]] && LEMMA_SHARING=1
 
-super_timeout=$(( $TIMEOUT + 5 ))
+super_timeout=$(( (($TIMEOUT + 1) * 102) / 100 ))
 
 err=$(mktemp)
 out=$(mktemp)
@@ -119,6 +119,7 @@ for o in $os; do
       prev_res=
       sum_time=0
       for ((n=1; n<=$N; ++n)); do
+        ## sometimes it hangs after finishing ... repeat until the case it does not
         while true; do
           timeout $super_timeout ./server/smts.py $partitioning_opt $lemma_sharing_opt -Pf -Pt $nt_opt -o $o -fp "$file" >$out 2>$err
           ret=$?
