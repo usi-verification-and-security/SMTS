@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 import yaml
+import copy
 
 # Default timeout
 def_to = 1200
@@ -197,6 +198,9 @@ if __name__ == '__main__':
 #            print("No results for {}".format(input_file))
 #            sys.exit(1)
 
+    sat_results = {name: [copy.deepcopy(res) for res in lst if res[0] == 'sat'] for name, lst in results.items()}
+    unsat_results = {name: [copy.deepcopy(res) for res in lst if res[0] == 'unsat'] for name, lst in results.items()}
+
     if len(max_runtime) == 0:
         assert len(min_runtime) == 0
         # die("No result for any input file on track {}, "\
@@ -217,17 +221,18 @@ if __name__ == '__main__':
         for r in resList:
             if r[1] < 0:
                 r[1] = bnd
-
-    for k in results.keys():
-        postProc(results[k])
-        results[k].sort(key=lambda x: x[1])
+        resList.sort(key=lambda x: x[1])
         # add the index
-        for i in range(0, len(results[k])):
-            if results[k][i][1] == bnd:
-                results[k][i].append(i)
+        for i in range(0, len(resList)):
+            if resList[i][1] == bnd:
+                resList[i].append(i)
                 break
             else:
-                results[k][i].append(i+1)
+                resList[i].append(i+1)
+
+    for res in (results, sat_results, unsat_results):
+        for k in res.keys():
+            postProc(res[k])
 
     print('#!/usr/bin/env gnuplot')
     print('set term svg dynamic fname "Arvo"')
@@ -260,6 +265,9 @@ if __name__ == '__main__':
 
     for name in results.keys():
         result = results[name]
+        # result = sat_results[name]
+        # result = unsat_results[name]
+        # for result in map(lambda r: r[name], (results, sat_results, unsat_results)):
         print("\n".join(map(lambda x: " ".join(map(str, x[1:3])), result)))
         print("e")
 
