@@ -3,6 +3,7 @@
 __pycache__/
 .ccls-cache/
 build/
+/local/
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
