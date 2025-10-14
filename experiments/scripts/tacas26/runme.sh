@@ -118,9 +118,10 @@ for o in $os; do
     while read file; do
       prev_res=
       sum_time=0
+      ## make an average time, BUT just one timeout result implies average timeout
       for ((n=1; n<=$N; ++n)); do
-        ## sometimes it hangs after finishing ... repeat until the case it does not
-        while true; do
+        ## sometimes it hangs after finishing ... repeat several times until the case it does not
+        for ((i=1; i<=3; ++i)); do
           timeout $super_timeout ./server/smts.py $partitioning_opt $lemma_sharing_opt -Pf -Pt $nt_opt -o $o -fp "$file" >$out 2>$err
           ret=$?
           sleep 0.5
@@ -128,13 +129,27 @@ for o in $os; do
           (( $ret == 0 )) && break
         done
 
-        sed -i '/^;error/d' $out
-
-        res=$(sed 's/^[^ ]* \([^ ]*\) .*$/\1/' <$out)
-        [[ ! $res =~ ^(unsat|sat|unknown)$ || -s $err ]] && {
-          printf "ERROR at %s:\nUnrecognized result:\n%s\n" "$file" "$res" >$err_file
+        [[ -s $err ]] && {
+          printf "ERROR output .err at %s:\n" "$file" >$err_file
           cleanup 1
         }
+
+        if (( $ret != 0 )); then
+          (( $ret != 124 )) && {
+            printf "ERROR non-zero exit status at %s:\n" "$file" >$err_file
+            cleanup 1
+          }
+          res=unknown
+        else
+          sed -i '/^;error/d' $out
+
+          res=$(sed 's/^[^ ]* \([^ ]*\) .*$/\1/' <$out)
+          [[ ! $res =~ ^(unsat|sat|unknown)$ ]] && {
+            printf "ERROR at %s:\nUnrecognized result:\n%s\n" "$file" "$res" >$err_file
+            cleanup 1
+          }
+        fi
+
         #++ distinguish mem-outs (use the time, not TIMEOUT)
         [[ $res == unknown ]] && {
           printf "%s %s %s\n" "$file" $res $TIMEOUT
