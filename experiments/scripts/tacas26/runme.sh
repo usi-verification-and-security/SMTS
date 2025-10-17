@@ -39,6 +39,7 @@ function cleanup {
   fi
 
   [[ -n $new_files_file ]] && rm -f "$new_files_file"
+  [[ -n $files_file_cp ]] && rm -f "$files_file_cp"
 
   [[ -n $1 ]] && exit $1
 }
@@ -86,6 +87,9 @@ mkdir -p "$RESULTS_DIR" >/dev/null || cleanup $?
 [[ -z $LEMMA_SHARING ]] && LEMMA_SHARING=1
 
 super_timeout=$(( (($TIMEOUT + 1) * 102) / 100 ))
+
+files_file_cp=$(mktemp)
+cp "$files_file" "$files_file_cp" || cleanup $?
 
 err=$(mktemp)
 out=$(mktemp)
@@ -166,7 +170,7 @@ for o in $os; do
       [[ $res == unknown ]] && continue
       avg_time=$(bc -l <<<"scale=2; ($sum_time)/$N")
       printf "%s %s %s\n" "$file" $res $avg_time
-    done <"$files_file" >"$results_file"
+    done <"$files_file_cp" >"$results_file"
   done
 done
 
