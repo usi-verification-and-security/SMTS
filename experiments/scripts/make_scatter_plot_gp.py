@@ -323,7 +323,7 @@ if __name__ == '__main__':
         print('set label "   ratio x/y: %.02f" at graph %f,%f %s' % (unsat_x_par2/float(unsat_y_par2), label_xsatpos, label_ypos, label_font_str))
     label_ypos -= label_ypos_step
 
-    print('plot x title "" lc "black", "-" title "" with %s, "-" title "" with %s, "-" title "" with %s, "-" title "" with %s' % (sat_point_str, unsat_point_str, unknown_point_str, unsound_point_str))
+    print('plot "-" title "" with %s, "-" title "" with %s, "-" title "" with %s, "-" title "" with %s, x title "" lc "black"' % (sat_point_str, unsat_point_str, unknown_point_str, unsound_point_str))
 
     sat_strings = []
     unsat_strings = []
