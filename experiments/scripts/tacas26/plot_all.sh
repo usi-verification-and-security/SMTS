@@ -12,6 +12,17 @@ TACAS_DATA_DIR=$(realpath "$DATA_DIR/$TACAS/")
 TACAS_OUTPUT_DIR=$(realpath "$TACAS_DATA_DIR/outputs/")
 TACAS_PLOT_DIR=$(realpath "$TACAS_DATA_DIR/plots/")
 
+[[ $1 =~ ^QF_ ]] && {
+    LOGIC=$1
+    shift
+}
+
+FILES_SUFFIX=_files
+[[ -n $1 ]] && {
+    FILES_SUFFIX+="$1"
+    shift
+}
+
 shopt -s extglob
 
 function plot {
@@ -41,7 +52,7 @@ function plot {
         versions+=("$version")
 
         local param=$(basename "$f")
-        param="${param#${version}_${logic}*_files}"
+        param="${param#${version}_${logic}*${FILES_SUFFIX}}"
         param="${param#*_selected}"
         param="${param##+(_+([0-9]))}"
         param="${param##+(-+([0-9]))}"
@@ -85,11 +96,12 @@ function plot {
 }
 
 for logic in QF_{LRA,LIA}; do
-    plot scatter OpenSMT 'SMTS (8 solvers)' "$TACAS_OUTPUT_DIR/opensmt/${logic}/opensmt_${logic}_files" "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}_files-p-l_nt-32_o-8"
-    plot scatter OpenSMT 'SMTS (1 solver)' "$TACAS_OUTPUT_DIR/opensmt/${logic}/opensmt_${logic}_files" "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}_files-p_nt-32_o-1"
-    plot scatter 'SMTS portfolio (8 solvers)' 'SMTS (8 solvers)' "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}_files-l_nt-32_o-8" "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}_files-p-l_nt-32_o-8"
-    plot scatter 'SMTS portfolio no-sharing (8 solvers)' 'SMTS portfolio (8 solvers)' "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}_files_nt-32_o-8" "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}_files-l_nt-32_o-8"
-    plot scatter 'SMTS no-sharing (8 solvers)' 'SMTS (8 solvers)' "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}_files-p_nt-32_o-8" "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}_files-p-l_nt-32_o-8"
+    [[ -n $LOGIC && $logic != $LOGIC ]] && continue
+    plot scatter OpenSMT 'SMTS (8 solvers)' "$TACAS_OUTPUT_DIR/opensmt/${logic}/opensmt_${logic}${FILES_SUFFIX}" "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}${FILES_SUFFIX}-p-l_nt-32_o-8"
+    plot scatter OpenSMT 'SMTS (1 solver)' "$TACAS_OUTPUT_DIR/opensmt/${logic}/opensmt_${logic}${FILES_SUFFIX}" "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}${FILES_SUFFIX}-p_nt-32_o-1"
+    plot scatter 'SMTS portfolio (8 solvers)' 'SMTS (8 solvers)' "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}${FILES_SUFFIX}-l_nt-32_o-8" "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}${FILES_SUFFIX}-p-l_nt-32_o-8"
+    plot scatter 'SMTS portfolio no-sharing (8 solvers)' 'SMTS portfolio (8 solvers)' "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}${FILES_SUFFIX}_nt-32_o-8" "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}${FILES_SUFFIX}-l_nt-32_o-8"
+    plot scatter 'SMTS no-sharing (8 solvers)' 'SMTS (8 solvers)' "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}${FILES_SUFFIX}-p_nt-32_o-8" "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}${FILES_SUFFIX}-p-l_nt-32_o-8"
 
-    plot cactus OpenSMT 'SMTS ('{1,2,4,8}')' "$TACAS_OUTPUT_DIR/opensmt/${logic}/opensmt_${logic}_files" "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}_files-p_nt-32_o-1" "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}_files-p-l_nt-32_o-"{2,4,8}
+    plot cactus OpenSMT 'SMTS ('{1,2,4,8}')' "$TACAS_OUTPUT_DIR/opensmt/${logic}/opensmt_${logic}${FILES_SUFFIX}" "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}${FILES_SUFFIX}-p_nt-32_o-1" "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}${FILES_SUFFIX}-p-l_nt-32_o-"{2,4,8}
 done
