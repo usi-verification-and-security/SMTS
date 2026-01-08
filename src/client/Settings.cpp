@@ -24,7 +24,7 @@ void Settings::load(int argc, char **argv) {
             case 'h':
                 new(this) Settings();
                 std::cout << "\n******* Compiled with " << __VERSION__ << " on " << __DATE__ << " ******\n"
-                << "SMTS version: " << SMTS_VERSION << "\n"
+                << "SMTS version: " << 1/*SMTS_VERSION*/ << "\n"
                         "Usage: " << argv[0] << "\n"
                                   "[-h] display this message\n"
                                   "[-s server-host:port] if not set then file mode is enabled\n"
