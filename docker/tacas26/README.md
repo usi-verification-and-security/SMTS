@@ -9,6 +9,19 @@ The software runs a parallel SMT solver SMTS and a sequential SMT solver OpenSMT
 on SMT-LIB benchmarks from QF_LRA and QF_LIA logics.
 The resulting data are scatter and cactus plots.
 
+## Updates
+
+The previous version is `v1` with DOI 10.5281/zenodo.18197587
+
+This is version `v2` with DOI 10.5281/zenodo.18330747
+
+The updates are:
+
+* Fixed file paths in the list of benchmark files
+* Added `smoke` mode that allows to run within 30 minutes
+* Minor fixes in plotting scripts
+* Extended the instructions on retrieving the plots to the host machine
+
 ## Contents
 
 * `README.md`: this read-me file
