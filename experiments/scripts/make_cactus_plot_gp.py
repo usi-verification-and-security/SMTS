@@ -5,7 +5,7 @@ import sys
 import argparse
 import json
 import os
-import yaml
+# import yaml
 import copy
 
 # Default timeout

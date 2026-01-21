@@ -172,7 +172,8 @@ if __name__ == '__main__':
     print('sat PAR-2: x:{} y:{}'.format(sat_x_par2, sat_y_par2), file=sys.stderr)
     print('unsat PAR-2: x:{} y:{}'.format(unsat_x_par2, unsat_y_par2), file=sys.stderr)
 
-    speedup = sum(speedups)/len(speedups)
+    if speedups:
+      speedup = sum(speedups)/len(speedups)
     if sat_speedups:
       sat_speedup = sum(sat_speedups)/len(sat_speedups)
     if unsat_speedups:
@@ -278,7 +279,8 @@ if __name__ == '__main__':
     label_ypos -= label_ypos_step*label_ypos_section_step_coef
 
 
-    # print('set label "avg speedup x/y: %.02f" at graph %f,%f' % (speedup, label_xpos, label_ypos))
+    # if speedups:
+    #     print('set label "avg speedup x/y: %.02f" at graph %f,%f' % (speedup, label_xpos, label_ypos))
     # label_ypos -= label_ypos_step
     # if sat_speedups:
     #     print('set label "   - sat speedup x/y: %.02f" at graph %f,%f' % (sat_speedup, label_xpos, label_ypos))

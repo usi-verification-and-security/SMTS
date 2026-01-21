@@ -22,7 +22,7 @@ function cleanup {
   rm -f $GNUPLOT_FILE
 }
 
-python make_scatter_plot_gp.py "$results1" "$results2" "$label1" "$label2" "" '' "$IMAGE_FILE" $TIMEOUT >"$GNUPLOT_FILE" || {
+python3 make_scatter_plot_gp.py "$results1" "$results2" "$label1" "$label2" "" '' "$IMAGE_FILE" $TIMEOUT >"$GNUPLOT_FILE" || {
     status=$?
     [[ -s $GNUPLOT_FILE ]] && less "$GNUPLOT_FILE"
     cleanup

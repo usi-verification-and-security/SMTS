@@ -13,7 +13,7 @@ function cleanup {
   rm -f $GNUPLOT_FILE
 }
 
-python make_cactus_plot_gp.py -o "$IMAGE_FILE" -t $TIMEOUT "${results[@]}" >"$GNUPLOT_FILE" || {
+python3 make_cactus_plot_gp.py -o "$IMAGE_FILE" -t $TIMEOUT "${results[@]}" >"$GNUPLOT_FILE" || {
     status=$?
     [[ -s $GNUPLOT_FILE ]] && less "$GNUPLOT_FILE"
     cleanup
