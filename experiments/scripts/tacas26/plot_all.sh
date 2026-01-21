@@ -98,6 +98,7 @@ function plot {
 for logic in QF_{LRA,LIA}; do
     [[ -n $LOGIC && $logic != $LOGIC ]] && continue
     plot scatter OpenSMT 'SMTS (8 solvers)' "$TACAS_OUTPUT_DIR/opensmt/${logic}/opensmt_${logic}${FILES_SUFFIX}" "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}${FILES_SUFFIX}-p-l_nt-32_o-8"
+    [[ $FIRST_ONLY == 1 ]] && continue
     plot scatter OpenSMT 'SMTS (1 solver)' "$TACAS_OUTPUT_DIR/opensmt/${logic}/opensmt_${logic}${FILES_SUFFIX}" "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}${FILES_SUFFIX}-p_nt-32_o-1"
     plot scatter 'SMTS portfolio (8 solvers)' 'SMTS (8 solvers)' "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}${FILES_SUFFIX}-l_nt-32_o-8" "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}${FILES_SUFFIX}-p-l_nt-32_o-8"
     # plot scatter 'SMTS portfolio no-sharing (8 solvers)' 'SMTS portfolio (8 solvers)' "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}${FILES_SUFFIX}_nt-32_o-8" "$TACAS_OUTPUT_DIR/final-alg/${logic}/final-alg_${logic}${FILES_SUFFIX}-l_nt-32_o-8"

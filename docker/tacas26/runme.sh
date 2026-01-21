@@ -17,7 +17,7 @@ FINAL_OUTPUT_DIR="$FINAL_DATA_DIR/outputs"
 FINAL_PLOT_DIR="$FINAL_DATA_DIR/plots"
 
 ACTIONS=(run make-plots)
-MODES=(quick short full)
+MODES=(smoke quick short full)
 LOGICS=(
     QF_LRA
     QF_LIA
@@ -79,29 +79,35 @@ VERSION=final-alg
 export nts=''
 os='1 2 4 8'
 
+[[ -n $LOGIC ]] && LOGICS=($LOGIC)
 
 FILES=()
 for l in ${LOGICS[@]}; do
-    [[ -n $LOGIC && $l != $LOGIC ]] && continue
     FILES+=("$DATA_DIR/${l}_files")
 done
 
 unset FILES_SUFFIX
 case $MODE in
+    smoke)
+        BOUNDS=(3 3)
+        [[ -z $TIMEOUT ]] && TIMEOUT=120
+
+        FILES_SUFFIX=_uniq
+        ;;
     quick)
         BOUNDS=(15 40)
-        TIMEOUT=300
+        [[ -z $TIMEOUT ]] && TIMEOUT=300
 
         FILES_SUFFIX=_uniq
         ;;
     short)
         BOUNDS=(100 250)
-        TIMEOUT=600
+        [[ -z $TIMEOUT ]] && TIMEOUT=600
 
         FILES_SUFFIX=_gt1s
         ;;
     full)
-        TIMEOUT=1200
+        [[ -z $TIMEOUT ]] && TIMEOUT=1200
         ;;
 esac
 
@@ -149,6 +155,12 @@ case $ACTION in
                 for p in $ps; do
                     for l in $ls; do
                         [[ $p == 0 && $l == 0 ]] && continue
+                        case $MODE in
+                            smoke)
+                                [[ $o == 8 ]] || continue
+                                [[ $p == 1 && $l == 1 ]] || continue
+                                ;;
+                        esac
                         ## Unfortunately, cannot run multiple instances of SMTS on a single machine
                         printf 'Running SMTS with %d solvers, partitioning=%d, lemma sharing=%d ...\n' $o $p $l
                         PARTITIONING=$p LEMMA_SHARING=$l os=$o bash "$SMTS_TACAS_SCRIPTS_DIR/runme.sh" $VERSION "$f"
@@ -169,18 +181,36 @@ case $ACTION in
         cp -r "$DATA_DIR/opensmt" "$FINAL_OUTPUT_DIR"
 
         printf 'Generating plots ...\n'
+        case $MODE in
+            smoke)
+                export FIRST_ONLY=1
+                ;;
+        esac
         "$SMTS_TACAS_SCRIPTS_DIR/plot_all.sh" $LOGIC "${FILES_SUFFIX}${MODE_SUFFIX}"
 
-        cp -v "$FINAL_PLOT_DIR/scatter_QF_LRA_opensmt__final-alg-p-l_o-8.pdf" "$PLOTS_DIR/fig_1a_QF_LRA.pdf"
-        cp -v "$FINAL_PLOT_DIR/scatter_QF_LIA_opensmt__final-alg-p-l_o-8.pdf" "$PLOTS_DIR/fig_1b_QF_LIA.pdf"
-        cp -v "$FINAL_PLOT_DIR/cactus_QF_LRA_opensmt__final-alg-p_o-1__-p-l_o-2__-p-l_o-4__-p-l_o-8.pdf" "$PLOTS_DIR/fig_2a_QF_LRA.pdf"
-        cp -v "$FINAL_PLOT_DIR/cactus_QF_LIA_opensmt__final-alg-p_o-1__-p-l_o-2__-p-l_o-4__-p-l_o-8.pdf" "$PLOTS_DIR/fig_2b_QF_LIA.pdf"
-        cp -v "$FINAL_PLOT_DIR/scatter_QF_LRA_opensmt__final-alg-p_o-1.pdf" "$PLOTS_DIR/fig_3a_QF_LRA.pdf"
-        cp -v "$FINAL_PLOT_DIR/scatter_QF_LIA_opensmt__final-alg-p_o-1.pdf" "$PLOTS_DIR/fig_3b_QF_LIA.pdf"
-        cp -v "$FINAL_PLOT_DIR/scatter_QF_LRA_final-alg-l_o-8__-p-l_o-8.pdf" "$PLOTS_DIR/fig_4a_QF_LRA.pdf"
-        cp -v "$FINAL_PLOT_DIR/scatter_QF_LIA_final-alg-l_o-8__-p-l_o-8.pdf" "$PLOTS_DIR/fig_4b_QF_LIA.pdf"
-        cp -v "$FINAL_PLOT_DIR/scatter_QF_LRA_final-alg-p_o-8__-p-l_o-8.pdf" "$PLOTS_DIR/fig_5a_QF_LRA.pdf"
-        cp -v "$FINAL_PLOT_DIR/scatter_QF_LIA_final-alg-p_o-8__-p-l_o-8.pdf" "$PLOTS_DIR/fig_5b_QF_LIA.pdf"
+        for l in ${LOGICS[@]}; do
+            case $l in
+            QF_LRA)
+                alpha=a
+                ;;
+            QF_LIA)
+                alpha=b
+                ;;
+            esac
+
+            cp -v "$FINAL_PLOT_DIR/scatter_${l}_opensmt__final-alg-p-l_o-8.pdf" "$PLOTS_DIR/fig_1${alpha}_${l}.pdf"
+
+            case $MODE in
+            smoke)
+                continue
+                ;;
+            esac
+
+            cp -v "$FINAL_PLOT_DIR/cactus_${l}_opensmt__final-alg-p_o-1__-p-l_o-2__-p-l_o-4__-p-l_o-8.pdf" "$PLOTS_DIR/fig_2${alpha}_${l}.pdf"
+            cp -v "$FINAL_PLOT_DIR/scatter_${l}_opensmt__final-alg-p_o-1.pdf" "$PLOTS_DIR/fig_3${alpha}_${l}.pdf"
+            cp -v "$FINAL_PLOT_DIR/scatter_${l}_final-alg-l_o-8__-p-l_o-8.pdf" "$PLOTS_DIR/fig_4${alpha}_${l}.pdf"
+            cp -v "$FINAL_PLOT_DIR/scatter_${l}_final-alg-p_o-8__-p-l_o-8.pdf" "$PLOTS_DIR/fig_5${alpha}_${l}.pdf"
+        done
 
         printf '\nThe resulting plots are placed at %s\n' "$PLOTS_DIR"
         ;;
