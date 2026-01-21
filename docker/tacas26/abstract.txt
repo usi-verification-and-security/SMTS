@@ -7,7 +7,7 @@ on SMT-LIB benchmarks from QF_LRA and QF_LIA logics.
 The resulting data are scatter and cactus plots.
 
 The package is available from URL
-https://doi.org/10.5281/zenodo.18197587
+https://doi.org/10.5281/zenodo.18330747
 
 There are no additional requirements beyond Docker.
 The image should be ready-to-use automatically.
