@@ -73,6 +73,26 @@ After running the experiments finishes, run again `./runme.sh` script
 with `make-plots` command for the respective mode (and possibly logic).
 This will produce scatter and cactus plots into the `plots` directory.
 
+You need to move the plots to the host machine to display the plots using your graphical environment. Assuming that this docker container is the last one you run, you can get the container ID with
+```
+CONTAINER_ID=$(docker container ls -lq)
+```
+To copy a file from the container, use `docker cp <id>:<path> <dst>`.
+For example:
+```
+docker cp $CONTAINER_ID:/tacas26/plots/fig_1a_QF_LRA.pdf .
+```
+To copy all plots:
+```
+docker cp $CONTAINER_ID:/tacas26/plots .
+```
+
+The plots have transparent background.
+For example, using `magick`, display plot `plots/fig_1a_QF_LRA.pdf` by
+```
+display -alpha off plots/fig_1a_QF_LRA.pdf
+```
+
 ## Claimed badges
 
 ### Available
