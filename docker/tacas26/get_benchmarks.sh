@@ -41,7 +41,7 @@ for log in ${LOGICS[@]}; do
     find "$BENCH_DIR" -path '**/QF_LIA/**' -type f -name '*.smt2' >${log}_files
 
     cp "$EXPERIMENT_DATA_DIR"/outputs/opensmt/$log/opensmt_${log}_files .
-    sed -i 's|kolart/smt-comp/benchmarks/storage/2025|tomaqa/artifact/data/benchmarks|' opensmt_${log}_files
+    sed -i "s|/home/kolart/smt-comp/benchmarks/storage/2025|$BENCH_DIR|" opensmt_${log}_files
     cat opensmt_${log}_files | awk '{ if ($3 > 1) { print $1 } }' >${log}_files_gt1s
     shuf opensmt_${log}_files | awk '{ if ($3 > 1) { files[int($3)]=$1 } } END { for (t in files) { print files[t]} }' | shuf >${log}_files_uniq
     rm opensmt_${log}_files
